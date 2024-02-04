@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Copyright (c) Microsoft Corporation.
+SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+from: https://github.com/microsoft/STL/blob/main/stl/debugger/STL.natvis
+-->
+
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+  <Type Name="std::unordered_map&lt;*&gt;" Priority="MediumHigh">
+    <DisplayString>{{ size={_List._Size} }}</DisplayString>
+    <Expand>
+      <LinkedListItems>
+        <Size>_List._Size</Size>
+        <HeadPointer>_List._Myhead</HeadPointer>
+        <NextPointer>_Next</NextPointer>
+        <ValueNodePointer>_Myval</ValueNodePointer>
+      </LinkedListItems>
+    </Expand>
+  </Type>
+</AutoVisualizer>
