@@ -16,6 +16,25 @@ using json = nlohmann::json;
 using namespace std;
 namespace fs = std::filesystem;
 
+namespace nlohmann
+{
+    template <>
+    struct adl_serializer<glm::vec3>
+    {
+        static void to_json(json &j, const glm::vec3 &v)
+        {
+            j = json{v.x, v.y, v.z};
+        }
+
+        static void from_json(const json &j, glm::vec3 &v)
+        {
+            v.x = j.at(0).get<float>();
+            v.y = j.at(1).get<float>();
+            v.z = j.at(2).get<float>();
+        }
+    };
+}
+
 struct MeshDef
 {
     string name;
@@ -308,29 +327,78 @@ struct ModelDef
     }
 };
 
-#define ACTOR_JSON_VERSION 1
 struct ActorDef
 {
     string name;
     shared_ptr<PipelineDef> pipeline;
     shared_ptr<ModelDef> model;
+    glm::mat4 xform = glm::mat4(1.0f);
 
     void validate()
     {
         assert(!name.empty());
         assert(pipeline);
         assert(model);
+        assert(xform != glm::mat4(0.0f));
     }
 
     static ActorDef fromJSON(const nlohmann::json &j, unordered_map<string, shared_ptr<PipelineDef>> const &pipelines, unordered_map<string, shared_ptr<ModelDef>> const &models)
     {
         ActorDef a;
-        assert(j.at("version").get<uint32_t>() == ACTOR_JSON_VERSION);
         a.name = j.at("name").get<string>();
         a.pipeline = pipelines.at(j.at("pipeline").get<string>());
         a.model = models.at(j.at("model").get<string>());
+
+        // make the transform
+        glm::mat4 xform = glm::mat4(1.0f);
+        if (j.contains("xform"))
+        {
+            auto jx = j.at("xform");
+
+            glm::vec3 pos = glm::vec3(0);
+            glm::vec3 rot = glm::vec3(0);
+            glm::vec3 scale = glm::vec3(1);
+            if (jx.contains("position"))
+                pos = jx.at("position").get<glm::vec3>();
+            if (jx.contains("rotationYPR"))
+                rot = jx.at("rotationYPR").get<glm::vec3>();
+            if (jx.contains("scale"))
+                scale = jx.at("scale").get<glm::vec3>();
+            xform = glm::translate(glm::mat4(1.0f), pos) * glm::yawPitchRoll(rot.y, rot.x, rot.z) * glm::scale(glm::mat4(1.0f), scale);
+        }
+        a.xform = xform;
         a.validate();
         return a;
+    }
+};
+
+#define SCENE_JSON_VERSION 1
+struct SceneDef
+{
+    string name;
+    vector<shared_ptr<ActorDef>> actors;
+    unordered_map<string, shared_ptr<ActorDef>> actorMap;
+
+    void validate()
+    {
+        assert(!name.empty());
+        assert(!actors.empty());
+    }
+
+    static SceneDef fromJSON(const nlohmann::json &j, unordered_map<string, shared_ptr<PipelineDef>> const &pipelines, unordered_map<string, shared_ptr<ModelDef>> const &models)
+    {
+        SceneDef s;
+        assert(j.at("version").get<uint32_t>() == SCENE_JSON_VERSION);
+        s.name = j.at("name").get<string>();
+        for (auto const &actor : j.at("actors").get<vector<nlohmann::json>>())
+        {
+            auto a = make_shared<ActorDef>(ActorDef::fromJSON(actor, pipelines, models));
+            s.actors.push_back(a);
+            assert(!s.actorMap.contains(a->name));
+            s.actorMap[a->name] = a;
+        }
+        s.validate();
+        return s;
     }
 };
 
@@ -343,15 +411,18 @@ struct Metadata
     unordered_map<string, shared_ptr<ShaderDef>> fragmentShaders;
     unordered_map<string, shared_ptr<MaterialDef>> materials;
     unordered_map<string, shared_ptr<ModelDef>> models;
-    unordered_map<string, shared_ptr<ActorDef>> actors;
     unordered_map<string, shared_ptr<PipelineDef>> pipelines;
+    unordered_map<string, shared_ptr<SceneDef>> scenes;
 } metadata;
 
 void findAndProcessMetadata(const fs::path &path)
 {
     assert(fs::exists(path) && fs::is_directory(path));
 
-    static set<string> extensionsToProcess{".model", ".actor", ".pipeline"};
+    // The metadata is stored in JSON files with the following extensions
+    // other extensions need special handling or no handling (e.g. .mtl files are handled by
+    // loadMaterialDef, and .obj and .spv files are handled directly)
+    static set<string> jsonExts{".model", ".pipeline", ".scene"};
     struct LoadInfo
     {
         json j;
@@ -365,7 +436,7 @@ void findAndProcessMetadata(const fs::path &path)
         {
             string stem = entry.path().stem().string();
             string ext = entry.path().extension().string();
-            if (extensionsToProcess.find(ext) != extensionsToProcess.end())
+            if (jsonExts.find(ext) != jsonExts.end())
             {
                 ifstream f(entry.path());
                 LoadInfo loadInfo;
@@ -398,6 +469,9 @@ void findAndProcessMetadata(const fs::path &path)
         }
     }
 
+    // The order matters here: models depend on meshes and materials, actors depend on models and pipelines
+    // and the scene depends on actors
+
     for (auto const &[name, loadInfo] : loadInfos[".pipeline"])
     {
         auto pipelineDef = make_shared<PipelineDef>(PipelineDef::fromJSON(loadInfo.j, metadata.vertexShaders, metadata.fragmentShaders));
@@ -412,10 +486,10 @@ void findAndProcessMetadata(const fs::path &path)
         metadata.models[modelDef->name] = modelDef;
     }
 
-    for (auto const &[name, loadInfo] : loadInfos[".actor"])
+    for (auto const &[name, loadInfo] : loadInfos[".scene"])
     {
-        auto actorDef = make_shared<ActorDef>(ActorDef::fromJSON(loadInfo.j, metadata.pipelines, metadata.models));
-        assert(!metadata.actors.contains(actorDef->name));
-        metadata.actors[actorDef->name] = actorDef;
+        auto sceneDef = make_shared<SceneDef>(SceneDef::fromJSON(loadInfo.j, metadata.pipelines, metadata.models));
+        assert(!metadata.scenes.contains(sceneDef->name));
+        metadata.scenes[sceneDef->name] = sceneDef;
     }
 }

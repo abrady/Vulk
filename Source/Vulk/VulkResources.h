@@ -15,6 +15,8 @@
 #include "VulkPipelineBuilder.h"
 #include "VulkModel.h"
 #include "VulkMaterialTextures.h"
+#include "VulkActor.h"
+#include "VulkScene.h"
 
 // load resources used for rendering a set of things: shaders, meshes, textures, materials, etc.
 // Note:
@@ -42,18 +44,6 @@ public:
     ModelUBOs modelUBOs;
 
 private:
-    std::unordered_map<std::string, std::shared_ptr<VulkMaterialTextures>> materialTextures;
-    std::unordered_map<std::string, std::shared_ptr<VulkUniformBuffer<VulkMaterialConstants>>> materialUBOs;
-    std::unordered_map<std::string, std::shared_ptr<VulkMesh>> meshes;
-    std::unordered_map<std::string, std::shared_ptr<VulkTextureView>> textureViews;
-    std::unordered_map<std::string, std::shared_ptr<VulkTextureView>> normalViews;
-    std::unordered_map<std::string, std::shared_ptr<VulkPipeline>> pipelines;
-    std::unordered_map<std::string, std::shared_ptr<VulkDescriptorSetLayout>> descriptorSetLayouts;
-    std::unordered_map<std::string, std::shared_ptr<VulkBuffer>> buffers;
-    std::unordered_map<std::string, std::shared_ptr<VulkModel>> models;
-    std::unordered_map<std::string, VkShaderModule> vertShaders, fragShaders;
-    VkSampler textureSampler;
-
     enum ShaderType
     {
         Vertex,
@@ -72,6 +62,19 @@ private:
     std::shared_ptr<VulkMaterialTextures> getMaterialTextures(std::string const &name);
 
 public:
+    std::unordered_map<std::string, std::shared_ptr<VulkMaterialTextures>> materialTextures;
+    std::unordered_map<std::string, std::shared_ptr<VulkUniformBuffer<VulkMaterialConstants>>> materialUBOs;
+    std::unordered_map<std::string, std::shared_ptr<VulkMesh>> meshes;
+    std::unordered_map<std::string, std::shared_ptr<VulkTextureView>> textureViews;
+    std::unordered_map<std::string, std::shared_ptr<VulkTextureView>> normalViews;
+    std::unordered_map<std::string, std::shared_ptr<VulkPipeline>> pipelines;
+    std::unordered_map<std::string, std::shared_ptr<VulkDescriptorSetLayout>> descriptorSetLayouts;
+    std::unordered_map<std::string, std::shared_ptr<VulkBuffer>> buffers;
+    std::unordered_map<std::string, std::shared_ptr<VulkModel>> models;
+    std::unordered_map<std::string, std::shared_ptr<VulkScene>> scenes;
+    std::unordered_map<std::string, VkShaderModule> vertShaders, fragShaders;
+    VkSampler textureSampler;
+
     VulkResources(Vulk &vk)
         : vk(vk), modelUBOs(vk)
     {
@@ -80,7 +83,7 @@ public:
         loadDescriptorSetLayouts();
     }
 
-    VulkResources &loadActor(std::string name); // load from the metadata for rendering
+    VulkResources &loadScene(std::string name);
     VulkResources &loadVertexShader(std::string name);
     VulkResources &loadFragmentShader(std::string name);
 

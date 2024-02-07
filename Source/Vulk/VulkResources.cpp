@@ -70,16 +70,20 @@ shared_ptr<VulkModel> VulkResources::getModel(string const &name)
     return models[name];
 }
 
-VulkResources &VulkResources::loadActor(string name)
+VulkResources &VulkResources::loadScene(std::string name)
 {
-    // if (actors.contains(name))
-    // {
-    //     return *this;
-    // }
-    ActorDef &actorDef = *metadata.actors.at(name);
-    shared_ptr<VulkModel> model = getModel(actorDef.model->name);
-
-    // actors[name] = mr;
+    if (scenes.contains(name))
+    {
+        return *this;
+    }
+    SceneDef &sceneDef = *metadata.scenes.at(name);
+    shared_ptr<VulkScene> scene = make_shared<VulkScene>();
+    for (auto &actorDef : sceneDef.actors)
+    {
+        shared_ptr<VulkModel> model = getModel(actorDef->model->name);
+        scene->actors.push_back(make_shared<VulkActor>(model, actorDef->xform));
+    }
+    scenes[name] = scene;
     return *this;
 }
 

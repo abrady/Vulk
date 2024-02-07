@@ -20,8 +20,11 @@ Install the following. Note that CmakeLists.txt assumes these are in C:\Vulkan:
 * run `cmake -S . -B build` from the root of the project
 
 # TODOs
+* VulkResources should only need to live during the loading phase
 
 # Log
+
+## 
 
 ## 2/3/24 bootstrapping and resource loading
 I took the VulkanRender project, copied it, and need to clean out the cruft.

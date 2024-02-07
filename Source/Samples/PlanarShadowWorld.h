@@ -26,7 +26,7 @@ public:
                                   resources(vk)
     {
         // load resources
-        resources.loadActor("Skull");
+        resources.loadScene("basic");
 
         // set up render globals
         for (auto &light : resources.modelUBOs.lights.ptrs)
@@ -57,16 +57,21 @@ public:
         updateXformsUBO(*resources.modelUBOs.xforms.ptrs[currentFrame], viewport);
         *resources.modelUBOs.eyePos.ptrs[currentFrame] = camera.eye;
 
-        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, resources.getPipeline("LitModel"));
-        auto const sk = resources.getModel("Skull");
-        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, resources.getPipelineLayout("LitModel"), 0, 1, &sk->dsInfo->descriptorSets[currentFrame], 0, nullptr);
-        vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-        vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+        // render the scene?
+        auto scene = resources.scenes["basic"];
+        for (auto &actor : scene->actors)
+        {
+            auto model = actor->model;
+            vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, resources.getPipeline("LitModel"));
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, resources.getPipelineLayout("LitModel"), 0, 1, &model->dsInfo->descriptorSets[currentFrame], 0, nullptr);
+            vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+            vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-        VkDeviceSize offsets[] = {0};
-        vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sk->vertBuf.buf, offsets);
-        vkCmdBindIndexBuffer(commandBuffer, sk->indexBuf.buf, 0, VK_INDEX_TYPE_UINT32);
-        vkCmdDrawIndexed(commandBuffer, sk->numIndices, 1, 0, 0, 0);
+            VkDeviceSize offsets[] = {0};
+            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &model->vertBuf.buf, offsets);
+            vkCmdBindIndexBuffer(commandBuffer, model->indexBuf.buf, 0, VK_INDEX_TYPE_UINT32);
+            vkCmdDrawIndexed(commandBuffer, model->numIndices, 1, 0, 0, 0);
+        }
     }
 
     ~PlanarShadowWorld() {}
