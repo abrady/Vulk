@@ -1,4 +1,2 @@
 Assets/** filter=lfs diff=lfs merge=lfs -text
-Source/ThirdParty/lib/ filter=lfs diff=lfs merge=lfs -text
-Source/ThirdParty/ filter=lfs diff=lfs merge=lfs -text
 Source/ThirdParty/** filter=lfs diff=lfs merge=lfs -text
