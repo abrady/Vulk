@@ -12,6 +12,8 @@
 
 #include <nlohmann/json.hpp>
 
+#include "VulkGeo.h"
+
 using json = nlohmann::json;
 using namespace std;
 namespace fs = std::filesystem;
@@ -34,12 +36,6 @@ namespace nlohmann
         }
     };
 }
-
-struct MeshDef
-{
-    string name;
-    fs::path path;
-};
 
 struct ShaderDef
 {
@@ -300,6 +296,78 @@ struct PipelineDef
     }
 };
 
+enum MeshDefType
+{
+    MeshDefType_Model,
+    MeshDefType_GeoMesh,
+};
+static unordered_map<string, MeshDefType> meshDefTypeMap{
+    {"Model", MeshDefType_Model},
+    {"GeoMesh", MeshDefType_GeoMesh},
+};
+
+enum GeoMeshDefType
+{
+    GeoMeshDefType_Sphere,
+    GeoMeshDefType_Cylinder,
+};
+static unordered_map<string, GeoMeshDefType> geoMeshDefTypeMap{
+    {"Sphere", GeoMeshDefType_Sphere},
+    {"Cylinder", GeoMeshDefType_Cylinder},
+};
+
+struct ModelMeshDef
+{
+    fs::path path;
+};
+
+struct GeoMeshDef
+{
+    struct Sphere
+    {
+        float radius;
+        uint32_t numSubdivisions;
+    };
+    struct Cylinder
+    {
+        float height;
+        float bottomRadius;
+        float topRadius;
+        uint32_t numStacks;
+        uint32_t numSlices;
+    };
+    GeoMeshDefType type;
+    union
+    {
+        Sphere sphere;
+        Cylinder cylinder;
+    };
+    GeoMeshDef(Sphere sphere) : type(GeoMeshDefType_Sphere), sphere(sphere){};
+    GeoMeshDef(Cylinder cylinder) : type(GeoMeshDefType_Cylinder), cylinder(cylinder){};
+};
+
+struct MeshDef
+{
+    string name;
+    MeshDefType type;
+    MeshDef(string name, ModelMeshDef model) : name(name), type(MeshDefType_Model), model(make_shared<ModelMeshDef>(model)){};
+    MeshDef(string name, GeoMeshDef geo) : name(name), type(MeshDefType_GeoMesh), geo(make_shared<GeoMeshDef>(geo)){};
+    shared_ptr<ModelMeshDef> getModel()
+    {
+        assert(type == MeshDefType_Model);
+        return model;
+    }
+    shared_ptr<GeoMeshDef> getGeoMesh()
+    {
+        assert(type == MeshDefType_GeoMesh);
+        return geo;
+    }
+
+private:
+    shared_ptr<ModelMeshDef> model;
+    shared_ptr<GeoMeshDef> geo;
+};
+
 #define MODEL_JSON_VERSION 1
 struct ModelDef
 {
@@ -307,23 +375,57 @@ struct ModelDef
     shared_ptr<MeshDef> mesh;
     shared_ptr<MaterialDef> material;
 
-    void validate()
+    ModelDef(string name, shared_ptr<MeshDef> mesh, shared_ptr<MaterialDef> material) : name(name), mesh(mesh), material(material)
     {
         assert(!name.empty());
         assert(mesh);
-        assert(material);
     }
 
     static ModelDef fromJSON(const nlohmann::json &j, unordered_map<string, shared_ptr<MeshDef>> const &meshes, unordered_map<string, shared_ptr<MaterialDef>> materials)
     {
-        ModelDef m;
         assert(j.at("version").get<uint32_t>() == MODEL_JSON_VERSION);
-        m.name = j.at("name").get<string>();
-        auto meshname = j.at("mesh").get<string>();
-        m.mesh = meshes.at(meshname);
-        m.material = materials.at(j.at("material").get<string>());
-        m.validate();
-        return m;
+        auto name = j.at("name").get<string>();
+        auto material = materials.at(j.at("material").get<string>());
+        MeshDefType meshDefType = j.contains("type") ? meshDefTypeMap.at(j.at("type").get<string>()) : MeshDefType_Model;
+        switch (meshDefType)
+        {
+        case MeshDefType_Model:
+            return ModelDef(name, meshes.at(j.at("mesh").get<string>()), material);
+        case MeshDefType_GeoMesh:
+        {
+            shared_ptr<MeshDef> mesh;
+            auto meshJson = j.at("GeoMesh");
+            GeoMeshDefType type = geoMeshDefTypeMap.at(meshJson.at("type").get<string>());
+            switch (type)
+            {
+            case GeoMeshDefType_Sphere:
+            {
+                GeoMeshDef::Sphere sphere;
+                sphere.radius = meshJson.at("radius").get<float>();
+                sphere.numSubdivisions = meshJson.at("numSubdivisions").get<uint32_t>();
+                mesh = make_shared<MeshDef>(name + ".GeoMesh.Sphere", sphere);
+            }
+            break;
+            case GeoMeshDefType_Cylinder:
+            {
+                GeoMeshDef::Cylinder cylinder;
+                cylinder.height = meshJson.at("height").get<float>();
+                cylinder.bottomRadius = meshJson.at("bottomRadius").get<float>();
+                cylinder.topRadius = meshJson.at("topRadius").get<float>();
+                cylinder.numStacks = meshJson.at("numStacks").get<uint32_t>();
+                cylinder.numSlices = meshJson.at("numSlices").get<uint32_t>();
+
+                mesh = make_shared<MeshDef>(name + ".GeoMesh.Cylinder", cylinder);
+            }
+            break;
+            default:
+                throw runtime_error("Unknown GeoMesh type: " + type);
+            }
+            return ModelDef(name, mesh, material);
+        }
+        default:
+            throw runtime_error("Unknown MeshDef type: " + meshDefType);
+        };
     }
 };
 
@@ -342,12 +444,30 @@ struct ActorDef
         assert(xform != glm::mat4(0.0f));
     }
 
-    static ActorDef fromJSON(const nlohmann::json &j, unordered_map<string, shared_ptr<PipelineDef>> const &pipelines, unordered_map<string, shared_ptr<ModelDef>> const &models)
+    static ActorDef fromJSON(
+        const nlohmann::json &j,
+        unordered_map<string, shared_ptr<PipelineDef>> const &pipelines,
+        unordered_map<string, shared_ptr<ModelDef>> const &models,
+        unordered_map<string, shared_ptr<MeshDef>> meshes,
+        unordered_map<string, shared_ptr<MaterialDef>> materials)
     {
         ActorDef a;
         a.name = j.at("name").get<string>();
         a.pipeline = pipelines.at(j.at("pipeline").get<string>());
-        a.model = models.at(j.at("model").get<string>());
+
+        if (j.contains("model"))
+        {
+            assert(!j.contains("inlineModel"));
+            a.model = models.at(j.at("model").get<string>());
+        }
+        else if (j.contains("inlineModel"))
+        {
+            a.model = make_shared<ModelDef>(ModelDef::fromJSON(j.at("inlineModel"), meshes, materials));
+        }
+        else
+        {
+            throw runtime_error("ActorDef must contain either a model or an inlineModel");
+        }
 
         // make the transform
         glm::mat4 xform = glm::mat4(1.0f);
@@ -387,7 +507,12 @@ struct SceneDef
         assert(!actors.empty());
     }
 
-    static SceneDef fromJSON(const nlohmann::json &j, unordered_map<string, shared_ptr<PipelineDef>> const &pipelines, unordered_map<string, shared_ptr<ModelDef>> const &models)
+    static SceneDef fromJSON(
+        const nlohmann::json &j,
+        unordered_map<string, shared_ptr<PipelineDef>> const &pipelines,
+        unordered_map<string, shared_ptr<ModelDef>> const &models,
+        unordered_map<string, shared_ptr<MeshDef>> const &meshes,
+        unordered_map<string, shared_ptr<MaterialDef>> const &materials)
     {
         SceneDef s;
         assert(j.at("version").get<uint32_t>() == SCENE_JSON_VERSION);
@@ -420,7 +545,7 @@ struct SceneDef
         // load the actors
         for (auto const &actor : j.at("actors").get<vector<nlohmann::json>>())
         {
-            auto a = make_shared<ActorDef>(ActorDef::fromJSON(actor, pipelines, models));
+            auto a = make_shared<ActorDef>(ActorDef::fromJSON(actor, pipelines, models, meshes, materials));
             s.actors.push_back(a);
             assert(!s.actorMap.contains(a->name));
             s.actorMap[a->name] = a;
@@ -492,7 +617,8 @@ void findAndProcessMetadata(const fs::path &path)
             else if (ext == ".obj")
             {
                 assert(!metadata.meshes.contains(stem));
-                metadata.meshes[stem] = make_shared<MeshDef>(stem, entry.path());
+                ModelMeshDef mmd{entry.path()};
+                metadata.meshes[stem] = make_shared<MeshDef>(stem, mmd);
             }
         }
     }
@@ -516,7 +642,7 @@ void findAndProcessMetadata(const fs::path &path)
 
     for (auto const &[name, loadInfo] : loadInfos[".scene"])
     {
-        auto sceneDef = make_shared<SceneDef>(SceneDef::fromJSON(loadInfo.j, metadata.pipelines, metadata.models));
+        auto sceneDef = make_shared<SceneDef>(SceneDef::fromJSON(loadInfo.j, metadata.pipelines, metadata.models, metadata.meshes, metadata.materials));
         assert(!metadata.scenes.contains(sceneDef->name));
         metadata.scenes[sceneDef->name] = sceneDef;
     }

@@ -20,6 +20,10 @@
 #include "VulkShaderModule.h"
 #include "VulkSampler.h"
 
+struct MeshDef;
+struct ModelDef;
+struct PipelineDef;
+
 // load resources used for rendering a set of things: shaders, meshes, textures, materials, etc.
 // Note:
 //  not thread safe,
@@ -40,12 +44,12 @@ private:
     std::shared_ptr<VulkShaderModule> createShaderModule(ShaderType type, std::string const &name);
     void loadMetadata();
 
-    std::shared_ptr<VulkPipeline> loadPipeline(std::string name);
+    std::shared_ptr<VulkPipeline> loadPipeline(PipelineDef &pipelineDef);
 
     std::shared_ptr<VulkUniformBuffer<VulkMaterialConstants>> getMaterial(std::string const &name);
-    std::shared_ptr<VulkMesh> getMesh(std::string const &name);
+    std::shared_ptr<VulkMesh> getMesh(MeshDef &meshDef);
     std::shared_ptr<VulkMaterialTextures> getMaterialTextures(std::string const &name);
-    std::shared_ptr<VulkModel> getModel(std::string const &name);
+    std::shared_ptr<VulkModel> getModel(ModelDef &modelDef);
 
 public:
     std::unordered_map<std::string, std::shared_ptr<VulkMaterialTextures>> materialTextures;

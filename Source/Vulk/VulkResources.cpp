@@ -58,25 +58,25 @@ std::shared_ptr<VulkShaderModule> VulkResources::createShaderModule(ShaderType t
     return sm;
 }
 
-shared_ptr<VulkModel> VulkResources::getModel(string const &name)
+shared_ptr<VulkModel> VulkResources::getModel(ModelDef &modelDef)
 {
+    string name = modelDef.name;
     if (!models.contains(name))
     {
-        ModelDef &modelDef = *metadata.models.at(name);
         shared_ptr<VulkMaterialTextures> textures = getMaterialTextures(modelDef.material->name);
-        auto mr = make_shared<VulkModel>(vk, getMesh(modelDef.mesh->name), textures, getMaterial(modelDef.material->name));
+        auto mr = make_shared<VulkModel>(vk, getMesh(*modelDef.mesh), textures, getMaterial(modelDef.material->name));
         models[name] = mr;
     }
     return models[name];
 }
 
-std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(string name)
+std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(PipelineDef &def)
 {
+    string name = def.name;
     if (pipelines.contains(name))
     {
         return pipelines[name];
     }
-    PipelineDef const &def = *metadata.pipelines.at(name);
     VulkDescriptorSetLayoutBuilder dslb(vk);
 
     for (auto &pair : def.descriptorSet.uniformBuffers)
@@ -119,8 +119,8 @@ VulkResources &VulkResources::loadScene(std::string name)
 
     for (auto &actorDef : sceneDef.actors)
     {
-        shared_ptr<VulkModel> model = getModel(actorDef->model->name);
-        shared_ptr<VulkPipeline> pipeline = loadPipeline(actorDef->pipeline->name);
+        shared_ptr<VulkModel> model = getModel(*actorDef->model);
+        shared_ptr<VulkPipeline> pipeline = loadPipeline(*actorDef->pipeline);
 
         // Create a descriptor set for the actor that matches the pipeline layout
         DescriptorSetDef const &dsDef = metadata.pipelines.at(actorDef->pipeline->name)->descriptorSet;
@@ -155,13 +155,40 @@ shared_ptr<VulkUniformBuffer<VulkMaterialConstants>> VulkResources::getMaterial(
     return materialUBOs[name];
 }
 
-shared_ptr<VulkMesh> VulkResources::getMesh(string const &name)
+shared_ptr<VulkMesh> VulkResources::getMesh(MeshDef &meshDef)
 {
-    if (!meshes.contains(name))
+    string name = meshDef.name;
+    if (meshes.contains(name))
     {
-        meshes[name] = make_shared<VulkMesh>(VulkMesh::loadFromPath(metadata.meshes.at(name)->path, name));
+        return meshes[name];
     }
-    return meshes[name];
+    shared_ptr<VulkMesh> m;
+    switch (meshDef.type)
+    {
+    case MeshDefType_Model:
+        m = make_shared<VulkMesh>(VulkMesh::loadFromPath(meshDef.getModel()->path, name));
+        break;
+    case MeshDefType_GeoMesh:
+    {
+        GeoMeshDef &geoMeshDef = *meshDef.getGeoMesh();
+        m = make_shared<VulkMesh>();
+        m->name = name;
+        switch (geoMeshDef.type)
+        {
+        case GeoMeshDefType_Sphere:
+            makeGeoSphere(geoMeshDef.sphere.radius, geoMeshDef.sphere.numSubdivisions, *m);
+            break;
+        case GeoMeshDefType_Cylinder:
+            makeCylinder(geoMeshDef.cylinder.height, geoMeshDef.cylinder.bottomRadius, geoMeshDef.cylinder.topRadius, geoMeshDef.cylinder.numStacks, geoMeshDef.cylinder.numSlices, *m);
+            break;
+        }
+    }
+    break;
+    default:
+        throw runtime_error("Invalid mesh type");
+    }
+    meshes[name] = m;
+    return m;
 }
 
 shared_ptr<VulkMaterialTextures> VulkResources::getMaterialTextures(string const &name)
@@ -178,7 +205,6 @@ shared_ptr<VulkMaterialTextures> VulkResources::getMaterialTextures(string const
 
 VkPipeline VulkResources::getPipeline(string const &name)
 {
-    loadPipeline(name);
     VulkPipeline *p = pipelines.at(name).get();
     assert(p->pipeline != VK_NULL_HANDLE);
     return p->pipeline;

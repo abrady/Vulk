@@ -113,7 +113,7 @@ endfunction()
 
 # these assets don't need any processing, but we need everything in the build
 # directory to be usable by the executable
-set(STRAIGHT_COPY_DIRECTORIES Pipelines Scenes Shaders Models Textures)
+set(STRAIGHT_COPY_DIRECTORIES Pipelines Scenes Shaders Models Textures Materials)
 foreach(DIR ${STRAIGHT_COPY_DIRECTORIES})
     copy_assets(${DIR})
 endforeach()

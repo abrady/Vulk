@@ -9,6 +9,6 @@
 
 int main()
 {
-    SampleRunner<World>("TripleArch").run();
+    SampleRunner<World>("GoochLightingExample").run();
     return 0;
 }
