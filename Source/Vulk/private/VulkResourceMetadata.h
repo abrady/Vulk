@@ -376,6 +376,8 @@ struct ActorDef
 struct SceneDef
 {
     string name;
+    VulkCamera camera;
+    vector<shared_ptr<VulkPointLight>> pointLights;
     vector<shared_ptr<ActorDef>> actors;
     unordered_map<string, shared_ptr<ActorDef>> actorMap;
 
@@ -390,6 +392,32 @@ struct SceneDef
         SceneDef s;
         assert(j.at("version").get<uint32_t>() == SCENE_JSON_VERSION);
         s.name = j.at("name").get<string>();
+
+        // load the camera
+        auto jcam = j.at("camera");
+        glm::vec3 eye = jcam.at("eye").get<glm::vec3>();
+        glm::vec3 target = jcam.at("target").get<glm::vec3>();
+        s.camera.lookAt(eye, target);
+
+        // load the lights
+        for (auto const &light : j.at("lights").get<vector<json>>())
+        {
+            string type = light.at("type").get<string>();
+            if (type == "point")
+            {
+                auto pos = light.at("pos").get<glm::vec3>();
+                auto color = light.at("color").get<glm::vec3>();
+                auto falloffStart = light.contains("falloffStart") ? light.at("falloffStart").get<float>() : 0.f;
+                auto falloffEnd = light.contains("falloffEnd") ? light.at("falloffEnd").get<float>() : 0.f;
+                s.pointLights.push_back(make_shared<VulkPointLight>(pos, falloffStart, color, falloffEnd));
+            }
+            else
+            {
+                throw runtime_error("Unknown light type: " + type);
+            }
+        };
+
+        // load the actors
         for (auto const &actor : j.at("actors").get<vector<nlohmann::json>>())
         {
             auto a = make_shared<ActorDef>(ActorDef::fromJSON(actor, pipelines, models));

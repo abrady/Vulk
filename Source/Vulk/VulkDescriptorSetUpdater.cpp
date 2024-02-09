@@ -9,7 +9,7 @@ VulkDescriptorSetUpdater &VulkDescriptorSetUpdater::addUniformBuffer(VkBuffer bu
 
     VkWriteDescriptorSet writeDescriptorSet{};
     writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    writeDescriptorSet.dstSet = descriptorSet;
+    writeDescriptorSet.dstSet = descriptorSet->descriptorSet;
     writeDescriptorSet.dstBinding = binding;
     writeDescriptorSet.dstArrayElement = 0;
     writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -20,22 +20,24 @@ VulkDescriptorSetUpdater &VulkDescriptorSetUpdater::addUniformBuffer(VkBuffer bu
     return *this;
 }
 
-VulkDescriptorSetUpdater &VulkDescriptorSetUpdater::addImageSampler(VkImageView textureImageView, VkSampler textureSampler, uint32_t binding)
+VulkDescriptorSetUpdater &VulkDescriptorSetUpdater::addImageSampler(std::shared_ptr<VulkTextureView> textureImageView, std::shared_ptr<VulkSampler> textureSampler, uint32_t binding)
 {
     auto imageInfo = std::make_unique<VkDescriptorImageInfo>();
     imageInfo->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    imageInfo->imageView = textureImageView;
-    imageInfo->sampler = textureSampler;
+    imageInfo->imageView = textureImageView->textureImageView;
+    imageInfo->sampler = textureSampler->get();
 
     VkWriteDescriptorSet writeDescriptorSet{};
     writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    writeDescriptorSet.dstSet = descriptorSet;
+    writeDescriptorSet.dstSet = descriptorSet->descriptorSet;
     writeDescriptorSet.dstBinding = binding;
     writeDescriptorSet.dstArrayElement = 0;
     writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     writeDescriptorSet.descriptorCount = 1;
     writeDescriptorSet.pImageInfo = imageInfo.get();
 
+    descriptorSet->textureImageViews.push_back(textureImageView);
+    descriptorSet->textureSamplers.push_back(textureSampler);
     descriptorWrites.push_back(writeDescriptorSet);
     imageInfos.push_back(std::move(imageInfo));
     return *this;
@@ -50,7 +52,7 @@ VulkDescriptorSetUpdater &VulkDescriptorSetUpdater::addStorageBuffer(VkBuffer bu
 
     VkWriteDescriptorSet writeDescriptorSet{};
     writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    writeDescriptorSet.dstSet = descriptorSet;
+    writeDescriptorSet.dstSet = descriptorSet->descriptorSet;
     writeDescriptorSet.dstBinding = binding;
     writeDescriptorSet.dstArrayElement = 0;
     writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;

@@ -2,18 +2,18 @@
 
 #include <Vulk/Vulk.h>
 
-/**
- * takes a class that takes Vulk/SampleRunner as a constructor argument and
- * has a 'render' function that takes a VkCommandBuffer, a current frame index, a VkViewport, and a VkRect2D scissor
- */
 template <typename T>
 class SampleRunner : public Vulk
 {
+public:
+    SampleRunner(std::string scene) : scene(scene) {}
+
 protected:
     std::unique_ptr<T> world;
+    std::string scene;
     void init() override
     {
-        world = std::make_unique<T>(*this);
+        world = std::make_unique<T>(*this, scene);
     }
 
     void drawFrame(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer) override
@@ -65,13 +65,13 @@ protected:
 
     void keyCallback(int key, int scancode, int action, int mods)
     {
-        VulkCamera &camera = world->camera;
+        VulkCamera &camera = world->getCamera();
         if (action == GLFW_PRESS || action == GLFW_REPEAT)
         {
             glm::vec3 fwd = camera.getForwardVec();
             glm::vec3 right = camera.getRightVec();
             glm::vec3 up = camera.getUpVec();
-            float move = .005f;
+            float move = 5.f;
             bool handled = true;
             if (key == GLFW_KEY_W)
             {

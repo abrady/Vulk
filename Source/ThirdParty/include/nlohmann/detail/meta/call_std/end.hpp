@@ -1,17 +1,3 @@
-//     __ _____ _____ _____
-//  __|  |   __|     |   | |  JSON for Modern C++
-// |  |  |__   |  |  | | | |  version 3.11.3
-// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
-//
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
-// SPDX-License-Identifier: MIT
-
-#pragma once
-
-#include <nlohmann/detail/macro_scope.hpp>
-
-NLOHMANN_JSON_NAMESPACE_BEGIN
-
-NLOHMANN_CAN_CALL_STD_FUNC_IMPL(end);
-
-NLOHMANN_JSON_NAMESPACE_END
+version https://git-lfs.github.com/spec/v1
+oid sha256:deca609bf200442f452b848c19f28ee30879df0ca35e959ed3b41f861c92df55
+size 451

@@ -2,15 +2,22 @@
 
 #include <vulkan/vulkan.h>
 #include "Common/ClassNonCopyableNonMovable.h"
+#include "VulkDescriptorSetLayoutBuilder.h"
+#include "VulkShaderModule.h"
 
-struct VulkPipeline : public ClassNonCopyableNonMovable
+class VulkPipeline : public ClassNonCopyableNonMovable
 {
+private:
     Vulk &vk;
+    std::vector<std::shared_ptr<VulkShaderModule>> shaderModules;
+
+public:
     VkPipeline pipeline;
     VkPipelineLayout pipelineLayout;
+    std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout;
 
-    VulkPipeline(Vulk &vk, VkPipeline pipeline, VkPipelineLayout pipelineLayout)
-        : vk(vk), pipeline(pipeline), pipelineLayout(pipelineLayout)
+    VulkPipeline(Vulk &vk, VkPipeline pipeline, VkPipelineLayout pipelineLayout, std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout, std::vector<std::shared_ptr<VulkShaderModule>> shaderModules)
+        : vk(vk), pipeline(pipeline), pipelineLayout(pipelineLayout), descriptorSetLayout(descriptorSetLayout), shaderModules(shaderModules)
     {
     }
     ~VulkPipeline()
@@ -24,7 +31,7 @@ class VulkPipelineBuilder
 {
     Vulk &vk;
 
-    std::vector<VkShaderModule> shaderModules;
+    std::vector<std::shared_ptr<VulkShaderModule>> shaderModules;
     std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
     VkVertexInputBindingDescription bindingDescription = {};
     std::vector<VkVertexInputAttributeDescription> attributeDescriptions = {};
@@ -41,23 +48,23 @@ class VulkPipelineBuilder
     VkPrimitiveTopology primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
     VulkPipelineBuilder &addShaderStage(VkShaderStageFlagBits stage, char const *path);
-    VulkPipelineBuilder &addShaderStage(VkShaderStageFlagBits stage, VkShaderModule shaderModule);
+    VulkPipelineBuilder &addShaderStage(VkShaderStageFlagBits stage, std::shared_ptr<VulkShaderModule> shaderModule);
     VulkPipelineBuilder &addVertexInputField(uint32_t binding, uint32_t location, uint32_t offset, VkFormat format);
 
 public:
     VulkPipelineBuilder(Vulk &vk);
 
-    VulkPipelineBuilder &addVertexShaderStage(VkShaderModule shaderModule)
+    VulkPipelineBuilder &addVertexShaderStage(std::shared_ptr<VulkShaderModule> shaderModule)
     {
         return addShaderStage(VK_SHADER_STAGE_VERTEX_BIT, shaderModule);
     }
 
-    VulkPipelineBuilder &addFragmentShaderStage(VkShaderModule shaderModule)
+    VulkPipelineBuilder &addFragmentShaderStage(std::shared_ptr<VulkShaderModule> shaderModule)
     {
         return addShaderStage(VK_SHADER_STAGE_FRAGMENT_BIT, shaderModule);
     }
 
-    VulkPipelineBuilder &addGeometryShaderStage(VkShaderModule shaderModule)
+    VulkPipelineBuilder &addGeometryShaderStage(std::shared_ptr<VulkShaderModule> shaderModule)
     {
         return addShaderStage(VK_SHADER_STAGE_GEOMETRY_BIT, shaderModule);
     }
@@ -88,12 +95,12 @@ public:
 
     VulkPipelineBuilder &setBlendingEnabled(bool enabled, VkColorComponentFlags colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT);
 
-    void build(VkDescriptorSetLayout descriptorSetLayout, VkPipelineLayout *pipelineLayout, VkPipeline *graphicsPipeline);
-    std::unique_ptr<VulkPipeline> build(VkDescriptorSetLayout descriptorSetLayout)
+    void build(std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout, VkPipelineLayout *pipelineLayout, VkPipeline *graphicsPipeline);
+    std::shared_ptr<VulkPipeline> build(std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout)
     {
         VkPipelineLayout pipelineLayout;
         VkPipeline graphicsPipeline;
         build(descriptorSetLayout, &pipelineLayout, &graphicsPipeline);
-        return std::make_unique<VulkPipeline>(vk, graphicsPipeline, pipelineLayout);
+        return std::make_shared<VulkPipeline>(vk, graphicsPipeline, pipelineLayout, descriptorSetLayout, shaderModules);
     }
 };

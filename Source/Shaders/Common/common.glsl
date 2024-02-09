@@ -20,14 +20,12 @@ struct GlobalXform {
     mat4 proj;
 };
 
-// note that the order matters here: it allows this to be packed into 3 vec4s
-struct Light {
+// note that the order matters here: it allows this to be packed into 2 vec4s
+struct PointLight {
     vec3 pos;           // point light only
     float falloffStart; // point/spot light only
     vec3 color;         // color of light
     float falloffEnd;   // point/spot light only    
-    vec3 direction;     // directional/spot light only
-    float spotPower;    // spotlight only
 };
 
 struct Material
@@ -44,7 +42,7 @@ struct Material
 * @brief Calculates the lighting for a single light source using the Phong lighting model.
 * @param diffuseIn: an additional diffuse color to be added to the material's diffuse color. typically from a texture.
 */
-vec4 basicLighting(Light light, Material mtl, vec4 diffuseIn, vec3 eyePos, vec3 fragNormal, vec3 fragPos) {
+vec4 basicLighting(PointLight light, Material mtl, vec4 diffuseIn, vec3 eyePos, vec3 fragNormal, vec3 fragPos) {
     fragNormal = normalize(fragNormal);
     vec4 lightColor = vec4(light.color, 1.0);
     vec3 lightDir = normalize(light.pos - fragPos);
@@ -76,6 +74,28 @@ vec4 basicLighting(Light light, Material mtl, vec4 diffuseIn, vec3 eyePos, vec3 
     acc += specular;
     return acc;
     // return (ambient + diffuse + specular);
+}
+
+// c_shaded = s*c_highlight + (1-s)*t*c_warm + (1 - t)*c_cool
+// where:
+// c_cool = (0,0,0.55) * .25 * c_diffuse
+// c_warm = (0.3,0.3,0) * .25 * c_diffuse
+// c_highlight = (1,1,1)
+// t = 0.5 * (1 + n.l)
+// r = 2(n.l)n - l : e.g. reflect(n,l)
+// s = clamp(100(r.v) - 87) : e.g. in the range 0 to 1
+vec4 goochLighting(PointLight light, Material mtl, vec3 eyePos, vec3 fragNormal, vec3 fragPos) { 
+    vec3 l = normalize(light.pos - fragPos);
+    vec3 n = normalize(fragNormal);
+    vec3 v = normalize(eyePos - fragPos);
+    vec3 c_cool = vec3(0,0,0.55) * .25 * mtl.Kd;
+    vec3 c_warm = vec3(0.3,0.3,0) * .25 * mtl.Kd;
+    vec3 c_highlight = vec3(1,1,1);
+    float t = 0.5 * (1 + dot(n,l));
+    vec3 r = reflect(-l, n);
+    float s = clamp(100 * dot(r,v) - 87, 0, 1);
+    vec3 c_shaded = s * c_highlight + (1-s) * t * c_warm + (1 - t) * c_cool;
+    return vec4(c_shaded, 1.0);
 }
 
 const int LayoutLocation_Position = 0;

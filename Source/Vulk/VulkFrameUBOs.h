@@ -29,12 +29,12 @@ public:
         init();
     }
 
-    VulkFrameUBOs(Vulk &vk, T rhs) : vk(vk)
+    VulkFrameUBOs(Vulk &vk, T const &rhs) : vk(vk)
     {
         init();
         for (auto &ubo : ptrs)
         {
-            *ubo.mappedUBO = rhs;
+            *ubo = rhs;
         }
     }
 

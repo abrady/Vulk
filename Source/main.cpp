@@ -4,12 +4,11 @@
 #include <string>
 #include <vector>
 
-#include "Samples/PlanarShadowWorld.h"
+#include "Samples/World.h"
 #include "Samples/SampleRunner.h"
 
 int main()
 {
-    SampleRunner<PlanarShadowWorld> sample;
-    sample.run();
+    SampleRunner<World>("TripleArch").run();
     return 0;
 }

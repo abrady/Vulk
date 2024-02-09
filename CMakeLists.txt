@@ -41,6 +41,8 @@ endif()
 # Add source to this project's executable.
 link_directories("$ENV{VK_SDK_PATH}\\Lib")
 link_directories("C:\\Vulkan\\glfw\\build\\src\\Debug")
+link_directories("${CMAKE_SOURCE_DIR}/Source/ThirdParty/lib")
+
 
 set(VULKAN_RENDERER_SOURCES
     "Source/Vulk/Vulk.cpp"
@@ -73,6 +75,8 @@ endif()
 
 target_link_libraries(VulkanRenderer vulkan-1)
 target_link_libraries(VulkanRenderer glfw3)
+target_link_libraries(VulkanRenderer assimp-vc143-mtd)
+target_link_libraries(VulkanRenderer zlibstat)
 
 
 ##############################################################################
@@ -85,32 +89,25 @@ function(copy_assets DIR_NAME)
 
     file(MAKE_DIRECTORY ${DEST_DIR})
     file(GLOB_RECURSE ASSETS CONFIGURE_DEPENDS "${SOURCE_DIR}/*")
-    set(COMPILED_ASSETS "") # Clear the list before use
+    set(COMPILED_ASSETS_${DIR_NAME} "") # Clear the list before use
     foreach(ASSET_FILE ${ASSETS})
-        # Get the path of the file relative to the source directory
         file(RELATIVE_PATH REL_PATH "${SOURCE_DIR}" "${ASSET_FILE}")
-        # Construct the destination path
         set(DEST "${DEST_DIR}/${REL_PATH}")
-        # Get the directory of the destination path
         get_filename_component(DEST_FILE_DIR "${DEST}" DIRECTORY)
-        # Create the destination directory if it doesn't exist
         file(MAKE_DIRECTORY "${DEST_FILE_DIR}")
-        # Add a custom command to copy the file
         add_custom_command(
             OUTPUT "${DEST}"
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different "${ASSET_FILE}" "${DEST}"
+            COMMAND ${CMAKE_COMMAND} -E copy "${ASSET_FILE}" "${DEST}"
             DEPENDS "${ASSET_FILE}"
             COMMENT "Copying ${DIR_NAME} ${ASSET_FILE} to ${DEST}"
         )
-        # Add the output file to a list
-        list(APPEND COMPILED_ASSETS "${DEST}")
+        list(APPEND COMPILED_ASSETS_${DIR_NAME} "${DEST}")
     endforeach()
-
-    # Add a custom target to trigger the shader compilation
     add_custom_target(
         compile_${DIR_NAME}
         ALL
-        DEPENDS ${COMPILED_ASSETS}
+        
+        DEPENDS ${COMPILED_ASSETS_${DIR_NAME}}
     )
 endfunction()
 
@@ -120,7 +117,6 @@ set(STRAIGHT_COPY_DIRECTORIES Pipelines Scenes Shaders Models Textures)
 foreach(DIR ${STRAIGHT_COPY_DIRECTORIES})
     copy_assets(${DIR})
 endforeach()
-
 
 ##############################################################################
 ## Shaders

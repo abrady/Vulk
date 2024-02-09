@@ -44,7 +44,7 @@ VulkDescriptorSetLayoutBuilder &VulkDescriptorSetLayoutBuilder::addStorageBuffer
     return *this;
 }
 
-std::unique_ptr<VulkDescriptorSetLayout> VulkDescriptorSetLayoutBuilder::build()
+std::shared_ptr<VulkDescriptorSetLayout> VulkDescriptorSetLayoutBuilder::build()
 {
     std::vector<VkDescriptorSetLayoutBinding> layoutBindings;
     layoutBindings.reserve(layoutBindingsMap.size());
@@ -59,5 +59,5 @@ std::unique_ptr<VulkDescriptorSetLayout> VulkDescriptorSetLayoutBuilder::build()
 
     VkDescriptorSetLayout descriptorSetLayout;
     VK_CALL(vkCreateDescriptorSetLayout(vk.device, &layoutCreateInfo, nullptr, &descriptorSetLayout));
-    return std::make_unique<VulkDescriptorSetLayout>(vk, descriptorSetLayout);
+    return std::make_shared<VulkDescriptorSetLayout>(vk, descriptorSetLayout);
 }

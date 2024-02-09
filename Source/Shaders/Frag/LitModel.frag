@@ -10,7 +10,7 @@ layout(binding = VulkShaderBinding_EyePos) uniform EyePos {
 } eyePosUBO;
 
 layout(binding = VulkShaderBinding_Lights) uniform LightBuf {
-    Light light;
+    PointLight light;
 } lightBuf;
 
 layout(binding = VulkShaderBinding_MaterialUBO) uniform MaterialBuf {

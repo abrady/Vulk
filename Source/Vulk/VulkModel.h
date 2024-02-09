@@ -27,7 +27,6 @@ struct VulkModel
     std::shared_ptr<VulkMesh> mesh;
     std::shared_ptr<VulkMaterialTextures> textures;
     std::shared_ptr<VulkUniformBuffer<VulkMaterialConstants>> materialUBO;
-    std::shared_ptr<VulkDescriptorSetInfo> dsInfo;
     uint32_t numIndices;
     VulkBuffer vertBuf, indexBuf;
 
@@ -49,9 +48,4 @@ struct VulkModel
                        .setUsage(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT)
                        .setProperties(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
                        .build()) {}
-
-    void setDescriptorSets(std::shared_ptr<VulkDescriptorSetInfo> dsi)
-    {
-        this->dsInfo = dsi;
-    }
 };

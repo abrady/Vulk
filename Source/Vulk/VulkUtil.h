@@ -104,17 +104,6 @@ enum VulkShaderTextureBindings
 };
 
 // keep in sync with Source\Shaders\Common\common.glsl
-struct VulkLight
-{
-    glm::vec3 pos;       // point light only
-    float falloffStart;  // point/spot light only
-    glm::vec3 color;     // color of light
-    float falloffEnd;    // point/spot light only
-    glm::vec3 direction; // directional/spot light only
-    float spotPower;     // spotlight only
-};
-
-// keep in sync with Source\Shaders\Common\common.glsl
 struct VulkMaterialConstants
 {
     glm::vec3 Ka; // Ambient color
@@ -147,8 +136,7 @@ struct Vertex
 {
     glm::vec3 pos;
     glm::vec3 normal;
-    glm::vec3 tangent;
-    glm::vec2 texCoord;
+    glm::vec2 uv;
 
     enum BindingLocations
     {
@@ -164,7 +152,6 @@ class VulkMesh;
 
 SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface);
 QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface);
-void loadModel(char const *model_path, std::vector<Vertex> &vertices, std::vector<uint32_t> &indices);
 std::vector<char> readFileIntoMem(const std::string &filename);
 
 #include <glm/glm.hpp>

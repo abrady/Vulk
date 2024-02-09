@@ -54,19 +54,19 @@ VulkPipelineBuilder &VulkPipelineBuilder::addShaderStage(VkShaderStageFlagBits s
 {
     auto shaderCode = readFileIntoMem(path);
     VkShaderModule shaderModule = vk.createShaderModule(shaderCode);
-    addShaderStage(stage, shaderModule);
-    shaderModules.push_back(shaderModule); // this owns the shader module
+    addShaderStage(stage, std::make_shared<VulkShaderModule>(vk, shaderModule));
     return *this;
 }
 
-VulkPipelineBuilder &VulkPipelineBuilder::addShaderStage(VkShaderStageFlagBits stage, VkShaderModule shaderModule)
+VulkPipelineBuilder &VulkPipelineBuilder::addShaderStage(VkShaderStageFlagBits stage, std::shared_ptr<VulkShaderModule> shaderModule)
 {
     VkPipelineShaderStageCreateInfo shaderStageInfo{};
     shaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     shaderStageInfo.stage = stage;
-    shaderStageInfo.module = shaderModule;
+    shaderStageInfo.module = shaderModule->shaderModule;
     shaderStageInfo.pName = "main"; // entrypoint, by convention
 
+    shaderModules.push_back(shaderModule);
     shaderStages.push_back(shaderStageInfo);
     return *this;
 }
@@ -143,8 +143,7 @@ VulkPipelineBuilder &VulkPipelineBuilder::addVulkVertexInput(uint32_t binding)
     return addVertexInputBindingDescription(binding, sizeof(Vertex))
         .addVertexInputFieldVec3(binding, Vertex::PosBinding, offsetof(Vertex, pos))
         .addVertexInputFieldVec3(binding, Vertex::NormalBinding, offsetof(Vertex, normal))
-        .addVertexInputFieldVec3(binding, Vertex::TangentBinding, offsetof(Vertex, tangent))
-        .addVertexInputFieldVec2(binding, Vertex::TexCoordBinding, offsetof(Vertex, texCoord));
+        .addVertexInputFieldVec2(binding, Vertex::TexCoordBinding, offsetof(Vertex, uv));
 }
 
 VulkPipelineBuilder &VulkPipelineBuilder::setBlendingEnabled(bool enabled, VkColorComponentFlags colorWriteMask)
@@ -163,7 +162,7 @@ VulkPipelineBuilder &VulkPipelineBuilder::setBlendingEnabled(bool enabled, VkCol
     return *this;
 }
 
-void VulkPipelineBuilder::build(VkDescriptorSetLayout descriptorSetLayout, VkPipelineLayout *pipelineLayout, VkPipeline *graphicsPipeline)
+void VulkPipelineBuilder::build(std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout, VkPipelineLayout *pipelineLayout, VkPipeline *graphicsPipeline)
 {
     VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -174,7 +173,7 @@ void VulkPipelineBuilder::build(VkDescriptorSetLayout descriptorSetLayout, VkPip
 
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipelineLayoutInfo.setLayoutCount = 1;
-    pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
+    pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout->layout;
 
     VK_CALL(vkCreatePipelineLayout(vk.device, &pipelineLayoutInfo, nullptr, pipelineLayout));
 
@@ -201,11 +200,6 @@ void VulkPipelineBuilder::build(VkDescriptorSetLayout descriptorSetLayout, VkPip
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
     VK_CALL(vkCreateGraphicsPipelines(vk.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, graphicsPipeline));
-
-    for (auto shaderModule : shaderModules)
-    {
-        vkDestroyShaderModule(vk.device, shaderModule, nullptr);
-    }
 }
 
 VulkPipelineBuilder &VulkPipelineBuilder::setStencilTestEnabled(bool enabled)

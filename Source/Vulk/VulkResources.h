@@ -17,6 +17,8 @@
 #include "VulkMaterialTextures.h"
 #include "VulkActor.h"
 #include "VulkScene.h"
+#include "VulkShaderModule.h"
+#include "VulkSampler.h"
 
 // load resources used for rendering a set of things: shaders, meshes, textures, materials, etc.
 // Note:
@@ -27,22 +29,6 @@ class VulkResources
 public:
     Vulk &vk;
 
-    struct XformsUBO
-    {
-        alignas(16) glm::mat4 world;
-        alignas(16) glm::mat4 view;
-        alignas(16) glm::mat4 proj;
-    };
-
-    struct ModelUBOs
-    {
-        VulkFrameUBOs<XformsUBO> xforms;
-        VulkFrameUBOs<glm::vec3> eyePos;
-        VulkFrameUBOs<VulkLight> lights;
-        ModelUBOs(Vulk &vk) : xforms(vk), eyePos(vk), lights(vk) {}
-    };
-    ModelUBOs modelUBOs;
-
 private:
     enum ShaderType
     {
@@ -51,48 +37,54 @@ private:
         Fragment
     };
 
-    VkShaderModule createShaderModule(ShaderType type, std::string const &name);
+    std::shared_ptr<VulkShaderModule> createShaderModule(ShaderType type, std::string const &name);
     void loadMetadata();
 
-    void loadDescriptorSetLayouts();
-    void loadPipeline(std::string name);
+    std::shared_ptr<VulkPipeline> loadPipeline(std::string name);
 
     std::shared_ptr<VulkUniformBuffer<VulkMaterialConstants>> getMaterial(std::string const &name);
     std::shared_ptr<VulkMesh> getMesh(std::string const &name);
     std::shared_ptr<VulkMaterialTextures> getMaterialTextures(std::string const &name);
+    std::shared_ptr<VulkModel> getModel(std::string const &name);
 
 public:
     std::unordered_map<std::string, std::shared_ptr<VulkMaterialTextures>> materialTextures;
     std::unordered_map<std::string, std::shared_ptr<VulkUniformBuffer<VulkMaterialConstants>>> materialUBOs;
     std::unordered_map<std::string, std::shared_ptr<VulkMesh>> meshes;
-    std::unordered_map<std::string, std::shared_ptr<VulkTextureView>> textureViews;
-    std::unordered_map<std::string, std::shared_ptr<VulkTextureView>> normalViews;
     std::unordered_map<std::string, std::shared_ptr<VulkPipeline>> pipelines;
-    std::unordered_map<std::string, std::shared_ptr<VulkDescriptorSetLayout>> descriptorSetLayouts;
     std::unordered_map<std::string, std::shared_ptr<VulkBuffer>> buffers;
     std::unordered_map<std::string, std::shared_ptr<VulkModel>> models;
     std::unordered_map<std::string, std::shared_ptr<VulkScene>> scenes;
-    std::unordered_map<std::string, VkShaderModule> vertShaders, fragShaders;
-    VkSampler textureSampler;
+    std::unordered_map<std::string, std::shared_ptr<VulkShaderModule>> vertShaders, geomShaders, fragShaders;
+    std::shared_ptr<VulkSampler> textureSampler;
 
     VulkResources(Vulk &vk)
-        : vk(vk), modelUBOs(vk)
+        : vk(vk)
     {
         loadMetadata();
-        textureSampler = vk.createTextureSampler();
-        loadDescriptorSetLayouts();
+        textureSampler = std::make_shared<VulkSampler>(vk);
     }
 
     VulkResources &loadScene(std::string name);
-    VulkResources &loadVertexShader(std::string name);
-    VulkResources &loadFragmentShader(std::string name);
 
-    VkShaderModule getVertexShader(std::string const &name);
-    VkShaderModule getFragmentShader(std::string const &name);
-    VkSampler getTextureSampler();
+    std::shared_ptr<VulkShaderModule> getVertexShader(std::string const &name)
+    {
+        if (!vertShaders.contains(name))
+            vertShaders[name] = createShaderModule(Vertex, name);
+        return vertShaders.at(name);
+    }
+    std::shared_ptr<VulkShaderModule> getGeometryShader(std::string const &name)
+    {
+        if (!geomShaders.contains(name))
+            geomShaders[name] = createShaderModule(Geometry, name);
+        return geomShaders.at(name);
+    }
+    std::shared_ptr<VulkShaderModule> getFragmentShader(std::string const &name)
+    {
+        if (!fragShaders.contains(name))
+            fragShaders[name] = createShaderModule(Fragment, name);
+        return fragShaders.at(name);
+    }
+
     VkPipeline getPipeline(std::string const &name);
-    VkPipelineLayout getPipelineLayout(std::string const &name);
-    std::shared_ptr<VulkModel> getModel(std::string const &name);
-
-    ~VulkResources();
 };

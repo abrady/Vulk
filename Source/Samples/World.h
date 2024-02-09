@@ -13,57 +13,50 @@
 #include "Vulk/VulkDescriptorSetBuilder.h"
 #include "Vulk/VulkBufferBuilder.h"
 #include "Vulk/VulkResources.h"
+#include "Vulk/VulkScene.h"
 
-class PlanarShadowWorld
+class World
 {
 public:
     Vulk &vk;
-    VulkCamera camera;
-    VulkResources resources;
+    std::shared_ptr<VulkScene> scene;
+    float nearClip = 1.f;
+    float farClip = 10000.f;
 
 public:
-    PlanarShadowWorld(Vulk &vk) : vk(vk),
-                                  resources(vk)
+    World(Vulk &vk, std::string scene) : vk(vk)
     {
-        // load resources
-        resources.loadScene("basic");
-
-        // set up render globals
-        for (auto &light : resources.modelUBOs.lights.ptrs)
-        {
-            light->pos = glm::vec3(0.0f, 0.0f, 0.0f);
-            light->color = glm::vec3(1.0f, 1.0f, 1.0f);
-        }
-        camera.lookAt(glm::vec3(.9f, 1.f, 1.3f), glm::vec3(0.5f, 0.f, 0.f));
+        VulkResources resources(vk);
+        resources.loadScene(scene);
+        this->scene = resources.scenes[scene];
     }
 
-    void updateXformsUBO(VulkResources::XformsUBO &ubo, VkViewport const &viewport)
+    void updateXformsUBO(VulkSceneUBOs::XformsUBO &ubo, VkViewport const &viewport)
     {
         static auto startTime = std::chrono::high_resolution_clock::now();
         auto currentTime = std::chrono::high_resolution_clock::now();
         float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
         time = 0.0f;
         ubo.world = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        glm::vec3 fwd = camera.getForwardVec();
-        glm::vec3 lookAt = camera.eye + fwd;
-        glm::vec3 up = camera.getUpVec();
-        ubo.view = glm::lookAt(camera.eye, lookAt, up);
-        ubo.proj = glm::perspective(glm::radians(45.0f), viewport.width / (float)viewport.height, .01f, 10.0f);
+        glm::vec3 fwd = scene->camera.getForwardVec();
+        glm::vec3 lookAt = scene->camera.eye + fwd;
+        glm::vec3 up = scene->camera.getUpVec();
+        ubo.view = glm::lookAt(scene->camera.eye, lookAt, up);
+        ubo.proj = glm::perspective(glm::radians(45.0f), viewport.width / (float)viewport.height, nearClip, farClip);
         ubo.proj[1][1] *= -1;
     }
 
     void render(VkCommandBuffer commandBuffer, uint32_t currentFrame, VkViewport const &viewport, VkRect2D const &scissor)
     {
-        updateXformsUBO(*resources.modelUBOs.xforms.ptrs[currentFrame], viewport);
-        *resources.modelUBOs.eyePos.ptrs[currentFrame] = camera.eye;
+        updateXformsUBO(*scene->sceneUBOs.xforms.ptrs[currentFrame], viewport);
+        *scene->sceneUBOs.eyePos.ptrs[currentFrame] = scene->camera.eye;
 
         // render the scene?
-        auto scene = resources.scenes["basic"];
         for (auto &actor : scene->actors)
         {
             auto model = actor->model;
-            vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, resources.getPipeline("LitModel"));
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, resources.getPipelineLayout("LitModel"), 0, 1, &model->dsInfo->descriptorSets[currentFrame], 0, nullptr);
+            vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipeline);
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout, 0, 1, &actor->dsInfo->descriptorSets[currentFrame]->descriptorSet, 0, nullptr);
             vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
             vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
@@ -74,5 +67,10 @@ public:
         }
     }
 
-    ~PlanarShadowWorld() {}
+    VulkCamera &getCamera()
+    {
+        return scene->camera;
+    }
+
+    ~World() {}
 };

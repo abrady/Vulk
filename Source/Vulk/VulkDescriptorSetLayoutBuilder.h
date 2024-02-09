@@ -26,7 +26,7 @@ public:
     VulkDescriptorSetLayoutBuilder &addStorageBuffer(VkShaderStageFlags stageFlags, VulkShaderSSBOBindings binding);
 
     // and finally, build the layout
-    std::unique_ptr<VulkDescriptorSetLayout> build();
+    std::shared_ptr<VulkDescriptorSetLayout> build();
 
 private:
     std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> layoutBindingsMap;

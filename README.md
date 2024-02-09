@@ -21,10 +21,23 @@ Install the following. Note that CmakeLists.txt assumes these are in C:\Vulkan:
 
 # TODOs
 * VulkResources should only need to live during the loading phase
+* get some more models and make a scene. https://github.com/alecjacobson/common-3d-test-models ?
+* clean up our vertex input buffers, too much crap
 
 # Log
 
-## 
+## 2/6/24 Gooch shading
+* designed to increase legibility in technical drawings
+
+goals:
+* implement gooch shading
+* do it in a way that is selectable for what is being rendered - i.e. render this scene as gooch, that scene as phong or whatever
+
+Gooch in detail:
+* compare the normal direction with the light, the more it faces the light the warmer the color
+
+
+
 
 ## 2/3/24 bootstrapping and resource loading
 I took the VulkanRender project, copied it, and need to clean out the cruft.

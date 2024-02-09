@@ -2,6 +2,9 @@
     "files.associations": {
         "*.frag": "glsl",
         "*.vert": "glsl",
+        "*.pipeline": "json",
+        "*.model": "json",
+        "*.scene": "json",
         "stdexcept": "cpp",
         "array": "cpp",
         "iterator": "cpp",
@@ -79,6 +82,7 @@
         "any": "cpp",
         "filesystem": "cpp",
         "numeric": "cpp",
-        "valarray": "cpp"
+        "valarray": "cpp",
+        "codecvt": "cpp"
     }
 }
