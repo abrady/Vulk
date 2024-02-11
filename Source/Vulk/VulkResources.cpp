@@ -78,20 +78,34 @@ std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(PipelineDef &def)
     }
     VulkDescriptorSetLayoutBuilder dslb(vk);
 
-    for (auto &pair : def.descriptorSet.uniformBuffers)
-        dslb.addUniformBuffer(pair.second, pair.first);
-    for (auto &pair : def.descriptorSet.storageBuffers)
-        dslb.addStorageBuffer(pair.second, pair.first);
-    for (auto &pair : def.descriptorSet.imageSamplers)
-        dslb.addImageSampler(pair.second, pair.first);
-
+    for (auto &[stage, bindings] : def.descriptorSet.uniformBuffers)
+    {
+        for (auto &binding : bindings)
+        {
+            dslb.addUniformBuffer(stage, binding);
+        }
+    }
+    for (auto &[stage, bindings] : def.descriptorSet.storageBuffers)
+    {
+        for (auto &binding : bindings)
+        {
+            dslb.addStorageBuffer(stage, binding);
+        }
+    }
+    for (auto &[stage, bindings] : def.descriptorSet.imageSamplers)
+    {
+        for (auto &binding : bindings)
+        {
+            dslb.addImageSampler(stage, binding);
+        }
+    }
     shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout = dslb.build();
 
     auto pb = VulkPipelineBuilder(vk)
                   .addVertexShaderStage(getVertexShader(def.vertexShader->name))
                   .addFragmentShaderStage(getFragmentShader(def.fragmentShader->name))
                   .addVulkVertexInput(def.vertexInputBinding)
-                  .setPrimitiveTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
+                  .setPrimitiveTopology(def.primitiveTopology)
                   .setLineWidth(1.0f)
                   .setCullMode(VK_CULL_MODE_BACK_BIT)
                   .setDepthTestEnabled(true)
@@ -110,25 +124,69 @@ std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(PipelineDef &def)
 std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const &actorDef, shared_ptr<PipelineDef> pipelineDef, shared_ptr<VulkScene> scene)
 {
     auto const &dsDef = pipelineDef->descriptorSet;
-    auto const &ubs = dsDef.uniformBuffers;
-    auto binding = dsDef.uniformBuffers.begin(); // just to get the type
-    shared_ptr<VulkModel> model = getModel(*actorDef.model);
     VulkDescriptorSetBuilder builder(vk);
-    if ((binding = ubs.find(VulkShaderUBOBinding_Xforms)) != ubs.end())
-        builder.addFrameUBOs(scene->sceneUBOs.xforms, binding->second, binding->first);
-    if ((binding = ubs.find(VulkShaderUBOBinding_MaterialUBO)) != ubs.end())
-        builder.addUniformBuffer(*model->materialUBO, binding->second, binding->first);
-    if ((binding = ubs.find(VulkShaderUBOBinding_Lights)) != ubs.end())
-        builder.addUniformBuffer(scene->sceneUBOs.pointLight, binding->second, binding->first);
-    if ((binding = ubs.find(VulkShaderUBOBinding_EyePos)) != ubs.end())
-        builder.addFrameUBOs(scene->sceneUBOs.eyePos, binding->second, binding->first);
-    if (dsDef.imageSamplers.contains(VulkShaderTextureBinding_TextureSampler))
-        builder.addImageSampler(dsDef.imageSamplers.at(VulkShaderTextureBinding_TextureSampler), VulkShaderTextureBinding_TextureSampler, model->textures->diffuseView, textureSampler);
-    if (dsDef.imageSamplers.contains(VulkShaderTextureBinding_NormalSampler))
-        builder.addImageSampler(dsDef.imageSamplers.at(VulkShaderTextureBinding_NormalSampler), VulkShaderTextureBinding_NormalSampler, model->textures->normalView, textureSampler);
-    VkShaderStageFlagBits modelXformBinding = ubs.at(VulkShaderUBOBinding_ModelXform);
-    shared_ptr<VulkPipeline> pipeline = getPipeline(pipelineDef->name);
-    return make_shared<VulkActor>(vk, model, actorDef.xform, pipeline, builder, modelXformBinding);
+    shared_ptr<VulkModel> model = getModel(*actorDef.model);
+    shared_ptr<VulkFrameUBOs<glm::mat4>> xformUBOs;
+    for (auto &iter : dsDef.uniformBuffers)
+    {
+        VkShaderStageFlagBits stage = (VkShaderStageFlagBits)iter.first;
+        for (VulkShaderUBOBindings binding : iter.second)
+        {
+            switch (binding)
+            {
+            case VulkShaderUBOBinding_Xforms:
+                builder.addFrameUBOs(scene->sceneUBOs.xforms, stage, binding);
+                break;
+            case VulkShaderUBOBinding_MaterialUBO:
+                builder.addUniformBuffer(*model->materialUBO, stage, binding);
+                break;
+            case VulkShaderUBOBinding_Lights:
+                builder.addUniformBuffer(scene->sceneUBOs.pointLight, stage, binding);
+                break;
+            case VulkShaderUBOBinding_EyePos:
+                builder.addFrameUBOs(scene->sceneUBOs.eyePos, stage, binding);
+                break;
+            case VulkShaderUBOBinding_ModelXform:
+                if (!xformUBOs)
+                    xformUBOs = make_shared<VulkFrameUBOs<glm::mat4>>(vk, actorDef.xform);
+                builder.addFrameUBOs(*xformUBOs, stage, binding);
+                break;
+            default:
+                throw runtime_error("Invalid UBO binding");
+            }
+        }
+    }
+    // for (auto &[stage, ssbos] : dsDef.storageBuffers)
+    // {
+    //     for (VulkShaderSSBOBindings binding : ssbos)
+    //     {
+    //         switch (binding)
+    //         {
+    //         case VulkShaderSSBOBinding_MaxBindingID:
+    //         default:
+    //             throw runtime_error("Invalid SSBO binding");
+    //         }
+    //     }
+    // }
+    static_assert(VulkShaderSSBOBinding_MaxBindingID == 0);
+    for (auto &[stage, samplers] : dsDef.imageSamplers)
+    {
+        for (VulkShaderTextureBindings binding : samplers)
+        {
+            switch (binding)
+            {
+            case VulkShaderTextureBinding_TextureSampler:
+                builder.addImageSampler(stage, binding, model->textures->diffuseView, textureSampler);
+                break;
+            case VulkShaderTextureBinding_NormalSampler:
+                builder.addImageSampler(stage, binding, model->textures->normalView, textureSampler);
+                break;
+            default:
+                throw runtime_error("Invalid texture binding");
+            }
+        }
+    }
+    return make_shared<VulkActor>(vk, model, xformUBOs, builder.build(), getPipeline(pipelineDef->name));
 }
 
 VulkResources &VulkResources::loadScene(std::string name)

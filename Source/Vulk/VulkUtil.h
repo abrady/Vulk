@@ -61,17 +61,15 @@ enum VulkShaderBindings
 {
     VulkShaderBinding_XformsUBO = 0,
     VulkShaderBinding_TextureSampler = 1,
-    VulkShaderBinding_Actors = 2,
-    VulkShaderBinding_Lights = 3,
-    VulkShaderBinding_Materials = 4,
-    VulkShaderBinding_EyePos = 5,
-    VulkShaderBinding_TextureSampler2 = 6,
-    VulkShaderBinding_TextureSampler3 = 7,
-    VulkShaderBinding_WavesXform = 8,
-    VulkShaderBinding_NormalSampler = 9,
-    VulkShaderBinding_ModelXform = 10,
-    VulkShaderBinding_MirrorPlaneUBO = 11,
-    VulkShaderBinding_MaterialUBO = 12,
+    VulkShaderBinding_Lights = 2,
+    VulkShaderBinding_EyePos = 3,
+    VulkShaderBinding_TextureSampler2 = 4,
+    VulkShaderBinding_TextureSampler3 = 5,
+    VulkShaderBinding_WavesXform = 6,
+    VulkShaderBinding_NormalSampler = 7,
+    VulkShaderBinding_ModelXform = 8,
+    VulkShaderBinding_MirrorPlaneUBO = 9,
+    VulkShaderBinding_MaterialUBO = 10,
     VulkShaderBinding_MaxBindingID,
 };
 
@@ -89,9 +87,7 @@ enum VulkShaderUBOBindings
 
 enum VulkShaderSSBOBindings
 {
-    VulkShaderSSBOBinding_Actors = VulkShaderBinding_Actors,
-    VulkShaderSSBOBinding_Materials = VulkShaderBinding_Materials,
-    VulkShaderSSBOBinding_MaxBindingID = VulkShaderSSBOBinding_Materials,
+    VulkShaderSSBOBinding_MaxBindingID = 0,
 };
 
 enum VulkShaderTextureBindings

@@ -16,9 +16,9 @@ class VulkActor
 public:
     std::string name;
     std::shared_ptr<VulkModel> model;
-    glm::mat4 xform = glm::mat4(1.0f);
-    std::shared_ptr<VulkPipeline> pipeline;
     std::shared_ptr<VulkFrameUBOs<glm::mat4>> xformUBOs;
     std::shared_ptr<VulkDescriptorSetInfo> dsInfo;
-    VulkActor(Vulk &vk, std::shared_ptr<VulkModel> model, glm::mat4 xform, std::shared_ptr<VulkPipeline> pipeline, VulkDescriptorSetBuilder &builder, VkShaderStageFlagBits modelXformBinding);
+    std::shared_ptr<VulkPipeline> pipeline;
+    VulkActor(Vulk &vk, std::shared_ptr<VulkModel> model, std::shared_ptr<VulkFrameUBOs<glm::mat4>> xformUBOs, std::shared_ptr<VulkDescriptorSetInfo> dsInfo, std::shared_ptr<VulkPipeline> pipeline)
+        : vk(vk), model(model), xformUBOs(xformUBOs), dsInfo(dsInfo), pipeline(pipeline) {}
 };

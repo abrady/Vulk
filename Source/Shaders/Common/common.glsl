@@ -2,23 +2,16 @@ const float PI = 3.1415926535897932384626433832795;
 
 const int VulkShaderBinding_XformsUBO = 0;
 const int VulkShaderBinding_TextureSampler = 1;
-const int VulkShaderBinding_Actors = 2;
-const int VulkShaderBinding_Lights = 3;
-const int VulkShaderBinding_Materials = 4;
-const int VulkShaderBinding_EyePos = 5;
-const int VulkShaderBinding_TextureSampler2 = 6;
-const int VulkShaderBinding_TextureSampler3 = 7;
-const int VulkShaderBinding_WavesXform = 8;
-const int VulkShaderBinding_NormalSampler = 9;
-const int VulkShaderBinding_ModelXform = 10;
-const int VulkShaderBinding_MirrorPlaneUBO = 11;
-const int VulkShaderBinding_MaterialUBO = 12;
+const int VulkShaderBinding_Lights = 2;
+const int VulkShaderBinding_EyePos = 3;
+const int VulkShaderBinding_TextureSampler2 = 4;
+const int VulkShaderBinding_TextureSampler3 = 5;
+const int VulkShaderBinding_WavesXform = 6;
+const int VulkShaderBinding_NormalSampler = 7;
+const int VulkShaderBinding_ModelXform = 8;
+const int VulkShaderBinding_MirrorPlaneUBO = 9;
+const int VulkShaderBinding_MaterialUBO = 10;
 
-struct GlobalXform {
-    mat4 world;
-    mat4 view;
-    mat4 proj;
-};
 
 // note that the order matters here: it allows this to be packed into 2 vec4s
 struct PointLight {
@@ -105,14 +98,33 @@ const int LayoutLocation_TexCoord = 3;
 const int LayoutLocation_Height = 4;
 const int LayoutLocation_Bitangent = 5;
 
+#define DECLARE_XFORMS_UBO(xformUBO)  \
+layout(binding = VulkShaderBinding_XformsUBO) uniform UniformBufferObject { \
+    mat4 world; \
+    mat4 view; \
+    mat4 proj; \
+} xformUBO
+
+#define DECLARE_MODELXFORM_UBO(modelUBO)  \
+layout(binding = VulkShaderBinding_ModelXform) uniform ModelXformUBO { \
+    mat4 xform; \
+} modelUBO
+
+
 #define DECLARE_VERTEX_IN(inPosition, inNormal, inTangent, inTexCoord)  \
 layout(location = LayoutLocation_Position) in vec3 inPosition; \
 layout(location = LayoutLocation_Normal) in vec3 inNormal; \
 layout(location = LayoutLocation_Tangent) in vec3 inTangent; \
 layout(location = LayoutLocation_TexCoord) in vec2 inTexCoord
 
-#define DECLARE_VERTEX_OUT(outPos, outNorm, outTangent, outBitangent) \
+#define DECLARE_VERTEX_OUT(outPos, outNorm, outTangent, outTexCoord) \
 layout(location = LayoutLocation_Position) out vec3 outPos;  \
 layout(location = LayoutLocation_Normal) out vec3 outNorm; \
 layout(location = LayoutLocation_Tangent) out vec3 outTangent; \
-layout(location = LayoutLocation_Bitangent) out vec3 outBitangent
+layout(location = LayoutLocation_TexCoord) out vec2 outTexCoord
+
+#define DECLARE_FRAG_IN(inPosition, inNormal, inTangent, inTexCoord)  \
+layout(location = LayoutLocation_Position) in vec3 inPosition; \
+layout(location = LayoutLocation_Normal) in vec3 inNormal; \
+layout(location = LayoutLocation_Tangent) in vec3 inTangent; \
+layout(location = LayoutLocation_TexCoord) in vec2 inTexCoord

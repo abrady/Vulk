@@ -57,9 +57,9 @@ struct MaterialDef
 
 struct DescriptorSetDef
 {
-    unordered_map<VulkShaderUBOBindings, VkShaderStageFlagBits> uniformBuffers;
-    unordered_map<VulkShaderSSBOBindings, VkShaderStageFlagBits> storageBuffers;
-    unordered_map<VulkShaderTextureBindings, VkShaderStageFlagBits> imageSamplers;
+    unordered_map<VkShaderStageFlags, vector<VulkShaderUBOBindings>> uniformBuffers;
+    unordered_map<VkShaderStageFlags, vector<VulkShaderSSBOBindings>> storageBuffers;
+    unordered_map<VkShaderStageFlags, vector<VulkShaderTextureBindings>> imageSamplers;
 
     void validate() { assert(uniformBuffers.size() + storageBuffers.size() + imageSamplers.size() > 0); }
     static DescriptorSetDef fromJSON(const nlohmann::json &j);
@@ -72,6 +72,7 @@ struct PipelineDef
     shared_ptr<ShaderDef> vertexShader;
     shared_ptr<ShaderDef> geometryShader;
     shared_ptr<ShaderDef> fragmentShader;
+    VkPrimitiveTopology primitiveTopology;
     uint32_t vertexInputBinding;
     DescriptorSetDef descriptorSet;
 
@@ -83,29 +84,7 @@ struct PipelineDef
         descriptorSet.validate();
     }
 
-    static PipelineDef fromJSON(const nlohmann::json &j, unordered_map<string, shared_ptr<ShaderDef>> const &vertexShaders, unordered_map<string, shared_ptr<ShaderDef>> const &geometryShaders, unordered_map<string, shared_ptr<ShaderDef>> const &fragmentShaders)
-    {
-        PipelineDef p;
-        assert(j.at("version").get<uint32_t>() == PIPELINE_JSON_VERSION);
-        p.name = j.at("name").get<string>();
-        auto shader = j.at("vertexShader").get<string>();
-        assert(vertexShaders.contains(shader));
-        p.vertexShader = vertexShaders.at(shader);
-        shader = j.at("fragmentShader").get<string>();
-        assert(fragmentShaders.contains(shader));
-        p.fragmentShader = fragmentShaders.at(shader);
-        p.vertexInputBinding = j.at("vertexInputBinding").get<uint32_t>();
-        p.descriptorSet = DescriptorSetDef::fromJSON(j.at("descriptorSet")); // Use custom from_json for DescriptorSetDef
-
-        if (j.contains("geometryShader"))
-        {
-            shader = j.at("geometryShader").get<string>();
-            assert(geometryShaders.contains(shader));
-            p.geometryShader = geometryShaders.at(shader);
-        }
-        p.validate();
-        return p;
-    }
+    static PipelineDef fromJSON(const nlohmann::json &j, unordered_map<string, shared_ptr<ShaderDef>> const &vertexShaders, unordered_map<string, shared_ptr<ShaderDef>> const &geometryShaders, unordered_map<string, shared_ptr<ShaderDef>> const &fragmentShaders);
 };
 
 enum MeshDefType

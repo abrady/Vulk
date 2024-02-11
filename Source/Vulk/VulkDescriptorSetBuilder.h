@@ -61,7 +61,7 @@ public:
     VulkDescriptorSetBuilder(Vulk &vk) : vk(vk), layoutBuilder(vk), poolBuilder(vk) {}
 
     template <typename T>
-    VulkDescriptorSetBuilder &addFrameUBOs(VulkFrameUBOs<T> const &ubos, VkShaderStageFlags stageFlags, VulkShaderUBOBindings bindingID)
+    VulkDescriptorSetBuilder &addFrameUBOs(VulkFrameUBOs<T> const &ubos, VkShaderStageFlagBits stageFlags, VulkShaderUBOBindings bindingID)
     {
         layoutBuilder.addUniformBuffer(stageFlags, bindingID);
         poolBuilder.addUniformBufferCount(MAX_FRAMES_IN_FLIGHT);
@@ -74,7 +74,7 @@ public:
 
     // for non-mutable uniform buffers
     template <typename T>
-    VulkDescriptorSetBuilder &addUniformBuffer(VulkUniformBuffer<T> const &uniformBuffer, VkShaderStageFlags stageFlags, VulkShaderUBOBindings bindingID)
+    VulkDescriptorSetBuilder &addUniformBuffer(VulkUniformBuffer<T> const &uniformBuffer, VkShaderStageFlagBits stageFlags, VulkShaderUBOBindings bindingID)
     {
         layoutBuilder.addUniformBuffer(stageFlags, bindingID);
         poolBuilder.addUniformBufferCount(MAX_FRAMES_IN_FLIGHT);

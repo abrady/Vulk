@@ -5,14 +5,12 @@
 
 #include "common.glsl"
 
-layout(binding = VulkShaderBinding_ModelXform) uniform ModelXformUBO {
-    mat4 xform;
-} modelUBO;
+DECLARE_MODELXFORM_UBO(modelUBO);
 
 layout(binding = VulkShaderBinding_NormalSampler) uniform sampler2D normSampler;
 
 DECLARE_VERTEX_IN(inPosition, inNormal, inTangent, inTexCoord);
-DECLARE_VERTEX_OUT(outPos, outNorm, outTangent, outBitangent);
+DECLARE_VERTEX_OUT(outPos, outNorm, outTangent, outTexCoord);
 
 void main() {
     vec4 pos = modelUBO.xform * vec4(inPosition, 1.0);
@@ -27,5 +25,5 @@ void main() {
     outTangent = (modelUBO.xform * vec4(tangent, 0.0)).xyz;
 
     vec3 bitangent = cross(norm, tangent);
-    outBitangent = (modelUBO.xform * vec4(bitangent, 0.0)).xyz;
+    outTexCoord = inTexCoord;
 }

@@ -142,12 +142,8 @@ VulkShaderUBOBindings shaderUBOBindingFromStr(string const &binding)
 
 VulkShaderSSBOBindings shaderSSBOBindingFromStr(string const &binding)
 {
-    static unordered_map<string, VulkShaderSSBOBindings> bindings{
-        {"actors", VulkShaderSSBOBinding_Actors},
-        {"materials", VulkShaderSSBOBinding_Materials},
-    };
+    static unordered_map<string, VulkShaderSSBOBindings> bindings{};
     return bindings.at(binding);
-    static_assert(VulkShaderSSBOBinding_MaxBindingID == VulkShaderSSBOBinding_Materials, "this function must be kept in sync with VulkShaderSSBOBindings");
 }
 
 VulkShaderTextureBindings shaderTextureBindingFromStr(string const &binding)
@@ -162,34 +158,74 @@ VulkShaderTextureBindings shaderTextureBindingFromStr(string const &binding)
     static_assert(VulkShaderTextureBinding_MaxBindingID == VulkShaderTextureBinding_NormalSampler, "this function must be kept in sync with VulkShaderTextureBindings");
 }
 
-DescriptorSetDef DescriptorSetDef::fromJSON(const nlohmann::json &j)
+void parseShaderStageMap(const nlohmann::json &j, VkShaderStageFlagBits stage, DescriptorSetDef &ds)
 {
-    DescriptorSetDef ds;
-    if (j.contains("uniformBuffers"))
+    vector<string> uniformBuffers = j.at("uniformBuffers").get<vector<string>>();
+    for (auto const &value : uniformBuffers)
     {
-        unordered_map<string, string> uniformBuffers = j.at("uniformBuffers").get<unordered_map<string, string>>();
-        for (auto const &[key, value] : uniformBuffers)
-        {
-            ds.uniformBuffers[shaderUBOBindingFromStr(key)] = shaderStageMap.at(value);
-        }
+        ds.uniformBuffers[stage].push_back(shaderUBOBindingFromStr(value));
     }
     if (j.contains("storageBuffers"))
     {
-        unordered_map<string, string> storageBuffers = j.at("storageBuffers").get<unordered_map<string, string>>();
-        for (auto const &[key, value] : storageBuffers)
+        vector<string> storageBuffers = j.at("storageBuffers").get<vector<string>>();
+        for (auto const &value : storageBuffers)
         {
-            ds.storageBuffers[shaderSSBOBindingFromStr(key)] = shaderStageMap.at(value);
+            ds.storageBuffers[stage].push_back(shaderSSBOBindingFromStr(value));
         }
     }
     if (j.contains("imageSamplers"))
     {
-        unordered_map<string, string> imageSamplers = j.at("imageSamplers").get<unordered_map<string, string>>();
-        for (auto const &[key, value] : imageSamplers)
+        vector<string> imageSamplers = j.at("imageSamplers").get<vector<string>>();
+        for (auto const &value : imageSamplers)
         {
-            ds.imageSamplers[shaderTextureBindingFromStr(key)] = shaderStageMap.at(value);
+            ds.imageSamplers[stage].push_back(shaderTextureBindingFromStr(value));
         }
     }
+}
+
+DescriptorSetDef DescriptorSetDef::fromJSON(const nlohmann::json &j)
+{
+    DescriptorSetDef ds;
+    for (auto const &[stage, bindings] : j.items())
+    {
+        VkShaderStageFlagBits vkStage = shaderStageMap.at(stage);
+        parseShaderStageMap(bindings, vkStage, ds);
+    }
     return ds;
+}
+
+static unordered_map<string, VkPrimitiveTopology> primitiveTopologyMap{
+    {"TriangleList", VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST},
+    {"TriangleStrip", VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP},
+    {"LineList", VK_PRIMITIVE_TOPOLOGY_LINE_LIST},
+    {"LineStrip", VK_PRIMITIVE_TOPOLOGY_LINE_STRIP},
+    {"PointList", VK_PRIMITIVE_TOPOLOGY_POINT_LIST},
+};
+
+PipelineDef PipelineDef::fromJSON(const nlohmann::json &j, unordered_map<string, shared_ptr<ShaderDef>> const &vertexShaders, unordered_map<string, shared_ptr<ShaderDef>> const &geometryShaders, unordered_map<string, shared_ptr<ShaderDef>> const &fragmentShaders)
+{
+    PipelineDef p;
+    assert(j.at("version").get<uint32_t>() == PIPELINE_JSON_VERSION);
+    p.name = j.at("name").get<string>();
+    auto shader = j.at("vertexShader").get<string>();
+    assert(vertexShaders.contains(shader));
+    p.vertexShader = vertexShaders.at(shader);
+    shader = j.at("fragmentShader").get<string>();
+    assert(fragmentShaders.contains(shader));
+    p.fragmentShader = fragmentShaders.at(shader);
+    p.primitiveTopology = j.contains("primitiveTopology") ? primitiveTopologyMap.at(j.at("primitiveTopology").get<string>()) : VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+
+    p.vertexInputBinding = j.at("vertexInputBinding").get<uint32_t>();
+    p.descriptorSet = DescriptorSetDef::fromJSON(j.at("descriptorSet")); // Use custom from_json for DescriptorSetDef
+
+    if (j.contains("geometryShader"))
+    {
+        shader = j.at("geometryShader").get<string>();
+        assert(geometryShaders.contains(shader));
+        p.geometryShader = geometryShaders.at(shader);
+    }
+    p.validate();
+    return p;
 }
 
 static unordered_map<string, MeshDefType> meshDefTypeMap{

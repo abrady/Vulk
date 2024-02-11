@@ -2,9 +2,7 @@
 
 #include "common.glsl"
 
-layout(binding = VulkShaderBinding_XformsUBO) uniform UniformBufferObject {
-    GlobalXform xform;
-} xformUBO;
+DECLARE_XFORMS_UBO(xform);
 
 layout(location = LayoutLocation_Normal) in vec3 inNorm[1];
 
@@ -16,7 +14,6 @@ layout(location = LayoutLocation_Position) out vec3 outPos;
 layout(location = LayoutLocation_Normal) out vec3 outNorm;
 
 void main() {    
-    GlobalXform xform = xformUBO.xform;
     vec4 worldPos = xform.world * gl_in[0].gl_Position;
     vec4 worldNorm = xform.world * vec4(inNorm[0], 0.0);
 

@@ -44,7 +44,25 @@ Screenshot of the normal map normals:
 That isn't right. Let's check it with the normals from the geometry:
 ![](Assets/Screenshots/normal_map_geo_normals.png)
 
-Okay, so the normal rendering is correct, so the 
+Okay, so the normal rendering is correct, a little looking around leads me to....
+
+### Tangent Space
+In retrospect this makes a lot of sense, but normal maps are stored in tangent space which is just
+a fancy way of saying they're in a space relative to the vertices closest to them (at least that's how I'm internalizing what I read)
+
+So: each vertex needs to be multiplied by a matrix that transforms it into model space before it then gets transformed into world/projection/clip space.
+
+What we'll do is pass in the normal and tangent with each vert, use that to make a cotangent vert
+and then do this first transformation.
+
+Also, we apparently need to double and then subtract 1 from the normal I'm guessing because the floating point format can't handle negatives? yep, that appears to be it due to colors being in 0 - 1
+
+* sampledNormal = sampledNormal * 2.0 - 1.0; // Remap from [0, 1] to [-1, 1]
+* vec3 T = normalize(vec3(model * vec4(vertexTangent, 0.0)));
+* vec3 N = normalize(vec3(model * vec4(vertexNormal, 0.0)));
+* vec3 B = cross(N, T) * vertexTangent.w; // vertexTangent.w should be +1 or -1, indicating handedness
+* mat3 TBN = mat3(T, B, N);
+
 
 
 ## 2/6/24 Gooch shading
