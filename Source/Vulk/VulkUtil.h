@@ -141,7 +141,9 @@ struct Vertex
         NormalBinding = 1,
         TangentBinding = 2,
         TexCoordBinding = 3,
-        NumBindingLocations = 4,
+        HeightBinding = 4,
+        Pos2Binding = 5,
+        NumBindingLocations = 6,
     };
 };
 

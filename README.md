@@ -6,6 +6,9 @@ The goal of my previous project was to do enough hand-rolled stuff that I could 
 
 My goal for this project is to transition from the hand-coded samples I was doing before to a more data-driven engine capable of loading and rendering resources so I can focus on learning new rendering technologies by building them. One outcome I'd like is to have a modern renderer that displays lit rendered scenes on par with modern games (if not as efficiently or with as much capability)
 
+# Resources
+* https://learnopengl.com/Advanced-Lighting/Normal-Mapping - good tangent space intro
+
 # Building
 * Clone the repo
 
@@ -27,7 +30,36 @@ Install the following. Note that CmakeLists.txt assumes these are in C:\Vulkan:
 # Log
 
 ## 2/11/24 Implementing tangent space
+https://learnopengl.com/Advanced-Lighting/Normal-Mapping 
 
+Reading this I can see that I need to be more careful about how I implement the tangent vector - something something UV mapping.
+
+Imagining a triangle and its UVs you can imagine that the 2D set of UVs being interpolated across needs to match up with what the normal
+map has stored. At its very simplest you could imagine P0,P1, and P2 each having a normal. You sample that normal but then you'd have the
+wrong basis for transforming it into world space so it would be incorrect.
+
+Let 
+* E1 = P1 - P0
+* E2 = P2 - P1
+* dUV0 = UV1 - UV0
+* dUV1 = UV2 - UV0
+* T = the tangent
+* B = the bitangent
+
+then by convention:
+* E1 = dUV0.U * T + dUV0.V * B 
+* E2 = dUV0.U * T + dUV0.V * B
+
+That is, T and B make a basis for E1 defined by the dUV0:
+
+Imagine a matrix [T, B] that forms a basis M for a coordinate system in this triangle P0 at origin, E1 at M . dUV0 and E2 at M . dUV1
+
+let EM = [E1, E2]^T
+
+You can find the inverse of dUV1 and post-multiply both sides by it and you get:
+EM . dUV1_inv = M
+
+or something like that. 
 
 ## 2/10/24 Gooch shading cont'd
 Looks wrong. I'm not sure why, things look normal in renderdoc, let's try rendering normals and see if we can see what's going on. 

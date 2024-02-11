@@ -69,26 +69,18 @@ vec4 basicLighting(PointLight light, Material mtl, vec4 diffuseIn, vec3 eyePos, 
     // return (ambient + diffuse + specular);
 }
 
-// c_shaded = s*c_highlight + (1-s)*t*c_warm + (1 - t)*c_cool
-// where:
-// c_cool = (0,0,0.55) * .25 * c_diffuse
-// c_warm = (0.3,0.3,0) * .25 * c_diffuse
-// c_highlight = (1,1,1)
-// t = 0.5 * (1 + n.l)
-// r = 2(n.l)n - l : e.g. reflect(n,l)
-// s = clamp(100(r.v) - 87) : e.g. in the range 0 to 1
-vec4 goochLighting(PointLight light, Material mtl, vec3 eyePos, vec3 fragNormal, vec3 fragPos) { 
-    vec3 l = normalize(light.pos - fragPos);
-    vec3 n = normalize(fragNormal);
-    vec3 v = normalize(eyePos - fragPos);
-    vec3 c_cool = vec3(0,0,0.55) * .25 * mtl.Kd;
-    vec3 c_warm = vec3(0.3,0.3,0) * .25 * mtl.Kd;
-    vec3 c_highlight = vec3(1,1,1);
-    float t = 0.5 * (1 + dot(n,l));
-    vec3 r = reflect(-l, n);
-    float s = clamp(100 * dot(r,v) - 87, 0, 1);
-    vec3 c_shaded = s * c_highlight + (1-s) * t * c_warm + (1 - t) * c_cool;
-    return vec4(c_shaded, 1.0);
+// get the normal from the normal map and transform it into world space 
+// (or whatever space the passed in tangent and normal are in)
+// https://learnopengl.com/Advanced-Lighting/Normal-Mapping
+vec3 calcTBNNormal(sampler2D normSampler, vec2 inTexCoord, vec3 normWorld, vec3 tangentWorld) {
+    vec3 norm = vec3(texture(normSampler, inTexCoord));
+    norm = norm * 2.0 - 1.0; // Remap from [0, 1] to [-1, 1]
+    vec3 N = normalize(normWorld);
+    vec3 T = normalize(tangentWorld);
+    vec3 B = cross(N, T);
+    mat3 TBN = mat3(T, B, N);
+    norm = normalize(TBN * norm);
+    return norm;
 }
 
 const int LayoutLocation_Position = 0;
@@ -96,7 +88,7 @@ const int LayoutLocation_Normal = 1;
 const int LayoutLocation_Tangent = 2;
 const int LayoutLocation_TexCoord = 3;
 const int LayoutLocation_Height = 4;
-const int LayoutLocation_Bitangent = 5;
+const int LayoutLocation_Position2 = 5;
 
 #define XFORMS_UBO(xformUBO)  \
 layout(binding = VulkShaderBinding_XformsUBO) uniform UniformBufferObject { \

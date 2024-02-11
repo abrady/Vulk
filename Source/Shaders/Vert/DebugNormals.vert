@@ -5,25 +5,26 @@
 
 #include "common.glsl"
 
+XFORMS_UBO(xformUBO);
 MODELXFORM_UBO(modelUBO);
 
 layout(binding = VulkShaderBinding_NormalSampler) uniform sampler2D normSampler;
 
 VERTEX_IN(inPosition, inNormal, inTangent, inTexCoord);
-VERTEX_OUT(outPos, outNorm, outTangent, outTexCoord);
+
+layout(location = LayoutLocation_Position) out vec3 outWorldPos;
+layout(location = LayoutLocation_Normal) out vec3 outWorldNorm;
+layout(location = LayoutLocation_Position2) out vec4 outProjPos; // the offset for the normal
 
 void main() {
-    vec4 pos = modelUBO.xform * vec4(inPosition, 1.0);
-    outPos = pos.xyz;
-    gl_Position = modelUBO.xform * pos;
+    mat4 worldXform = xformUBO.world * modelUBO.xform;    
+    vec4 pos = worldXform * vec4(inPosition, 1.0);
+    gl_Position = xformUBO.proj * xformUBO.view * pos;
+    outWorldPos = pos.xyz;
 
-    vec3 norm = inNormal;
-    //vec3 norm = texture(normSampler, inTexCoord).xyz;
-    outNorm = (modelUBO.xform * vec4(norm, 0.0)).xyz;
+    vec3 normWorld = (worldXform * vec4(inNormal, 0.0)).xyz;
+    vec3 tangentWorld = (worldXform * vec4(inTangent, 0.0)).xyz;
+    outWorldNorm = calcTBNNormal(normSampler, inTexCoord, normWorld, tangentWorld);
 
-    vec3 tangent = inTangent;
-    outTangent = (modelUBO.xform * vec4(tangent, 0.0)).xyz;
-
-    vec3 bitangent = cross(norm, tangent);
-    outTexCoord = inTexCoord;
+    outProjPos = xformUBO.proj * xformUBO.view * vec4(outWorldPos + outWorldNorm * 0.1, 1);
 }
