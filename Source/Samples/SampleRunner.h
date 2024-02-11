@@ -71,7 +71,7 @@ protected:
             glm::vec3 fwd = camera.getForwardVec();
             glm::vec3 right = camera.getRightVec();
             glm::vec3 up = camera.getUpVec();
-            float move = 5.f;
+            float move = .2f;
             bool handled = true;
             if (key == GLFW_KEY_W)
             {

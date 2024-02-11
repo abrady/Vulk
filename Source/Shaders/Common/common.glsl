@@ -103,9 +103,16 @@ const int LayoutLocation_Normal = 1;
 const int LayoutLocation_Tangent = 2;
 const int LayoutLocation_TexCoord = 3;
 const int LayoutLocation_Height = 4;
+const int LayoutLocation_Bitangent = 5;
 
-#define LAYOUT_VULKVERTEX_IN  \
+#define DECLARE_VERTEX_IN(inPosition, inNormal, inTangent, inTexCoord)  \
 layout(location = LayoutLocation_Position) in vec3 inPosition; \
 layout(location = LayoutLocation_Normal) in vec3 inNormal; \
 layout(location = LayoutLocation_Tangent) in vec3 inTangent; \
 layout(location = LayoutLocation_TexCoord) in vec2 inTexCoord
+
+#define DECLARE_VERTEX_OUT(outPos, outNorm, outTangent, outBitangent) \
+layout(location = LayoutLocation_Position) out vec3 outPos;  \
+layout(location = LayoutLocation_Normal) out vec3 outNorm; \
+layout(location = LayoutLocation_Tangent) out vec3 outTangent; \
+layout(location = LayoutLocation_Bitangent) out vec3 outBitangent

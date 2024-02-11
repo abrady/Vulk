@@ -20,5 +20,5 @@ public:
     std::shared_ptr<VulkPipeline> pipeline;
     std::shared_ptr<VulkFrameUBOs<glm::mat4>> xformUBOs;
     std::shared_ptr<VulkDescriptorSetInfo> dsInfo;
-    VulkActor(Vulk &vk, std::shared_ptr<VulkModel> model, glm::mat4 xform, std::shared_ptr<VulkPipeline> pipeline, VulkDescriptorSetBuilder &builder);
+    VulkActor(Vulk &vk, std::shared_ptr<VulkModel> model, glm::mat4 xform, std::shared_ptr<VulkPipeline> pipeline, VulkDescriptorSetBuilder &builder, VkShaderStageFlagBits modelXformBinding);
 };

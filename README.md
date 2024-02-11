@@ -26,6 +26,27 @@ Install the following. Note that CmakeLists.txt assumes these are in C:\Vulkan:
 
 # Log
 
+## 2/10/24 Gooch shading cont'd
+Looks wrong. I'm not sure why, things look normal in renderdoc, let's try rendering normals and see if we can see what's going on. 
+1. make the DebugNormals: pipeline, frag, geom, vert shaders
+2. we need to load the pipeline in the scene and make the actors for that pipeline:
+    1. the meshes and samplers can be shared
+    2. the descriptor set for each actor needs to match the pipeline's layout
+
+how VulkResources loads models for a given pipeline:
+* one of the architectural decisions I made was that a binding value (for ubos, sbos, input vertices etc.) has a fixed interface, so specifying a binding is a contract that both sides will provide that given type, e.g. every scene is guaranteed to have a camera UBO or a VulkActor having a mat4 xform ubo.
+* Another decision I made is that the pipeline owns the descriptor set layout. 
+* given this, for our DebugNormals pipeline, we just need to take existing actors, grab their mesh and normal sampler, make a new descriptor set for it that matches the pipeline's layout, and we're good.
+
+Screenshot of the normal map normals:
+![](Assets/Screenshots/normal_map_normals_bad.png)
+
+That isn't right. Let's check it with the normals from the geometry:
+![](Assets/Screenshots/normal_map_geo_normals.png)
+
+Okay, so the normal rendering is correct, so the 
+
+
 ## 2/6/24 Gooch shading
 * designed to increase legibility in technical drawings
 

@@ -1,4 +1,7 @@
 {
+    "search.exclude": {
+        "**/Source/ThirdParty": true,
+    },
     "files.associations": {
         "*.frag": "glsl",
         "*.vert": "glsl",

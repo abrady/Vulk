@@ -17,6 +17,7 @@ layout(location = LayoutLocation_TexCoord) in vec2 inTexCoord;
 
 layout(location = LayoutLocation_Position) out vec3 fragPos;  
 layout(location = LayoutLocation_TexCoord) out vec2 fragTexCoord;
+layout(location = LayoutLocation_Normal) out vec3 fragNormal;
 
 void main() {
     GlobalXform xform = xformUBO.xform;
@@ -24,4 +25,5 @@ void main() {
     gl_Position = xform.proj * xform.view * worldXform * vec4(inPosition, 1.0);
     fragTexCoord = inTexCoord;
     fragPos = vec3(worldXform * vec4(inPosition, 1.0));
+    fragNormal = vec3(worldXform * vec4(inNormal, 0.0));
 }

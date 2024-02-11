@@ -143,6 +143,7 @@ VulkPipelineBuilder &VulkPipelineBuilder::addVulkVertexInput(uint32_t binding)
     return addVertexInputBindingDescription(binding, sizeof(Vertex))
         .addVertexInputFieldVec3(binding, Vertex::PosBinding, offsetof(Vertex, pos))
         .addVertexInputFieldVec3(binding, Vertex::NormalBinding, offsetof(Vertex, normal))
+        .addVertexInputFieldVec3(binding, Vertex::TangentBinding, offsetof(Vertex, tangent))
         .addVertexInputFieldVec2(binding, Vertex::TexCoordBinding, offsetof(Vertex, uv));
 }
 

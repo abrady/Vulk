@@ -326,7 +326,11 @@ void makeGeoSphere(float radius, uint32_t numSubdivisions, VulkMesh &meshData)
         meshData.vertices[i].normal = n;
         meshData.vertices[i].uv.x = atan2f(n.z, n.x) / (2.0f * glm::pi<float>()) + 0.5f;
         meshData.vertices[i].uv.y = asinf(n.y) / glm::pi<float>() + 0.5f;
-        // meshData.vertices[i].tangent = glm::vec3(1.0f, 0.0f, 0.0f); // TODO: calculate tangent
+
+        glm::vec3 arbitrary = glm::vec3(0, 1, 0);
+        if (abs(n.y) > 0.9999f)             // Check if n is parallel or almost parallel to the Y-axis
+            arbitrary = glm::vec3(1, 0, 0); // Use the X unit vector instead
+        meshData.vertices[i].tangent = glm::normalize(glm::cross(n, arbitrary));
     }
 }
 

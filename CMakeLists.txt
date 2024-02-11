@@ -46,16 +46,17 @@ link_directories("${CMAKE_SOURCE_DIR}/Source/ThirdParty/lib")
 
 set(VULKAN_RENDERER_SOURCES
     "Source/Vulk/Vulk.cpp"
-    "Source/Vulk/VulkGeo.cpp"
-    "Source/Vulk/VulkUtil.cpp" 
-    "Source/Vulk/VulkMesh.cpp"
     "Source/Vulk/VulkActor.cpp"
     "Source/Vulk/VulkCamera.cpp"
     "Source/Vulk/VulkDescriptorSetLayoutBuilder.cpp"
     "Source/Vulk/VulkDescriptorSetUpdater.cpp"
+    "Source/Vulk/VulkGeo.cpp"
+    "Source/Vulk/VulkMesh.cpp"
     "Source/Vulk/VulkPipelineBuilder.cpp"
+    "Source/Vulk/VulkResourceMetadata.cpp"
     "Source/Vulk/VulkResources.cpp"
     "Source/Vulk/VulkTextureView.cpp"
+    "Source/Vulk/VulkUtil.cpp" 
 )
 
 add_executable (VulkanRenderer "Source/main.cpp" ${VULKAN_RENDERER_SOURCES})

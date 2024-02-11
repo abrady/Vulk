@@ -13,6 +13,7 @@
 #include "Vulk/VulkDescriptorSetBuilder.h"
 #include "Vulk/VulkBufferBuilder.h"
 #include "Vulk/VulkResources.h"
+#include "Vulk/VulkResourceMetadata.h"
 #include "Vulk/VulkScene.h"
 
 class World
@@ -20,15 +21,29 @@ class World
 public:
     Vulk &vk;
     std::shared_ptr<VulkScene> scene;
+    std::shared_ptr<VulkPipeline> debugNormalsPipeline;
+    std::vector<std::shared_ptr<VulkActor>> debugNormalsActors;
+
     float nearClip = 1.f;
     float farClip = 10000.f;
 
 public:
-    World(Vulk &vk, std::string scene) : vk(vk)
+    World(Vulk &vk, std::string sceneName) : vk(vk)
     {
         VulkResources resources(vk);
-        resources.loadScene(scene);
-        this->scene = resources.scenes[scene];
+        resources.loadScene(sceneName);
+        scene = resources.scenes[sceneName];
+        debugNormalsPipeline = resources.getPipeline("DebugNormals");
+        auto debugNormalsPipelineDef = resources.metadata.pipelines.at("DebugNormals");
+
+        SceneDef &sceneDef = *resources.metadata.scenes.at(sceneName);
+        for (int i = 0; i < scene->actors.size(); ++i)
+        {
+            auto actor = scene->actors[i];
+            auto actorDef = sceneDef.actors[i];
+            std::shared_ptr<VulkActor> debugNormalsActor = resources.createActorFromPipeline(*actorDef, debugNormalsPipelineDef, scene);
+            debugNormalsActors.push_back(debugNormalsActor);
+        }
     }
 
     void updateXformsUBO(VulkSceneUBOs::XformsUBO &ubo, VkViewport const &viewport)
@@ -53,6 +68,21 @@ public:
 
         // render the scene?
         for (auto &actor : scene->actors)
+        {
+            auto model = actor->model;
+            vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipeline);
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout, 0, 1, &actor->dsInfo->descriptorSets[currentFrame]->descriptorSet, 0, nullptr);
+            vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+            vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
+            VkDeviceSize offsets[] = {0};
+            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &model->vertBuf.buf, offsets);
+            vkCmdBindIndexBuffer(commandBuffer, model->indexBuf.buf, 0, VK_INDEX_TYPE_UINT32);
+            vkCmdDrawIndexed(commandBuffer, model->numIndices, 1, 0, 0, 0);
+        }
+
+        // render the debug normals
+        for (auto &actor : debugNormalsActors)
         {
             auto model = actor->model;
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipeline);

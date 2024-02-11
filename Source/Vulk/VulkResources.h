@@ -20,9 +20,12 @@
 #include "VulkShaderModule.h"
 #include "VulkSampler.h"
 
+struct ActorDef;
+struct DescriptorSetDef;
 struct MeshDef;
 struct ModelDef;
 struct PipelineDef;
+struct Metadata;
 
 // load resources used for rendering a set of things: shaders, meshes, textures, materials, etc.
 // Note:
@@ -32,6 +35,7 @@ class VulkResources
 {
 public:
     Vulk &vk;
+    Metadata const &metadata;
 
 private:
     enum ShaderType
@@ -42,8 +46,6 @@ private:
     };
 
     std::shared_ptr<VulkShaderModule> createShaderModule(ShaderType type, std::string const &name);
-    void loadMetadata();
-
     std::shared_ptr<VulkPipeline> loadPipeline(PipelineDef &pipelineDef);
 
     std::shared_ptr<VulkUniformBuffer<VulkMaterialConstants>> getMaterial(std::string const &name);
@@ -62,13 +64,7 @@ public:
     std::unordered_map<std::string, std::shared_ptr<VulkShaderModule>> vertShaders, geomShaders, fragShaders;
     std::shared_ptr<VulkSampler> textureSampler;
 
-    VulkResources(Vulk &vk)
-        : vk(vk)
-    {
-        loadMetadata();
-        textureSampler = std::make_shared<VulkSampler>(vk);
-    }
-
+    VulkResources(Vulk &vk);
     VulkResources &loadScene(std::string name);
 
     std::shared_ptr<VulkShaderModule> getVertexShader(std::string const &name)
@@ -90,5 +86,7 @@ public:
         return fragShaders.at(name);
     }
 
-    VkPipeline getPipeline(std::string const &name);
+    std::shared_ptr<VulkActor> createActorFromPipeline(ActorDef const &actorDef, std::shared_ptr<PipelineDef> pipelineDef, std::shared_ptr<VulkScene> scene);
+
+    std::shared_ptr<VulkPipeline> getPipeline(std::string const &name);
 };
