@@ -98,32 +98,32 @@ const int LayoutLocation_TexCoord = 3;
 const int LayoutLocation_Height = 4;
 const int LayoutLocation_Bitangent = 5;
 
-#define DECLARE_XFORMS_UBO(xformUBO)  \
+#define XFORMS_UBO(xformUBO)  \
 layout(binding = VulkShaderBinding_XformsUBO) uniform UniformBufferObject { \
     mat4 world; \
     mat4 view; \
     mat4 proj; \
 } xformUBO
 
-#define DECLARE_MODELXFORM_UBO(modelUBO)  \
+#define MODELXFORM_UBO(modelUBO)  \
 layout(binding = VulkShaderBinding_ModelXform) uniform ModelXformUBO { \
     mat4 xform; \
 } modelUBO
 
 
-#define DECLARE_VERTEX_IN(inPosition, inNormal, inTangent, inTexCoord)  \
+#define VERTEX_IN(inPosition, inNormal, inTangent, inTexCoord)  \
 layout(location = LayoutLocation_Position) in vec3 inPosition; \
 layout(location = LayoutLocation_Normal) in vec3 inNormal; \
 layout(location = LayoutLocation_Tangent) in vec3 inTangent; \
 layout(location = LayoutLocation_TexCoord) in vec2 inTexCoord
 
-#define DECLARE_VERTEX_OUT(outPos, outNorm, outTangent, outTexCoord) \
+#define VERTEX_OUT(outPos, outNorm, outTangent, outTexCoord) \
 layout(location = LayoutLocation_Position) out vec3 outPos;  \
 layout(location = LayoutLocation_Normal) out vec3 outNorm; \
 layout(location = LayoutLocation_Tangent) out vec3 outTangent; \
 layout(location = LayoutLocation_TexCoord) out vec2 outTexCoord
 
-#define DECLARE_FRAG_IN(inPosition, inNormal, inTangent, inTexCoord)  \
+#define FRAG_IN(inPosition, inNormal, inTangent, inTexCoord)  \
 layout(location = LayoutLocation_Position) in vec3 inPosition; \
 layout(location = LayoutLocation_Normal) in vec3 inNormal; \
 layout(location = LayoutLocation_Tangent) in vec3 inTangent; \

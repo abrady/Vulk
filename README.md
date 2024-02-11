@@ -26,6 +26,9 @@ Install the following. Note that CmakeLists.txt assumes these are in C:\Vulkan:
 
 # Log
 
+## 2/11/24 Implementing tangent space
+
+
 ## 2/10/24 Gooch shading cont'd
 Looks wrong. I'm not sure why, things look normal in renderdoc, let's try rendering normals and see if we can see what's going on. 
 1. make the DebugNormals: pipeline, frag, geom, vert shaders
@@ -63,7 +66,7 @@ Also, we apparently need to double and then subtract 1 from the normal I'm guess
 * vec3 B = cross(N, T) * vertexTangent.w; // vertexTangent.w should be +1 or -1, indicating handedness
 * mat3 TBN = mat3(T, B, N);
 
-
+i.e. we make basis in model space based on the tangent and normal (and the derived bitangent) and project the tangent space vectors onto it.
 
 ## 2/6/24 Gooch shading
 * designed to increase legibility in technical drawings

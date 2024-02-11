@@ -2,8 +2,8 @@
 
 #include "common.glsl"
 
-DECLARE_XFORMS_UBO(xformUBO);
-DECLARE_MODELXFORM_UBO(modelXformUBO);
+XFORMS_UBO(xformUBO);
+MODELXFORM_UBO(modelXformUBO);
 
 layout(binding = VulkShaderBinding_NormalSampler) uniform sampler2D normSampler;
 
@@ -20,7 +20,7 @@ layout(binding = VulkShaderBinding_MaterialUBO) uniform MaterialBuf {
 } materialBuf;
 
 
-DECLARE_FRAG_IN(inPosition, inNormal, inTangent, inTexCoord);
+FRAG_IN(inPosition, inNormal, inTangent, inTexCoord);
 layout(location = 0) out vec4 outColor;
 
 void main() {

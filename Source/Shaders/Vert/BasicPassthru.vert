@@ -2,11 +2,11 @@
 
 #include "common.glsl"
 
-DECLARE_XFORMS_UBO(xform);
-DECLARE_MODELXFORM_UBO(modelUBO);
+XFORMS_UBO(xform);
+MODELXFORM_UBO(modelUBO);
 
-DECLARE_VERTEX_IN(inPosition, inNormal, inTangent, inTexCoord);
-DECLARE_VERTEX_OUT(outPos, outNorm, outTangent, outTexCoord);
+VERTEX_IN(inPosition, inNormal, inTangent, inTexCoord);
+VERTEX_OUT(outPos, outNorm, outTangent, outTexCoord);
 
 void main() {
     mat4 worldXform = xform.world * modelUBO.xform;

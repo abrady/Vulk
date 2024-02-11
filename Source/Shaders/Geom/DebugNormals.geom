@@ -2,7 +2,7 @@
 
 #include "common.glsl"
 
-DECLARE_XFORMS_UBO(xform);
+XFORMS_UBO(xform);
 
 layout(location = LayoutLocation_Normal) in vec3 inNorm[1];
 

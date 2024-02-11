@@ -5,12 +5,12 @@
 
 #include "common.glsl"
 
-DECLARE_MODELXFORM_UBO(modelUBO);
+MODELXFORM_UBO(modelUBO);
 
 layout(binding = VulkShaderBinding_NormalSampler) uniform sampler2D normSampler;
 
-DECLARE_VERTEX_IN(inPosition, inNormal, inTangent, inTexCoord);
-DECLARE_VERTEX_OUT(outPos, outNorm, outTangent, outTexCoord);
+VERTEX_IN(inPosition, inNormal, inTangent, inTexCoord);
+VERTEX_OUT(outPos, outNorm, outTangent, outTexCoord);
 
 void main() {
     vec4 pos = modelUBO.xform * vec4(inPosition, 1.0);
