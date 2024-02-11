@@ -10,37 +10,55 @@ VulkDescriptorSetLayout::~VulkDescriptorSetLayout()
 
 VulkDescriptorSetLayoutBuilder &VulkDescriptorSetLayoutBuilder::addUniformBuffer(VkShaderStageFlags stageFlags, VulkShaderUBOBindings binding)
 {
-    VkDescriptorSetLayoutBinding layoutBinding{};
-    layoutBinding.binding = binding;
-    layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    layoutBinding.descriptorCount = 1;
-    layoutBinding.stageFlags = stageFlags;
-    ASSERT_KEY_NOT_SET(layoutBindingsMap, binding);
-    layoutBindingsMap[binding] = layoutBinding;
+    if (!layoutBindingsMap.contains(binding))
+    {
+        VkDescriptorSetLayoutBinding layoutBinding{};
+        layoutBinding.binding = binding;
+        layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        layoutBinding.descriptorCount = 1;
+        layoutBinding.stageFlags = stageFlags;
+        layoutBindingsMap[binding] = layoutBinding;
+    }
+    else
+    {
+        layoutBindingsMap[binding].stageFlags |= stageFlags;
+    }
     return *this;
 }
 
 VulkDescriptorSetLayoutBuilder &VulkDescriptorSetLayoutBuilder::addImageSampler(VkShaderStageFlags stageFlags, VulkShaderTextureBindings binding)
 {
-    VkDescriptorSetLayoutBinding layoutBinding{};
-    layoutBinding.binding = binding;
-    layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    layoutBinding.descriptorCount = 1;
-    layoutBinding.stageFlags = stageFlags;
-    ASSERT_KEY_NOT_SET(layoutBindingsMap, binding);
-    layoutBindingsMap[binding] = layoutBinding;
+    if (!layoutBindingsMap.contains(binding))
+    {
+        VkDescriptorSetLayoutBinding layoutBinding{};
+        layoutBinding.binding = binding;
+        layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        layoutBinding.descriptorCount = 1;
+        layoutBinding.stageFlags = stageFlags;
+        layoutBindingsMap[binding] = layoutBinding;
+    }
+    else
+    {
+        layoutBindingsMap[binding].stageFlags |= stageFlags;
+    }
     return *this;
 }
 
 VulkDescriptorSetLayoutBuilder &VulkDescriptorSetLayoutBuilder::addStorageBuffer(VkShaderStageFlags stageFlags, VulkShaderSSBOBindings binding)
 {
-    VkDescriptorSetLayoutBinding layoutBinding{};
-    layoutBinding.binding = binding;
-    layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-    layoutBinding.descriptorCount = 1;
-    layoutBinding.stageFlags = stageFlags;
-    ASSERT_KEY_NOT_SET(layoutBindingsMap, binding);
-    layoutBindingsMap[binding] = layoutBinding;
+    if (!layoutBindingsMap.contains(binding))
+    {
+        VkDescriptorSetLayoutBinding layoutBinding{};
+        layoutBinding.binding = binding;
+        layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        layoutBinding.descriptorCount = 1;
+        layoutBinding.stageFlags = stageFlags;
+        layoutBindingsMap[binding] = layoutBinding;
+    }
+    else
+    {
+        layoutBindingsMap[binding].stageFlags |= stageFlags;
+    }
     return *this;
 }
 
