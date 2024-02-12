@@ -9,8 +9,9 @@
 #include "Common/ClassNonCopyableNonMovable.h"
 #include "VulkFrameUBOs.h"
 #include "VulkSampler.h"
-#include "VulkTextureView.h"
 #include "VulkDescriptorSet.h"
+
+class VulkTextureView;
 
 struct VulkDescriptorSetInfo : public ClassNonCopyableNonMovable
 {

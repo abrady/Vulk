@@ -9,6 +9,6 @@
 
 int main()
 {
-    SampleRunner<World>("GoochLightingExample").run();
+    SampleRunner<World>("RenderNormalmap").run();
     return 0;
 }

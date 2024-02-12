@@ -160,12 +160,31 @@ void Vulk::cleanupVulkan()
     glfwTerminate();
 }
 
-VkImage Vulk::createTextureImage(char const *texture_path, VkDeviceMemory &textureImageMemory, VkImage &textureImage)
+static const std::unordered_map<VkFormat, uint32_t> numChannelsFromFormat = {
+    {VK_FORMAT_R8_UNORM, 1},
+    {VK_FORMAT_R8G8_UNORM, 2},
+    {VK_FORMAT_R8G8B8_UNORM, 3},
+    {VK_FORMAT_R8G8B8_SRGB, 3},
+    {VK_FORMAT_R8G8B8A8_UNORM, 4},
+    {VK_FORMAT_R8G8B8A8_SRGB, 4},
+};
+
+VkImage Vulk::createTextureImage(char const *texture_path, VkDeviceMemory &textureImageMemory, VkImage &textureImage, bool isUNORM, VkFormat &formatOut)
 {
     int texWidth, texHeight, texChannels;
     stbi_uc *pixels = stbi_load(texture_path, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-    VkDeviceSize imageSize = texWidth * texHeight * 4;
+    VkDeviceSize imageSize = texWidth * texHeight * 4; // not texChannels because we always load 4 channels because drivers prefer 32 bit aligned data...
     assert(pixels);
+    VkFormat format;
+    if (isUNORM)
+    {
+        format = VK_FORMAT_R8G8B8A8_UNORM;
+    }
+    else
+    {
+        format = VK_FORMAT_R8G8B8A8_SRGB;
+    }
+    formatOut = format;
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
@@ -178,11 +197,11 @@ VkImage Vulk::createTextureImage(char const *texture_path, VkDeviceMemory &textu
 
     stbi_image_free(pixels);
 
-    createImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
+    createImage(texWidth, texHeight, format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
 
-    transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    transitionImageLayout(textureImage, format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
     copyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
-    transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    transitionImageLayout(textureImage, format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     vkDestroyBuffer(device, stagingBuffer, nullptr);
     vkFreeMemory(device, stagingBufferMemory, nullptr);

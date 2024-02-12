@@ -151,9 +151,20 @@ std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const
                     xformUBOs = make_shared<VulkFrameUBOs<glm::mat4>>(vk, actorDef.xform);
                 builder.addFrameUBOs(*xformUBOs, stage, binding);
                 break;
+            case VulkShaderUBOBinding_DebugNormals:
+                if (scene->debugNormalsUBO == nullptr)
+                    scene->debugNormalsUBO = make_shared<VulkUniformBuffer<VulkDebugNormalsUBO>>(vk);
+                builder.addUniformBuffer(*scene->debugNormalsUBO, stage, binding);
+                break;
+            case VulkShaderUBOBinding_DebugTangents:
+                if (scene->debugTangentsUBO == nullptr)
+                    scene->debugTangentsUBO = make_shared<VulkUniformBuffer<VulkDebugTangentsUBO>>(vk);
+                builder.addUniformBuffer(*scene->debugTangentsUBO, stage, binding);
+                break;
             default:
                 throw runtime_error("Invalid UBO binding");
             }
+            static_assert(VulkShaderUBOBinding_MaxBindingID == VulkShaderUBOBinding_DebugTangents);
         }
     }
     // for (auto &[stage, ssbos] : dsDef.storageBuffers)
@@ -249,8 +260,8 @@ shared_ptr<VulkMaterialTextures> VulkResources::getMaterialTextures(string const
     {
         MaterialDef const &def = *metadata.materials.at(name);
         materialTextures[name] = make_shared<VulkMaterialTextures>();
-        materialTextures[name]->diffuseView = !def.mapKd.empty() ? make_unique<VulkTextureView>(vk, def.mapKd) : nullptr;
-        materialTextures[name]->normalView = !def.mapNormal.empty() ? make_unique<VulkTextureView>(vk, def.mapNormal) : nullptr;
+        materialTextures[name]->diffuseView = !def.mapKd.empty() ? make_unique<VulkTextureView>(vk, def.mapKd, false) : nullptr;
+        materialTextures[name]->normalView = !def.mapNormal.empty() ? make_unique<VulkTextureView>(vk, def.mapNormal, true) : nullptr;
     }
     return materialTextures[name];
 }

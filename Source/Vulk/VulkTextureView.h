@@ -4,15 +4,20 @@
 #include "Common/ClassNonCopyableNonMovable.h"
 
 class Vulk;
-struct VulkTextureView : public ClassNonCopyableNonMovable
+class VulkTextureView : public ClassNonCopyableNonMovable
 {
+public:
     Vulk &vk;
     VkImage textureImage;
     VkDeviceMemory textureImageMemory;
     VkImageView textureImageView;
 
-    VulkTextureView(Vulk &vkIn, std::filesystem::path const &texturePath);
-    VulkTextureView(Vulk &vkIn, char const *texturePath);
-    VulkTextureView(Vulk &vkIn, std::string const &texturePath) : VulkTextureView(vkIn, texturePath.c_str()) {}
+    // isUNORM just means load the texture without changing the format - for example loading a normal map.
+    VulkTextureView(Vulk &vkIn, std::filesystem::path const &texturePath, bool isUNORM);
+    VulkTextureView(Vulk &vkIn, char const *texturePath, bool isUNORM);
+    VulkTextureView(Vulk &vkIn, std::string const &texturePath, bool isUNORM) : VulkTextureView(vkIn, texturePath.c_str(), isUNORM) {}
     ~VulkTextureView();
+
+private:
+    void loadTextureView(char const *texturePath, bool isUNORM);
 };

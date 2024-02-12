@@ -33,6 +33,19 @@ static const std::vector<const char *> validationLayers = {
 static const std::vector<const char *> deviceExtensions = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
+enum VulkTextureType
+{
+    VulkTextureType_Diffuse,
+    VulkTextureType_Normal,
+    VulkTextureType_Specular,
+    VulkTextureType_Emissive,
+    VulkTextureType_AmbientOcclusion,
+    VulkTextureType_Roughness,
+    VulkTextureType_Metallic,
+    VulkTextureType_Height,
+    VulkTextureType_MaxTextureTypes
+};
+
 class Vulk
 {
     std::chrono::time_point<std::chrono::steady_clock> lastFrameTime;
@@ -49,7 +62,7 @@ public:
     void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
     VkSampler createTextureSampler();
     VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
-    VkImage createTextureImage(char const *texture_path, VkDeviceMemory &textureImageMemory, VkImage &textureImage);
+    VkImage createTextureImage(char const *texture_path, VkDeviceMemory &textureImageMemory, VkImage &textureImage, bool isUNORM, VkFormat &formatOut);
     uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
     VkShaderModule createShaderModule(const std::vector<char> &code);
     VkDescriptorSet createDescriptorSet(VkDescriptorSetLayout descriptorSetLayout, VkDescriptorPool descriptorPool);

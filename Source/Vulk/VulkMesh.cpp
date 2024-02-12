@@ -14,7 +14,8 @@ glm::vec3 toVec3(const aiVector3D &aiVec)
 void loadModel(char const *model_path, std::vector<Vertex> &vertices, std::vector<uint32_t> &indices)
 {
     Assimp::Importer importer;
-    const aiScene *scene = importer.ReadFile(model_path, aiProcess_Triangulate | aiProcess_GenSmoothNormals);
+    unsigned int flags = aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace;
+    const aiScene *scene = importer.ReadFile(model_path, flags);
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
     {
@@ -31,6 +32,7 @@ void loadModel(char const *model_path, std::vector<Vertex> &vertices, std::vecto
         Vertex vertex;
         vertex.pos = toVec3(mesh->mVertices[i]);
         vertex.normal = toVec3(mesh->mNormals[i]);
+        vertex.tangent = toVec3(mesh->mTangents[i]);
 
         if (mesh->mTextureCoords[0])
         {

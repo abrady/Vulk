@@ -6,17 +6,22 @@
 
 using namespace glm;
 
+// Calculate the tangent of a triangle - in this case convention is to use:
+// Imagine a triangle on a plane with a tangent and bitangent vector on the plane.
+//
+// 2. E1=ΔU1T+ΔV1B
+// see also https://learnopengl.com/Advanced-Lighting/Normal-Mapping
 static vec3 calcTangent(vec3 pos1, vec3 pos2, vec3 pos3, vec2 uv1, vec2 uv2, vec2 uv3)
 {
     // positions
-    pos1 = vec3(-1.0, 1.0, 0.0);
-    pos2 = vec3(-1.0, -1.0, 0.0);
-    pos3 = vec3(1.0, -1.0, 0.0);
+    // pos1 = vec3(-1.0, 1.0, 0.0);
+    // pos2 = vec3(-1.0, -1.0, 0.0);
+    // pos3 = vec3(1.0, -1.0, 0.0);
     // glm::vec3 pos4( 1.0,  1.0, 0.0);
     // // texture coordinates
-    uv1 = vec2(0.0, 1.0);
-    uv2 = vec2(0.0, 0.0);
-    uv3 = vec2(1.0, 0.0);
+    // uv1 = vec2(0.0, 1.0);
+    // uv2 = vec2(0.0, 0.0);
+    // uv3 = vec2(1.0, 0.0);
     // glm::vec2 uv4(1.0, 1.0);
     // normal vector
     // glm::vec3 nm(0.0, 0.0, 1.0);
@@ -37,40 +42,6 @@ static vec3 calcTangent(vec3 pos1, vec3 pos2, vec3 pos3, vec2 uv1, vec2 uv2, vec
     // bitangent1.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
     // bitangent1.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
     return tangent1;
-}
-
-// Calculate the tangent of a triangle - in this case convention is to use:
-// Imagine a triangle on a plane with a tangent and bitangent vector on the plane.
-//
-// 2. E1=ΔU1T+ΔV1B
-// see also https://learnopengl.com/Advanced-Lighting/Normal-Mapping
-vec3 calcTangent0(vec3 const &P1, vec3 const &P2, vec3 const &P3, vec2 const &UV1, vec2 const &UV2, vec2 const &UV3)
-{
-    // Calculate the edges of the triangle and the differences in texture coordinates
-    vec3 Edge1 = P2 - P1;
-    vec3 Edge2 = P3 - P1;
-
-    vec2 DeltaUV1 = UV2 - UV1;
-    vec2 DeltaUV2 = UV3 - UV1;
-
-    // Calculate the determinant of the 2x2 matrix from the UV deltas
-    float det = DeltaUV1.x * DeltaUV2.y - DeltaUV2.x * DeltaUV1.y;
-
-    // Prevent division by zero (or near zero) by providing a fallback or handling the case appropriately
-    float invDet = 1.0f / det;
-
-    // Calculate the tangent and bitangent
-    vec3 Tangent; //, Bitangent;
-
-    Tangent.x = invDet * (DeltaUV2.y * Edge1.x - DeltaUV1.y * Edge2.x);
-    Tangent.y = invDet * (DeltaUV2.y * Edge1.y - DeltaUV1.y * Edge2.y);
-    Tangent.z = invDet * (DeltaUV2.y * Edge1.z - DeltaUV1.y * Edge2.z);
-
-    // Bitangent.x = invDet * (-DeltaUV2.x * Edge1.x + DeltaUV1.x * Edge2.x);
-    // Bitangent.y = invDet * (-DeltaUV2.x * Edge1.y + DeltaUV1.x * Edge2.y);
-    // Bitangent.z = invDet * (-DeltaUV2.x * Edge1.z + DeltaUV1.x * Edge2.z);
-
-    return normalize(Tangent);
 }
 
 static void calcMeshTangents(VulkMesh &meshData)
@@ -95,9 +66,6 @@ static void calcMeshTangents(VulkMesh &meshData)
         meshData.vertices[i0].tangent += tangent;
         meshData.vertices[i1].tangent += tangent;
         meshData.vertices[i2].tangent += tangent;
-        // meshData.vertices[i0].tangent = tangent;
-        // meshData.vertices[i1].tangent = tangent;
-        // meshData.vertices[i2].tangent = tangent;
     }
 
     for (auto &vert : meshData.vertices)
@@ -257,6 +225,7 @@ void makeQuad(float x, float y, float w, float h, float depth, uint32_t numSubdi
     {
         subdivideTris(meshData);
     }
+    calcMeshTangents(meshData);
 }
 
 void makeQuad(float w, float h, uint32_t numSubdivisions, VulkMesh &meshData)
@@ -374,6 +343,7 @@ void makeCylinder(float height, float bottomRadius, float topRadius, uint32_t nu
         meshData.indices.push_back(baseIndex + i + 1);
         meshData.indices.push_back(centerIndex);
     }
+    calcMeshTangents(meshData);
 }
 
 void makeGeoSphere(float radius, uint32_t numSubdivisions, VulkMesh &meshData)
@@ -457,6 +427,7 @@ void makeAxes(float length, VulkMesh &meshData)
     meshData.appendMesh(x);
     meshData.appendMesh(y);
     meshData.appendMesh(z);
+    calcMeshTangents(meshData);
 }
 
 void makeGrid(float width, float depth, uint32_t m, uint32_t n, VulkMesh &meshData, float repeatU, float repeatV)
@@ -509,4 +480,6 @@ void makeGrid(float width, float depth, uint32_t m, uint32_t n, VulkMesh &meshDa
             k += 6; // next quad
         }
     }
+
+    calcMeshTangents(meshData);
 }

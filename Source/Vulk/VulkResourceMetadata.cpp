@@ -135,9 +135,11 @@ VulkShaderUBOBindings shaderUBOBindingFromStr(string const &binding)
         {"modelXform", VulkShaderUBOBinding_ModelXform},
         {"mirrorPlaneUBO", VulkShaderUBOBinding_MirrorPlaneUBO},
         {"materialUBO", VulkShaderUBOBinding_MaterialUBO},
+        {"debugNormals", VulkShaderUBOBinding_DebugNormals},
+        {"debugTangents", VulkShaderUBOBinding_DebugTangents},
     };
     return bindings.at(binding);
-    static_assert(VulkShaderUBOBinding_MaxBindingID == VulkShaderUBOBinding_MaterialUBO, "this function must be kept in sync with VulkShaderUBOBindings");
+    static_assert(VulkShaderUBOBinding_MaxBindingID == VulkShaderUBOBinding_DebugTangents, "this function must be kept in sync with VulkShaderUBOBindings");
 }
 
 VulkShaderSSBOBindings shaderSSBOBindingFromStr(string const &binding)
@@ -273,7 +275,7 @@ ModelDef ModelDef::fromJSON(const nlohmann::json &j, unordered_map<string, share
         case GeoMeshDefType_Sphere:
         {
             float radius = meshJson.at("radius").get<float>();
-            uint32_t numSubdivisions = meshJson.at("numSubdivisions").get<uint32_t>();
+            uint32_t numSubdivisions = meshJson.value("numSubdivisions", 0);
             mesh = make_shared<VulkMesh>();
             makeGeoSphere(radius, numSubdivisions, *mesh);
         }

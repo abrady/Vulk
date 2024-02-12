@@ -30,6 +30,9 @@ public:
     VulkSceneUBOs sceneUBOs;
     VulkCamera camera;
     std::vector<std::shared_ptr<VulkActor>> actors;
+    // debug
+    std::shared_ptr<VulkUniformBuffer<VulkDebugNormalsUBO>> debugNormalsUBO;
+    std::shared_ptr<VulkUniformBuffer<VulkDebugTangentsUBO>> debugTangentsUBO;
 
     VulkScene(Vulk &vk) : vk(vk), sceneUBOs(vk) {}
 };

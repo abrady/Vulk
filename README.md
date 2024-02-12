@@ -23,11 +23,33 @@ Install the following. Note that CmakeLists.txt assumes these are in C:\Vulkan:
 * run `cmake -S . -B build` from the root of the project
 
 # TODOs
-* VulkResources should only need to live during the loading phase
+* DONE VulkResources should only need to live during the loading phase
 * get some more models and make a scene. https://github.com/alecjacobson/common-3d-test-models ?
 * clean up our vertex input buffers, too much crap
+* invert the TBN matrix: So now that we have a TBN matrix, how are we going to use it? There are two ways we can use a TBN matrix for normal mapping, and we'll demonstrate both of them:
+    * We take the TBN matrix that transforms any vector from tangent to world space, give it to the fragment shader, and transform the sampled normal from tangent space to world space using the TBN matrix; the normal is then in the same space as the other lighting variables.
+    * We take the inverse of the TBN matrix that transforms any vector from world space to tangent space, and use this matrix to transform not the normal, but the other relevant lighting variables to tangent space; the normal is then again in the same space as the other lighting variables. - this is better because we can do this in vertex space and then use the interpolated values.
 
 # Log
+
+## 2/11/24 debugging
+![](Assets/Screenshots/quad_correct_tangents.png)
+
+Quads look correct tangent-wise
+
+Looking at the normal map directly: 
+* first these normals aren't normalized? maybe I'm loading them wrong, let's ee
+* oooh, I'm loading them as VK_FORMAT_R8G8B8_SRGB, but that automatically converts the texture from linear color space to sRGB space (i.e. gamma corrects them)
+* what I need to do is use the _UNORM format.
+* also I see this only has 3 channels but I'm loading 4, does that matter? let's see
+
+![](Assets/Screenshots/fixed_texture_normals.png)
+
+Look at that! just had to load the normals in _UNORM format and not _SRBG which was doing some sort of correction. let's see the sphere:
+
+![](Assets/Screenshots/fixed_sphere_normals.png)
+
+looking good too! 
 
 ## 2/11/24 Implementing tangent space
 https://learnopengl.com/Advanced-Lighting/Normal-Mapping 

@@ -8,10 +8,9 @@
 XFORMS_UBO(xformUBO);
 MODELXFORM_UBO(modelUBO);
 
-layout(binding = VulkShaderBinding_DebugNormalsUBO) uniform DebugNormalsUBO {
+layout(binding = VulkShaderBinding_DebugTangentsUBO) uniform DebugTangentsUBO {
     float len;        
-    bool useModel;       
-} debugNormalsUBO;
+} debugTangentsUBO;
 
 layout(binding = VulkShaderBinding_NormalSampler) uniform sampler2D normSampler;
 
@@ -29,15 +28,7 @@ void main() {
 
     vec4 outPos2;
     // normal from texture
-    if (!debugNormalsUBO.useModel) {
-        vec3 normWorld = (worldXform * vec4(inNormal, 0.0)).xyz;
-        vec3 tangentWorld = (worldXform * vec4(inTangent, 0.0)).xyz;
-        outWorldNorm = calcTBNNormal(normSampler, inTexCoord, normWorld, tangentWorld);
-        outPos2 = vec4(outWorldPos + outWorldNorm * 0.1, 1);
-    } else {
-        outWorldNorm = (worldXform * vec4(inNormal, 0.0)).xyz;
-        outPos2 = vec4(outWorldPos + outWorldNorm * 0.1, 1);
-    }
-
+    outWorldNorm = (worldXform * vec4(inTangent, 0.0)).xyz;
+    outPos2 = vec4(outWorldPos + outWorldNorm * debugTangentsUBO.len, 1);
     outProjPos = xformUBO.proj * xformUBO.view * outPos2;
 }

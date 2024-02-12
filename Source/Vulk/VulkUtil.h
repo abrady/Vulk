@@ -70,6 +70,8 @@ enum VulkShaderBindings
     VulkShaderBinding_ModelXform = 8,
     VulkShaderBinding_MirrorPlaneUBO = 9,
     VulkShaderBinding_MaterialUBO = 10,
+    VulkShaderBinding_DebugNormalsUBO = 11,
+    VulkShaderBinding_DebugTangentsUBO = 12,
     VulkShaderBinding_MaxBindingID,
 };
 
@@ -82,7 +84,15 @@ enum VulkShaderUBOBindings
     VulkShaderUBOBinding_ModelXform = VulkShaderBinding_ModelXform,
     VulkShaderUBOBinding_MirrorPlaneUBO = VulkShaderBinding_MirrorPlaneUBO,
     VulkShaderUBOBinding_MaterialUBO = VulkShaderBinding_MaterialUBO,
-    VulkShaderUBOBinding_MaxBindingID = VulkShaderUBOBinding_MaterialUBO,
+    VulkShaderUBOBinding_DebugNormals = VulkShaderBinding_DebugNormalsUBO,
+    VulkShaderUBOBinding_DebugTangents = VulkShaderBinding_DebugTangentsUBO,
+    VulkShaderUBOBinding_MaxBindingID = VulkShaderBinding_DebugTangentsUBO,
+};
+
+enum VulkShaderDebugUBOs
+{
+    VulkShaderDebugUBO_DebugNormals = VulkShaderUBOBinding_DebugNormals,
+    VulkShaderDebugUBO_DebugTangents = VulkShaderUBOBinding_DebugTangents,
 };
 
 enum VulkShaderSSBOBindings
@@ -145,6 +155,17 @@ struct Vertex
         Pos2Binding = 5,
         NumBindingLocations = 6,
     };
+};
+
+struct VulkDebugNormalsUBO
+{
+    float length = .1f;    // how long to render the debug normal
+    bool useModel = false; // use the model's normals/tangents instead of the shader sampled normals
+};
+
+struct VulkDebugTangentsUBO
+{
+    float length = .1f; // how long to render the debug tangent
 };
 
 class VulkMesh;

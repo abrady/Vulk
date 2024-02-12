@@ -11,6 +11,8 @@ const int VulkShaderBinding_NormalSampler = 7;
 const int VulkShaderBinding_ModelXform = 8;
 const int VulkShaderBinding_MirrorPlaneUBO = 9;
 const int VulkShaderBinding_MaterialUBO = 10;
+const int VulkShaderBinding_DebugNormalsUBO = 11;
+const int VulkShaderBinding_DebugTangentsUBO = 12;
 
 
 // note that the order matters here: it allows this to be packed into 2 vec4s
@@ -72,13 +74,19 @@ vec4 basicLighting(PointLight light, Material mtl, vec4 diffuseIn, vec3 eyePos, 
 // get the normal from the normal map and transform it into world space 
 // (or whatever space the passed in tangent and normal are in)
 // https://learnopengl.com/Advanced-Lighting/Normal-Mapping
-vec3 calcTBNNormal(sampler2D normSampler, vec2 inTexCoord, vec3 normWorld, vec3 tangentWorld) {
-    vec3 norm = vec3(texture(normSampler, inTexCoord));
-    norm = norm * 2.0 - 1.0; // Remap from [0, 1] to [-1, 1]
+mat3 calcTBNMat(vec3 normWorld, vec3 tangentWorld) {
     vec3 N = normalize(normWorld);
     vec3 T = normalize(tangentWorld);
+    // re-orthogonalize T with respect to N
+    T = normalize(T - dot(T, N) * N); // Gram-Schmidt orthogonalize
     vec3 B = cross(N, T);
-    mat3 TBN = mat3(T, B, N);
+    return mat3(T, B, N);
+}
+
+vec3 calcTBNNormal(sampler2D normSampler, vec2 inTexCoord, vec3 normWorld, vec3 tangentWorld) {
+    vec3 norm = texture(normSampler, inTexCoord).xyz;
+    norm = normalize(norm * 2.0 - 1.0); // Remap from [0, 1] to [-1, 1]
+    mat3 TBN = calcTBNMat(normWorld, tangentWorld);
     norm = normalize(TBN * norm);
     return norm;
 }

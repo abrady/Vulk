@@ -3,8 +3,9 @@
 #include <memory>
 #include <vector>
 #include "Vulk.h"
-#include "VulkTextureView.h"
 #include "VulkSampler.h"
+
+class VulkTextureView;
 
 class VulkDescriptorSet : public ClassNonCopyableNonMovable
 {
