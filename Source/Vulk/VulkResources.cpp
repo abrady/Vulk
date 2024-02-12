@@ -105,11 +105,11 @@ std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(PipelineDef &def)
                   .addVertexShaderStage(getVertexShader(def.vertexShader->name))
                   .addFragmentShaderStage(getFragmentShader(def.fragmentShader->name))
                   .addVulkVertexInput(def.vertexInputBinding)
+                  .setDepthTestEnabled(def.depthTestEnabled)
+                  .setDepthWriteEnabled(def.depthWriteEnabled)
                   .setPrimitiveTopology(def.primitiveTopology)
                   .setLineWidth(1.0f)
                   .setCullMode(VK_CULL_MODE_BACK_BIT)
-                  .setDepthTestEnabled(true)
-                  .setDepthWriteEnabled(true)
                   .setDepthCompareOp(VK_COMPARE_OP_LESS)
                   .setStencilTestEnabled(false)
                   .setBlendingEnabled(true);
@@ -231,20 +231,9 @@ shared_ptr<VulkMesh> VulkResources::getMesh(MeshDef &meshDef)
     case MeshDefType_Model:
         m = make_shared<VulkMesh>(VulkMesh::loadFromPath(meshDef.getModel()->path, name));
         break;
-    case MeshDefType_GeoMesh:
+    case MeshDefType_Mesh:
     {
-        GeoMeshDef &geoMeshDef = *meshDef.getGeoMesh();
-        m = make_shared<VulkMesh>();
-        m->name = name;
-        switch (geoMeshDef.type)
-        {
-        case GeoMeshDefType_Sphere:
-            makeGeoSphere(geoMeshDef.sphere.radius, geoMeshDef.sphere.numSubdivisions, *m);
-            break;
-        case GeoMeshDefType_Cylinder:
-            makeCylinder(geoMeshDef.cylinder.height, geoMeshDef.cylinder.bottomRadius, geoMeshDef.cylinder.topRadius, geoMeshDef.cylinder.numStacks, geoMeshDef.cylinder.numSlices, *m);
-            break;
-        }
+        m = meshDef.getMesh();
     }
     break;
     default:

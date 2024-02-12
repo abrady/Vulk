@@ -30,5 +30,6 @@ void main()
     vec3 warmColor = vec3(0.0, 1.0, 0.0); 
     vec3 normalColor = mix(coldColor, warmColor, facingRatio);
 
-    outColor = vec4(normalColor, 1.0);    
+    //outColor = vec4(normalColor, 1.0);    
+    outColor = vec4(1,1,0,1);
 }

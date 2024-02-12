@@ -72,7 +72,11 @@ struct PipelineDef
     shared_ptr<ShaderDef> vertexShader;
     shared_ptr<ShaderDef> geometryShader;
     shared_ptr<ShaderDef> fragmentShader;
+
     VkPrimitiveTopology primitiveTopology;
+    bool depthTestEnabled;
+    bool depthWriteEnabled;
+
     uint32_t vertexInputBinding;
     DescriptorSetDef descriptorSet;
 
@@ -90,13 +94,7 @@ struct PipelineDef
 enum MeshDefType
 {
     MeshDefType_Model,
-    MeshDefType_GeoMesh,
-};
-
-enum GeoMeshDefType
-{
-    GeoMeshDefType_Sphere,
-    GeoMeshDefType_Cylinder,
+    MeshDefType_Mesh,
 };
 
 struct ModelMeshDef
@@ -106,27 +104,7 @@ struct ModelMeshDef
 
 struct GeoMeshDef
 {
-    struct Sphere
-    {
-        float radius;
-        uint32_t numSubdivisions;
-    };
-    struct Cylinder
-    {
-        float height;
-        float bottomRadius;
-        float topRadius;
-        uint32_t numStacks;
-        uint32_t numSlices;
-    };
-    GeoMeshDefType type;
-    union
-    {
-        Sphere sphere;
-        Cylinder cylinder;
-    };
-    GeoMeshDef(Sphere sphere) : type(GeoMeshDefType_Sphere), sphere(sphere){};
-    GeoMeshDef(Cylinder cylinder) : type(GeoMeshDefType_Cylinder), cylinder(cylinder){};
+    VulkMesh mesh;
 };
 
 struct MeshDef
@@ -134,21 +112,21 @@ struct MeshDef
     string name;
     MeshDefType type;
     MeshDef(string name, ModelMeshDef model) : name(name), type(MeshDefType_Model), model(make_shared<ModelMeshDef>(model)){};
-    MeshDef(string name, GeoMeshDef geo) : name(name), type(MeshDefType_GeoMesh), geo(make_shared<GeoMeshDef>(geo)){};
+    MeshDef(string name, std::shared_ptr<VulkMesh> mesh) : name(name), type(MeshDefType_Mesh), mesh(mesh){};
     shared_ptr<ModelMeshDef> getModel()
     {
         assert(type == MeshDefType_Model);
         return model;
     }
-    shared_ptr<GeoMeshDef> getGeoMesh()
+    shared_ptr<VulkMesh> getMesh()
     {
-        assert(type == MeshDefType_GeoMesh);
-        return geo;
+        assert(type == MeshDefType_Mesh);
+        return mesh;
     }
 
 private:
     shared_ptr<ModelMeshDef> model;
-    shared_ptr<GeoMeshDef> geo;
+    shared_ptr<VulkMesh> mesh;
 };
 
 #define MODEL_JSON_VERSION 1

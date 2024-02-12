@@ -22,9 +22,24 @@ void main() {
     gl_Position = xformUBO.proj * xformUBO.view * pos;
     outWorldPos = pos.xyz;
 
-    vec3 normWorld = (worldXform * vec4(inNormal, 0.0)).xyz;
-    vec3 tangentWorld = (worldXform * vec4(inTangent, 0.0)).xyz;
-    outWorldNorm = calcTBNNormal(normSampler, inTexCoord, normWorld, tangentWorld);
+    vec4 outPos2;
+    // normal from texture
+    if (false) {
+        vec3 normWorld = (worldXform * vec4(inNormal, 0.0)).xyz;
+        vec3 tangentWorld = (worldXform * vec4(inTangent, 0.0)).xyz;
+        outWorldNorm = calcTBNNormal(normSampler, inTexCoord, normWorld, tangentWorld);
+        outPos2 = vec4(outWorldPos + outWorldNorm * 0.1, 1);
+    }
+    // normal from input
+    if (false) {
+        outWorldNorm = (worldXform * vec4(inNormal, 0.0)).xyz;
+        outPos2 = vec4(outWorldPos + outWorldNorm * 0.1, 1);
+    }
+    // tangent
+    if (true) {
+        outWorldNorm = (worldXform * vec4(inTangent, 0.0)).xyz;
+        outPos2 = vec4(outWorldPos + outWorldNorm * 0.1, 1);
+    }
 
-    outProjPos = xformUBO.proj * xformUBO.view * vec4(outWorldPos + outWorldNorm * 0.1, 1);
+    outProjPos = xformUBO.proj * xformUBO.view * outPos2;
 }

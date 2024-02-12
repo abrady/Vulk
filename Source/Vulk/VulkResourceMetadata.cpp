@@ -214,6 +214,8 @@ PipelineDef PipelineDef::fromJSON(const nlohmann::json &j, unordered_map<string,
     assert(fragmentShaders.contains(shader));
     p.fragmentShader = fragmentShaders.at(shader);
     p.primitiveTopology = j.contains("primitiveTopology") ? primitiveTopologyMap.at(j.at("primitiveTopology").get<string>()) : VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    p.depthTestEnabled = j.value("depthTestEnabled", true);
+    p.depthWriteEnabled = j.value("depthWriteEnabled", true);
 
     p.vertexInputBinding = j.at("vertexInputBinding").get<uint32_t>();
     p.descriptorSet = DescriptorSetDef::fromJSON(j.at("descriptorSet")); // Use custom from_json for DescriptorSetDef
@@ -230,12 +232,25 @@ PipelineDef PipelineDef::fromJSON(const nlohmann::json &j, unordered_map<string,
 
 static unordered_map<string, MeshDefType> meshDefTypeMap{
     {"Model", MeshDefType_Model},
-    {"GeoMesh", MeshDefType_GeoMesh},
+    {"Mesh", MeshDefType_Mesh},
 };
 
+enum GeoMeshDefType
+{
+    GeoMeshDefType_Sphere,
+    GeoMeshDefType_Cylinder,
+    GeoMeshDefType_EquilateralTriangle,
+    GeoMeshDefType_Quad,
+    GeoMeshDefType_Grid,
+    GeoMeshDefType_Axes,
+};
 static unordered_map<string, GeoMeshDefType> geoMeshDefTypeMap{
     {"Sphere", GeoMeshDefType_Sphere},
     {"Cylinder", GeoMeshDefType_Cylinder},
+    {"Triangle", GeoMeshDefType_EquilateralTriangle},
+    {"Quad", GeoMeshDefType_Quad},
+    {"Grid", GeoMeshDefType_Grid},
+    {"Axes", GeoMeshDefType_Axes},
 };
 
 ModelDef ModelDef::fromJSON(const nlohmann::json &j, unordered_map<string, shared_ptr<MeshDef>> const &meshes, unordered_map<string, shared_ptr<MaterialDef>> materials)
@@ -248,37 +263,67 @@ ModelDef ModelDef::fromJSON(const nlohmann::json &j, unordered_map<string, share
     {
     case MeshDefType_Model:
         return ModelDef(name, meshes.at(j.at("mesh").get<string>()), material);
-    case MeshDefType_GeoMesh:
+    case MeshDefType_Mesh:
     {
-        shared_ptr<MeshDef> mesh;
+        shared_ptr<VulkMesh> mesh = make_shared<VulkMesh>();
         auto meshJson = j.at("GeoMesh");
         GeoMeshDefType type = geoMeshDefTypeMap.at(meshJson.at("type").get<string>());
         switch (type)
         {
         case GeoMeshDefType_Sphere:
         {
-            GeoMeshDef::Sphere sphere;
-            sphere.radius = meshJson.at("radius").get<float>();
-            sphere.numSubdivisions = meshJson.at("numSubdivisions").get<uint32_t>();
-            mesh = make_shared<MeshDef>(name + ".GeoMesh.Sphere", sphere);
+            float radius = meshJson.at("radius").get<float>();
+            uint32_t numSubdivisions = meshJson.at("numSubdivisions").get<uint32_t>();
+            mesh = make_shared<VulkMesh>();
+            makeGeoSphere(radius, numSubdivisions, *mesh);
         }
         break;
         case GeoMeshDefType_Cylinder:
         {
-            GeoMeshDef::Cylinder cylinder;
-            cylinder.height = meshJson.at("height").get<float>();
-            cylinder.bottomRadius = meshJson.at("bottomRadius").get<float>();
-            cylinder.topRadius = meshJson.at("topRadius").get<float>();
-            cylinder.numStacks = meshJson.at("numStacks").get<uint32_t>();
-            cylinder.numSlices = meshJson.at("numSlices").get<uint32_t>();
-
-            mesh = make_shared<MeshDef>(name + ".GeoMesh.Cylinder", cylinder);
+            float height = meshJson.at("height").get<float>();
+            float bottomRadius = meshJson.at("bottomRadius").get<float>();
+            float topRadius = meshJson.at("topRadius").get<float>();
+            uint32_t numStacks = meshJson.at("numStacks").get<uint32_t>();
+            uint32_t numSlices = meshJson.at("numSlices").get<uint32_t>();
+            makeCylinder(height, bottomRadius, topRadius, numStacks, numSlices, *mesh);
+        }
+        break;
+        case GeoMeshDefType_EquilateralTriangle:
+        {
+            float side = meshJson.at("side").get<float>();
+            uint32_t numSubdivisions = meshJson.at("numSubdivisions").get<uint32_t>();
+            makeEquilateralTri(side, numSubdivisions, *mesh);
+        }
+        break;
+        case GeoMeshDefType_Quad:
+        {
+            float w = meshJson.at("width").get<float>();
+            float h = meshJson.at("height").get<float>();
+            uint32_t numSubdivisions = meshJson.at("numSubdivisions").get<uint32_t>();
+            makeQuad(w, h, numSubdivisions, *mesh);
+        }
+        break;
+        case GeoMeshDefType_Grid:
+        {
+            float width = meshJson.at("width").get<float>();
+            float depth = meshJson.at("depth").get<float>();
+            uint32_t m = meshJson.at("m").get<uint32_t>();
+            uint32_t n = meshJson.at("n").get<uint32_t>();
+            float repeatU = meshJson.value("repeatU", 1.0f);
+            float repeatV = meshJson.value("repeatV", 1.0f);
+            makeGrid(width, depth, m, n, *mesh, repeatU, repeatV);
+        }
+        break;
+        case GeoMeshDefType_Axes:
+        {
+            float length = meshJson.at("length").get<float>();
+            makeAxes(length, *mesh);
         }
         break;
         default:
             throw runtime_error("Unknown GeoMesh type: " + type);
         }
-        return ModelDef(name, mesh, material);
+        return ModelDef(name, make_shared<MeshDef>(name, mesh), material);
     }
     default:
         throw runtime_error("Unknown MeshDef type: " + meshDefType);

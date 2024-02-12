@@ -6,12 +6,45 @@
 
 using namespace glm;
 
+static vec3 calcTangent(vec3 pos1, vec3 pos2, vec3 pos3, vec2 uv1, vec2 uv2, vec2 uv3)
+{
+    // positions
+    pos1 = vec3(-1.0, 1.0, 0.0);
+    pos2 = vec3(-1.0, -1.0, 0.0);
+    pos3 = vec3(1.0, -1.0, 0.0);
+    // glm::vec3 pos4( 1.0,  1.0, 0.0);
+    // // texture coordinates
+    uv1 = vec2(0.0, 1.0);
+    uv2 = vec2(0.0, 0.0);
+    uv3 = vec2(1.0, 0.0);
+    // glm::vec2 uv4(1.0, 1.0);
+    // normal vector
+    // glm::vec3 nm(0.0, 0.0, 1.0);
+
+    glm::vec3 edge1 = pos2 - pos1;
+    glm::vec3 edge2 = pos3 - pos1;
+    glm::vec2 deltaUV1 = uv2 - uv1;
+    glm::vec2 deltaUV2 = uv3 - uv1;
+
+    float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+    glm::vec3 tangent1;
+    tangent1.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+    tangent1.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+    tangent1.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+
+    // bitangent1.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+    // bitangent1.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+    // bitangent1.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+    return tangent1;
+}
+
 // Calculate the tangent of a triangle - in this case convention is to use:
 // Imagine a triangle on a plane with a tangent and bitangent vector on the plane.
 //
 // 2. E1=ΔU1T+ΔV1B
 // see also https://learnopengl.com/Advanced-Lighting/Normal-Mapping
-static vec3 calcTangent(vec3 const &P1, vec3 const &P2, vec3 const &P3, vec2 const &UV1, vec2 const &UV2, vec2 const &UV3)
+vec3 calcTangent0(vec3 const &P1, vec3 const &P2, vec3 const &P3, vec2 const &UV1, vec2 const &UV2, vec2 const &UV3)
 {
     // Calculate the edges of the triangle and the differences in texture coordinates
     vec3 Edge1 = P2 - P1;
@@ -42,6 +75,10 @@ static vec3 calcTangent(vec3 const &P1, vec3 const &P2, vec3 const &P3, vec2 con
 
 static void calcMeshTangents(VulkMesh &meshData)
 {
+    for (auto &vert : meshData.vertices)
+    {
+        vert.tangent = vec3(0.f); // normalize to get the 'average' tangent
+    }
     // tangent space needs special handling
     for (uint32_t i = 0; i < meshData.indices.size(); i += 3)
     {
@@ -58,6 +95,9 @@ static void calcMeshTangents(VulkMesh &meshData)
         meshData.vertices[i0].tangent += tangent;
         meshData.vertices[i1].tangent += tangent;
         meshData.vertices[i2].tangent += tangent;
+        // meshData.vertices[i0].tangent = tangent;
+        // meshData.vertices[i1].tangent = tangent;
+        // meshData.vertices[i2].tangent = tangent;
     }
 
     for (auto &vert : meshData.vertices)
@@ -143,7 +183,7 @@ void makeEquilateralTri(float side, uint32_t numSubdivisions, VulkMesh &meshData
     Vertex v1;
     v1.pos = vec3(side, 0.0f, 0.0f);
     v1.normal = vec3(0.0f, 0.0f, 1.0f);
-    v1.uv = vec2(1.0f, 1.0f);
+    v1.uv = vec2(0.5f, 1.0f);
 
     Vertex v2;
     v2.pos = vec3(side / 2.0f, side * sqrtf(3.0f) / 2.0f, 0.0f);
@@ -169,6 +209,8 @@ void makeEquilateralTri(float side, uint32_t numSubdivisions, VulkMesh &meshData
     {
         subdivideTris(meshData);
     }
+
+    calcMeshTangents(meshData);
 }
 
 void makeQuad(float x, float y, float w, float h, float depth, uint32_t numSubdivisions, VulkMesh &meshData)
