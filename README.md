@@ -32,6 +32,9 @@ Install the following. Note that CmakeLists.txt assumes these are in C:\Vulkan:
 
 # Log
 
+## 2/12/24 wrapping up sampled normals debugging
+I'm curious about the multiple tangents coming off of my verts, what is going on here? Ah! when you subdivide adjacent tris you'll duplicate verts if you're not careful. quick and dirty vert lookup seems to be working. good enough.
+
 ## 2/11/24 debugging
 ![](Assets/Screenshots/quad_correct_tangents.png)
 

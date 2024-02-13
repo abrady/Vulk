@@ -175,3 +175,70 @@ QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surfa
 std::vector<char> readFileIntoMem(const std::string &filename);
 
 #include <glm/glm.hpp>
+
+class VulkPauseableTimer
+{
+public:
+    VulkPauseableTimer() : isRunning(false), elapsedTime(0.0f) {}
+
+    void start()
+    {
+        if (!isRunning)
+        {
+            startTime = std::chrono::high_resolution_clock::now();
+            isRunning = true;
+        }
+    }
+
+    void pause()
+    {
+        if (isRunning)
+        {
+            auto currentTime = std::chrono::high_resolution_clock::now();
+            elapsedTime += std::chrono::duration<float>(currentTime - startTime).count();
+            isRunning = false;
+        }
+    }
+
+    void resume()
+    {
+        start();
+    }
+
+    void toggle()
+    {
+        if (isRunning)
+        {
+            pause();
+        }
+        else
+        {
+            resume();
+        }
+    }
+
+    void reset()
+    {
+        isRunning = false;
+        elapsedTime = 0.0f;
+    }
+
+    float getElapsedTime()
+    {
+        if (isRunning)
+        {
+            auto currentTime = std::chrono::high_resolution_clock::now();
+            auto currentElapsedTime = elapsedTime + std::chrono::duration<float>(currentTime - startTime).count();
+            return currentElapsedTime;
+        }
+        else
+        {
+            return elapsedTime;
+        }
+    }
+
+private:
+    bool isRunning;
+    float elapsedTime; // In seconds
+    std::chrono::time_point<std::chrono::high_resolution_clock> startTime;
+};

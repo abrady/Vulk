@@ -96,6 +96,24 @@ static void subdivideTris(VulkMesh &meshData)
     meshData.indices.clear();
     meshData.vertices.reserve(verticesCopy.size() * 2);
     meshData.indices.reserve(indicesCopy.size() * 4);
+
+    std::unordered_map<glm::vec3, uint32_t> indexFromPoint;
+    auto addVertex = [&](Vertex const &v) -> uint32_t
+    {
+        auto it = indexFromPoint.find(v.pos);
+        if (it != indexFromPoint.end())
+        {
+            return it->second;
+        }
+        else
+        {
+            uint32_t index = (uint32_t)meshData.vertices.size();
+            meshData.vertices.push_back(v);
+            indexFromPoint[v.pos] = index;
+            return index;
+        }
+    };
+
     for (uint32_t i = 0; i < indicesCopy.size(); i += 3)
     {
         Vertex v0 = verticesCopy[indicesCopy[i + 0]];
@@ -106,36 +124,44 @@ static void subdivideTris(VulkMesh &meshData)
         Vertex m0, m1, m2;
         m0.pos = 0.5f * (v0.pos + v1.pos);
         m0.uv = 0.5f * (v0.uv + v1.uv);
+        m0.normal = 0.5f * (v0.normal + v1.normal);
         m1.pos = 0.5f * (v1.pos + v2.pos);
         m1.uv = 0.5f * (v1.uv + v2.uv);
+        m1.normal = 0.5f * (v1.normal + v2.normal);
         m2.pos = 0.5f * (v0.pos + v2.pos);
         m2.uv = 0.5f * (v0.uv + v2.uv);
+        m2.normal = 0.5f * (v0.normal + v2.normal);
 
         // add new geometry
-        meshData.vertices.push_back(v0);
-        meshData.vertices.push_back(m0);
-        meshData.vertices.push_back(v1);
-        meshData.vertices.push_back(m1);
-        meshData.vertices.push_back(v2);
-        meshData.vertices.push_back(m2);
+        // meshData.vertices.push_back(v0);
+        // meshData.vertices.push_back(m0);
+        // meshData.vertices.push_back(v1);
+        // meshData.vertices.push_back(m1);
+        // meshData.vertices.push_back(v2);
+        // meshData.vertices.push_back(m2);
+        uint32_t i0 = addVertex(v0);
+        uint32_t i1 = addVertex(m0);
+        uint32_t i2 = addVertex(v1);
+        uint32_t i3 = addVertex(m1);
+        uint32_t i4 = addVertex(v2);
+        uint32_t i5 = addVertex(m2);
 
         // add new indices
-        uint32_t numVertices = (uint32_t)meshData.vertices.size() - 6;
-        meshData.indices.push_back(numVertices + 0);
-        meshData.indices.push_back(numVertices + 1);
-        meshData.indices.push_back(numVertices + 5);
+        meshData.indices.push_back(i0);
+        meshData.indices.push_back(i1);
+        meshData.indices.push_back(i5);
 
-        meshData.indices.push_back(numVertices + 1);
-        meshData.indices.push_back(numVertices + 2);
-        meshData.indices.push_back(numVertices + 3);
+        meshData.indices.push_back(i1);
+        meshData.indices.push_back(i2);
+        meshData.indices.push_back(i3);
 
-        meshData.indices.push_back(numVertices + 1);
-        meshData.indices.push_back(numVertices + 3);
-        meshData.indices.push_back(numVertices + 5);
+        meshData.indices.push_back(i1);
+        meshData.indices.push_back(i3);
+        meshData.indices.push_back(i5);
 
-        meshData.indices.push_back(numVertices + 3);
-        meshData.indices.push_back(numVertices + 4);
-        meshData.indices.push_back(numVertices + 5);
+        meshData.indices.push_back(i3);
+        meshData.indices.push_back(i4);
+        meshData.indices.push_back(i5);
     }
 }
 
@@ -157,10 +183,6 @@ void makeEquilateralTri(float side, uint32_t numSubdivisions, VulkMesh &meshData
     v2.pos = vec3(side / 2.0f, side * sqrtf(3.0f) / 2.0f, 0.0f);
     v2.normal = vec3(0.0f, 0.0f, 1.0f);
     v2.uv = vec2(0.0f, 1.0f);
-
-    // v0.tangent = vec3(1.0f, 0.0f, 0.0f);
-    // v1.tangent = normalize(v2.pos - v1.pos);
-    // v2.tangent = normalize(v0.pos - v2.pos);
 
     uint32_t baseIndex = (uint32_t)meshData.vertices.size();
     meshData.vertices.push_back(v0);

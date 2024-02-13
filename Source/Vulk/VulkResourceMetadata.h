@@ -76,6 +76,7 @@ struct PipelineDef
     VkPrimitiveTopology primitiveTopology;
     bool depthTestEnabled;
     bool depthWriteEnabled;
+    VkCompareOp depthCompareOp;
 
     uint32_t vertexInputBinding;
     DescriptorSetDef descriptorSet;

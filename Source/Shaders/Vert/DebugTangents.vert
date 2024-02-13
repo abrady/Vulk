@@ -27,7 +27,6 @@ void main() {
     outWorldPos = pos.xyz;
 
     vec4 outPos2;
-    // normal from texture
     outWorldNorm = (worldXform * vec4(inTangent, 0.0)).xyz;
     outPos2 = vec4(outWorldPos + outWorldNorm * debugTangentsUBO.len, 1);
     outProjPos = xformUBO.proj * xformUBO.view * outPos2;

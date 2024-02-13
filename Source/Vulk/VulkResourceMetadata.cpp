@@ -204,6 +204,17 @@ static unordered_map<string, VkPrimitiveTopology> primitiveTopologyMap{
     {"PointList", VK_PRIMITIVE_TOPOLOGY_POINT_LIST},
 };
 
+static unordered_map<string, VkCompareOp> depthCompareOpMap{
+    {"NEVER", VK_COMPARE_OP_NEVER},
+    {"LESS", VK_COMPARE_OP_LESS},
+    {"EQUAL", VK_COMPARE_OP_EQUAL},
+    {"LESS_OR_EQUAL", VK_COMPARE_OP_LESS_OR_EQUAL},
+    {"GREATER", VK_COMPARE_OP_GREATER},
+    {"NOT_EQUAL", VK_COMPARE_OP_NOT_EQUAL},
+    {"GREATER_OR_EQUAL", VK_COMPARE_OP_GREATER_OR_EQUAL},
+    {"ALWAYS", VK_COMPARE_OP_ALWAYS},
+};
+
 PipelineDef PipelineDef::fromJSON(const nlohmann::json &j, unordered_map<string, shared_ptr<ShaderDef>> const &vertexShaders, unordered_map<string, shared_ptr<ShaderDef>> const &geometryShaders, unordered_map<string, shared_ptr<ShaderDef>> const &fragmentShaders)
 {
     PipelineDef p;
@@ -218,6 +229,7 @@ PipelineDef PipelineDef::fromJSON(const nlohmann::json &j, unordered_map<string,
     p.primitiveTopology = j.contains("primitiveTopology") ? primitiveTopologyMap.at(j.at("primitiveTopology").get<string>()) : VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     p.depthTestEnabled = j.value("depthTestEnabled", true);
     p.depthWriteEnabled = j.value("depthWriteEnabled", true);
+    p.depthCompareOp = depthCompareOpMap.at(j.value("depthCompareOp", "LESS"));
 
     p.vertexInputBinding = j.at("vertexInputBinding").get<uint32_t>();
     p.descriptorSet = DescriptorSetDef::fromJSON(j.at("descriptorSet")); // Use custom from_json for DescriptorSetDef
@@ -451,7 +463,7 @@ void findAndProcessMetadata(const fs::path &path, Metadata &metadata)
             {
                 ifstream f(entry.path());
                 LoadInfo loadInfo;
-                loadInfo.j = nlohmann::json::parse(f, nullptr, true, true); // allow comments and trailing commas
+                loadInfo.j = nlohmann::json::parse(f, nullptr, true, true); // allow comments
                 loadInfo.path = entry.path().parent_path();
                 assert(loadInfo.j.at("name") == stem);
                 loadInfos[ext][loadInfo.j.at("name")] = loadInfo;

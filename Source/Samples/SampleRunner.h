@@ -65,66 +65,7 @@ protected:
 
     void keyCallback(int key, int scancode, int action, int mods)
     {
-        VulkCamera &camera = world->getCamera();
-        if (action == GLFW_PRESS || action == GLFW_REPEAT)
-        {
-            glm::vec3 fwd = camera.getForwardVec();
-            glm::vec3 right = camera.getRightVec();
-            glm::vec3 up = camera.getUpVec();
-            float move = .2f;
-            bool handled = true;
-            if (key == GLFW_KEY_W)
-            {
-                camera.eye += move * fwd;
-            }
-            else if (key == GLFW_KEY_A)
-            {
-                camera.eye -= move * right;
-            }
-            else if (key == GLFW_KEY_S)
-            {
-                camera.eye -= move * fwd;
-            }
-            else if (key == GLFW_KEY_D)
-            {
-                camera.eye += move * right;
-            }
-            else if (key == GLFW_KEY_Q)
-            {
-                camera.eye -= move * up;
-            }
-            else if (key == GLFW_KEY_E)
-            {
-                camera.eye += move * up;
-            }
-            else if (key == GLFW_KEY_LEFT)
-            {
-                camera.yaw -= 15.0f;
-            }
-            else if (key == GLFW_KEY_RIGHT)
-            {
-                camera.yaw += 15.0f;
-            }
-            else if (key == GLFW_KEY_UP)
-            {
-                camera.pitch += 15.0f;
-            }
-            else if (key == GLFW_KEY_DOWN)
-            {
-                camera.pitch -= 15.0f;
-            }
-            else
-            {
-                handled = false;
-            }
-            if (handled)
-            {
-                camera.yaw = fmodf(camera.yaw, 360.0f);
-                camera.pitch = fmodf(camera.pitch, 360.0f);
-                std::cout << "eye: " << camera.eye.x << ", " << camera.eye.y << ", " << camera.eye.z << " yaw: " << camera.yaw << " pitch: " << camera.pitch << std::endl;
-                return;
-            }
-        }
-        Vulk::keyCallback(key, scancode, action, mods);
+        if (!world->keyCallback(key, scancode, action, mods))
+            Vulk::keyCallback(key, scancode, action, mods);
     }
 };
