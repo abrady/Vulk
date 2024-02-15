@@ -1,5 +1,6 @@
 #version 450
 
+#include "lighting.frag"
 #include "common.glsl"
 
 XFORMS_UBO(xformUBO);

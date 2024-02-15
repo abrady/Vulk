@@ -28,6 +28,8 @@ include_directories("${CMAKE_SOURCE_DIR}/Source/ThirdParty/include")
 include_directories("$ENV{VK_SDK_PATH}/include")
 add_compile_options(-W3)
 
+add_subdirectory(${CMAKE_SOURCE_DIR}/Tools/vertfrag)
+
 # TODO: configure so it will work for release builds too
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(TARGET_DIR "${CMAKE_BINARY_DIR}/Debug") 

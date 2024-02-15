@@ -1,0 +1,19 @@
+@ubo(XformsUBO xformsUBO, ModelXform modelUBO)
+void vert(in Pos inPos, in Norm inNorm, in Tan inTan, in TexCoord inTex, out  )
+{
+    mat4 worldXform = xform.world * modelUBO.xform;
+    gl_Position = xform.proj * xform.view * worldXform * vec4(inPosition, 1.0);
+    outTexCoord = inTexCoord;
+    outPos = vec3(worldXform * vec4(inPosition, 1.0));
+    outNorm = vec3(worldXform * vec4(inNormal, 0.0));
+    outTangent = vec3(worldXform * vec4(inTangent, 0.0)); 
+}
+
+@ubo(EyePos eyePos, Lights lights, MaterialUBO materialUBO)
+@sampler(TextureSampler texSampler, TextureSampler normSampler)
+void frag(in Pos fragPos, in TexCoord fragTexCoord) 
+{
+    vec4 tex = texture(texSampler, fragTexCoord);
+    vec3 norm = vec3(texture(normSampler, fragTexCoord));
+    outColor = blinnPhong(tex.xyx, norm, eyePosUBO.eyePos, lightBuf.light.pos, fragPos, lightBuf.light.color, true);
+}

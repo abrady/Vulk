@@ -32,8 +32,56 @@ Install the following. Note that CmakeLists.txt assumes these are in C:\Vulkan:
 
 # Log
 
+## 2/14 pipeline annoyances
+* it sucks to define the pipeline and the inputs and then get runtime errors
+* what would be nice would be some way to tie this all together. how can I do this?
+
+1. parse the shader and generate the piepline: cons - too fiddly
+2. create an upstream file that generates the shaders but you fill out what they do
+    * cons: still tedious!
+3. upstream file where you write the shader code and define inputs and outputs?
+
+what would that look like?
+* ubos: could be any stage
+* samplers: any stage
+* in verts: only vertex stage
+* outputs feed into inputs in the next stage
+
+XFORMS_UBO(xform);
+MODELXFORM_UBO(modelUBO);
+VERTEX_IN(inPosition, inNormal, inTangent, inTexCoord);
+VERTEX_OUT(outPos, outNorm, outTangent, outTexCoord);
+
+```
+// FRAG
+//  VERT_IN: inPos, inNorm, inTan, inTex
+@ubo(XformsUBO xformsUBO, ModelXform modelUBO)
+void vert(in Pos inPos, in Norm inNorm, in Tan inTan, in TexCoord inTex, out  )
+{
+    mat4 worldXform = xform.world * modelUBO.xform;
+    gl_Position = xform.proj * xform.view * worldXform * vec4(inPosition, 1.0);
+    outTexCoord = inTexCoord;
+    outPos = vec3(worldXform * vec4(inPosition, 1.0));
+    outNorm = vec3(worldXform * vec4(inNormal, 0.0));
+    outTangent = vec3(worldXform * vec4(inTangent, 0.0)); 
+}
+
+@ubo(EyePos eyePos, Lights lights, MaterialUBO materialUBO)
+@sampler(TextureSampler texSampler, TextureSampler normSampler)
+void frag(in Pos fragPos, in TexCoord fragTexCoord) 
+{
+    vec4 tex = texture(texSampler, fragTexCoord);
+    vec3 norm = vec3(texture(normSampler, fragTexCoord));
+    outColor = blinnPhong(tex.xyx, norm, eyePosUBO.eyePos, lightBuf.light.pos, fragPos, lightBuf.light.color, true);
+}
+
+
+```
+
+
 ## 2/12/24 wrapping up sampled normals debugging
-I'm curious about the multiple tangents coming off of my verts, what is going on here? Ah! when you subdivide adjacent tris you'll duplicate verts if you're not careful. quick and dirty vert lookup seems to be working. good enough.
+I'm curious about the multiple tangents coming off of my verts, what is going on here? Ah! when you subdivide adjacent tris you'll duplicate verts if you're not 
+careful. quick and dirty vert lookup seems to be working. good enough.
 
 ## 2/11/24 debugging
 ![](Assets/Screenshots/quad_correct_tangents.png)

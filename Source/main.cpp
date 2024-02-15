@@ -9,6 +9,6 @@
 
 int main()
 {
-    SampleRunner<World>("RenderNormalmap").run();
+    SampleRunner<World>("BlinnPhong").run();
     return 0;
 }
