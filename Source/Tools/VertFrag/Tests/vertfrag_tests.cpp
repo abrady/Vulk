@@ -102,7 +102,7 @@ TEST_CASE("Vertfrag Tests") {
         pegtl::memory_input<> in(R"(
             
     @ubo(EyePos eyePos, Lights lights, MaterialUBO materialUBO)
-    @sampler(TextureSampler texSampler, TextureSampler normSampler)
+    @sampler(TextureSampler texSampler, NormalSampler normSampler)
     @out(Color outColor)
     void frag(Pos fragPos, TexCoord fragTexCoord)
     {

@@ -135,8 +135,19 @@ namespace vertfrag {
             return s;
         }
     };
-
     template <typename Rule> struct control : normal<Rule> {
+        // template <typename ParseInput, typename... States> static void start(const ParseInput &pi, States &&.../*unused*/) noexcept {
+        //     // std::cerr << "start: " << pi.position().byte << std::endl;
+        // }
+
+        // template <typename ParseInput, typename... States> static void success(const ParseInput &pi, States &&.../*unused*/) noexcept {
+        //     // std::cerr << "success: " << pi.position().byte << std::endl;
+        // }
+
+        // template <typename ParseInput, typename... States> static void failure(const ParseInput &pi, States &&.../*unused*/) noexcept {
+        //     // std::cerr << "failure: " << pi.position().byte << std::endl;
+        // }
+
         // This method is called when a rule fails to match.
         template <typename Input, typename... States> static void raise(const Input &in, States &&...) {
             std::cerr << "Error: Failed to match rule '" << demangle<Rule>()
@@ -221,6 +232,16 @@ namespace vertfrag {
     template <> struct action<shader_param_name> {
         template <typename ParseInput> static void apply(const ParseInput &in, StateBuilder &s) {
             s.b->addInBindingName(in.string());
+        }
+    };
+    template <> struct action<sampler_param_type> {
+        template <typename ParseInput> static void apply(const ParseInput &in, StateBuilder &s) {
+            s.b->addSamplerBinding(VulkShaderEnums::textureBindingFromString(in.string()));
+        }
+    };
+    template <> struct action<sampler_param_name> {
+        template <typename ParseInput> static void apply(const ParseInput &in, StateBuilder &s) {
+            s.b->addSamplerName(in.string());
         }
     };
     template <> struct action<out_param_type> {
