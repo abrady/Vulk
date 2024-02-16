@@ -160,8 +160,8 @@ namespace vertfrag {
     struct ubo_keyword : TAO_PEGTL_KEYWORD("@ubo") {};
     struct ubo_type : plus<identifier> {};
     struct ubo_name : plus<identifier> {};
-    struct ubo_param : seq<ubo_type, spaces, ubo_name> {};
-    struct ubo_declaration : seq<ubo_keyword, one<'('>, list<ubo_param, one<','>>, one<')'>> {};
+    struct ubo_param : seq<opt_spaces, ubo_type, spaces, ubo_name> {};
+    struct ubo_declaration : seq<ubo_keyword, one<'('>, list<ubo_param, one<','>>, one<')'>, spaces> {};
 
     struct shader_param_type : plus<identifier> {};
     struct shader_param_name : plus<identifier> {};
@@ -171,7 +171,7 @@ namespace vertfrag {
     struct out_param_type : plus<identifier> {};
     struct out_param_name : plus<identifier> {};
     struct out_param : seq<opt_spaces, out_param_type, spaces, out_param_name, opt_spaces> {};
-    struct out_declaration : seq<out_keyword, one<'('>, list<out_param, one<','>>, one<')'>> {};
+    struct out_declaration : seq<out_keyword, one<'('>, list<out_param, one<','>>, one<')'>, spaces> {};
 
     struct not_brace : not_one<'{', '}'> {};
     struct content; // forward decl
@@ -184,7 +184,7 @@ namespace vertfrag {
     struct shader_func_decl : seq<shader_start, one<'('>, list<shader_param, one<','>>, one<')'>, star<space>, function_body> {};
 
     // seq<ubo_declaration, shader_func_decl> {};
-    struct shader_decl : seq<ubo_declaration, spaces, out_declaration, spaces, shader_func_decl> {};
+    struct shader_decl : seq<ubo_declaration, out_declaration, shader_func_decl> {};
     struct vertfrag_body : star<sor<shader_decl, skip>> {};
     // struct grammar : must<vertfrag_body, eof> {};
     struct grammar : must<shader_decl, eof> {};

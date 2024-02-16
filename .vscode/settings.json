@@ -91,7 +91,16 @@
         "numeric": "cpp",
         "valarray": "cpp",
         "codecvt": "cpp",
-        "typeindex": "cpp"
+        "typeindex": "cpp",
+        "condition_variable": "cpp",
+        "deque": "cpp",
+        "coroutine": "cpp",
+        "resumable": "cpp",
+        "future": "cpp",
+        "random": "cpp",
+        "regex": "cpp",
+        "stack": "cpp",
+        "variant": "cpp"
     },
     "files.eol": "\n"
 }

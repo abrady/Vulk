@@ -9,7 +9,7 @@ TEST_CASE("Vertfrag Tests") {
     // Define your tests here
     SECTION("Test Parsing") {
         vertfrag::StateBuilder stateBuilder;
-        pegtl::memory_input<> in(R"(@ubo(XformsUBO xformsIn)
+        pegtl::memory_input<> in(R"(@ubo(XformsUBO xformsIn, ModelXform modelIn)
     @out(Pos outPos, Normal outNorm)
     void vert(Pos inPos, Normal inNorm, Tangent inTan, TexCoord inTex)
     {
@@ -25,11 +25,11 @@ TEST_CASE("Vertfrag Tests") {
         REQUIRE(pegtl::parse<vertfrag::grammar, vertfrag::action, vertfrag::control>(in, stateBuilder));
         auto state = stateBuilder.build();
         auto &vert = state.shaderDecls[0];
-        REQUIRE(vert.ubos.size() == 1);
+        REQUIRE(vert.ubos.size() == 2);
         REQUIRE(vert.ubos[0].type == VulkShaderUBOBinding_Xforms);
         REQUIRE(vert.ubos[0].name == "xformsIn");
-        // REQUIRE(vert.ubos[1].type == VulkShaderUBOBinding_ModelXform);
-        // REQUIRE(vert.ubos[1].name == "modelIn");
+        REQUIRE(vert.ubos[1].type == VulkShaderUBOBinding_ModelXform);
+        REQUIRE(vert.ubos[1].name == "modelIn");
 
         REQUIRE(vert.inBindings.size() == 4);
         REQUIRE(vert.inBindings[0].type == VulkVertBindingLocation_PosBinding);
