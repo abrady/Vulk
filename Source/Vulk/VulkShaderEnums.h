@@ -4,13 +4,14 @@
 #include <string>
 
 enum VulkVertBindingLocation {
-    VulkVertBindingLocation_PosBinding = 0,
-    VulkVertBindingLocation_NormalBinding = 1,
-    VulkVertBindingLocation_TangentBinding = 2,
-    VulkVertBindingLocation_TexCoordBinding = 3,
-    VulkVertBindingLocation_HeightBinding = 4,
-    VulkVertBindingLocation_Pos2Binding = 5,
-    VulkVertBindingLocation_MaxID = 6,
+    VulkVertBindingLocation_ColorBinding = 0,
+    VulkVertBindingLocation_PosBinding = 1,
+    VulkVertBindingLocation_NormalBinding = 2,
+    VulkVertBindingLocation_TangentBinding = 3,
+    VulkVertBindingLocation_TexCoordBinding = 4,
+    VulkVertBindingLocation_HeightBinding = 5,
+    VulkVertBindingLocation_Pos2Binding = 6,
+    VulkVertBindingLocation_MaxID = 7,
 };
 
 // keep in sync with Source\Shaders\Common\common.glsl
@@ -65,7 +66,9 @@ enum VulkShaderTextureBindings {
 
 struct VulkShaderEnums {
     static VulkVertBindingLocation vertBindingFromString(const std::string &bindingName) {
-        if (bindingName == "Pos") {
+        if (bindingName == "Color") {
+            return VulkVertBindingLocation_ColorBinding;
+        } else if (bindingName == "Pos") {
             return VulkVertBindingLocation_PosBinding;
         } else if (bindingName == "Normal") {
             return VulkVertBindingLocation_NormalBinding;
@@ -80,7 +83,7 @@ struct VulkShaderEnums {
         } else {
             throw std::runtime_error("Unknown vertex binding: " + bindingName);
         }
-        static_assert(VulkVertBindingLocation_MaxID == 6);
+        static_assert(VulkVertBindingLocation_MaxID == 7);
     }
     static VulkShaderBindings shaderBindingFromString(const std::string &bindingName) {
         if (bindingName == "XformsUBO") {

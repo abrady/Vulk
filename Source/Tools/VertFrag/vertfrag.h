@@ -167,6 +167,12 @@ namespace vertfrag {
     struct shader_param_name : plus<identifier> {};
     struct shader_param : seq<opt_spaces, shader_param_type, spaces, shader_param_name, opt_spaces> {};
 
+    struct sampler_keyword : TAO_PEGTL_KEYWORD("@out") {};
+    struct sampler_param_type : plus<identifier> {};
+    struct sampler_param_name : plus<identifier> {};
+    struct sampler_param : seq<opt_spaces, sampler_param_type, spaces, sampler_param_name, opt_spaces> {};
+    struct sampler_declaration : seq<sampler_keyword, one<'('>, list<sampler_param, one<','>>, one<')'>, spaces> {};
+
     struct out_keyword : TAO_PEGTL_KEYWORD("@out") {};
     struct out_param_type : plus<identifier> {};
     struct out_param_name : plus<identifier> {};
@@ -181,13 +187,13 @@ namespace vertfrag {
 
     struct shader_name : plus<identifier> {};
     struct shader_start : seq<TAO_PEGTL_KEYWORD("void"), spaces, shader_name> {};
-    struct shader_func_decl : seq<shader_start, one<'('>, list<shader_param, one<','>>, one<')'>, star<space>, function_body> {};
+    struct shader_func_decl : seq<shader_start, one<'('>, list<shader_param, one<','>>, one<')'>, star<space>, function_body, opt_spaces> {};
 
     // seq<ubo_declaration, shader_func_decl> {};
-    struct shader_decl : seq<ubo_declaration, out_declaration, shader_func_decl> {};
+    struct shader_decl : seq<opt<ubo_declaration>, out_declaration, shader_func_decl> {};
     struct vertfrag_body : star<sor<shader_decl, skip>> {};
     struct grammar : must<vertfrag_body, eof> {};
-    // struct grammar : must<shader_decl, eof> {};
+    // struct grammar : must<plus<shader_decl>, eof> {};
 
     template <> struct action<ubo_type> {
         template <typename ParseInput> static void apply(const ParseInput &in, StateBuilder &s) {

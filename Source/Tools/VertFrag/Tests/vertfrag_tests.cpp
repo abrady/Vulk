@@ -7,7 +7,48 @@ namespace pegtl = tao::pegtl;
 
 TEST_CASE("Vertfrag Tests") {
     // Define your tests here
+    SECTION("Test Parsing Simple") {
+        vertfrag::StateBuilder stateBuilder;
+        pegtl::memory_input<> in(R"(@out(Pos outPos, Normal outNorm)
+    void vert(Pos inPos, Normal inNorm, Tangent inTan, TexCoord inTex)
+    {})",
+                                 "vertfrag input");
+        REQUIRE(pegtl::parse<vertfrag::grammar, vertfrag::action, vertfrag::control>(in, stateBuilder));
+    }
+    SECTION("Test Parsing With UBO") {
+        vertfrag::StateBuilder stateBuilder;
+        pegtl::memory_input<> in(R"(@ubo(XformsUBO xformsIn, ModelXform modelIn)
+    @out(Pos outPos, Normal outNorm)
+    void vert(Pos inPos, Normal inNorm, Tangent inTan, TexCoord inTex)
+    {})",
+                                 "vertfrag input");
+        REQUIRE(pegtl::parse<vertfrag::grammar, vertfrag::action, vertfrag::control>(in, stateBuilder));
+    }
+    SECTION("Test Parsing With Vert and Frag") {
+        vertfrag::StateBuilder stateBuilder;
+        pegtl::memory_input<> in(R"(@out(Pos outPos, Normal outNorm)
+    void vert(Pos inPos, Normal inNorm, Tangent inTan, TexCoord inTex)
+    {}
+    @out(Pos outPos, Normal outNorm)
+    void frag(Pos inPos, Normal inNorm, Tangent inTan, TexCoord inTex)
+    {})",
+                                 "vertfrag input");
+        REQUIRE(pegtl::parse<vertfrag::grammar, vertfrag::action, vertfrag::control>(in, stateBuilder));
+    }
     SECTION("Test Parsing") {
+        vertfrag::StateBuilder stateBuilder;
+        pegtl::memory_input<> in(R"(@ubo(XformsUBO xformsIn, ModelXform modelIn)
+    @out(Pos outPos, Normal outNorm)
+    void vert(Pos inPos, Normal inNorm, Tangent inTan, TexCoord inTex)
+    {}
+    @ubo(XformsUBO xformsIn, ModelXform modelIn)
+    @out(Pos outPos, Normal outNorm)
+    void frag(Pos inPos, Normal inNorm, Tangent inTan, TexCoord inTex)
+    {})",
+                                 "vertfrag input");
+        REQUIRE(pegtl::parse<vertfrag::grammar, vertfrag::action, vertfrag::control>(in, stateBuilder));
+    }
+    SECTION("Test Complex Parsing") {
         vertfrag::StateBuilder stateBuilder;
         pegtl::memory_input<> in(R"(
             
@@ -29,8 +70,6 @@ TEST_CASE("Vertfrag Tests") {
         0.0)); outTangent = vec3(worldXform * vec4(inTangent, 0.0));
     })",
                                  "vertfrag input");
-
-        // argv_input in(argv, 1);
         REQUIRE(pegtl::parse<vertfrag::grammar, vertfrag::action, vertfrag::control>(in, stateBuilder));
         auto state = stateBuilder.build();
         auto &vert = state.shaderDecls[0];
