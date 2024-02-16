@@ -1,6 +1,10 @@
 {
     "search.exclude": {
         "**/Source/ThirdParty": true,
+        "**/build": true,
+    },
+    "files.exclude": {
+        "**/build": true,
     },
     "files.associations": {
         "*.frag": "glsl",

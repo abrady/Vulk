@@ -29,9 +29,11 @@ Install the following. Note that CmakeLists.txt assumes these are in C:\Vulkan:
 * invert the TBN matrix: So now that we have a TBN matrix, how are we going to use it? There are two ways we can use a TBN matrix for normal mapping, and we'll demonstrate both of them:
     * We take the TBN matrix that transforms any vector from tangent to world space, give it to the fragment shader, and transform the sampled normal from tangent space to world space using the TBN matrix; the normal is then in the same space as the other lighting variables.
     * We take the inverse of the TBN matrix that transforms any vector from world space to tangent space, and use this matrix to transform not the normal, but the other relevant lighting variables to tangent space; the normal is then again in the same space as the other lighting variables. - this is better because we can do this in vertex space and then use the interpolated values.
+* https://github.com/KHeresy/openxr-simple-example : integrate with OpenXR
 
 # Log
 
+<<<<<<< Updated upstream
 ## 2/14 pipeline annoyances
 * it sucks to define the pipeline and the inputs and then get runtime errors
 * what would be nice would be some way to tie this all together. how can I do this?
@@ -77,6 +79,9 @@ void frag(in Pos fragPos, in TexCoord fragTexCoord)
 
 
 ```
+=======
+## 2/13/24 Gooch revsited
+>>>>>>> Stashed changes
 
 
 ## 2/12/24 wrapping up sampled normals debugging
