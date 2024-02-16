@@ -10,8 +10,8 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/hash.hpp>
 #include <glm/gtx/euler_angles.hpp>
+#include <glm/gtx/hash.hpp>
 #include <stb/stb_image.h>
 #include <tiny_obj_loader.h>
 
@@ -34,19 +34,19 @@
 #include <stdexcept>
 #include <unordered_map>
 #include <vector>
-#include <vector>
-#include <vulkan/vulkan.h>
 #include <vulkan/vk_enum_string_helper.h>
+#include <vulkan/vulkan.h>
 
-#define VK_CALL(func)                                                                                                                                            \
-    do                                                                                                                                                           \
-    {                                                                                                                                                            \
-        VkResult vkcall_macro_result = (func);                                                                                                                   \
-        if (vkcall_macro_result != VK_SUCCESS)                                                                                                                   \
-        {                                                                                                                                                        \
-            std::cerr << "Vulkan error: " << string_VkResult(vkcall_macro_result) << " at " << __FILE__ << ":" << __LINE__ << std::endl;                         \
-            throw std::runtime_error(std::string("Vulkan error: ") + string_VkResult(vkcall_macro_result) + " at " + __FILE__ + ":" + std::to_string(__LINE__)); \
-        }                                                                                                                                                        \
+#include "VulkShaderEnums.h"
+
+#define VK_CALL(func)                                                                                                                                          \
+    do {                                                                                                                                                       \
+        VkResult vkcall_macro_result = (func);                                                                                                                 \
+        if (vkcall_macro_result != VK_SUCCESS) {                                                                                                               \
+            std::cerr << "Vulkan error: " << string_VkResult(vkcall_macro_result) << " at " << __FILE__ << ":" << __LINE__ << std::endl;                       \
+            throw std::runtime_error(std::string("Vulkan error: ") + string_VkResult(vkcall_macro_result) + " at " + __FILE__ + ":" +                          \
+                                     std::to_string(__LINE__));                                                                                                \
+        }                                                                                                                                                      \
     } while (0)
 
 #define ASSERT_KEY_NOT_SET(findable_container, key) assert((findable_container).find(key) == (findable_container).end())
@@ -56,62 +56,7 @@
 #define VULK_SHADERS_DIR "Source/Shaders/"
 
 // keep in sync with Source\Shaders\Common\common.glsl
-// every binding needs to be globally unique across all shaders in a given pipeline
-enum VulkShaderBindings
-{
-    VulkShaderBinding_XformsUBO = 0,
-    VulkShaderBinding_TextureSampler = 1,
-    VulkShaderBinding_Lights = 2,
-    VulkShaderBinding_EyePos = 3,
-    VulkShaderBinding_TextureSampler2 = 4,
-    VulkShaderBinding_TextureSampler3 = 5,
-    VulkShaderBinding_WavesXform = 6,
-    VulkShaderBinding_NormalSampler = 7,
-    VulkShaderBinding_ModelXform = 8,
-    VulkShaderBinding_MirrorPlaneUBO = 9,
-    VulkShaderBinding_MaterialUBO = 10,
-    VulkShaderBinding_DebugNormalsUBO = 11,
-    VulkShaderBinding_DebugTangentsUBO = 12,
-    VulkShaderBinding_MaxBindingID,
-};
-
-enum VulkShaderUBOBindings
-{
-    VulkShaderUBOBinding_Xforms = VulkShaderBinding_XformsUBO,
-    VulkShaderUBOBinding_Lights = VulkShaderBinding_Lights,
-    VulkShaderUBOBinding_EyePos = VulkShaderBinding_EyePos,
-    VulkShaderUBOBinding_WavesXform = VulkShaderBinding_WavesXform,
-    VulkShaderUBOBinding_ModelXform = VulkShaderBinding_ModelXform,
-    VulkShaderUBOBinding_MirrorPlaneUBO = VulkShaderBinding_MirrorPlaneUBO,
-    VulkShaderUBOBinding_MaterialUBO = VulkShaderBinding_MaterialUBO,
-    VulkShaderUBOBinding_DebugNormals = VulkShaderBinding_DebugNormalsUBO,
-    VulkShaderUBOBinding_DebugTangents = VulkShaderBinding_DebugTangentsUBO,
-    VulkShaderUBOBinding_MaxBindingID = VulkShaderBinding_DebugTangentsUBO,
-};
-
-enum VulkShaderDebugUBOs
-{
-    VulkShaderDebugUBO_DebugNormals = VulkShaderUBOBinding_DebugNormals,
-    VulkShaderDebugUBO_DebugTangents = VulkShaderUBOBinding_DebugTangents,
-};
-
-enum VulkShaderSSBOBindings
-{
-    VulkShaderSSBOBinding_MaxBindingID = 0,
-};
-
-enum VulkShaderTextureBindings
-{
-    VulkShaderTextureBinding_TextureSampler = VulkShaderBinding_TextureSampler,
-    VulkShaderTextureBinding_TextureSampler2 = VulkShaderBinding_TextureSampler2,
-    VulkShaderTextureBinding_TextureSampler3 = VulkShaderBinding_TextureSampler3,
-    VulkShaderTextureBinding_NormalSampler = VulkShaderBinding_NormalSampler,
-    VulkShaderTextureBinding_MaxBindingID = VulkShaderTextureBinding_NormalSampler,
-};
-
-// keep in sync with Source\Shaders\Common\common.glsl
-struct VulkMaterialConstants
-{
+struct VulkMaterialConstants {
     glm::vec3 Ka; // Ambient color
     float Ns;     // Specular exponent (shininess)
     glm::vec3 Kd; // Diffuse color
@@ -120,51 +65,34 @@ struct VulkMaterialConstants
     float d;      // Transparency (dissolve)
 };
 
-struct QueueFamilyIndices
-{
+struct QueueFamilyIndices {
     std::optional<uint32_t> graphicsFamily;
     std::optional<uint32_t> presentFamily;
 
-    bool isComplete()
-    {
+    bool isComplete() {
         return graphicsFamily.has_value() && presentFamily.has_value();
     }
 };
 
-struct SwapChainSupportDetails
-{
+struct SwapChainSupportDetails {
     VkSurfaceCapabilitiesKHR capabilities;
     std::vector<VkSurfaceFormatKHR> formats;
     std::vector<VkPresentModeKHR> presentModes;
 };
 
-struct Vertex
-{
+struct Vertex {
     glm::vec3 pos;
     glm::vec3 normal;
     glm::vec3 tangent;
     glm::vec2 uv;
-
-    enum BindingLocations
-    {
-        PosBinding = 0,
-        NormalBinding = 1,
-        TangentBinding = 2,
-        TexCoordBinding = 3,
-        HeightBinding = 4,
-        Pos2Binding = 5,
-        NumBindingLocations = 6,
-    };
 };
 
-struct VulkDebugNormalsUBO
-{
+struct VulkDebugNormalsUBO {
     float length = .1f;    // how long to render the debug normal
     bool useModel = false; // use the model's normals/tangents instead of the shader sampled normals
 };
 
-struct VulkDebugTangentsUBO
-{
+struct VulkDebugTangentsUBO {
     float length = .1f; // how long to render the debug tangent
 };
 
@@ -176,68 +104,54 @@ std::vector<char> readFileIntoMem(const std::string &filename);
 
 #include <glm/glm.hpp>
 
-class VulkPauseableTimer
-{
-public:
-    VulkPauseableTimer() : isRunning(false), elapsedTime(0.0f) {}
+class VulkPauseableTimer {
+  public:
+    VulkPauseableTimer() : isRunning(false), elapsedTime(0.0f) {
+    }
 
-    void start()
-    {
-        if (!isRunning)
-        {
+    void start() {
+        if (!isRunning) {
             startTime = std::chrono::high_resolution_clock::now();
             isRunning = true;
         }
     }
 
-    void pause()
-    {
-        if (isRunning)
-        {
+    void pause() {
+        if (isRunning) {
             auto currentTime = std::chrono::high_resolution_clock::now();
             elapsedTime += std::chrono::duration<float>(currentTime - startTime).count();
             isRunning = false;
         }
     }
 
-    void resume()
-    {
+    void resume() {
         start();
     }
 
-    void toggle()
-    {
-        if (isRunning)
-        {
+    void toggle() {
+        if (isRunning) {
             pause();
-        }
-        else
-        {
+        } else {
             resume();
         }
     }
 
-    void reset()
-    {
+    void reset() {
         isRunning = false;
         elapsedTime = 0.0f;
     }
 
-    float getElapsedTime()
-    {
-        if (isRunning)
-        {
+    float getElapsedTime() {
+        if (isRunning) {
             auto currentTime = std::chrono::high_resolution_clock::now();
             auto currentElapsedTime = elapsedTime + std::chrono::duration<float>(currentTime - startTime).count();
             return currentElapsedTime;
-        }
-        else
-        {
+        } else {
             return elapsedTime;
         }
     }
 
-private:
+  private:
     bool isRunning;
     float elapsedTime; // In seconds
     std::chrono::time_point<std::chrono::high_resolution_clock> startTime;

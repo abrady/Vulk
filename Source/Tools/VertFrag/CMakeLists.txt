@@ -7,4 +7,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 project(vertfrag)
 
+include_directories("${CMAKE_SOURCE_DIR}/Source")
+
 add_executable(vertfrag vertfrag.cpp)

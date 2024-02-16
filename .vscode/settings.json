@@ -90,6 +90,8 @@
         "filesystem": "cpp",
         "numeric": "cpp",
         "valarray": "cpp",
-        "codecvt": "cpp"
-    }
+        "codecvt": "cpp",
+        "typeindex": "cpp"
+    },
+    "files.eol": "\n"
 }

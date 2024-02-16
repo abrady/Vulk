@@ -33,7 +33,6 @@ Install the following. Note that CmakeLists.txt assumes these are in C:\Vulkan:
 
 # Log
 
-<<<<<<< Updated upstream
 ## 2/14 pipeline annoyances
 * it sucks to define the pipeline and the inputs and then get runtime errors
 * what would be nice would be some way to tie this all together. how can I do this?
@@ -79,9 +78,7 @@ void frag(in Pos fragPos, in TexCoord fragTexCoord)
 
 
 ```
-=======
-## 2/13/24 Gooch revsited
->>>>>>> Stashed changes
+
 
 
 ## 2/12/24 wrapping up sampled normals debugging
