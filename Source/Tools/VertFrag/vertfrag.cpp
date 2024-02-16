@@ -4,8 +4,6 @@
 #include "Vulk/VulkShaderEnums.h"
 #include "tao/pegtl.hpp"
 
-namespace p = tao::pegtl;
-
 // @ubo(XformsUBO xformsUBO, ModelXform modelUBO)
 // void vert(Pos inPos, Norm inNorm, Tan inTan, TexCoord inTex)
 // {
@@ -110,18 +108,18 @@ namespace vertfrag {
         }
     };
 
-    template <typename Rule> struct control : p::normal<Rule> {
+    template <typename Rule> struct control : normal<Rule> {
         // This method is called when a rule fails to match.
         template <typename Input, typename... States> static void raise(const Input &in, States &&...) {
-            std::cerr << "Error: Failed to match rule '" << p::demangle<Rule>()
+            std::cerr << "Error: Failed to match rule '" << demangle<Rule>()
                       << "' at position " + std::to_string(in.position().byte) + ", character: '" + in.peek_char() + "'\n";
-            throw p::parse_error("Error: Failed to match rule", in);
+            throw parse_error("Error: Failed to match rule", in);
         }
     };
 
     // Rule to match comments
-    struct single_line_comment : p::seq<p::star<p::space>, p::two<'/'>, p::until<p::eolf>> {};
-    struct multi_line_comment : p::if_must<p::seq<p::one<'/'>, p::one<'*'>>, p::until<p::seq<p::one<'*'>, p::one<'/'>>>> {};
+    struct single_line_comment : seq<star<space>, two<'/'>, until<eolf>> {};
+    struct multi_line_comment : if_must<seq<one<'/'>, one<'*'>>, until<seq<one<'*'>, one<'/'>>>> {};
     struct skip : sor<space, single_line_comment, multi_line_comment> {};
 
     // Class template for user-defined actions that does
@@ -130,8 +128,8 @@ namespace vertfrag {
     template <typename Rule> struct action {};
 
     // pegtl requires explicit whitespace matching
-    struct spaces : p::plus<p::space> {};     // Rule for spaces
-    struct opt_spaces : p::star<p::space> {}; // Rule for spaces
+    struct spaces : plus<space> {};     // Rule for spaces
+    struct opt_spaces : star<space> {}; // Rule for spaces
 
     // Specialisation of the user-defined action to do
     // something when the 'ubo' rule succeeds; is called
@@ -139,31 +137,31 @@ namespace vertfrag {
 
     // @ubo(XformsUBO xformsUBO, ModelXform modelUBO)
     // @ubo(ubo_type ubo_name, ubo_type ubo_name)
-    struct ubo_keyword : TAO_PEGTL_KEYWORD("@ubo") {}; // p::string<'@', 'u', 'b', 'o'> {};
-    struct ubo_type : p::plus<p::identifier> {};
-    struct ubo_name : p::plus<p::identifier> {};
-    struct ubo_param : p::seq<ubo_type, spaces, ubo_name> {}; // Define the parameter rule
-    struct ubo_declaration : p::seq<ubo_keyword, p::one<'('>, p::list<ubo_param, p::one<','>>, p::one<')'>> {};
+    struct ubo_keyword : TAO_PEGTL_KEYWORD("@ubo") {}; // string<'@', 'u', 'b', 'o'> {};
+    struct ubo_type : plus<identifier> {};
+    struct ubo_name : plus<identifier> {};
+    struct ubo_param : seq<ubo_type, spaces, ubo_name> {}; // Define the parameter rule
+    struct ubo_declaration : seq<ubo_keyword, one<'('>, list<ubo_param, one<','>>, one<')'>> {};
 
-    struct shader_param_type : p::plus<p::identifier> {};
-    struct shader_param_name : p::plus<p::identifier> {};
-    struct shader_param : p::seq<opt_spaces, shader_param_type, spaces, shader_param_name, opt_spaces> {}; // Define the parameter rule
+    struct shader_param_type : plus<identifier> {};
+    struct shader_param_name : plus<identifier> {};
+    struct shader_param : seq<opt_spaces, shader_param_type, spaces, shader_param_name, opt_spaces> {}; // Define the parameter rule
 
-    struct not_brace : p::not_one<'{', '}'> {};
+    struct not_brace : not_one<'{', '}'> {};
     struct content; // forward decl
-    struct brace_pair : p::seq<p::one<'{'>, p::until<p::one<'}'>, content>> {};
-    struct content : p::star<p::sor<not_brace, brace_pair>> {};
+    struct brace_pair : seq<one<'{'>, until<one<'}'>, content>> {};
+    struct content : star<sor<not_brace, brace_pair>> {};
     struct function_body : brace_pair {};
 
-    struct shader_name : p::plus<p::identifier> {};
+    struct shader_name : plus<identifier> {};
     struct shader_start : seq<TAO_PEGTL_KEYWORD("void"), spaces, shader_name> {};
-    struct shader_func_decl : p::seq<shader_start, p::one<'('>, p::list<shader_param, p::one<','>>, p::one<')'>, p::star<p::space>, function_body> {};
+    struct shader_func_decl : seq<shader_start, one<'('>, list<shader_param, one<','>>, one<')'>, star<space>, function_body> {};
 
     // seq<ubo_declaration, shader_func_decl> {};
     struct shader_decl : seq<ubo_declaration, spaces, shader_func_decl> {};
     struct vertfrag_body : star<sor<shader_decl, skip>> {};
-    // struct grammar : p::must<vertfrag_body, p::eof> {};
-    struct grammar : p::must<shader_decl, p::eof> {};
+    // struct grammar : must<vertfrag_body, eof> {};
+    struct grammar : must<shader_decl, eof> {};
 
     template <> struct action<ubo_type> {
         template <typename ParseInput> static void apply(const ParseInput &in, StateBuilder &s) {
@@ -199,9 +197,11 @@ namespace vertfrag {
 
 } // namespace vertfrag
 
+namespace pegtl = tao::pegtl;
+
 int main() {
     vertfrag::StateBuilder stateBuilder;
-    p::memory_input<> in(R"(@ubo(XformsUBO xformsIn)
+    pegtl::memory_input<> in(R"(@ubo(XformsUBO xformsIn)
     void vert(Pos inPos, Normal inNorm, Tangent inTan, TexCoord inTex)
     {
         mat4 worldXform = xform.world * modelUBO.xform;
@@ -210,10 +210,10 @@ int main() {
         * vec4(inPosition, 1.0)); outNorm = vec3(worldXform * vec4(inNormal,
         0.0)); outTangent = vec3(worldXform * vec4(inTangent, 0.0));
     })",
-                         "vertfrag input");
+                             "vertfrag input");
 
-    // p::argv_input in(argv, 1);
-    if (!p::parse<vertfrag::grammar, vertfrag::action, vertfrag::control>(in, stateBuilder)) {
+    // argv_input in(argv, 1);
+    if (!pegtl::parse<vertfrag::grammar, vertfrag::action, vertfrag::control>(in, stateBuilder)) {
         std::cerr << "Error parsing input" << std::endl;
         return 1;
     }
