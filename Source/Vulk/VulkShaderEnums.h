@@ -1,5 +1,8 @@
 #pragma once
 
+#include <stdexcept>
+#include <string>
+
 enum VertBindingLocations {
     VertBindingLocations_PosBinding = 0,
     VertBindingLocations_NormalBinding = 1,

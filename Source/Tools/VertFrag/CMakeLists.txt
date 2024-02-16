@@ -5,8 +5,9 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-project(vertfrag)
+project(VertFrag)
 
 include_directories("${CMAKE_SOURCE_DIR}/Source")
 
-add_executable(vertfrag vertfrag.cpp)
+add_executable(VertFrag VertFrag.cpp)
+add_subdirectory(Tests)
