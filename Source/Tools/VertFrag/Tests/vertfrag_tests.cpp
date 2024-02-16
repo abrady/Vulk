@@ -1,4 +1,4 @@
-#include "../VertFrag.h" // Include your parser header
+#include "../VertFragParser.h" // Include your parser header
 
 #define CATCH_CONFIG_MAIN // This tells Catch to provide a main() - only do this in one cpp file
 #include <catch2/catch.hpp>
@@ -8,7 +8,7 @@ namespace pegtl = tao::pegtl;
 TEST_CASE("Vertfrag Tests") {
     // Define your tests here
     SECTION("Test Parsing Simple") {
-        vertfrag::StateBuilder stateBuilder;
+        vertfrag::StateBuilder stateBuilder("test");
         pegtl::memory_input<> in(R"(@out(Pos outPos, Normal outNorm)
     void vert(Pos inPos, Normal inNorm, Tangent inTan, TexCoord inTex)
     {})",
@@ -33,7 +33,7 @@ TEST_CASE("Vertfrag Tests") {
         REQUIRE(vert.outBindings[1].name == "outNorm");
     }
     SECTION("Test Parsing With UBO") {
-        vertfrag::StateBuilder stateBuilder;
+        vertfrag::StateBuilder stateBuilder("test");
         pegtl::memory_input<> in(R"(@ubo(XformsUBO xformsIn, ModelXform modelIn)
     @out(Pos outPos, Normal outNorm)
     void vert(Pos inPos, Normal inNorm, Tangent inTan, TexCoord inTex)
@@ -54,7 +54,7 @@ TEST_CASE("Vertfrag Tests") {
         REQUIRE(vert.outBindings[1].name == "outNorm");
     }
     SECTION("Test Parsing With Vert and Frag") {
-        vertfrag::StateBuilder stateBuilder;
+        vertfrag::StateBuilder stateBuilder("test");
         pegtl::memory_input<> in(R"(@out(Pos outPos, Normal outNorm)
     void vert(Pos inPos, Normal inNorm, Tangent inTan, TexCoord inTex)
     {}
@@ -73,7 +73,7 @@ TEST_CASE("Vertfrag Tests") {
         REQUIRE(frag.inBindings[1].name == "inNorm");
     }
     SECTION("Test Parsing With Vert and Frag with whitespace") {
-        vertfrag::StateBuilder stateBuilder;
+        vertfrag::StateBuilder stateBuilder("test");
         pegtl::memory_input<> in(R"(
             
     @out(Pos outPos, Normal outNorm)
@@ -98,7 +98,7 @@ TEST_CASE("Vertfrag Tests") {
     }
 
     SECTION("Test Frag Parsing") {
-        vertfrag::StateBuilder stateBuilder;
+        vertfrag::StateBuilder stateBuilder("test");
         pegtl::memory_input<> in(R"(
             
     @ubo(EyePos eyePos, Lights lights, MaterialUBO materialUBO)
@@ -136,7 +136,7 @@ TEST_CASE("Vertfrag Tests") {
         REQUIRE(frag.inBindings[1].name == "fragTexCoord");
     }
     SECTION("Test Parsing") {
-        vertfrag::StateBuilder stateBuilder;
+        vertfrag::StateBuilder stateBuilder("test");
         pegtl::memory_input<> in(R"(@ubo(XformsUBO xformsIn, ModelXform modelIn)
     @out(Pos outPos, Normal outNorm)
     void vert(Pos inPos, Normal inNorm, Tangent inTan, TexCoord inTex)
@@ -149,7 +149,7 @@ TEST_CASE("Vertfrag Tests") {
         REQUIRE(pegtl::parse<vertfrag::grammar, vertfrag::action, vertfrag::control>(in, stateBuilder));
     }
     SECTION("Test Frag With Comments") {
-        vertfrag::StateBuilder stateBuilder;
+        vertfrag::StateBuilder stateBuilder("test");
         pegtl::memory_input<> in(R"(
             
             // spaces
@@ -196,17 +196,16 @@ TEST_CASE("Vertfrag Tests") {
         REQUIRE(vert.outBindings[1].name == "outNorm"); //
     }
     SECTION("Test Frag/Vert With Comments") {
-        vertfrag::StateBuilder stateBuilder;
+        vertfrag::StateBuilder stateBuilder("test");
         pegtl::memory_input<> in(R"(
             
             // spaces
 
-            /* 
-            * and
-            * comments
-            */
-            
-            @ubo(XformsUBO xformsIn, ModelXform modelIn)
+    /* 
+    * and
+    * comments
+    */
+    @ubo(XformsUBO xformsIn, ModelXform modelIn)
     @out(Pos outPos, Normal outNorm)
     void vert(Pos inPos, Normal inNorm, Tangent inTan, TexCoord inTex)
     {
@@ -217,6 +216,7 @@ TEST_CASE("Vertfrag Tests") {
         0.0)); outTangent = vec3(worldXform * vec4(inTangent, 0.0));
     }
     
+    // some comments
     @ubo(EyePos eyePos, Lights lights, MaterialUBO materialUBO)
     @sampler(TextureSampler texSampler, TextureSampler normSampler)
     @out(Color outColor)

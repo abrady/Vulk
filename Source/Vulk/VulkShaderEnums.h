@@ -37,9 +37,7 @@ enum VulkShaderUBOBindings {
     VulkShaderUBOBinding_Xforms = VulkShaderBinding_XformsUBO,
     VulkShaderUBOBinding_Lights = VulkShaderBinding_Lights,
     VulkShaderUBOBinding_EyePos = VulkShaderBinding_EyePos,
-    VulkShaderUBOBinding_WavesXform = VulkShaderBinding_WavesXform,
     VulkShaderUBOBinding_ModelXform = VulkShaderBinding_ModelXform,
-    VulkShaderUBOBinding_MirrorPlaneUBO = VulkShaderBinding_MirrorPlaneUBO,
     VulkShaderUBOBinding_MaterialUBO = VulkShaderBinding_MaterialUBO,
     VulkShaderUBOBinding_DebugNormals = VulkShaderBinding_DebugNormalsUBO,
     VulkShaderUBOBinding_DebugTangents = VulkShaderBinding_DebugTangentsUBO,
@@ -125,12 +123,8 @@ struct VulkShaderEnums {
             return VulkShaderUBOBinding_Lights;
         } else if (bindingName == "EyePos") {
             return VulkShaderUBOBinding_EyePos;
-        } else if (bindingName == "WavesXform") {
-            return VulkShaderUBOBinding_WavesXform;
         } else if (bindingName == "ModelXform") {
             return VulkShaderUBOBinding_ModelXform;
-        } else if (bindingName == "MirrorPlaneUBO") {
-            return VulkShaderUBOBinding_MirrorPlaneUBO;
         } else if (bindingName == "MaterialUBO") {
             return VulkShaderUBOBinding_MaterialUBO;
         } else if (bindingName == "DebugNormals") {
@@ -171,5 +165,59 @@ struct VulkShaderEnums {
             throw std::runtime_error("Unknown texture binding: " + bindingName);
         }
         static_assert(VulkShaderTextureBinding_MaxBindingID == VulkShaderTextureBinding_NormalSampler);
+    }
+
+    static std::string vertBindingLocationToString(VulkVertBindingLocation binding) {
+        switch (binding) {
+        case VulkVertBindingLocation_ColorBinding:
+            return "LayoutLocation_Color";
+        case VulkVertBindingLocation_PosBinding:
+            return "LayoutLocation_Position";
+        case VulkVertBindingLocation_NormalBinding:
+            return "LayoutLocation_Normal";
+        case VulkVertBindingLocation_TangentBinding:
+            return "LayoutLocation_Tangent";
+        case VulkVertBindingLocation_TexCoordBinding:
+            return "LayoutLocation_TexCoord";
+        case VulkVertBindingLocation_HeightBinding:
+            return "LayoutLocation_Height";
+        case VulkVertBindingLocation_Pos2Binding:
+            return "LayoutLocation_Position2";
+        default:
+            throw std::runtime_error("Unknown vertex binding: " + std::to_string(binding));
+        }
+    }
+
+    static std::string shaderBindingToString(uint32_t binding) {
+        switch (binding) {
+        case VulkShaderBinding_XformsUBO:
+            return "VulkShaderBinding_XformsUBO";
+        case VulkShaderBinding_TextureSampler:
+            return "VulkShaderBinding_TextureSampler";
+        case VulkShaderBinding_Lights:
+            return "VulkShaderBinding_Lights";
+        case VulkShaderBinding_EyePos:
+            return "VulkShaderBinding_EyePos";
+        case VulkShaderBinding_TextureSampler2:
+            return "VulkShaderBinding_TextureSampler2";
+        case VulkShaderBinding_TextureSampler3:
+            return "VulkShaderBinding_TextureSampler3";
+        case VulkShaderBinding_WavesXform:
+            return "VulkShaderBinding_WavesXform";
+        case VulkShaderBinding_NormalSampler:
+            return "NormalSampler";
+        case VulkShaderBinding_ModelXform:
+            return "VulkShaderBinding_ModelXform";
+        case VulkShaderBinding_MirrorPlaneUBO:
+            return "VulkShaderBinding_MirrorPlaneUBO";
+        case VulkShaderBinding_MaterialUBO:
+            return "VulkShaderBinding_MaterialUBO";
+        case VulkShaderBinding_DebugNormalsUBO:
+            return "VulkShaderBinding_DebugNormalsUBO";
+        case VulkShaderBinding_DebugTangentsUBO:
+            return "VulkShaderBinding_DebugTangentsUBO";
+        default:
+            throw std::runtime_error("Unknown shader binding: " + std::to_string(binding));
+        }
     }
 };

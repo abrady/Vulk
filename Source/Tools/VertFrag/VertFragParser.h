@@ -44,6 +44,7 @@ namespace vertfrag {
             std::string name;
         };
 
+        std::string name;
         std::vector<UBO> ubos;
         std::vector<VertBindings> inBindings;
         std::vector<VertBindings> outBindings;
@@ -51,6 +52,7 @@ namespace vertfrag {
     };
 
     struct State {
+        std::string name;
         std::vector<ShaderDecl> shaderDecls;
     };
 
@@ -103,7 +105,9 @@ namespace vertfrag {
             assert(inBindings.size() == inBindingNames.size());
             assert(outBindings.size() == outBindingNames.size());
             assert(funcBody.size() > 0);
+            assert(funcName.size() > 0);
             ShaderDecl s;
+            s.name = funcName;
             for (size_t i = 0; i < uboBindings.size(); i++) {
                 s.ubos.push_back({uboBindings[i], uboNames[i]});
             }
@@ -124,7 +128,8 @@ namespace vertfrag {
 
       public:
         std::unique_ptr<ShaderDeclBuilder> b;
-        StateBuilder() : b(std::make_unique<ShaderDeclBuilder>()) {
+        StateBuilder(std::string name) : b(std::make_unique<ShaderDeclBuilder>()) {
+            s.name = name;
         }
         void buildShaderDecl() {
             assert(b->funcName == "vert" || b->funcName == "frag");

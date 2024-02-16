@@ -4,35 +4,27 @@ using json = nlohmann::json;
 using namespace std;
 namespace fs = std::filesystem;
 
-namespace nlohmann
-{
-    template <>
-    struct adl_serializer<glm::vec3>
-    {
-        static void to_json(json &j, const glm::vec3 &v)
-        {
+namespace nlohmann {
+    template <> struct adl_serializer<glm::vec3> {
+        static void to_json(json &j, const glm::vec3 &v) {
             j = json{v.x, v.y, v.z};
         }
 
-        static void from_json(const json &j, glm::vec3 &v)
-        {
+        static void from_json(const json &j, glm::vec3 &v) {
             v.x = j.at(0).get<float>();
             v.y = j.at(1).get<float>();
             v.z = j.at(2).get<float>();
         }
     };
-}
+} // namespace nlohmann
 
-MaterialDef loadMaterialDef(const fs::path &file)
-{
-    if (!fs::exists(file))
-    {
+MaterialDef loadMaterialDef(const fs::path &file) {
+    if (!fs::exists(file)) {
         throw std::runtime_error("Material file does not exist: " + file.string());
     }
 
     std::ifstream mtlFile(file);
-    if (!mtlFile.is_open())
-    {
+    if (!mtlFile.is_open()) {
         throw std::runtime_error("Failed to open material file: " + file.string());
     }
 
@@ -40,77 +32,53 @@ MaterialDef loadMaterialDef(const fs::path &file)
     std::string line;
     fs::path basePath = file.parent_path();
     bool startedNewMtl = false;
-    while (std::getline(mtlFile, line))
-    {
+    while (std::getline(mtlFile, line)) {
         std::istringstream lineStream(line);
         std::string prefix;
         lineStream >> prefix;
 
-        auto processPath = [&](const std::string &relativePath) -> fs::path
-        {
+        auto processPath = [&](const std::string &relativePath) -> fs::path {
             fs::path absPath = fs::absolute(basePath / relativePath);
-            if (!fs::exists(absPath))
-            {
+            if (!fs::exists(absPath)) {
                 throw std::runtime_error("Referenced file does not exist: " + absPath.string());
             }
             return absPath;
         };
 
-        if (prefix == "newmtl")
-        {
+        if (prefix == "newmtl") {
             assert(!startedNewMtl);
             startedNewMtl = true; // just handle 1 material for now
             string mtlName;
             lineStream >> mtlName;
             assert(mtlName == file.stem().string());
             material.name = mtlName;
-        }
-        else if (prefix == "map_Ka")
-        {
+        } else if (prefix == "map_Ka") {
             std::string relativePath;
             lineStream >> relativePath;
             material.mapKa = processPath(relativePath);
-        }
-        else if (prefix == "map_Kd")
-        {
+        } else if (prefix == "map_Kd") {
             std::string relativePath;
             lineStream >> relativePath;
             material.mapKd = processPath(relativePath);
-        }
-        else if (prefix == "map_Ks")
-        {
+        } else if (prefix == "map_Ks") {
             std::string relativePath;
             lineStream >> relativePath;
             material.mapKs = processPath(relativePath);
-        }
-        else if (prefix == "map_Bump")
-        {
+        } else if (prefix == "map_Bump") {
             std::string relativePath;
             lineStream >> relativePath;
             material.mapNormal = processPath(relativePath);
-        }
-        else if (prefix == "Ns")
-        {
+        } else if (prefix == "Ns") {
             lineStream >> material.Ns;
-        }
-        else if (prefix == "Ni")
-        {
+        } else if (prefix == "Ni") {
             lineStream >> material.Ni;
-        }
-        else if (prefix == "d")
-        {
+        } else if (prefix == "d") {
             lineStream >> material.d;
-        }
-        else if (prefix == "Ka")
-        {
+        } else if (prefix == "Ka") {
             lineStream >> material.Ka[0] >> material.Ka[1] >> material.Ka[2];
-        }
-        else if (prefix == "Kd")
-        {
+        } else if (prefix == "Kd") {
             lineStream >> material.Kd[0] >> material.Kd[1] >> material.Kd[2];
-        }
-        else if (prefix == "Ks")
-        {
+        } else if (prefix == "Ks") {
             lineStream >> material.Ks[0] >> material.Ks[1] >> material.Ks[2];
         }
         // Add handling for other properties as needed
@@ -125,71 +93,106 @@ static unordered_map<string, VkShaderStageFlagBits> shaderStageMap{
     {"geometry", VK_SHADER_STAGE_GEOMETRY_BIT},
 };
 
-VulkShaderUBOBindings shaderUBOBindingFromStr(string const &binding)
-{
-    static unordered_map<string, VulkShaderUBOBindings> bindings{
+static vector<pair<string, VulkShaderUBOBindings>> const &getUBOBindings() {
+    static vector<pair<string, VulkShaderUBOBindings>> bindings = {
         {"xforms", VulkShaderUBOBinding_Xforms},
         {"lights", VulkShaderUBOBinding_Lights},
         {"eyePos", VulkShaderUBOBinding_EyePos},
-        {"wavesXform", VulkShaderUBOBinding_WavesXform},
-        {"modelXform", VulkShaderUBOBinding_ModelXform},
-        {"mirrorPlaneUBO", VulkShaderUBOBinding_MirrorPlaneUBO},
         {"materialUBO", VulkShaderUBOBinding_MaterialUBO},
         {"debugNormals", VulkShaderUBOBinding_DebugNormals},
         {"debugTangents", VulkShaderUBOBinding_DebugTangents},
     };
-    return bindings.at(binding);
+    return bindings;
     static_assert(VulkShaderUBOBinding_MaxBindingID == VulkShaderUBOBinding_DebugTangents, "this function must be kept in sync with VulkShaderUBOBindings");
 }
 
-VulkShaderSSBOBindings shaderSSBOBindingFromStr(string const &binding)
-{
+VulkShaderUBOBindings shaderUBOBindingFromStr(string const &binding) {
+    static unordered_map<string, VulkShaderUBOBindings> bindings;
+    static once_flag flag;
+    call_once(flag, [&]() {
+        for (auto const &[name, value] : getUBOBindings()) {
+            assert(!bindings.contains(name));
+            bindings[name] = value;
+        }
+    });
+    return bindings.at(binding);
+}
+
+string shaderUBOBindingToStr(VulkShaderUBOBindings binding) {
+    static unordered_map<VulkShaderUBOBindings, string> bindings;
+    static once_flag flag;
+    call_once(flag, [&]() {
+        for (auto const &[name, value] : getUBOBindings()) {
+            assert(!bindings.contains(value));
+            bindings[value] = name;
+        }
+    });
+    return bindings.at(binding);
+}
+
+VulkShaderSSBOBindings shaderSSBOBindingFromStr(string const &binding) {
     static unordered_map<string, VulkShaderSSBOBindings> bindings{};
     return bindings.at(binding);
 }
 
-VulkShaderTextureBindings shaderTextureBindingFromStr(string const &binding)
-{
-    static unordered_map<string, VulkShaderTextureBindings> bindings{
+static vector<pair<string, VulkShaderTextureBindings>> const &getTextureBindings() {
+    static vector<pair<string, VulkShaderTextureBindings>> bindings = {
         {"textureSampler", VulkShaderTextureBinding_TextureSampler},
         {"textureSampler2", VulkShaderTextureBinding_TextureSampler2},
         {"textureSampler3", VulkShaderTextureBinding_TextureSampler3},
         {"normalSampler", VulkShaderTextureBinding_NormalSampler},
     };
-    return bindings.at(binding);
-    static_assert(VulkShaderTextureBinding_MaxBindingID == VulkShaderTextureBinding_NormalSampler, "this function must be kept in sync with VulkShaderTextureBindings");
+    return bindings;
 }
 
-void parseShaderStageMap(const nlohmann::json &j, VkShaderStageFlagBits stage, DescriptorSetDef &ds)
-{
+VulkShaderTextureBindings shaderTextureBindingFromStr(string const &binding) {
+    static unordered_map<string, VulkShaderTextureBindings> bindings;
+    static once_flag flag;
+    call_once(flag, [&]() {
+        for (auto const &[name, value] : getTextureBindings()) {
+            assert(!bindings.contains(name));
+            bindings[name] = value;
+        }
+    });
+    return bindings.at(binding);
+    static_assert(VulkShaderTextureBinding_MaxBindingID == VulkShaderTextureBinding_NormalSampler,
+                  "this function must be kept in sync with VulkShaderTextureBindings");
+}
+
+string shaderTextureBindingToStr(VulkShaderTextureBindings binding) {
+    static unordered_map<VulkShaderTextureBindings, string> bindings;
+    static once_flag flag;
+    call_once(flag, [&]() {
+        for (auto const &[name, value] : getTextureBindings()) {
+            assert(!bindings.contains(value));
+            bindings[value] = name;
+        }
+    });
+    return bindings.at(binding);
+}
+
+void parseShaderStageMap(const nlohmann::json &j, VkShaderStageFlagBits stage, DescriptorSetDef &ds) {
     vector<string> uniformBuffers = j.at("uniformBuffers").get<vector<string>>();
-    for (auto const &value : uniformBuffers)
-    {
+    for (auto const &value : uniformBuffers) {
         ds.uniformBuffers[stage].push_back(shaderUBOBindingFromStr(value));
     }
-    if (j.contains("storageBuffers"))
-    {
+    if (j.contains("storageBuffers")) {
         vector<string> storageBuffers = j.at("storageBuffers").get<vector<string>>();
-        for (auto const &value : storageBuffers)
-        {
+        for (auto const &value : storageBuffers) {
             ds.storageBuffers[stage].push_back(shaderSSBOBindingFromStr(value));
         }
     }
-    if (j.contains("imageSamplers"))
-    {
+    if (j.contains("imageSamplers")) {
         vector<string> imageSamplers = j.at("imageSamplers").get<vector<string>>();
-        for (auto const &value : imageSamplers)
-        {
+        for (auto const &value : imageSamplers) {
             ds.imageSamplers[stage].push_back(shaderTextureBindingFromStr(value));
         }
     }
 }
 
-DescriptorSetDef DescriptorSetDef::fromJSON(const nlohmann::json &j)
-{
+DescriptorSetDef DescriptorSetDef::fromJSON(const nlohmann::json &j) {
     DescriptorSetDef ds;
-    for (auto const &[stage, bindings] : j.items())
-    {
+    for (auto const &[stage, bindings] : j.items()) {
         VkShaderStageFlagBits vkStage = shaderStageMap.at(stage);
         parseShaderStageMap(bindings, vkStage, ds);
     }
@@ -197,10 +200,8 @@ DescriptorSetDef DescriptorSetDef::fromJSON(const nlohmann::json &j)
 }
 
 static unordered_map<string, VkPrimitiveTopology> primitiveTopologyMap{
-    {"TriangleList", VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST},
-    {"TriangleStrip", VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP},
-    {"LineList", VK_PRIMITIVE_TOPOLOGY_LINE_LIST},
-    {"LineStrip", VK_PRIMITIVE_TOPOLOGY_LINE_STRIP},
+    {"TriangleList", VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST}, {"TriangleStrip", VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP},
+    {"LineList", VK_PRIMITIVE_TOPOLOGY_LINE_LIST},         {"LineStrip", VK_PRIMITIVE_TOPOLOGY_LINE_STRIP},
     {"PointList", VK_PRIMITIVE_TOPOLOGY_POINT_LIST},
 };
 
@@ -215,8 +216,9 @@ static unordered_map<string, VkCompareOp> depthCompareOpMap{
     {"ALWAYS", VK_COMPARE_OP_ALWAYS},
 };
 
-PipelineDef PipelineDef::fromJSON(const nlohmann::json &j, unordered_map<string, shared_ptr<ShaderDef>> const &vertexShaders, unordered_map<string, shared_ptr<ShaderDef>> const &geometryShaders, unordered_map<string, shared_ptr<ShaderDef>> const &fragmentShaders)
-{
+PipelineDef PipelineDef::fromJSON(const nlohmann::json &j, unordered_map<string, shared_ptr<ShaderDef>> const &vertexShaders,
+                                  unordered_map<string, shared_ptr<ShaderDef>> const &geometryShaders,
+                                  unordered_map<string, shared_ptr<ShaderDef>> const &fragmentShaders) {
     PipelineDef p;
     assert(j.at("version").get<uint32_t>() == PIPELINE_JSON_VERSION);
     p.name = j.at("name").get<string>();
@@ -226,7 +228,8 @@ PipelineDef PipelineDef::fromJSON(const nlohmann::json &j, unordered_map<string,
     shader = j.at("fragmentShader").get<string>();
     assert(fragmentShaders.contains(shader));
     p.fragmentShader = fragmentShaders.at(shader);
-    p.primitiveTopology = j.contains("primitiveTopology") ? primitiveTopologyMap.at(j.at("primitiveTopology").get<string>()) : VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    p.primitiveTopology =
+        j.contains("primitiveTopology") ? primitiveTopologyMap.at(j.at("primitiveTopology").get<string>()) : VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     p.depthTestEnabled = j.value("depthTestEnabled", true);
     p.depthWriteEnabled = j.value("depthWriteEnabled", true);
     p.depthCompareOp = depthCompareOpMap.at(j.value("depthCompareOp", "LESS"));
@@ -234,8 +237,7 @@ PipelineDef PipelineDef::fromJSON(const nlohmann::json &j, unordered_map<string,
     p.vertexInputBinding = j.at("vertexInputBinding").get<uint32_t>();
     p.descriptorSet = DescriptorSetDef::fromJSON(j.at("descriptorSet")); // Use custom from_json for DescriptorSetDef
 
-    if (j.contains("geometryShader"))
-    {
+    if (j.contains("geometryShader")) {
         shader = j.at("geometryShader").get<string>();
         assert(geometryShaders.contains(shader));
         p.geometryShader = geometryShaders.at(shader);
@@ -249,8 +251,7 @@ static unordered_map<string, MeshDefType> meshDefTypeMap{
     {"Mesh", MeshDefType_Mesh},
 };
 
-enum GeoMeshDefType
-{
+enum GeoMeshDefType {
     GeoMeshDefType_Sphere,
     GeoMeshDefType_Cylinder,
     GeoMeshDefType_EquilateralTriangle,
@@ -259,66 +260,50 @@ enum GeoMeshDefType
     GeoMeshDefType_Axes,
 };
 static unordered_map<string, GeoMeshDefType> geoMeshDefTypeMap{
-    {"Sphere", GeoMeshDefType_Sphere},
-    {"Cylinder", GeoMeshDefType_Cylinder},
-    {"Triangle", GeoMeshDefType_EquilateralTriangle},
-    {"Quad", GeoMeshDefType_Quad},
-    {"Grid", GeoMeshDefType_Grid},
-    {"Axes", GeoMeshDefType_Axes},
+    {"Sphere", GeoMeshDefType_Sphere}, {"Cylinder", GeoMeshDefType_Cylinder}, {"Triangle", GeoMeshDefType_EquilateralTriangle},
+    {"Quad", GeoMeshDefType_Quad},     {"Grid", GeoMeshDefType_Grid},         {"Axes", GeoMeshDefType_Axes},
 };
 
-ModelDef ModelDef::fromJSON(const nlohmann::json &j, unordered_map<string, shared_ptr<MeshDef>> const &meshes, unordered_map<string, shared_ptr<MaterialDef>> materials)
-{
+ModelDef ModelDef::fromJSON(const nlohmann::json &j, unordered_map<string, shared_ptr<MeshDef>> const &meshes,
+                            unordered_map<string, shared_ptr<MaterialDef>> materials) {
     assert(j.at("version").get<uint32_t>() == MODEL_JSON_VERSION);
     auto name = j.at("name").get<string>();
     auto material = materials.at(j.at("material").get<string>());
     MeshDefType meshDefType = j.contains("type") ? meshDefTypeMap.at(j.at("type").get<string>()) : MeshDefType_Model;
-    switch (meshDefType)
-    {
+    switch (meshDefType) {
     case MeshDefType_Model:
         return ModelDef(name, meshes.at(j.at("mesh").get<string>()), material);
-    case MeshDefType_Mesh:
-    {
+    case MeshDefType_Mesh: {
         shared_ptr<VulkMesh> mesh = make_shared<VulkMesh>();
         auto meshJson = j.at("GeoMesh");
         GeoMeshDefType type = geoMeshDefTypeMap.at(meshJson.at("type").get<string>());
-        switch (type)
-        {
-        case GeoMeshDefType_Sphere:
-        {
+        switch (type) {
+        case GeoMeshDefType_Sphere: {
             float radius = meshJson.at("radius").get<float>();
             uint32_t numSubdivisions = meshJson.value("numSubdivisions", 0);
             mesh = make_shared<VulkMesh>();
             makeGeoSphere(radius, numSubdivisions, *mesh);
-        }
-        break;
-        case GeoMeshDefType_Cylinder:
-        {
+        } break;
+        case GeoMeshDefType_Cylinder: {
             float height = meshJson.at("height").get<float>();
             float bottomRadius = meshJson.at("bottomRadius").get<float>();
             float topRadius = meshJson.at("topRadius").get<float>();
             uint32_t numStacks = meshJson.at("numStacks").get<uint32_t>();
             uint32_t numSlices = meshJson.at("numSlices").get<uint32_t>();
             makeCylinder(height, bottomRadius, topRadius, numStacks, numSlices, *mesh);
-        }
-        break;
-        case GeoMeshDefType_EquilateralTriangle:
-        {
+        } break;
+        case GeoMeshDefType_EquilateralTriangle: {
             float side = meshJson.at("side").get<float>();
             uint32_t numSubdivisions = meshJson.at("numSubdivisions").get<uint32_t>();
             makeEquilateralTri(side, numSubdivisions, *mesh);
-        }
-        break;
-        case GeoMeshDefType_Quad:
-        {
+        } break;
+        case GeoMeshDefType_Quad: {
             float w = meshJson.at("width").get<float>();
             float h = meshJson.at("height").get<float>();
             uint32_t numSubdivisions = meshJson.at("numSubdivisions").get<uint32_t>();
             makeQuad(w, h, numSubdivisions, *mesh);
-        }
-        break;
-        case GeoMeshDefType_Grid:
-        {
+        } break;
+        case GeoMeshDefType_Grid: {
             float width = meshJson.at("width").get<float>();
             float depth = meshJson.at("depth").get<float>();
             uint32_t m = meshJson.at("m").get<uint32_t>();
@@ -326,14 +311,11 @@ ModelDef ModelDef::fromJSON(const nlohmann::json &j, unordered_map<string, share
             float repeatU = meshJson.value("repeatU", 1.0f);
             float repeatV = meshJson.value("repeatV", 1.0f);
             makeGrid(width, depth, m, n, *mesh, repeatU, repeatV);
-        }
-        break;
-        case GeoMeshDefType_Axes:
-        {
+        } break;
+        case GeoMeshDefType_Axes: {
             float length = meshJson.at("length").get<float>();
             makeAxes(length, *mesh);
-        }
-        break;
+        } break;
         default:
             throw runtime_error("Unknown GeoMesh type: " + type);
         }
@@ -344,35 +326,25 @@ ModelDef ModelDef::fromJSON(const nlohmann::json &j, unordered_map<string, share
     };
 }
 
-ActorDef ActorDef::fromJSON(
-    const nlohmann::json &j,
-    unordered_map<string, shared_ptr<PipelineDef>> const &pipelines,
-    unordered_map<string, shared_ptr<ModelDef>> const &models,
-    unordered_map<string, shared_ptr<MeshDef>> meshes,
-    unordered_map<string, shared_ptr<MaterialDef>> materials)
-{
+ActorDef ActorDef::fromJSON(const nlohmann::json &j, unordered_map<string, shared_ptr<PipelineDef>> const &pipelines,
+                            unordered_map<string, shared_ptr<ModelDef>> const &models, unordered_map<string, shared_ptr<MeshDef>> meshes,
+                            unordered_map<string, shared_ptr<MaterialDef>> materials) {
     ActorDef a;
     a.name = j.at("name").get<string>();
     a.pipeline = pipelines.at(j.at("pipeline").get<string>());
 
-    if (j.contains("model"))
-    {
+    if (j.contains("model")) {
         assert(!j.contains("inlineModel"));
         a.model = models.at(j.at("model").get<string>());
-    }
-    else if (j.contains("inlineModel"))
-    {
+    } else if (j.contains("inlineModel")) {
         a.model = make_shared<ModelDef>(ModelDef::fromJSON(j.at("inlineModel"), meshes, materials));
-    }
-    else
-    {
+    } else {
         throw runtime_error("ActorDef must contain either a model or an inlineModel");
     }
 
     // make the transform
     glm::mat4 xform = glm::mat4(1.0f);
-    if (j.contains("xform"))
-    {
+    if (j.contains("xform")) {
         auto jx = j.at("xform");
 
         glm::vec3 pos = glm::vec3(0);
@@ -391,13 +363,9 @@ ActorDef ActorDef::fromJSON(
     return a;
 }
 
-SceneDef SceneDef::fromJSON(
-    const nlohmann::json &j,
-    unordered_map<string, shared_ptr<PipelineDef>> const &pipelines,
-    unordered_map<string, shared_ptr<ModelDef>> const &models,
-    unordered_map<string, shared_ptr<MeshDef>> const &meshes,
-    unordered_map<string, shared_ptr<MaterialDef>> const &materials)
-{
+SceneDef SceneDef::fromJSON(const nlohmann::json &j, unordered_map<string, shared_ptr<PipelineDef>> const &pipelines,
+                            unordered_map<string, shared_ptr<ModelDef>> const &models, unordered_map<string, shared_ptr<MeshDef>> const &meshes,
+                            unordered_map<string, shared_ptr<MaterialDef>> const &materials) {
     SceneDef s;
     assert(j.at("version").get<uint32_t>() == SCENE_JSON_VERSION);
     s.name = j.at("name").get<string>();
@@ -409,26 +377,21 @@ SceneDef SceneDef::fromJSON(
     s.camera.lookAt(eye, target);
 
     // load the lights
-    for (auto const &light : j.at("lights").get<vector<json>>())
-    {
+    for (auto const &light : j.at("lights").get<vector<json>>()) {
         string type = light.at("type").get<string>();
-        if (type == "point")
-        {
+        if (type == "point") {
             auto pos = light.at("pos").get<glm::vec3>();
             auto color = light.at("color").get<glm::vec3>();
             auto falloffStart = light.contains("falloffStart") ? light.at("falloffStart").get<float>() : 0.f;
             auto falloffEnd = light.contains("falloffEnd") ? light.at("falloffEnd").get<float>() : 0.f;
             s.pointLights.push_back(make_shared<VulkPointLight>(pos, falloffStart, color, falloffEnd));
-        }
-        else
-        {
+        } else {
             throw runtime_error("Unknown light type: " + type);
         }
     };
 
     // load the actors
-    for (auto const &actor : j.at("actors").get<vector<nlohmann::json>>())
-    {
+    for (auto const &actor : j.at("actors").get<vector<nlohmann::json>>()) {
         auto a = make_shared<ActorDef>(ActorDef::fromJSON(actor, pipelines, models, meshes, materials));
         s.actors.push_back(a);
         assert(!s.actorMap.contains(a->name));
@@ -438,59 +401,44 @@ SceneDef SceneDef::fromJSON(
     return s;
 }
 
-void findAndProcessMetadata(const fs::path &path, Metadata &metadata)
-{
+void findAndProcessMetadata(const fs::path &path, Metadata &metadata) {
     assert(fs::exists(path) && fs::is_directory(path));
 
     // The metadata is stored in JSON files with the following extensions
     // other extensions need special handling or no handling (e.g. .mtl files are handled by
     // loadMaterialDef, and .obj and .spv files are handled directly)
     static set<string> jsonExts{".model", ".pipeline", ".scene"};
-    struct LoadInfo
-    {
+    struct LoadInfo {
         json j;
         fs::path path;
     };
     unordered_map<string, unordered_map<string, LoadInfo>> loadInfos;
 
-    for (const auto &entry : fs::recursive_directory_iterator(path))
-    {
-        if (entry.is_regular_file())
-        {
+    for (const auto &entry : fs::recursive_directory_iterator(path)) {
+        if (entry.is_regular_file()) {
             string stem = entry.path().stem().string();
             string ext = entry.path().extension().string();
-            if (jsonExts.find(ext) != jsonExts.end())
-            {
+            if (jsonExts.find(ext) != jsonExts.end()) {
                 ifstream f(entry.path());
                 LoadInfo loadInfo;
                 loadInfo.j = nlohmann::json::parse(f, nullptr, true, true); // allow comments
                 loadInfo.path = entry.path().parent_path();
                 assert(loadInfo.j.at("name") == stem);
                 loadInfos[ext][loadInfo.j.at("name")] = loadInfo;
-            }
-            else if (ext == ".vertspv")
-            {
+            } else if (ext == ".vertspv") {
                 assert(!metadata.vertexShaders.contains(stem));
                 metadata.vertexShaders[stem] = make_shared<ShaderDef>(stem, entry.path());
-            }
-            else if (ext == ".geomspv")
-            {
+            } else if (ext == ".geomspv") {
                 assert(!metadata.geometryShaders.contains(stem));
                 metadata.geometryShaders[stem] = make_shared<ShaderDef>(stem, entry.path());
-            }
-            else if (ext == ".fragspv")
-            {
+            } else if (ext == ".fragspv") {
                 assert(!metadata.fragmentShaders.contains(stem));
                 metadata.fragmentShaders[stem] = make_shared<ShaderDef>(stem, entry.path());
-            }
-            else if (ext == ".mtl")
-            {
+            } else if (ext == ".mtl") {
                 assert(!metadata.materials.contains(stem));
                 auto material = make_shared<MaterialDef>(loadMaterialDef(entry.path()));
                 metadata.materials[material->name] = material;
-            }
-            else if (ext == ".obj")
-            {
+            } else if (ext == ".obj") {
                 assert(!metadata.meshes.contains(stem));
                 ModelMeshDef mmd{entry.path()};
                 metadata.meshes[stem] = make_shared<MeshDef>(stem, mmd);
@@ -501,34 +449,30 @@ void findAndProcessMetadata(const fs::path &path, Metadata &metadata)
     // The order matters here: models depend on meshes and materials, actors depend on models and pipelines
     // and the scene depends on actors
 
-    for (auto const &[name, loadInfo] : loadInfos[".pipeline"])
-    {
-        auto pipelineDef = make_shared<PipelineDef>(PipelineDef::fromJSON(loadInfo.j, metadata.vertexShaders, metadata.geometryShaders, metadata.fragmentShaders));
+    for (auto const &[name, loadInfo] : loadInfos[".pipeline"]) {
+        auto pipelineDef =
+            make_shared<PipelineDef>(PipelineDef::fromJSON(loadInfo.j, metadata.vertexShaders, metadata.geometryShaders, metadata.fragmentShaders));
         assert(!metadata.pipelines.contains(pipelineDef->name));
         metadata.pipelines[pipelineDef->name] = pipelineDef;
     }
 
-    for (auto const &[name, loadInfo] : loadInfos[".model"])
-    {
+    for (auto const &[name, loadInfo] : loadInfos[".model"]) {
         auto modelDef = make_shared<ModelDef>(ModelDef::fromJSON(loadInfo.j, metadata.meshes, metadata.materials));
         assert(!metadata.models.contains(modelDef->name));
         metadata.models[modelDef->name] = modelDef;
     }
 
-    for (auto const &[name, loadInfo] : loadInfos[".scene"])
-    {
+    for (auto const &[name, loadInfo] : loadInfos[".scene"]) {
         auto sceneDef = make_shared<SceneDef>(SceneDef::fromJSON(loadInfo.j, metadata.pipelines, metadata.models, metadata.meshes, metadata.materials));
         assert(!metadata.scenes.contains(sceneDef->name));
         metadata.scenes[sceneDef->name] = sceneDef;
     }
 }
 
-Metadata const *getMetadata()
-{
+Metadata const *getMetadata() {
     static Metadata metadata;
     static once_flag flag;
-    call_once(flag, [&]()
-              { findAndProcessMetadata(fs::current_path(), metadata); });
+    call_once(flag, [&]() { findAndProcessMetadata(fs::current_path(), metadata); });
 
     return &metadata;
 }

@@ -14,6 +14,14 @@ const int VulkShaderBinding_MaterialUBO = 10;
 const int VulkShaderBinding_DebugNormalsUBO = 11;
 const int VulkShaderBinding_DebugTangentsUBO = 12;
 
+const int LayoutLocation_Color = 0;
+const int LayoutLocation_Position = 1;
+const int LayoutLocation_Normal = 2;
+const int LayoutLocation_Tangent = 3;
+const int LayoutLocation_TexCoord = 4;
+const int LayoutLocation_Height = 5;
+const int LayoutLocation_Position2 = 6;
+
 
 
 struct Material
@@ -46,13 +54,6 @@ vec3 calcTBNNormal(sampler2D normSampler, vec2 inTexCoord, vec3 normWorld, vec3 
     return norm;
 }
 
-const int LayoutLocation_Position = 0;
-const int LayoutLocation_Normal = 1; 
-const int LayoutLocation_Tangent = 2;
-const int LayoutLocation_TexCoord = 3;
-const int LayoutLocation_Height = 4;
-const int LayoutLocation_Position2 = 5;
-
 #define XFORMS_UBO(xformUBO)  \
 layout(binding = VulkShaderBinding_XformsUBO) uniform UniformBufferObject { \
     mat4 world; \
@@ -64,6 +65,28 @@ layout(binding = VulkShaderBinding_XformsUBO) uniform UniformBufferObject { \
 layout(binding = VulkShaderBinding_ModelXform) uniform ModelXformUBO { \
     mat4 xform; \
 } modelUBO
+
+#define EYEPOS_UBO(eyePosUBO)  \
+layout(binding = VulkShaderBinding_EyePos) uniform EyePos { \
+    vec3 eyePos; \
+} eyePosUBO
+
+#define LIGHTS_UBO(lightUBO)  \
+layout(binding = VulkShaderBinding_Lights) uniform LightBuf { \
+    PointLight light; \
+} lightBuf
+
+#define DEBUGNORMALS_UBO(debugNormalsUBO)  \
+layout(binding = VulkShaderBinding_DebugNormalsUBO) uniform DebugNormalsUBO { \
+    float len;         \
+    bool useModel;     \
+} debugNormalsUBO
+
+#define MATERIAL_UBO(materialUBO)  \
+layout(binding = VulkShaderBinding_MaterialUBO) uniform MaterialBuf { \
+    Material material; \
+} materialBuf
+
 
 
 #define VERTEX_IN(inPosition, inNormal, inTangent, inTexCoord)  \
