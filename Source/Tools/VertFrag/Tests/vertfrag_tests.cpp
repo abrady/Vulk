@@ -9,10 +9,8 @@ TEST_CASE("Vertfrag Tests") {
     // Define your tests here
     SECTION("Test Parsing") {
         vertfrag::StateBuilder stateBuilder;
-        pegtl::memory_input<> in(R"(
-    // some comments!
-
-    @ubo(XformsUBO xformsIn)
+        pegtl::memory_input<> in(R"(@ubo(XformsUBO xformsIn)
+    @out(Pos outPos, Normal outNorm)
     void vert(Pos inPos, Normal inNorm, Tangent inTan, TexCoord inTex)
     {
         mat4 worldXform = xform.world * modelUBO.xform;
@@ -20,16 +18,33 @@ TEST_CASE("Vertfrag Tests") {
         vec4(inPosition, 1.0); outTexCoord = inTexCoord; outPos = vec3(worldXform
         * vec4(inPosition, 1.0)); outNorm = vec3(worldXform * vec4(inNormal,
         0.0)); outTangent = vec3(worldXform * vec4(inTangent, 0.0));
-    }
-    )",
+    })",
                                  "vertfrag input");
 
         // argv_input in(argv, 1);
         REQUIRE(pegtl::parse<vertfrag::grammar, vertfrag::action, vertfrag::control>(in, stateBuilder));
         auto state = stateBuilder.build();
-        state;
-        REQUIRE(state.vert.ubos.size() == 1);
-        REQUIRE(state.vert.ubos[0].type == VulkShaderUBOBinding_Xforms);
-        REQUIRE(state.vert.ubos[0].name == "xformsIn");
+        auto &vert = state.shaderDecls[0];
+        REQUIRE(vert.ubos.size() == 1);
+        REQUIRE(vert.ubos[0].type == VulkShaderUBOBinding_Xforms);
+        REQUIRE(vert.ubos[0].name == "xformsIn");
+        // REQUIRE(vert.ubos[1].type == VulkShaderUBOBinding_ModelXform);
+        // REQUIRE(vert.ubos[1].name == "modelIn");
+
+        REQUIRE(vert.inBindings.size() == 4);
+        REQUIRE(vert.inBindings[0].type == VulkVertBindingLocation_PosBinding);
+        REQUIRE(vert.inBindings[0].name == "inPos");
+        REQUIRE(vert.inBindings[1].type == VulkVertBindingLocation_NormalBinding);
+        REQUIRE(vert.inBindings[1].name == "inNorm");
+        REQUIRE(vert.inBindings[2].type == VulkVertBindingLocation_TangentBinding);
+        REQUIRE(vert.inBindings[2].name == "inTan");
+        REQUIRE(vert.inBindings[3].type == VulkVertBindingLocation_TexCoordBinding);
+        REQUIRE(vert.inBindings[3].name == "inTex");
+
+        REQUIRE(vert.outBindings.size() == 2);
+        REQUIRE(vert.outBindings[0].type == VulkVertBindingLocation_PosBinding);
+        REQUIRE(vert.outBindings[0].name == "outPos");
+        REQUIRE(vert.outBindings[1].type == VulkVertBindingLocation_NormalBinding);
+        REQUIRE(vert.outBindings[1].name == "outNorm"); //
     }
 }

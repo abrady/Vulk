@@ -6,6 +6,7 @@
 #include <string>
 
 // @ubo(XformsUBO xformsUBO, ModelXform modelUBO)
+// @out(Pos outPos, Norm outNorm, Tan outTangent, TexCoord outTexCoord)
 // void vert(Pos inPos, Norm inNorm, Tan inTan, TexCoord inTex)
 // {
 //     mat4 worldXform = xform.world * modelUBO.xform;
@@ -13,6 +14,7 @@
 //     vec4(inPosition, 1.0); outTexCoord = inTexCoord; outPos = vec3(worldXform
 //     * vec4(inPosition, 1.0)); outNorm = vec3(worldXform * vec4(inNormal,
 //     0.0)); outTangent = vec3(worldXform * vec4(inTangent, 0.0));
+//
 // }
 
 // @ubo(EyePos eyePos, Lights lights, MaterialUBO materialUBO)
@@ -33,11 +35,18 @@ namespace vertfrag {
             VulkShaderUBOBindings type;
             std::string name;
         };
+        struct VertBindings {
+            VulkVertBindingLocation type;
+            std::string name;
+        };
+
         std::vector<UBO> ubos;
+        std::vector<VertBindings> inBindings;
+        std::vector<VertBindings> outBindings;
     };
 
     struct State {
-        ShaderDecl vert, frag;
+        std::vector<ShaderDecl> shaderDecls;
     };
 
     class ShaderDeclBuilder {
@@ -45,8 +54,10 @@ namespace vertfrag {
         std::vector<std::string> uboNames;
         std::vector<VulkShaderTextureBindings> textureBindings;
         std::vector<std::string> textureNames;
-        std::vector<VertBindingLocations> vertBindings;
-        std::vector<std::string> vertBindingNames;
+        std::vector<VulkVertBindingLocation> inBindings;
+        std::vector<std::string> inBindingNames;
+        std::vector<VulkVertBindingLocation> outBindings;
+        std::vector<std::string> outBindingNames;
         std::string funcBody;
 
       public:
@@ -63,11 +74,17 @@ namespace vertfrag {
         void addSamplerName(const std::string &name) {
             textureNames.push_back(name);
         }
-        void addVertBinding(VertBindingLocations binding) {
-            vertBindings.push_back(binding);
+        void addInBinding(VulkVertBindingLocation binding) {
+            inBindings.push_back(binding);
         }
-        void addVertBindingName(const std::string &name) {
-            vertBindingNames.push_back(name);
+        void addInBindingName(const std::string &name) {
+            inBindingNames.push_back(name);
+        }
+        void addOutBinding(VulkVertBindingLocation binding) {
+            outBindings.push_back(binding);
+        }
+        void addOutBindingName(const std::string &name) {
+            outBindingNames.push_back(name);
         }
         void addFunctionName(const std::string &name) {
             funcName = name;
@@ -78,11 +95,18 @@ namespace vertfrag {
         ShaderDecl build() {
             assert(uboBindings.size() == uboNames.size());
             assert(textureBindings.size() == textureNames.size());
-            assert(vertBindings.size() == vertBindingNames.size());
+            assert(inBindings.size() == inBindingNames.size());
+            assert(outBindings.size() == outBindingNames.size());
             assert(funcBody.size() > 0);
             ShaderDecl s;
             for (size_t i = 0; i < uboBindings.size(); i++) {
                 s.ubos.push_back({uboBindings[i], uboNames[i]});
+            }
+            for (size_t i = 0; i < inBindings.size(); i++) {
+                s.inBindings.push_back({inBindings[i], inBindingNames[i]});
+            }
+            for (size_t i = 0; i < outBindings.size(); i++) {
+                s.outBindings.push_back({outBindings[i], outBindingNames[i]});
             }
             return s;
         }
@@ -95,13 +119,8 @@ namespace vertfrag {
         StateBuilder() : b(std::make_unique<ShaderDeclBuilder>()) {
         }
         void buildShaderDecl() {
-            if (b->funcName == "vert")
-                s.vert = b->build();
-            else if (b->funcName == "frag")
-                s.frag = b->build();
-            else
-                throw std::runtime_error("Unknown shader type");
-
+            assert(b->funcName == "vert" || b->funcName == "frag");
+            s.shaderDecls.push_back(b->build());
             b = std::make_unique<ShaderDeclBuilder>(); // Reset the builder
         }
         State build() {
@@ -138,15 +157,21 @@ namespace vertfrag {
 
     // @ubo(XformsUBO xformsUBO, ModelXform modelUBO)
     // @ubo(ubo_type ubo_name, ubo_type ubo_name)
-    struct ubo_keyword : TAO_PEGTL_KEYWORD("@ubo") {}; // string<'@', 'u', 'b', 'o'> {};
+    struct ubo_keyword : TAO_PEGTL_KEYWORD("@ubo") {};
     struct ubo_type : plus<identifier> {};
     struct ubo_name : plus<identifier> {};
-    struct ubo_param : seq<ubo_type, spaces, ubo_name> {}; // Define the parameter rule
+    struct ubo_param : seq<ubo_type, spaces, ubo_name> {};
     struct ubo_declaration : seq<ubo_keyword, one<'('>, list<ubo_param, one<','>>, one<')'>> {};
 
     struct shader_param_type : plus<identifier> {};
     struct shader_param_name : plus<identifier> {};
-    struct shader_param : seq<opt_spaces, shader_param_type, spaces, shader_param_name, opt_spaces> {}; // Define the parameter rule
+    struct shader_param : seq<opt_spaces, shader_param_type, spaces, shader_param_name, opt_spaces> {};
+
+    struct out_keyword : TAO_PEGTL_KEYWORD("@out") {};
+    struct out_param_type : plus<identifier> {};
+    struct out_param_name : plus<identifier> {};
+    struct out_param : seq<opt_spaces, out_param_type, spaces, out_param_name, opt_spaces> {};
+    struct out_declaration : seq<out_keyword, one<'('>, list<out_param, one<','>>, one<')'>> {};
 
     struct not_brace : not_one<'{', '}'> {};
     struct content; // forward decl
@@ -159,10 +184,10 @@ namespace vertfrag {
     struct shader_func_decl : seq<shader_start, one<'('>, list<shader_param, one<','>>, one<')'>, star<space>, function_body> {};
 
     // seq<ubo_declaration, shader_func_decl> {};
-    struct shader_decl : seq<ubo_declaration, spaces, shader_func_decl> {};
+    struct shader_decl : seq<ubo_declaration, spaces, out_declaration, spaces, shader_func_decl> {};
     struct vertfrag_body : star<sor<shader_decl, skip>> {};
-    struct grammar : must<vertfrag_body, eof> {};
-    // struct grammar : must<shader_decl, eof> {};
+    // struct grammar : must<vertfrag_body, eof> {};
+    struct grammar : must<shader_decl, eof> {};
 
     template <> struct action<ubo_type> {
         template <typename ParseInput> static void apply(const ParseInput &in, StateBuilder &s) {
@@ -176,12 +201,22 @@ namespace vertfrag {
     };
     template <> struct action<shader_param_type> {
         template <typename ParseInput> static void apply(const ParseInput &in, StateBuilder &s) {
-            s.b->addVertBinding(VulkShaderEnums::vertBindingFromString(in.string()));
+            s.b->addInBinding(VulkShaderEnums::vertBindingFromString(in.string()));
         }
     };
     template <> struct action<shader_param_name> {
         template <typename ParseInput> static void apply(const ParseInput &in, StateBuilder &s) {
-            s.b->addVertBindingName(in.string());
+            s.b->addInBindingName(in.string());
+        }
+    };
+    template <> struct action<out_param_type> {
+        template <typename ParseInput> static void apply(const ParseInput &in, StateBuilder &s) {
+            s.b->addOutBinding(VulkShaderEnums::vertBindingFromString(in.string()));
+        }
+    };
+    template <> struct action<out_param_name> {
+        template <typename ParseInput> static void apply(const ParseInput &in, StateBuilder &s) {
+            s.b->addOutBindingName(in.string());
         }
     };
     template <> struct action<shader_name> {

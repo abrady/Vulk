@@ -125,10 +125,10 @@ VulkPipelineBuilder &VulkPipelineBuilder::addVertexInputFieldVec2(uint32_t bindi
 
 VulkPipelineBuilder &VulkPipelineBuilder::addVulkVertexInput(uint32_t binding) {
     return addVertexInputBindingDescription(binding, sizeof(Vertex))
-        .addVertexInputFieldVec3(binding, VertBindingLocations_PosBinding, offsetof(Vertex, pos))
-        .addVertexInputFieldVec3(binding, VertBindingLocations_NormalBinding, offsetof(Vertex, normal))
-        .addVertexInputFieldVec3(binding, VertBindingLocations_TangentBinding, offsetof(Vertex, tangent))
-        .addVertexInputFieldVec2(binding, VertBindingLocations_TexCoordBinding, offsetof(Vertex, uv));
+        .addVertexInputFieldVec3(binding, VulkVertBindingLocation_PosBinding, offsetof(Vertex, pos))
+        .addVertexInputFieldVec3(binding, VulkVertBindingLocation_NormalBinding, offsetof(Vertex, normal))
+        .addVertexInputFieldVec3(binding, VulkVertBindingLocation_TangentBinding, offsetof(Vertex, tangent))
+        .addVertexInputFieldVec2(binding, VulkVertBindingLocation_TexCoordBinding, offsetof(Vertex, uv));
 }
 
 VulkPipelineBuilder &VulkPipelineBuilder::setBlendingEnabled(bool enabled, VkColorComponentFlags colorWriteMask) {
