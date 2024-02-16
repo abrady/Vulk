@@ -186,8 +186,8 @@ namespace vertfrag {
     // seq<ubo_declaration, shader_func_decl> {};
     struct shader_decl : seq<ubo_declaration, out_declaration, shader_func_decl> {};
     struct vertfrag_body : star<sor<shader_decl, skip>> {};
-    // struct grammar : must<vertfrag_body, eof> {};
-    struct grammar : must<shader_decl, eof> {};
+    struct grammar : must<vertfrag_body, eof> {};
+    // struct grammar : must<shader_decl, eof> {};
 
     template <> struct action<ubo_type> {
         template <typename ParseInput> static void apply(const ParseInput &in, StateBuilder &s) {

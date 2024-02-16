@@ -9,7 +9,16 @@ TEST_CASE("Vertfrag Tests") {
     // Define your tests here
     SECTION("Test Parsing") {
         vertfrag::StateBuilder stateBuilder;
-        pegtl::memory_input<> in(R"(@ubo(XformsUBO xformsIn, ModelXform modelIn)
+        pegtl::memory_input<> in(R"(
+            
+            // spaces
+
+            /* 
+            * and
+            * comments
+            */
+            
+            @ubo(XformsUBO xformsIn, ModelXform modelIn)
     @out(Pos outPos, Normal outNorm)
     void vert(Pos inPos, Normal inNorm, Tangent inTan, TexCoord inTex)
     {
