@@ -15,6 +15,21 @@
             "environment": [],
             "externalConsole": false,
             "preLaunchTask": "CMake: build"
-        }
+        },
+        {
+            "name": "PipelineBuilder - Debug",
+            "program": "${workspaceFolder}/build/Source/Tools/PipelineBuilder/Debug/PipelineBuilder.exe",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "args": [
+                "${workspaceFolder}/Assets/Pipelines/DebugNormals.pipeline",
+                "${workspaceFolder}/Source/Shaders",
+                "${workspaceFolder}/build/Debug/Assets/Pipelines"
+            ],
+            "stopAtEntry": false,
+            "environment": [],
+            "externalConsole": false,
+            "preLaunchTask": "CMake: build"
+        },
     ]
 }

@@ -1,0 +1,11 @@
+{
+    "name": "vulk",
+    "version-string": "0.1.0",
+    "dependencies": [
+        "vulkan",
+        "spirv-headers",
+        "spirv-cross",
+        "glfw3",
+        "catch2"
+    ]
+}

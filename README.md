@@ -33,6 +33,11 @@ Install the following. Note that CmakeLists.txt assumes these are in C:\Vulkan:
 
 # Log
 
+## 2/17 pipeline/shader annoyances part 2
+
+having thought about it some more, the root problem is that it is easy to have a shader use, say, a UBO, but the pipeline doesn't declare it, or an upstream shader to not bind properly to a downstream one (e.g. incorrect outputs to inputs). it feels like this could be pretty easy to fix:
+1. shaders themselves export their dependencies, can we generate them from that? 
+
 ## 2/14 pipeline annoyances
 * it sucks to define the pipeline and the inputs and then get runtime errors
 * what would be nice would be some way to tie this all together. how can I do this?

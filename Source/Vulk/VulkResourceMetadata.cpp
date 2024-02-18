@@ -98,6 +98,7 @@ static vector<pair<string, VulkShaderUBOBindings>> const &getUBOBindings() {
         {"xforms", VulkShaderUBOBinding_Xforms},
         {"lights", VulkShaderUBOBinding_Lights},
         {"eyePos", VulkShaderUBOBinding_EyePos},
+        {"modelXform", VulkShaderUBOBinding_ModelXform},
         {"materialUBO", VulkShaderUBOBinding_MaterialUBO},
         {"debugNormals", VulkShaderUBOBinding_DebugNormals},
         {"debugTangents", VulkShaderUBOBinding_DebugTangents},

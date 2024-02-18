@@ -1,8 +1,5 @@
-
-# CMakeList.txt : CMake project for vulkan5, include source and define
-# WARNING: in certain cases you may need to re-run CMake: Configure (or from the command line do cmake -B build -S vulkan5)
-#          e.g. when I set the generatore platform. 
-#
+# this uses vcpkg to manage dependencies so don't forget to run vcpkg integrate install to get the path and build with it
+# e.g. mkdir Build; cd Build; cmake -DCMAKE_TOOLCHAIN_FILE=<path_to>/buildsystems/vcpkg.cmake ..
 # cmake -DCMAKE_BUILD_TYPE=Debug - for Debug Build
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -18,17 +15,32 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Set a variable for the base path
-set(VULKAN_UTILS "c:\\Vulkan")
-# Use the variable in the include_directories command
-include_directories("${VULKAN_UTILS}\\glfw\\include")
-
 include_directories("${CMAKE_SOURCE_DIR}/Source")
 include_directories("${CMAKE_SOURCE_DIR}/Source/ThirdParty/include")
 include_directories("$ENV{VK_SDK_PATH}/include")
 add_compile_options(-W3)
 
-add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Tools/vertfrag)
+######
+## dependencies
+######
+find_program(GLSLC_EXECUTABLE NAMES glslc)
+
+if(NOT GLSLC_EXECUTABLE)
+    message(FATAL_ERROR "glslc not found! Please install Vulkan SDK or glslang.")
+endif()
+
+######
+## libraries to download
+######
+
+# include(FetchContent) - using vcpkg instead
+
+######
+## subdirectories
+######
+
+# add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Tools/vertfrag)
+add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Tools/PipelineBuilder)
 
 # TODO: configure so it will work for release builds too
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -42,7 +54,6 @@ endif()
 
 # Add source to this project's executable.
 link_directories("$ENV{VK_SDK_PATH}\\Lib")
-link_directories("C:\\Vulkan\\glfw\\build\\src\\Debug")
 link_directories("${CMAKE_SOURCE_DIR}/Source/ThirdParty/lib")
 
 
@@ -62,6 +73,8 @@ set(VULKAN_RENDERER_SOURCES
 )
 
 add_executable (VulkanRenderer "Source/main.cpp" ${VULKAN_RENDERER_SOURCES})
+
+
 if(MSVC)
   file(GLOB MY_PROJECT_NATVIS_FILES "${CMAKE_SOURCE_DIR}/Source/Tools/MSVC/Natvis/*.natvis")
   message("adding natvis files to project ${MY_PROJECT_NATVIS_FILES}")
@@ -76,10 +89,11 @@ else()
   add_compile_options(-sanitize=address)
 endif()
 
-target_link_libraries(VulkanRenderer vulkan-1)
-target_link_libraries(VulkanRenderer glfw3)
-target_link_libraries(VulkanRenderer assimp-vc143-mtd)
-target_link_libraries(VulkanRenderer zlibstat)
+target_link_libraries(VulkanRenderer PRIVATE vulkan-1)
+target_link_libraries(VulkanRenderer PRIVATE assimp-vc143-mtd)
+target_link_libraries(VulkanRenderer PRIVATE zlibstat)
+# Note: if you put these above the FetchContent_MakeAvailable calls, it will not work
+target_link_libraries(VulkanRenderer PRIVATE glfw)
 
 
 ##############################################################################
