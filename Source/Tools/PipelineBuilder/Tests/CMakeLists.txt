@@ -12,4 +12,4 @@ find_package(Catch2 CONFIG REQUIRED)
 target_link_libraries(PipelineBuilderTests PRIVATE Catch2::Catch2 Catch2::Catch2WithMain spirv-cross-core spirv-cross-glsl spirv-cross-reflect spirv-cross-util )
 
 enable_testing()
-add_test(NAME PipelineBuilderTests COMMAND PipelineBuilderTests)
+vulk_add_and_remember_test(PipelineBuilderTests)

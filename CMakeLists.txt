@@ -60,8 +60,20 @@ find_package(Vulkan REQUIRED)
 ## subdirectories
 ######
 
+# Add a custom target that builds only the tests, so we can build them all at once in our github workflow
+add_custom_target(build_tests)
+
 # this has to be before we include any subdirectories
 enable_testing()
+
+# Define a function to add tests and accumulate them into a custom target so we can
+# build them all at once in our github workflow
+function(vulk_add_and_remember_test target)
+  # Register the test with CTest
+  add_test(NAME ${target} COMMAND ${target})
+  # Add the test to the custom target
+  add_dependencies(build_tests ${target})
+endfunction()
 
 
 # add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Tools/vertfrag)
@@ -222,9 +234,3 @@ add_custom_target(
     compile_shaders 
     DEPENDS ${COMPILED_SHADERS}
 )
-
-
-
-# Add a custom target that builds only the tests
-# TODO: there must be a way to do this with all tests...
-add_custom_target(build_tests DEPENDS PipelineBuilderTests)
