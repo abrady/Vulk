@@ -36,7 +36,15 @@ Install the following. Note that CmakeLists.txt assumes these are in C:\Vulkan:
 ## 2/17 pipeline/shader annoyances part 2
 
 having thought about it some more, the root problem is that it is easy to have a shader use, say, a UBO, but the pipeline doesn't declare it, or an upstream shader to not bind properly to a downstream one (e.g. incorrect outputs to inputs). it feels like this could be pretty easy to fix:
-1. shaders themselves export their dependencies, can we generate them from that? 
+* shaders themselves export their dependencies, can we generate them from that? 
+
+I just wrote some tests that reader a spirv file and checks the bindings, it works as expected.
+
+so next I just need to:
+* make the code to load a pipeline and the respective shaders referenced by the pipeline
+* check that the inputs and outputs match
+* write out the pipeline file in the build director
+* wire this up to cmake
 
 ## 2/14 pipeline annoyances
 * it sucks to define the pipeline and the inputs and then get runtime errors
