@@ -41,6 +41,10 @@ find_package(Vulkan REQUIRED)
 ## subdirectories
 ######
 
+# this has to be before we include any subdirectories
+enable_testing()
+
+
 # add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Tools/vertfrag)
 add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Tools/PipelineBuilder)
 
@@ -199,3 +203,4 @@ add_custom_target(
     compile_shaders 
     DEPENDS ${COMPILED_SHADERS}
 )
+
