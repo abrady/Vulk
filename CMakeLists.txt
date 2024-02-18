@@ -30,10 +30,12 @@ if(NOT GLSLC_EXECUTABLE)
 endif()
 
 ######
-## libraries to download
+## vcpkg
 ######
 
-# include(FetchContent) - using vcpkg instead
+# this is heuristically generated, and may not be correct
+find_package(glfw3 CONFIG REQUIRED)
+find_package(Vulkan REQUIRED)
 
 ######
 ## subdirectories
@@ -89,11 +91,10 @@ else()
   add_compile_options(-sanitize=address)
 endif()
 
-target_link_libraries(VulkanRenderer PRIVATE vulkan-1)
 target_link_libraries(VulkanRenderer PRIVATE assimp-vc143-mtd)
 target_link_libraries(VulkanRenderer PRIVATE zlibstat)
-# Note: if you put these above the FetchContent_MakeAvailable calls, it will not work
 target_link_libraries(VulkanRenderer PRIVATE glfw)
+target_link_libraries(VulkanRenderer PRIVATE Vulkan::Vulkan)
 
 
 ##############################################################################

@@ -25,8 +25,7 @@ std::vector<uint32_t> readSPIRVFile(fs::path filename) {
     return buffer;
 }
 
-TEST_CASE("PipelineBuilder Tests") {
-    // Define your tests here
+TEST_CASE("PipelineBuilder Tests") { // Define your tests here
     SECTION("Test Basics") {
         auto spirvData = readSPIRVFile(fs::path(__FILE__).parent_path() / "vert" / "DebugNormals.vertspv");
         spirv_cross::CompilerGLSL glsl(std::move(spirvData));

@@ -1,4 +1,5 @@
 build/
+vcpkg_installed/
 
 # Visual Studio files
 .vs/
