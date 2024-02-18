@@ -1,6 +1,5 @@
 #pragma once
 
-#include "nlohmann/json.hpp"
 #include "spirv_cross/spirv_glsl.hpp"
 #include <filesystem>
 #include <fstream>
@@ -10,6 +9,8 @@
 
 #include "Vulk/VulkResourceMetadata.h"
 #include "Vulk/VulkShaderEnums.h"
+
+#include "nlohmann/json.hpp"
 
 struct ShaderInfo {
     std::string name;
