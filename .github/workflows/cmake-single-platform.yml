@@ -18,7 +18,19 @@ jobs:
       uses: actions/checkout@v2
       with:
         submodules: 'recursive'    
-
+    - name: Cache vcpkg dependencies
+      uses: actions/cache@v2
+      with:
+        path: vcpkg_installed
+        key: ${{ runner.os }}-vcpkg-${{ hashFiles('**/vcpkg.json') }}
+    # cmake will do this, but this allows caching if the cmake part fails.
+    - name: Install dependencies
+      run: |
+        git clone https://github.com/Microsoft/vcpkg.git
+        cd vcpkg
+        ./bootstrap-vcpkg.sh
+        ./vcpkg integrate install
+        ./vcpkg install        
     - name: Prepare Vulkan SDK
       uses: humbletim/setup-vulkan-sdk@v1.2.0
       with:

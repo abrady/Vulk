@@ -1,7 +1,6 @@
 {
     "name": "vulk",
     "version-string": "0.1.0",
-    "builtin-baseline": "9e0ca9519d9d24a1d9d57a37cc824e79ce83936f",
     "dependencies": [
         "vulkan",
         "spirv-headers",
