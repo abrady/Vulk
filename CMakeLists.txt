@@ -223,3 +223,8 @@ add_custom_target(
     DEPENDS ${COMPILED_SHADERS}
 )
 
+
+
+# Add a custom target that builds only the tests
+# TODO: there must be a way to do this with all tests...
+add_custom_target(build_tests DEPENDS PipelineBuilderTests)
