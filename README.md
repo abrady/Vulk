@@ -10,17 +10,14 @@ My goal for this project is to transition from the hand-coded samples I was doin
 * https://learnopengl.com/Advanced-Lighting/Normal-Mapping - good tangent space intro
 
 # Building
-* Clone the repo
-
-Install the following. Note that CmakeLists.txt assumes these are in C:\Vulkan:
 * Install [Vulkan SDK](https://vulkan.lunarg.com/sdk/home)
-* Install [GLFW](https://www.glfw.org/)
-* Install [GLM](https://glm.g-truc.net/0.9.9/index.html)
-* Install [TinyObjLoader](https://github.com/tinyobjloader/tinyobjloader)
-* Install [STB](https://github.com/nothings/stb)
-
-* make sure your CMakeLists.txt points to the proper directory
-* run `cmake -S . -B build` from the root of the project
+* make sure your VULKAN_SDK environment variable is set
+* Clone the repo
+* mkdir build
+* cd build
+* cmake ..
+* cmake --build .
+* (optional - run tests) ctest -C Debug (or however you built it)
 
 # TODOs
 * DONE VulkResources should only need to live during the loading phase

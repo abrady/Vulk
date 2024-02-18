@@ -2,6 +2,24 @@
 # e.g. mkdir Build; cd Build; cmake -DCMAKE_TOOLCHAIN_FILE=<path_to>/buildsystems/vcpkg.cmake ..
 # cmake -DCMAKE_BUILD_TYPE=Debug - for Debug Build
 
+######
+## vcpkg setup
+######
+
+# Check if vcpkg is bootstrapped
+if(NOT EXISTS "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake")
+  message(STATUS "Bootstrapping vcpkg...")
+  execute_process(COMMAND ${CMAKE_SOURCE_DIR}/vcpkg/bootstrap-vcpkg.bat
+                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/vcpkg)
+endif()
+
+# Set the toolchain file
+set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
+
+######
+## project setup
+######
+
 if(NOT CMAKE_BUILD_TYPE)
     message("CMAKE_BUILD_TYPE not set, defaulting to Debug")
     set(CMAKE_BUILD_TYPE Debug)
@@ -23,11 +41,12 @@ add_compile_options(-W3)
 ######
 ## dependencies
 ######
-find_program(GLSLC_EXECUTABLE NAMES glslc)
 
-if(NOT GLSLC_EXECUTABLE)
-    message(FATAL_ERROR "glslc not found! Please install Vulkan SDK or glslang.")
-endif()
+# casuing problems on the github workflow, commenting out for now.
+# find_program(GLSLC_EXECUTABLE NAMES glslc)
+# if(NOT GLSLC_EXECUTABLE)
+#     message(FATAL_ERROR "glslc not found! Please install Vulkan SDK or glslang.")
+# endif()
 
 ######
 ## vcpkg
