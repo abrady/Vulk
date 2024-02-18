@@ -87,10 +87,10 @@ MaterialDef loadMaterialDef(const fs::path &file) {
     return material;
 }
 
-static unordered_map<string, VkShaderStageFlagBits> shaderStageMap{
-    {"vertex", VK_SHADER_STAGE_VERTEX_BIT},
-    {"fragment", VK_SHADER_STAGE_FRAGMENT_BIT},
-    {"geometry", VK_SHADER_STAGE_GEOMETRY_BIT},
+unordered_map<VkShaderStageFlagBits, string> shaderStageToStr{
+    {VK_SHADER_STAGE_VERTEX_BIT, "vert"},
+    {VK_SHADER_STAGE_FRAGMENT_BIT, "frag"},
+    {VK_SHADER_STAGE_GEOMETRY_BIT, "geom"},
 };
 
 static vector<pair<string, VulkShaderUBOBindings>> const &getUBOBindings() {
@@ -194,10 +194,24 @@ void parseShaderStageMap(const nlohmann::json &j, VkShaderStageFlagBits stage, D
 DescriptorSetDef DescriptorSetDef::fromJSON(const nlohmann::json &j) {
     DescriptorSetDef ds;
     for (auto const &[stage, bindings] : j.items()) {
-        VkShaderStageFlagBits vkStage = shaderStageMap.at(stage);
+        VkShaderStageFlagBits vkStage = DescriptorSetDef::getShaderStageFromStr(stage);
         parseShaderStageMap(bindings, vkStage, ds);
     }
     return ds;
+}
+
+nlohmann::json DescriptorSetDef::toJSON(const DescriptorSetDef &def) {
+    nlohmann::json j;
+    for (auto const &[stage, bindings] : def.uniformBuffers) {
+        j[shaderStageToStr.at(stage)]["uniformBuffers"] = bindings;
+    }
+    for (auto const &[stage, bindings] : def.storageBuffers) {
+        j[shaderStageToStr.at(stage)]["storageBuffers"] = bindings;
+    }
+    for (auto const &[stage, bindings] : def.imageSamplers) {
+        j[shaderStageToStr.at(stage)]["imageSamplers"] = bindings;
+    }
+    return j;
 }
 
 static unordered_map<string, VkPrimitiveTopology> primitiveTopologyMap{
@@ -236,7 +250,8 @@ PipelineDef PipelineDef::fromJSON(const nlohmann::json &j, unordered_map<string,
     p.depthCompareOp = depthCompareOpMap.at(j.value("depthCompareOp", "LESS"));
 
     p.vertexInputBinding = j.at("vertexInputBinding").get<uint32_t>();
-    p.descriptorSet = DescriptorSetDef::fromJSON(j.at("descriptorSet")); // Use custom from_json for DescriptorSetDef
+    if (j.contains("descriptorSet"))
+        p.descriptorSet = DescriptorSetDef::fromJSON(j.at("descriptorSet")); // Use custom from_json for DescriptorSetDef
 
     if (j.contains("geometryShader")) {
         shader = j.at("geometryShader").get<string>();
@@ -245,6 +260,23 @@ PipelineDef PipelineDef::fromJSON(const nlohmann::json &j, unordered_map<string,
     }
     p.validate();
     return p;
+}
+
+nlohmann::json PipelineDef::toJSON(const PipelineDef &def) {
+    nlohmann::json j;
+    j["version"] = PIPELINE_JSON_VERSION;
+    j["name"] = def.name;
+    j["vertexShader"] = def.vertexShader->name;
+    j["fragmentShader"] = def.fragmentShader->name;
+    j["primitiveTopology"] = "TriangleList"; // TODO: add support for other topologies
+    j["depthTestEnabled"] = def.depthTestEnabled;
+    j["depthWriteEnabled"] = def.depthWriteEnabled;
+    j["depthCompareOp"] = "LESS"; // TODO: add support for other compare ops
+    j["vertexInputBinding"] = def.vertexInputBinding;
+    j["descriptorSet"] = DescriptorSetDef::toJSON(def.descriptorSet);
+    if (def.geometryShader)
+        j["geometryShader"] = def.geometryShader->name;
+    return j;
 }
 
 static unordered_map<string, MeshDefType> meshDefTypeMap{

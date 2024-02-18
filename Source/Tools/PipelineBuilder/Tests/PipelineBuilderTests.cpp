@@ -1,6 +1,7 @@
 #define CATCH_CONFIG_MAIN // This tells Catch to provide a main() - only do this in one cpp file
 #include <catch.hpp>
 
+#include "../PipelineBuilder.h"
 #include "Vulk/VulkShaderEnums.h"
 #include "spirv_cross/spirv_glsl.hpp"
 #include <filesystem>
@@ -11,74 +12,60 @@
 
 namespace fs = std::filesystem;
 
-std::vector<uint32_t> readSPIRVFile(fs::path filename) {
-    std::ifstream file(filename, std::ios::ate | std::ios::binary);
-
-    if (!file.is_open()) {
-        throw std::runtime_error("Failed to open file!");
-    }
-
-    size_t fileSize = (size_t)file.tellg();
-    std::vector<uint32_t> buffer(fileSize / sizeof(uint32_t));
-
-    file.seekg(0);
-    file.read((char *)buffer.data(), fileSize);
-    file.close();
-
-    return buffer;
-}
-
 TEST_CASE("PipelineBuilder Tests") { // Define your tests here
     SECTION("Test Basics") {
-        auto spirvData = readSPIRVFile(fs::path(__FILE__).parent_path() / "vert" / "DebugNormals.vertspv");
-        spirv_cross::CompilerGLSL glsl(std::move(spirvData));
-        const spirv_cross::ShaderResources resources = glsl.get_shader_resources();
-
-        // For UBOs
-        std::unordered_map<std::string, std::string> bindings;
-        for (const spirv_cross::Resource &resource : resources.uniform_buffers) {
-            unsigned set = glsl.get_decoration(resource.id, spv::DecorationDescriptorSet);
-            unsigned binding = glsl.get_decoration(resource.id, spv::DecorationBinding);
-            std::cout << "UBO: " << resource.name << " Set: " << set << " Binding: " << VulkShaderEnums::shaderBindingToString(binding) << std::endl;
-            CHECK_FALSE(bindings.contains(resource.name));
-            bindings[resource.name] = VulkShaderEnums::shaderBindingToString(binding);
-        }
-        CHECK(bindings["UniformBufferObject"] == "VulkShaderBinding_XformsUBO");
-        CHECK(bindings["ModelXformUBO"] == "VulkShaderBinding_ModelXform");
-        CHECK(bindings["DebugNormalsUBO"] == "VulkShaderBinding_DebugNormalsUBO");
-
-        // For SBOs
-        for (const spirv_cross::Resource &resource : resources.storage_buffers) {
-            unsigned set = glsl.get_decoration(resource.id, spv::DecorationDescriptorSet);
-            unsigned binding = glsl.get_decoration(resource.id, spv::DecorationBinding);
-            std::cout << "SBO: " << resource.name << " Set: " << set << " Binding: " << VulkShaderEnums::shaderBindingToString(binding) << std::endl;
-            CHECK_FALSE(bindings.contains(resource.name));
-            bindings[resource.name] = VulkShaderEnums::shaderBindingToString(binding);
-        }
-
-        // Inputs
-        std::unordered_map<std::string, unsigned> inputLocations;
-        for (const spirv_cross::Resource &resource : resources.stage_inputs) {
-            VulkVertBindingLocation location = (VulkVertBindingLocation)glsl.get_decoration(resource.id, spv::DecorationLocation);
-            std::string loc = VulkShaderEnums::vertBindingLocationToString(location);
-            std::cout << "Input: " << resource.name << " Location: " << loc << std::endl;
-            CHECK_FALSE(inputLocations.contains(resource.name));
-            inputLocations[resource.name] = location;
-        }
-        CHECK(inputLocations["inPosition"] == VulkVertBindingLocation_PosBinding);
-        CHECK(inputLocations["inNormal"] == VulkVertBindingLocation_NormalBinding);
-        CHECK(inputLocations["inTangent"] == VulkVertBindingLocation_TangentBinding);
-        // Outputs
-        std::unordered_map<std::string, unsigned> outputLocations;
-        for (const spirv_cross::Resource &resource : resources.stage_outputs) {
-            VulkVertBindingLocation location = (VulkVertBindingLocation)glsl.get_decoration(resource.id, spv::DecorationLocation);
-            std::string loc = VulkShaderEnums::vertBindingLocationToString(location);
-            std::cout << "Output: " << resource.name << " Location: " << loc << std::endl;
-            CHECK_FALSE(outputLocations.contains(resource.name));
-            outputLocations[resource.name] = location;
-        }
-        CHECK(outputLocations["outWorldPos"] == VulkVertBindingLocation_PosBinding);
-        CHECK(outputLocations["outWorldNorm"] == VulkVertBindingLocation_NormalBinding);
-        CHECK(outputLocations["outProjPos"] == VulkVertBindingLocation_Pos2Binding);
+        ShaderInfo info = PipelineBuilder::getShaderInfo(fs::path(__FILE__).parent_path() / "spirvs" / "vert" / "DebugNormals.vertspv");
+        CHECK(info.uboBindings[VulkShaderUBOBinding_Xforms] == "UniformBufferObject");
+        CHECK(info.uboBindings[VulkShaderUBOBinding_ModelXform] == "ModelXformUBO");
+        CHECK(info.uboBindings[VulkShaderUBOBinding_DebugNormals] == "DebugNormalsUBO");
+        CHECK(info.inputLocations[VulkVertBindingLocation_PosBinding] == "inPosition");
+        CHECK(info.inputLocations[VulkVertBindingLocation_NormalBinding] == "inNormal");
+        CHECK(info.inputLocations[VulkVertBindingLocation_TangentBinding] == "inTangent");
+        CHECK(info.outputLocations[VulkVertBindingLocation_PosBinding] == "outWorldPos");
+        CHECK(info.outputLocations[VulkVertBindingLocation_NormalBinding] == "outWorldNorm");
+        CHECK(info.outputLocations[VulkVertBindingLocation_Pos2Binding] == "outProjPos");
+    }
+    SECTION("Test Gooch Frag") {
+        ShaderInfo info = PipelineBuilder::getShaderInfo(fs::path(__FILE__).parent_path() / "spirvs" / "frag" / "GoochShading.fragspv");
+        CHECK(info.samplerBindings[VulkShaderTextureBinding_NormalSampler] == "normSampler");
+    }
+    SECTION("Test mismatch in upstream/downstream") {
+        ShaderInfo info1 = PipelineBuilder::getShaderInfo(fs::path(__FILE__).parent_path() / "spirvs" / "vert" / "DebugNormals.vertspv");
+        ShaderInfo info2 = PipelineBuilder::getShaderInfo(fs::path(__FILE__).parent_path() / "spirvs" / "frag" / "GoochShading.fragspv");
+        std::string errMsg;
+        CHECK(PipelineBuilder::checkConnections(info1, info2, errMsg) == false);
+    }
+    SECTION("Test match in upstream/downstream") {
+        ShaderInfo info1 = PipelineBuilder::getShaderInfo(fs::path(__FILE__).parent_path() / "spirvs" / "vert" / "DebugNormals.vertspv");
+        ShaderInfo info2 = PipelineBuilder::getShaderInfo(fs::path(__FILE__).parent_path() / "spirvs" / "geom" / "DebugNormals.geomspv");
+        ShaderInfo info3 = PipelineBuilder::getShaderInfo(fs::path(__FILE__).parent_path() / "spirvs" / "frag" / "DebugNormals.fragspv");
+        std::string errMsg;
+        CAPTURE(errMsg);
+        CHECK(PipelineBuilder::checkConnections(info1, info2, errMsg) == true);
+        CHECK(PipelineBuilder::checkConnections(info2, info3, errMsg) == true);
+    }
+    SECTION("Test Pipeline Generation") {
+        PipelineDef def;
+        def.name = "TestPipeline";
+        def.vertexShader = std::make_shared<ShaderDef>(ShaderDef{"DebugNormals", std::filesystem::path("/")});
+        def.geometryShader = std::make_shared<ShaderDef>(ShaderDef{"DebugNormals", std::filesystem::path("/")});
+        def.fragmentShader = std::make_shared<ShaderDef>(ShaderDef{"DebugNormals", std::filesystem::path("/")});
+        def.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        def.depthTestEnabled = true;
+        def.depthWriteEnabled = true;
+        def.depthCompareOp = VK_COMPARE_OP_LESS;
+        PipelineDef res = PipelineBuilder::buildPipeline(def, fs::path(__FILE__).parent_path() / "spirvs");
+        CHECK(res.name == "TestPipeline");
+        CHECK(res.vertexShader->name == "DebugNormals");
+        CHECK(res.geometryShader->name == "DebugNormals");
+        CHECK(res.fragmentShader->name == "DebugNormals");
+        CHECK(res.primitiveTopology == VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+        CHECK(res.depthTestEnabled == true);
+        CHECK(res.depthWriteEnabled == true);
+        CHECK(res.depthCompareOp == VK_COMPARE_OP_LESS);
+        CHECK(res.descriptorSet.uniformBuffers[VK_SHADER_STAGE_VERTEX_BIT] ==
+              std::vector<VulkShaderUBOBindings>{VulkShaderUBOBinding_Xforms, VulkShaderUBOBinding_ModelXform, VulkShaderUBOBinding_DebugNormals});
+        CHECK(res.descriptorSet.uniformBuffers[VK_SHADER_STAGE_GEOMETRY_BIT] == std::vector<VulkShaderUBOBindings>{});
+        CHECK(res.descriptorSet.uniformBuffers[VK_SHADER_STAGE_FRAGMENT_BIT] == std::vector<VulkShaderUBOBindings>{VulkShaderUBOBinding_EyePos});
     }
 }

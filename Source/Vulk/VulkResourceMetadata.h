@@ -54,14 +54,25 @@ struct MaterialDef {
 };
 
 struct DescriptorSetDef {
-    unordered_map<VkShaderStageFlags, vector<VulkShaderUBOBindings>> uniformBuffers;
-    unordered_map<VkShaderStageFlags, vector<VulkShaderSSBOBindings>> storageBuffers;
-    unordered_map<VkShaderStageFlags, vector<VulkShaderTextureBindings>> imageSamplers;
+    unordered_map<VkShaderStageFlagBits, vector<VulkShaderUBOBindings>> uniformBuffers;
+    unordered_map<VkShaderStageFlagBits, vector<VulkShaderSSBOBindings>> storageBuffers;
+    unordered_map<VkShaderStageFlagBits, vector<VulkShaderTextureBindings>> imageSamplers;
 
     void validate() {
         assert(uniformBuffers.size() + storageBuffers.size() + imageSamplers.size() > 0);
     }
     static DescriptorSetDef fromJSON(const nlohmann::json &j);
+    static nlohmann::json toJSON(const DescriptorSetDef &def);
+
+    static VkShaderStageFlagBits getShaderStageFromStr(std::string s) {
+        static unordered_map<string, VkShaderStageFlagBits> shaderStageFromStr{
+            {"vert", VK_SHADER_STAGE_VERTEX_BIT},
+            {"frag", VK_SHADER_STAGE_FRAGMENT_BIT},
+            {"geom", VK_SHADER_STAGE_GEOMETRY_BIT},
+        };
+
+        return shaderStageFromStr.at(s);
+    }
 };
 
 #define PIPELINE_JSON_VERSION 1
@@ -89,6 +100,7 @@ struct PipelineDef {
     static PipelineDef fromJSON(const nlohmann::json &j, unordered_map<string, shared_ptr<ShaderDef>> const &vertexShaders,
                                 unordered_map<string, shared_ptr<ShaderDef>> const &geometryShaders,
                                 unordered_map<string, shared_ptr<ShaderDef>> const &fragmentShaders);
+    static nlohmann::json toJSON(const PipelineDef &def);
 };
 
 enum MeshDefType {
@@ -187,6 +199,7 @@ struct Metadata {
     unordered_map<string, shared_ptr<SceneDef>> scenes;
 };
 
+extern string shaderUBOBindingToStr(VulkShaderUBOBindings binding);
 extern string shaderUBOBindingToStr(VulkShaderUBOBindings binding);
 extern string shaderTextureBindingToStr(VulkShaderTextureBindings binding);
 extern Metadata const *getMetadata();
