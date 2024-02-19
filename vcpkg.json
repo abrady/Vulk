@@ -2,11 +2,14 @@
     "name": "vulk",
     "version-string": "0.1.0",
     "dependencies": [
-        "vulkan",
-        "spirv-headers",
-        "spirv-cross",
-        "glfw3",
         "catch2",
-        "nlohmann-json"
+        "glfw3",
+        "glm",
+        "nlohmann-json",
+        "spirv-cross",
+        "spirv-headers",
+        "stb",
+        "tinyobjloader",
+        "vulkan"
     ]
 }

@@ -12,7 +12,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/hash.hpp>
-#include <stb/stb_image.h>
+#include <stb_image.h>
 #include <tiny_obj_loader.h>
 
 #pragma warning(pop)
@@ -34,7 +34,7 @@
 #include <stdexcept>
 #include <unordered_map>
 #include <vector>
-#include <vulkan/vk_enum_string_helper.h>
+// #include <vulkan/vk_enum_string_helper.h>
 #include <vulkan/vulkan.h>
 
 #include "VulkShaderEnums.h"
@@ -43,8 +43,8 @@
     do {                                                                                                                                                       \
         VkResult vkcall_macro_result = (func);                                                                                                                 \
         if (vkcall_macro_result != VK_SUCCESS) {                                                                                                               \
-            std::cerr << "Vulkan error: " << string_VkResult(vkcall_macro_result) << " at " << __FILE__ << ":" << __LINE__ << std::endl;                       \
-            throw std::runtime_error(std::string("Vulkan error: ") + string_VkResult(vkcall_macro_result) + " at " + __FILE__ + ":" +                          \
+            std::cerr << "Vulkan error: " << (vkcall_macro_result) << " at " << __FILE__ << ":" << __LINE__ << std::endl;                                      \
+            throw std::runtime_error(std::string("Vulkan error: ") + std::to_string(vkcall_macro_result) + " at " + __FILE__ + ":" +                           \
                                      std::to_string(__LINE__));                                                                                                \
         }                                                                                                                                                      \
     } while (0)
