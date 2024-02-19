@@ -87,30 +87,6 @@ MaterialDef loadMaterialDef(const fs::path &file) {
     return material;
 }
 
-string shaderUBOBindingToStr(VulkShaderUBOBindings binding) {
-    static unordered_map<VulkShaderUBOBindings, string> bindings;
-    static once_flag flag;
-    call_once(flag, [&]() {
-        for (auto const &[name, value] : getUBOBindings()) {
-            assert(!bindings.contains(value));
-            bindings[value] = name;
-        }
-    });
-    return bindings.at(binding);
-}
-
-string shaderTextureBindingToStr(VulkShaderTextureBindings binding) {
-    static unordered_map<VulkShaderTextureBindings, string> bindings;
-    static once_flag flag;
-    call_once(flag, [&]() {
-        for (auto const &[name, value] : getTextureBindings()) {
-            assert(!bindings.contains(value));
-            bindings[value] = name;
-        }
-    });
-    return bindings.at(binding);
-}
-
 static unordered_map<string, MeshDefType> meshDefTypeMap{
     {"Model", MeshDefType_Model},
     {"Mesh", MeshDefType_Mesh},

@@ -154,16 +154,57 @@ struct DescriptorSetDef {
         return ds;
     }
 
+    static string shaderUBOBindingToStr(VulkShaderUBOBindings binding) {
+        static unordered_map<VulkShaderUBOBindings, string> bindings;
+        static once_flag flag;
+        call_once(flag, [&]() {
+            for (auto const &[name, value] : DescriptorSetDef::getUBOBindings()) {
+                assert(!bindings.contains(value));
+                bindings[value] = name;
+            }
+        });
+        return bindings.at(binding);
+    }
+
+    static string shaderSSBOBindingToStr(VulkShaderSSBOBindings binding) {
+        static unordered_map<VulkShaderSSBOBindings, string> bindings;
+        return bindings.at(binding);
+    }
+
+    static string shaderTextureBindingToStr(VulkShaderTextureBindings binding) {
+        static unordered_map<VulkShaderTextureBindings, string> bindings;
+        static once_flag flag;
+        call_once(flag, [&]() {
+            for (auto const &[name, value] : DescriptorSetDef::getTextureBindings()) {
+                assert(!bindings.contains(value));
+                bindings[value] = name;
+            }
+        });
+        return bindings.at(binding);
+    }
+
     static nlohmann::json toJSON(const DescriptorSetDef &def) {
         nlohmann::json j;
         for (auto const &[stage, bindings] : def.uniformBuffers) {
-            j[shaderStageToStr(stage)]["uniformBuffers"] = bindings;
+            std::vector<std::string> bindingStrs;
+            for (auto const &binding : bindings) {
+                bindingStrs.push_back(shaderUBOBindingToStr(binding));
+            }
+            j[shaderStageToStr(stage)]["uniformBuffers"] = bindingStrs;
         }
         for (auto const &[stage, bindings] : def.storageBuffers) {
-            j[shaderStageToStr(stage)]["storageBuffers"] = bindings;
+            std::vector<std::string> bindingStrs;
+            for (auto const &binding : bindings) {
+                bindingStrs.push_back(shaderSSBOBindingToStr(binding));
+            }
+            j[shaderStageToStr(stage)]["storageBuffers"] = bindingStrs;
         }
         for (auto const &[stage, bindings] : def.imageSamplers) {
-            j[shaderStageToStr(stage)]["imageSamplers"] = bindings;
+            std::vector<std::string> bindingStrs;
+            for (auto const &binding : bindings) {
+                bindingStrs.push_back(shaderTextureBindingToStr(binding));
+            }
+            j[shaderStageToStr(stage)]["imageSamplers"] = bindingStrs;
         }
         return j;
     }
@@ -370,7 +411,4 @@ struct Metadata {
     unordered_map<string, shared_ptr<SceneDef>> scenes;
 };
 
-extern string shaderUBOBindingToStr(VulkShaderUBOBindings binding);
-extern string shaderUBOBindingToStr(VulkShaderUBOBindings binding);
-extern string shaderTextureBindingToStr(VulkShaderTextureBindings binding);
 extern Metadata const *getMetadata();
