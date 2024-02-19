@@ -21,8 +21,8 @@
             "program": "${workspaceFolder}/build/Source/Tools/PipelineBuilder/Debug/PipelineBuilder.exe",
             "type": "cppvsdbg",
             "request": "launch",
+            "cwd": "${workspaceRoot}/Build/Debug",
             "args": [
-                "${workspaceFolder}/Assets/Pipelines/DebugNormals.pipeline",
                 "${workspaceFolder}/Source/Shaders",
                 "${workspaceFolder}/build/Debug/Assets/Pipelines"
             ],

@@ -58,6 +58,7 @@ find_package(Vulkan REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(Stb REQUIRED)
 find_package(glm CONFIG REQUIRED)
+find_package(assimp CONFIG REQUIRED)
 
 ######
 ## subdirectories
@@ -131,12 +132,12 @@ endif()
 
 target_include_directories(VulkanRenderer PRIVATE ${Stb_INCLUDE_DIR})
 
-target_link_libraries(VulkanRenderer PRIVATE assimp-vc143-mtd)
-target_link_libraries(VulkanRenderer PRIVATE zlibstat)
 target_link_libraries(VulkanRenderer PRIVATE glfw)
 target_link_libraries(VulkanRenderer PRIVATE Vulkan::Vulkan)
 target_link_libraries(VulkanRenderer PRIVATE nlohmann_json::nlohmann_json)
 target_link_libraries(VulkanRenderer PRIVATE glm::glm-header-only)
+target_link_libraries(VulkanRenderer PRIVATE assimp::assimp)
+
 
 ##############################################################################
 ## Assets
