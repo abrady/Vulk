@@ -141,6 +141,41 @@ class PipelineBuilder {
         return pipelineOut;
     }
 
+    static void buildPipelineFile(PipelineDef pipelineIn, std::filesystem::path builtShadersDir, std::filesystem::path pipelineFileOut) {
+        if (!std::filesystem::exists(builtShadersDir)) {
+            std::cerr << "Shaders directory does not exist: " << builtShadersDir << std::endl;
+            throw std::runtime_error("PipelineBuilder: Shaders directory does not exist");
+        }
+        if (!std::filesystem::exists(pipelineFileOut.parent_path())) {
+            std::cerr << "Output directory does not exist: " << pipelineFileOut.parent_path() << std::endl;
+            throw std::runtime_error("PipelineBuilder: Output directory does not exist");
+        }
+
+        PipelineDef pipelineOut = buildPipeline(pipelineIn, builtShadersDir);
+        nlohmann::json pipelineOutJSON = PipelineDef::toJSON(pipelineOut);
+
+        std::ofstream outFile(pipelineFileOut);
+        outFile << pipelineOutJSON;
+        outFile.close();
+    }
+
+    static void buildPipelinesFromMetadata(std::filesystem::path builtShadersDir, std::filesystem::path pipelineDirOut) {
+        if (!std::filesystem::exists(builtShadersDir)) {
+            std::cerr << "Shaders directory does not exist: " << builtShadersDir << std::endl;
+            throw std::runtime_error("PipelineBuilder: Shaders directory does not exist");
+        }
+        if (!std::filesystem::exists(pipelineDirOut)) {
+            std::cerr << "Output directory does not exist: " << pipelineDirOut << std::endl;
+            throw std::runtime_error("PipelineBuilder: Output directory does not exist");
+        }
+
+        Metadata const *m = getMetadata();
+        for (auto &pipeline : m->pipelines) {
+            PipelineDef def = *pipeline.second;
+            buildPipelineFile(def, builtShadersDir, pipelineDirOut / (pipeline.first + ".json"));
+        }
+    }
+
   private:
     static std::vector<uint32_t> readSPIRVFile(std::filesystem::path filename) {
         std::ifstream file(filename, std::ios::ate | std::ios::binary);

@@ -87,38 +87,6 @@ MaterialDef loadMaterialDef(const fs::path &file) {
     return material;
 }
 
-unordered_map<VkShaderStageFlagBits, string> shaderStageToStr{
-    {VK_SHADER_STAGE_VERTEX_BIT, "vert"},
-    {VK_SHADER_STAGE_FRAGMENT_BIT, "frag"},
-    {VK_SHADER_STAGE_GEOMETRY_BIT, "geom"},
-};
-
-static vector<pair<string, VulkShaderUBOBindings>> const &getUBOBindings() {
-    static vector<pair<string, VulkShaderUBOBindings>> bindings = {
-        {"xforms", VulkShaderUBOBinding_Xforms},
-        {"lights", VulkShaderUBOBinding_Lights},
-        {"eyePos", VulkShaderUBOBinding_EyePos},
-        {"modelXform", VulkShaderUBOBinding_ModelXform},
-        {"materialUBO", VulkShaderUBOBinding_MaterialUBO},
-        {"debugNormals", VulkShaderUBOBinding_DebugNormals},
-        {"debugTangents", VulkShaderUBOBinding_DebugTangents},
-    };
-    return bindings;
-    static_assert(VulkShaderUBOBinding_MaxBindingID == VulkShaderUBOBinding_DebugTangents, "this function must be kept in sync with VulkShaderUBOBindings");
-}
-
-VulkShaderUBOBindings shaderUBOBindingFromStr(string const &binding) {
-    static unordered_map<string, VulkShaderUBOBindings> bindings;
-    static once_flag flag;
-    call_once(flag, [&]() {
-        for (auto const &[name, value] : getUBOBindings()) {
-            assert(!bindings.contains(name));
-            bindings[name] = value;
-        }
-    });
-    return bindings.at(binding);
-}
-
 string shaderUBOBindingToStr(VulkShaderUBOBindings binding) {
     static unordered_map<VulkShaderUBOBindings, string> bindings;
     static once_flag flag;
@@ -131,35 +99,6 @@ string shaderUBOBindingToStr(VulkShaderUBOBindings binding) {
     return bindings.at(binding);
 }
 
-VulkShaderSSBOBindings shaderSSBOBindingFromStr(string const &binding) {
-    static unordered_map<string, VulkShaderSSBOBindings> bindings{};
-    return bindings.at(binding);
-}
-
-static vector<pair<string, VulkShaderTextureBindings>> const &getTextureBindings() {
-    static vector<pair<string, VulkShaderTextureBindings>> bindings = {
-        {"textureSampler", VulkShaderTextureBinding_TextureSampler},
-        {"textureSampler2", VulkShaderTextureBinding_TextureSampler2},
-        {"textureSampler3", VulkShaderTextureBinding_TextureSampler3},
-        {"normalSampler", VulkShaderTextureBinding_NormalSampler},
-    };
-    return bindings;
-}
-
-VulkShaderTextureBindings shaderTextureBindingFromStr(string const &binding) {
-    static unordered_map<string, VulkShaderTextureBindings> bindings;
-    static once_flag flag;
-    call_once(flag, [&]() {
-        for (auto const &[name, value] : getTextureBindings()) {
-            assert(!bindings.contains(name));
-            bindings[name] = value;
-        }
-    });
-    return bindings.at(binding);
-    static_assert(VulkShaderTextureBinding_MaxBindingID == VulkShaderTextureBinding_NormalSampler,
-                  "this function must be kept in sync with VulkShaderTextureBindings");
-}
-
 string shaderTextureBindingToStr(VulkShaderTextureBindings binding) {
     static unordered_map<VulkShaderTextureBindings, string> bindings;
     static once_flag flag;
@@ -170,113 +109,6 @@ string shaderTextureBindingToStr(VulkShaderTextureBindings binding) {
         }
     });
     return bindings.at(binding);
-}
-
-void parseShaderStageMap(const nlohmann::json &j, VkShaderStageFlagBits stage, DescriptorSetDef &ds) {
-    vector<string> uniformBuffers = j.at("uniformBuffers").get<vector<string>>();
-    for (auto const &value : uniformBuffers) {
-        ds.uniformBuffers[stage].push_back(shaderUBOBindingFromStr(value));
-    }
-    if (j.contains("storageBuffers")) {
-        vector<string> storageBuffers = j.at("storageBuffers").get<vector<string>>();
-        for (auto const &value : storageBuffers) {
-            ds.storageBuffers[stage].push_back(shaderSSBOBindingFromStr(value));
-        }
-    }
-    if (j.contains("imageSamplers")) {
-        vector<string> imageSamplers = j.at("imageSamplers").get<vector<string>>();
-        for (auto const &value : imageSamplers) {
-            ds.imageSamplers[stage].push_back(shaderTextureBindingFromStr(value));
-        }
-    }
-}
-
-DescriptorSetDef DescriptorSetDef::fromJSON(const nlohmann::json &j) {
-    DescriptorSetDef ds;
-    for (auto const &[stage, bindings] : j.items()) {
-        VkShaderStageFlagBits vkStage = DescriptorSetDef::getShaderStageFromStr(stage);
-        parseShaderStageMap(bindings, vkStage, ds);
-    }
-    return ds;
-}
-
-nlohmann::json DescriptorSetDef::toJSON(const DescriptorSetDef &def) {
-    nlohmann::json j;
-    for (auto const &[stage, bindings] : def.uniformBuffers) {
-        j[shaderStageToStr.at(stage)]["uniformBuffers"] = bindings;
-    }
-    for (auto const &[stage, bindings] : def.storageBuffers) {
-        j[shaderStageToStr.at(stage)]["storageBuffers"] = bindings;
-    }
-    for (auto const &[stage, bindings] : def.imageSamplers) {
-        j[shaderStageToStr.at(stage)]["imageSamplers"] = bindings;
-    }
-    return j;
-}
-
-static unordered_map<string, VkPrimitiveTopology> primitiveTopologyMap{
-    {"TriangleList", VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST}, {"TriangleStrip", VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP},
-    {"LineList", VK_PRIMITIVE_TOPOLOGY_LINE_LIST},         {"LineStrip", VK_PRIMITIVE_TOPOLOGY_LINE_STRIP},
-    {"PointList", VK_PRIMITIVE_TOPOLOGY_POINT_LIST},
-};
-
-static unordered_map<string, VkCompareOp> depthCompareOpMap{
-    {"NEVER", VK_COMPARE_OP_NEVER},
-    {"LESS", VK_COMPARE_OP_LESS},
-    {"EQUAL", VK_COMPARE_OP_EQUAL},
-    {"LESS_OR_EQUAL", VK_COMPARE_OP_LESS_OR_EQUAL},
-    {"GREATER", VK_COMPARE_OP_GREATER},
-    {"NOT_EQUAL", VK_COMPARE_OP_NOT_EQUAL},
-    {"GREATER_OR_EQUAL", VK_COMPARE_OP_GREATER_OR_EQUAL},
-    {"ALWAYS", VK_COMPARE_OP_ALWAYS},
-};
-
-PipelineDef PipelineDef::fromJSON(const nlohmann::json &j, unordered_map<string, shared_ptr<ShaderDef>> const &vertexShaders,
-                                  unordered_map<string, shared_ptr<ShaderDef>> const &geometryShaders,
-                                  unordered_map<string, shared_ptr<ShaderDef>> const &fragmentShaders) {
-    PipelineDef p;
-    assert(j.at("version").get<uint32_t>() == PIPELINE_JSON_VERSION);
-    p.name = j.at("name").get<string>();
-    auto shader = j.at("vertexShader").get<string>();
-    assert(vertexShaders.contains(shader));
-    p.vertexShader = vertexShaders.at(shader);
-    shader = j.at("fragmentShader").get<string>();
-    assert(fragmentShaders.contains(shader));
-    p.fragmentShader = fragmentShaders.at(shader);
-    p.primitiveTopology =
-        j.contains("primitiveTopology") ? primitiveTopologyMap.at(j.at("primitiveTopology").get<string>()) : VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-    p.depthTestEnabled = j.value("depthTestEnabled", true);
-    p.depthWriteEnabled = j.value("depthWriteEnabled", true);
-    p.depthCompareOp = depthCompareOpMap.at(j.value("depthCompareOp", "LESS"));
-
-    p.vertexInputBinding = j.at("vertexInputBinding").get<uint32_t>();
-    if (j.contains("descriptorSet"))
-        p.descriptorSet = DescriptorSetDef::fromJSON(j.at("descriptorSet")); // Use custom from_json for DescriptorSetDef
-
-    if (j.contains("geometryShader")) {
-        shader = j.at("geometryShader").get<string>();
-        assert(geometryShaders.contains(shader));
-        p.geometryShader = geometryShaders.at(shader);
-    }
-    p.validate();
-    return p;
-}
-
-nlohmann::json PipelineDef::toJSON(const PipelineDef &def) {
-    nlohmann::json j;
-    j["version"] = PIPELINE_JSON_VERSION;
-    j["name"] = def.name;
-    j["vertexShader"] = def.vertexShader->name;
-    j["fragmentShader"] = def.fragmentShader->name;
-    j["primitiveTopology"] = "TriangleList"; // TODO: add support for other topologies
-    j["depthTestEnabled"] = def.depthTestEnabled;
-    j["depthWriteEnabled"] = def.depthWriteEnabled;
-    j["depthCompareOp"] = "LESS"; // TODO: add support for other compare ops
-    j["vertexInputBinding"] = def.vertexInputBinding;
-    j["descriptorSet"] = DescriptorSetDef::toJSON(def.descriptorSet);
-    if (def.geometryShader)
-        j["geometryShader"] = def.geometryShader->name;
-    return j;
 }
 
 static unordered_map<string, MeshDefType> meshDefTypeMap{
