@@ -6,6 +6,7 @@
         "spirv-headers",
         "spirv-cross",
         "glfw3",
-        "catch2"
+        "catch2",
+        "nlohmann-json"
     ]
 }

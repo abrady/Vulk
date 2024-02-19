@@ -55,6 +55,7 @@ add_compile_options(-W3)
 # this is heuristically generated, and may not be correct
 find_package(glfw3 CONFIG REQUIRED)
 find_package(Vulkan REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
 
 ######
 ## subdirectories
@@ -130,7 +131,7 @@ target_link_libraries(VulkanRenderer PRIVATE assimp-vc143-mtd)
 target_link_libraries(VulkanRenderer PRIVATE zlibstat)
 target_link_libraries(VulkanRenderer PRIVATE glfw)
 target_link_libraries(VulkanRenderer PRIVATE Vulkan::Vulkan)
-
+target_link_libraries(VulkanRenderer PRIVATE nlohmann_json::nlohmann_json)
 
 ##############################################################################
 ## Assets
