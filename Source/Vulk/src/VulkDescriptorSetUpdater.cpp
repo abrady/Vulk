@@ -1,5 +1,5 @@
-#include "VulkDescriptorSetUpdater.h"
-#include "VulkTextureView.h"
+#include "Vulk/VulkDescriptorSetUpdater.h"
+#include "Vulk/VulkTextureView.h"
 
 VulkDescriptorSetUpdater &VulkDescriptorSetUpdater::addUniformBuffer(VkBuffer buf, VkDeviceSize range, uint32_t binding)
 {

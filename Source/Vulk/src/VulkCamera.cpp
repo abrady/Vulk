@@ -1,4 +1,4 @@
-#include "VulkCamera.h"
+#include "Vulk/VulkCamera.h"
 
 void VulkCamera::lookAt(glm::vec3 eyeIn, glm::vec3 target) {
     this->eye = eyeIn;

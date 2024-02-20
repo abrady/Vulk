@@ -2,7 +2,6 @@
 /**
 * This vertex shader will extrac the normals from a texture and pass them to the geometry shader to generate
 */
-
 #include "common.glsl"
 
 XFORMS_UBO(xformUBO);

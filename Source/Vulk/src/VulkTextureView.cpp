@@ -1,7 +1,7 @@
 #include <filesystem>
 
-#include "VulkTextureView.h"
-#include "Vulk.h"
+#include "Vulk/VulkTextureView.h"
+#include "Vulk/Vulk.h"
 
 void VulkTextureView::loadTextureView(char const *texturePath, bool isUNORM)
 {

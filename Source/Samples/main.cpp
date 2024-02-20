@@ -4,11 +4,10 @@
 #include <string>
 #include <vector>
 
-#include "Samples/World.h"
 #include "Samples/SampleRunner.h"
+#include "Samples/World.h"
 
-int main()
-{
+int main() {
     SampleRunner<World>("BlinnPhong").run();
     return 0;
 }

@@ -1,6 +1,6 @@
-#include "VulkDescriptorSetLayoutBuilder.h"
-#include "VulkUtil.h"
-#include "Vulk.h"
+#include "Vulk/VulkDescriptorSetLayoutBuilder.h"
+#include "Vulk/VulkUtil.h"
+#include "Vulk/Vulk.h"
 
 VulkDescriptorSetLayout::VulkDescriptorSetLayout(Vulk &vk, VkDescriptorSetLayout layout) : vk(vk), layout(layout) {}
 VulkDescriptorSetLayout::~VulkDescriptorSetLayout()

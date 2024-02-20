@@ -1,5 +1,5 @@
-#include "VulkGeo.h"
-#include "VulkMesh.h"
+#include "Vulk/VulkGeo.h"
+#include "Vulk/VulkMesh.h"
 
 // TODO: get subdivideTris working with our geo creation functions and maybe we can accumulate the vertices and indices in the meshData
 #define CHECK_MESH_DATA(meshData) assert(meshData.vertices.size() == 0 && meshData.indices.size() == 0)

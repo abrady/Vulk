@@ -10,7 +10,7 @@
 #include "Vulk/VulkResourceMetadata.h"
 #include "Vulk/VulkShaderEnums.h"
 
-#include "nlohmann/json.hpp"
+#include <nlohmann/json.hpp>
 
 struct ShaderInfo {
     std::string name;

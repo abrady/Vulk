@@ -3,8 +3,8 @@
 // i.e. the body of this functions will be defined in this file while other uses of the header
 // will just declare the functions
 
-#include "VulkUtil.h"
-#include "VulkMesh.h"
+#include "Vulk/VulkUtil.h"
+#include "Vulk/VulkMesh.h"
 
 #pragma warning(push, 0)        // assume these headers know what they're doing
 #pragma warning(disable : 6262) // warning C6262: Function uses '35036' bytes of stack:  exceeds /analyze:stacksize '16384'

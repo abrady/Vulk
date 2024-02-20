@@ -1,4 +1,4 @@
-#include "VulkMesh.h"
+#include "Vulk/VulkMesh.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>

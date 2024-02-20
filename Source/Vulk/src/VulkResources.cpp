@@ -1,4 +1,4 @@
-#include "VulkResources.h"
+#include "Vulk/VulkResources.h"
 
 #include <unordered_map>
 #include <iostream>
@@ -6,13 +6,13 @@
 #include <string>
 #include <nlohmann/json.hpp>
 
-#include "VulkCamera.h"
-#include "VulkPointLight.h"
-#include "VulkMesh.h"
-#include "VulkPipelineBuilder.h"
-#include "VulkDescriptorSetLayoutBuilder.h"
-#include "VulkDescriptorSetBuilder.h"
-#include "VulkResourceMetadata.h"
+#include "Vulk/VulkCamera.h"
+#include "Vulk/VulkPointLight.h"
+#include "Vulk/VulkMesh.h"
+#include "Vulk/VulkPipelineBuilder.h"
+#include "Vulk/VulkDescriptorSetLayoutBuilder.h"
+#include "Vulk/VulkDescriptorSetBuilder.h"
+#include "Vulk/VulkResourceMetadata.h"
 
 using namespace std;
 namespace fs = filesystem;

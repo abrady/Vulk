@@ -3,7 +3,15 @@
 # cmake -DCMAKE_BUILD_TYPE=Debug - for Debug Build
 
 cmake_minimum_required (VERSION 3.8)
-project ("VulkanRenderer")
+project ("VulkanRoot")
+
+find_package(nlohmann_json CONFIG REQUIRED)
+find_package(glfw3 CONFIG REQUIRED)
+find_package(Vulkan REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
+find_package(Stb REQUIRED)
+find_package(glm CONFIG REQUIRED)
+
 
 # Check if vcpkg is bootstrapped
 if(NOT EXISTS "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake")
@@ -68,49 +76,18 @@ endfunction()
 add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Tools/PipelineBuilder)
 
 # TODO: configure so it will work for release builds too
+
+
+message("CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
+set(GLSLC_FLAGS "-g" "--target-env=vulkan1.3" "-I${CMAKE_SOURCE_DIR}/Source/Shaders/Common") # build debug symbols and turn off optimizations
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(TARGET_DIR "${CMAKE_BINARY_DIR}/Debug") 
-    set(GLSLC_FLAGS "-g" "-O0" "-I${CMAKE_SOURCE_DIR}/Source/Shaders/Common") # build debug symbols and turn off optimizations
+    list(APPEND GLSLC_FLAGS "-O0")
+elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+    set(TARGET_DIR "${CMAKE_BINARY_DIR}/Release") 
+else()
+    message(FATAL_ERROR "Unknown build type: ${CMAKE_BUILD_TYPE}")
 endif()
-
-##############################################################################
-## Assets
-##############################################################################
-
-function(copy_assets DIR_NAME)
-    set(SOURCE_DIR "${CMAKE_SOURCE_DIR}/Assets/${DIR_NAME}")
-    set(DEST_DIR "${TARGET_DIR}/Assets/${DIR_NAME}") 
-
-    file(MAKE_DIRECTORY ${DEST_DIR})
-    file(GLOB_RECURSE ASSETS CONFIGURE_DEPENDS "${SOURCE_DIR}/*")
-    set(COMPILED_ASSETS_${DIR_NAME} "") # Clear the list before use
-    foreach(ASSET_FILE ${ASSETS})
-        file(RELATIVE_PATH REL_PATH "${SOURCE_DIR}" "${ASSET_FILE}")
-        set(DEST "${DEST_DIR}/${REL_PATH}")
-        get_filename_component(DEST_FILE_DIR "${DEST}" DIRECTORY)
-        file(MAKE_DIRECTORY "${DEST_FILE_DIR}")
-        add_custom_command(
-            OUTPUT "${DEST}"
-            COMMAND ${CMAKE_COMMAND} -E copy "${ASSET_FILE}" "${DEST}"
-            DEPENDS "${ASSET_FILE}"
-            COMMENT "Copying ${DIR_NAME} ${ASSET_FILE} to ${DEST}"
-        )
-        list(APPEND COMPILED_ASSETS_${DIR_NAME} "${DEST}")
-    endforeach()
-    add_custom_target(
-        compile_${DIR_NAME}
-        ALL
-        
-        DEPENDS ${COMPILED_ASSETS_${DIR_NAME}}
-    )
-endfunction()
-
-# these assets don't need any processing, but we need everything in the build
-# directory to be usable by the executable
-set(STRAIGHT_COPY_DIRECTORIES Pipelines Scenes Shaders Models Textures Materials)
-foreach(DIR ${STRAIGHT_COPY_DIRECTORIES})
-    copy_assets(${DIR})
-endforeach()
 
 ##############################################################################
 ## Shaders
@@ -174,4 +151,48 @@ endforeach()
 add_custom_target(
     compile_shaders 
     DEPENDS ${COMPILED_SHADERS}
+)
+
+
+##############################################################################
+## Assets
+##############################################################################
+
+function(copy_assets DIR_NAME GLOBAL_ASSETS_VAR)
+    set(ASSETS_TO_BUILD ${${GLOBAL_ASSETS_VAR}}) # get the list of assets from parent scope
+    set(SOURCE_DIR "${CMAKE_SOURCE_DIR}/Assets/${DIR_NAME}")
+    set(DEST_DIR "${TARGET_DIR}/Assets/${DIR_NAME}") 
+
+    file(MAKE_DIRECTORY ${DEST_DIR})
+    file(GLOB_RECURSE ASSETS CONFIGURE_DEPENDS "${SOURCE_DIR}/*")
+    foreach(ASSET_FILE ${ASSETS})
+        file(RELATIVE_PATH REL_PATH "${SOURCE_DIR}" "${ASSET_FILE}")
+        set(DEST "${DEST_DIR}/${REL_PATH}")
+        get_filename_component(DEST_FILE_DIR "${DEST}" DIRECTORY)
+        file(MAKE_DIRECTORY "${DEST_FILE_DIR}")
+        add_custom_command(
+            OUTPUT "${DEST}"
+            COMMAND ${CMAKE_COMMAND} -E copy "${ASSET_FILE}" "${DEST}"
+            DEPENDS "${ASSET_FILE}"
+            COMMENT "Copying ${DIR_NAME} ${ASSET_FILE} to ${DEST}"
+        )
+        list(APPEND ASSETS_TO_BUILD "${DEST}")
+    endforeach()
+    set(${GLOBAL_ASSETS_VAR} "${ASSETS_TO_BUILD}" PARENT_SCOPE) # set the list of assets in parent scope (equivalent to return value)
+endfunction()
+
+# accumulate the assets to build in this
+set(GLOBAL_ASSETS_TO_BUILD "")
+
+# these assets don't need any processing, but we need everything in the build
+# directory to be usable by the executable
+set(STRAIGHT_COPY_DIRECTORIES Pipelines Scenes Shaders Models Textures Materials)
+foreach(DIR ${STRAIGHT_COPY_DIRECTORIES})
+    copy_assets(${DIR} GLOBAL_ASSETS_TO_BUILD)
+endforeach()
+
+add_custom_target(
+    build_assets
+    ALL    
+    DEPENDS ${GLOBAL_ASSETS_TO_BUILD} compile_shaders
 )

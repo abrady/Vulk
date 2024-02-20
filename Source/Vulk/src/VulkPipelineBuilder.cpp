@@ -1,6 +1,6 @@
-#include "VulkPipelineBuilder.h"
-#include "Vulk.h"
-#include "VulkUtil.h"
+#include "Vulk/VulkPipelineBuilder.h"
+#include "Vulk/Vulk.h"
+#include "Vulk/VulkUtil.h"
 
 VulkPipelineBuilder::VulkPipelineBuilder(Vulk &vk) : vk(vk) {
     rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;

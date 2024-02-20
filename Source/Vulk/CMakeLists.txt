@@ -4,20 +4,12 @@ cmake_minimum_required(VERSION 3.10)
 ## vcpkg
 ######
 
-find_package(glfw3 CONFIG REQUIRED)
-find_package(Vulkan REQUIRED)
-find_package(nlohmann_json CONFIG REQUIRED)
-find_package(Stb REQUIRED)
-find_package(glm CONFIG REQUIRED)
-
-
 # Set the project name
 project(Vulk)
 
 # packages
 find_package(glfw3 CONFIG REQUIRED)
 find_package(Vulkan REQUIRED)
-find_package(nlohmann_json CONFIG REQUIRED)
 find_package(Stb REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(assimp CONFIG REQUIRED)
@@ -30,12 +22,11 @@ target_include_directories(Vulk PUBLIC include) # Make the include directory pub
 # Specify the include directories
 target_include_directories(Vulk PRIVATE ${Stb_INCLUDE_DIR})
 
-target_link_libraries(Vulk PRIVATE assimp-vc143-mtd)
-target_link_libraries(Vulk PRIVATE zlibstat)
 target_link_libraries(Vulk PRIVATE glfw)
 target_link_libraries(Vulk PRIVATE Vulkan::Vulkan)
 target_link_libraries(Vulk PRIVATE nlohmann_json::nlohmann_json)
 target_link_libraries(Vulk PRIVATE glm::glm-header-only)
+target_link_libraries(Vulk PRIVATE assimp::assimp)
 
 if(MSVC)
   file(GLOB MY_PROJECT_NATVIS_FILES "${CMAKE_SOURCE_DIR}/Source/Tools/MSVC/Natvis/*.natvis")
