@@ -2,9 +2,8 @@
 # e.g. mkdir Build; cd Build; cmake -DCMAKE_TOOLCHAIN_FILE=<path_to>/buildsystems/vcpkg.cmake ..
 # cmake -DCMAKE_BUILD_TYPE=Debug - for Debug Build
 
-######
-## vcpkg setup
-######
+cmake_minimum_required (VERSION 3.8)
+project ("VulkanRenderer")
 
 # Check if vcpkg is bootstrapped
 if(NOT EXISTS "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake")
@@ -25,43 +24,27 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
 
-cmake_minimum_required (VERSION 3.8)
-project ("VulkanRenderer")
 
 set(CMAKE_GENERATOR_PLATFORM x64)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+add_compile_options(-W3)
+
+######
+## global includes
+######
 
 include_directories("${CMAKE_SOURCE_DIR}/Source")
 include_directories("${CMAKE_SOURCE_DIR}/Source/ThirdParty/include")
 include_directories("$ENV{VK_SDK_PATH}/include")
-add_compile_options(-W3)
-
-######
-## dependencies
-######
-
-# casuing problems on the github workflow, commenting out for now.
-# find_program(GLSLC_EXECUTABLE NAMES glslc)
-# if(NOT GLSLC_EXECUTABLE)
-#     message(FATAL_ERROR "glslc not found! Please install Vulkan SDK or glslang.")
-# endif()
-
-######
-## vcpkg
-######
-
-# this is heuristically generated, and may not be correct
-find_package(glfw3 CONFIG REQUIRED)
-find_package(Vulkan REQUIRED)
-find_package(nlohmann_json CONFIG REQUIRED)
-find_package(Stb REQUIRED)
-find_package(glm CONFIG REQUIRED)
 
 ######
 ## subdirectories
 ######
+
+add_subdirectory("${CMAKE_SOURCE_DIR}/Source/Vulk")
+add_subdirectory("${CMAKE_SOURCE_DIR}/Source/Samples")
 
 # Add a custom target that builds only the tests, so we can build them all at once in our github workflow
 add_custom_target(build_tests)
@@ -87,56 +70,6 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(TARGET_DIR "${CMAKE_BINARY_DIR}/Debug") 
     set(GLSLC_FLAGS "-g" "-O0" "-I${CMAKE_SOURCE_DIR}/Source/Shaders/Common") # build debug symbols and turn off optimizations
 endif()
-
-##############################################################################
-## Executable
-##############################################################################
-
-# Add source to this project's executable.
-link_directories("$ENV{VK_SDK_PATH}\\Lib")
-link_directories("${CMAKE_SOURCE_DIR}/Source/ThirdParty/lib")
-
-
-set(VULKAN_RENDERER_SOURCES
-    "Source/Vulk/Vulk.cpp"
-    "Source/Vulk/VulkActor.cpp"
-    "Source/Vulk/VulkCamera.cpp"
-    "Source/Vulk/VulkDescriptorSetLayoutBuilder.cpp"
-    "Source/Vulk/VulkDescriptorSetUpdater.cpp"
-    "Source/Vulk/VulkGeo.cpp"
-    "Source/Vulk/VulkMesh.cpp"
-    "Source/Vulk/VulkPipelineBuilder.cpp"
-    "Source/Vulk/VulkResourceMetadata.cpp"
-    "Source/Vulk/VulkResources.cpp"
-    "Source/Vulk/VulkTextureView.cpp"
-    "Source/Vulk/VulkUtil.cpp" 
-)
-
-add_executable (VulkanRenderer "Source/main.cpp" ${VULKAN_RENDERER_SOURCES})
-
-
-if(MSVC)
-  file(GLOB MY_PROJECT_NATVIS_FILES "${CMAKE_SOURCE_DIR}/Source/Tools/MSVC/Natvis/*.natvis")
-  message("adding natvis files to project ${MY_PROJECT_NATVIS_FILES}")
-  target_sources(VulkanRenderer PRIVATE ${MY_PROJECT_NATVIS_FILES})
-  # /analyze - /analyze:warninglevel 4
-  # /fsanitize=address /fsanitize=fuzzer
-  # /sdl - Enables recommended Security Development Lifecycle (SDL) checks
-  target_compile_options(VulkanRenderer PRIVATE /W4 /WX /sdl)
-  add_compile_options(/fsanitize=address)
-else()
-  target_compile_options(VulkanRenderer PRIVATE -Wall -Wextra -pedantic -Werror)
-  add_compile_options(-sanitize=address)
-endif()
-
-target_include_directories(VulkanRenderer PRIVATE ${Stb_INCLUDE_DIR})
-
-target_link_libraries(VulkanRenderer PRIVATE assimp-vc143-mtd)
-target_link_libraries(VulkanRenderer PRIVATE zlibstat)
-target_link_libraries(VulkanRenderer PRIVATE glfw)
-target_link_libraries(VulkanRenderer PRIVATE Vulkan::Vulkan)
-target_link_libraries(VulkanRenderer PRIVATE nlohmann_json::nlohmann_json)
-target_link_libraries(VulkanRenderer PRIVATE glm::glm-header-only)
 
 ##############################################################################
 ## Assets
