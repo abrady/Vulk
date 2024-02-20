@@ -100,7 +100,10 @@
         "random": "cpp",
         "regex": "cpp",
         "stack": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "cinttypes": "cpp",
+        "expected": "cpp",
+        "queue": "cpp"
     },
     "files.eol": "\n"
 }

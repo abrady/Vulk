@@ -87,8 +87,8 @@ class PipelineBuilder {
         return errMsg.empty();
     }
 
-    static ShaderInfo infoFromDef(ShaderDef def, std::string type, std::filesystem::path shadersDir) {
-        return getShaderInfo(shadersDir / type / (def.name + "." + type + "spv"));
+    static ShaderInfo infoFromShader(std::string name, std::string type, std::filesystem::path shadersDir) {
+        return getShaderInfo(shadersDir / type / (name + "." + type + "spv"));
     }
 
     // e.g. the "vert" or "frag" part of the descriptor set
@@ -105,27 +105,27 @@ class PipelineBuilder {
         }
     }
 
-    static PipelineDef buildPipeline(PipelineDef pipelineIn, std::filesystem::path builtShadersDir) {
+    static PipelineDeclDef buildPipeline(PipelineDeclDef pipelineIn, std::filesystem::path builtShadersDir, std::string &errMsgOut) {
         if (!std::filesystem::exists(builtShadersDir)) {
             std::cerr << "Shaders directory does not exist: " << builtShadersDir << std::endl;
             throw std::runtime_error("PipelineBuilder: Shaders directory does not exist");
         }
 
-        PipelineDef pipelineOut = pipelineIn;
+        PipelineDeclDef pipelineOut = pipelineIn;
 
         std::vector<ShaderInfo> shaderInfos;
-        if (pipelineIn.vertexShader) {
-            ShaderInfo info = infoFromDef(*pipelineIn.vertexShader, "vert", builtShadersDir);
+        if (!pipelineIn.vertShaderName.empty()) {
+            ShaderInfo info = infoFromShader(pipelineIn.vertShaderName, "vert", builtShadersDir);
             shaderInfos.push_back(info);
             updateDSDef(info, "vert", pipelineOut.descriptorSet);
         }
-        if (pipelineIn.geometryShader) {
-            ShaderInfo info = infoFromDef(*pipelineIn.geometryShader, "geom", builtShadersDir);
+        if (!pipelineIn.geomShaderName.empty()) {
+            ShaderInfo info = infoFromShader(pipelineIn.geomShaderName, "geom", builtShadersDir);
             shaderInfos.push_back(info);
             updateDSDef(info, "geom", pipelineOut.descriptorSet);
         }
-        if (pipelineIn.fragmentShader) {
-            ShaderInfo info = infoFromDef(*pipelineIn.fragmentShader, "frag", builtShadersDir);
+        if (!pipelineIn.fragShaderName.empty()) {
+            ShaderInfo info = infoFromShader(pipelineIn.fragShaderName, "frag", builtShadersDir);
             shaderInfos.push_back(info);
             updateDSDef(info, "frag", pipelineOut.descriptorSet);
         }
@@ -133,15 +133,16 @@ class PipelineBuilder {
         for (int i = 0; i < shaderInfos.size() - 1; i++) {
             std::string errMsg;
             if (!checkConnections(shaderInfos[i], shaderInfos[i + 1], errMsg)) {
-                std::cerr << errMsg << std::endl;
-                throw std::runtime_error("PipelineBuilder: Shader connections do not match");
+                errMsgOut += "\n";
+                errMsgOut += errMsg;
             }
         }
 
         return pipelineOut;
     }
 
-    static void buildPipelineFile(PipelineDef pipelineIn, std::filesystem::path builtShadersDir, std::filesystem::path pipelineFileOut) {
+    static void buildPipelineFile(PipelineDeclDef pipelineIn, std::filesystem::path builtShadersDir, std::filesystem::path pipelineFileOut,
+                                  std::string &errMsgOut) {
         if (!std::filesystem::exists(builtShadersDir)) {
             std::cerr << "Shaders directory does not exist: " << builtShadersDir << std::endl;
             throw std::runtime_error("PipelineBuilder: Shaders directory does not exist");
@@ -151,15 +152,24 @@ class PipelineBuilder {
             throw std::runtime_error("PipelineBuilder: Output directory does not exist");
         }
 
-        PipelineDef pipelineOut = buildPipeline(pipelineIn, builtShadersDir);
-        nlohmann::json pipelineOutJSON = PipelineDef::toJSON(pipelineOut);
+        std::string errMsg;
+        PipelineDeclDef pipelineOut = buildPipeline(pipelineIn, builtShadersDir, errMsg);
+        if (!errMsg.empty()) {
+            errMsgOut += errMsg;
+            return;
+        }
+        nlohmann::json pipelineOutJSON = PipelineDeclDef::toJSON(pipelineOut);
 
         std::ofstream outFile(pipelineFileOut);
         outFile << pipelineOutJSON;
         outFile.close();
     }
 
-    static void buildPipelinesFromMetadata(std::filesystem::path builtShadersDir, std::filesystem::path pipelineDirOut) {
+    static void buildPipelineFromFile(std::filesystem::path builtShadersDir, std::filesystem::path pipelineDirOut, fs::path pipelineFileIn) {
+        if (!std::filesystem::exists(pipelineFileIn)) {
+            std::cerr << "Pipeline file does not exist: " << pipelineFileIn << std::endl;
+            throw std::runtime_error("PipelineBuilder: Pipeline file does not exist");
+        }
         if (!std::filesystem::exists(builtShadersDir)) {
             std::cerr << "Shaders directory does not exist: " << builtShadersDir << std::endl;
             throw std::runtime_error("PipelineBuilder: Shaders directory does not exist");
@@ -169,12 +179,46 @@ class PipelineBuilder {
             throw std::runtime_error("PipelineBuilder: Output directory does not exist");
         }
 
-        Metadata const *m = getMetadata();
-        for (auto &pipeline : m->pipelines) {
-            PipelineDef def = *pipeline.second;
-            buildPipelineFile(def, builtShadersDir, pipelineDirOut / (pipeline.first + ".json"));
+        nlohmann::json pipelineInJSON;
+        std::ifstream inFile(pipelineFileIn);
+        inFile >> pipelineInJSON;
+        inFile.close();
+        auto def = PipelineDeclDef::fromJSON(pipelineInJSON);
+
+        std::string errMsg;
+        buildPipelineFile(def, builtShadersDir, pipelineDirOut / pipelineFileIn.filename(), errMsg);
+        if (!errMsg.empty()) {
+            std::cerr << "Errors building pipelines: \n" << errMsg << std::endl;
+            throw std::runtime_error("PipelineBuilder: Errors building pipelines");
         }
     }
+
+    // static void buildPipelinesFromMetadata(std::filesystem::path builtShadersDir, std::filesystem::path pipelineDirOut, std::string optPipeline = "") {
+    //     if (!std::filesystem::exists(builtShadersDir)) {
+    //         std::cerr << "Shaders directory does not exist: " << builtShadersDir << std::endl;
+    //         throw std::runtime_error("PipelineBuilder: Shaders directory does not exist");
+    //     }
+    //     if (!std::filesystem::exists(pipelineDirOut)) {
+    //         std::cerr << "Output directory does not exist: " << pipelineDirOut << std::endl;
+    //         throw std::runtime_error("PipelineBuilder: Output directory does not exist");
+    //     }
+
+    //     Metadata m = {};
+    //     findAndProcessMetadata(builtShadersDir.parent_path(), m);
+    //     std::string errMsg;
+    //     if (optPipeline.size() > 0) {
+    //         buildPipelineFile(*m.pipelines.at(optPipeline), builtShadersDir, pipelineDirOut / (optPipeline + ".json"), errMsg);
+    //     } else {
+    //         for (auto &pipeline : m.pipelines) {
+    //             PipelineDeclDef def = *pipeline.second;
+    //             buildPipelineFile(def, builtShadersDir, pipelineDirOut / (pipeline.first + ".json"), errMsg);
+    //         }
+    //     }
+    //     if (!errMsg.empty()) {
+    //         std::cerr << "Errors building pipelines: \n" << errMsg << std::endl;
+    //         throw std::runtime_error("PipelineBuilder: Errors building pipelines");
+    //     }
+    // }
 
   private:
     static std::vector<uint32_t> readSPIRVFile(std::filesystem::path filename) {

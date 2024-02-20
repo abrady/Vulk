@@ -23,13 +23,20 @@
             "request": "launch",
             "cwd": "${workspaceRoot}/Build/Debug",
             "args": [
-                "${workspaceFolder}/Source/Shaders",
-                "${workspaceFolder}/build/Debug/Assets/Pipelines"
+                "${workspaceFolder}/build/Debug/Source/Shaders",
+                "${workspaceFolder}/build/Debug/Assets/Pipelines",
+                "${workspaceFolder}/Assets/Pipelines/DebugNormals.pipeline"
             ],
             "stopAtEntry": false,
             "environment": [],
             "externalConsole": false,
             "preLaunchTask": "CMake: build"
         },
+        {
+            "name": "(gdb) Attach",
+            "type": "cppvsdbg",
+            "request": "attach",
+            "processId": "${command:pickProcess}"
+        }
     ]
 }

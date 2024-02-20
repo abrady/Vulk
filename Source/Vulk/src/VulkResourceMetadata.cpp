@@ -243,6 +243,7 @@ SceneDef SceneDef::fromJSON(const nlohmann::json &j, unordered_map<string, share
 }
 
 void findAndProcessMetadata(const fs::path &path, Metadata &metadata) {
+    cout << "Finding and processing metadata in " << path << endl;
     assert(fs::exists(path) && fs::is_directory(path));
 
     // The metadata is stored in JSON files with the following extensions
@@ -267,8 +268,8 @@ void findAndProcessMetadata(const fs::path &path, Metadata &metadata) {
                 assert(loadInfo.j.at("name") == stem);
                 loadInfos[ext][loadInfo.j.at("name")] = loadInfo;
             } else if (ext == ".vertspv") {
-                assert(!metadata.vertexShaders.contains(stem));
-                metadata.vertexShaders[stem] = make_shared<ShaderDef>(stem, entry.path());
+                assert(!metadata.vertShaders.contains(stem));
+                metadata.vertShaders[stem] = make_shared<ShaderDef>(stem, entry.path());
             } else if (ext == ".geomspv") {
                 assert(!metadata.geometryShaders.contains(stem));
                 metadata.geometryShaders[stem] = make_shared<ShaderDef>(stem, entry.path());
@@ -280,6 +281,9 @@ void findAndProcessMetadata(const fs::path &path, Metadata &metadata) {
                 auto material = make_shared<MaterialDef>(loadMaterialDef(entry.path()));
                 metadata.materials[material->name] = material;
             } else if (ext == ".obj") {
+                if (metadata.meshes.contains(stem)) {
+                    cerr << "Mesh already exists: " << stem << endl;
+                }
                 assert(!metadata.meshes.contains(stem));
                 ModelMeshDef mmd{entry.path()};
                 metadata.meshes[stem] = make_shared<MeshDef>(stem, mmd);
@@ -292,7 +296,7 @@ void findAndProcessMetadata(const fs::path &path, Metadata &metadata) {
 
     for (auto const &[name, loadInfo] : loadInfos[".pipeline"]) {
         auto pipelineDef =
-            make_shared<PipelineDef>(PipelineDef::fromJSON(loadInfo.j, metadata.vertexShaders, metadata.geometryShaders, metadata.fragmentShaders));
+            make_shared<PipelineDef>(PipelineDef::fromJSON(loadInfo.j, metadata.vertShaders, metadata.geometryShaders, metadata.fragmentShaders));
         assert(!metadata.pipelines.contains(pipelineDef->name));
         metadata.pipelines[pipelineDef->name] = pipelineDef;
     }

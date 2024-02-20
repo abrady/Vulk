@@ -186,7 +186,7 @@ set(GLOBAL_ASSETS_TO_BUILD "")
 
 # these assets don't need any processing, but we need everything in the build
 # directory to be usable by the executable
-set(STRAIGHT_COPY_DIRECTORIES Pipelines Scenes Shaders Models Textures Materials)
+set(STRAIGHT_COPY_DIRECTORIES Scenes Shaders Models Textures Materials)
 foreach(DIR ${STRAIGHT_COPY_DIRECTORIES})
     copy_assets(${DIR} GLOBAL_ASSETS_TO_BUILD)
 endforeach()
@@ -196,3 +196,34 @@ add_custom_target(
     ALL    
     DEPENDS ${GLOBAL_ASSETS_TO_BUILD} compile_shaders
 )
+
+##
+# build the pipelines
+##
+# Set the source and destination directories
+set(PIPELINES_SOURCE_DIR "${CMAKE_SOURCE_DIR}/Assets/Pipelines")
+set(PIPELINES_DEST_DIR "${TARGET_DIR}/Assets/Pipelines") 
+# Create the destination directory if it doesn't exist
+file(MAKE_DIRECTORY ${PIPELINES_DEST_DIR})
+file(GLOB_RECURSE PIPELINE_SRC_FILES CONFIGURE_DEPENDS "${PIPELINES_SOURCE_DIR}/*")
+# Create a custom command for each pipeline file
+
+foreach(FILE ${PIPELINE_SRC_FILES})
+    get_filename_component(FILE_NAME ${FILE} NAME)
+    set(OUTPUT_FILE "${PIPELINES_DEST_DIR}/${FILE_NAME}")
+    add_custom_command(
+        OUTPUT ${OUTPUT_FILE}
+        COMMAND $<TARGET_FILE:PipelineBuilder> ${SHADER_DEST_DIR} ${PIPELINES_DEST_DIR} ${FILE}
+        DEPENDS PipelineBuilder ${FILE}
+        COMMENT "building ${OUTPUT_FILE} from ${FILE}"
+    )
+    list(APPEND PIPELINEBUILDER_OUTPUT_FILES ${OUTPUT_FILE})
+endforeach()
+# Create a custom target that depends on the output of the previous commands
+add_custom_target(
+    RunPipelineBuilder ALL
+    DEPENDS ${PIPELINEBUILDER_OUTPUT_FILES}
+)
+# Make your main target depend on the RunPipelineBuilder target
+message("Adding dependency on RunPipelineBuilder")
+add_dependencies(VulkSamples RunPipelineBuilder)

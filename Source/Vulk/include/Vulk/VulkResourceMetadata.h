@@ -59,7 +59,6 @@ struct DescriptorSetDef {
     unordered_map<VkShaderStageFlagBits, vector<VulkShaderTextureBindings>> imageSamplers;
 
     void validate() {
-        assert(uniformBuffers.size() + storageBuffers.size() + imageSamplers.size() > 0);
     }
 
     static string shaderStageToStr(VkShaderStageFlagBits stage) {
@@ -221,11 +220,13 @@ struct DescriptorSetDef {
 };
 
 #define PIPELINE_JSON_VERSION 1
-struct PipelineDef {
+// PipelineDeclDef is used to declare a pipeline that is transformed into a PipelineDef during the build process
+// e.g. it lives in the Assets/Pipelines directory
+struct PipelineDeclDef {
     string name;
-    shared_ptr<ShaderDef> vertexShader;
-    shared_ptr<ShaderDef> geometryShader;
-    shared_ptr<ShaderDef> fragmentShader;
+    string vertShaderName;
+    string geomShaderName;
+    string fragShaderName;
 
     VkPrimitiveTopology primitiveTopology;
     bool depthTestEnabled;
@@ -237,9 +238,8 @@ struct PipelineDef {
 
     void validate() {
         assert(!name.empty());
-        assert(vertexShader);
-        assert(fragmentShader);
-        descriptorSet.validate();
+        assert(!vertShaderName.empty());
+        assert(!fragShaderName.empty());
     }
 
     static VkPrimitiveTopology getPrimitiveTopologyFromStr(string s) {
@@ -267,50 +267,90 @@ struct PipelineDef {
         return depthCompareOpMap.at(s);
     }
 
-    static PipelineDef fromJSON(const nlohmann::json &j, unordered_map<string, shared_ptr<ShaderDef>> const &vertexShaders,
-                                unordered_map<string, shared_ptr<ShaderDef>> const &geometryShaders,
-                                unordered_map<string, shared_ptr<ShaderDef>> const &fragmentShaders) {
-        PipelineDef p;
+    static PipelineDeclDef fromJSON(const nlohmann::json &j) {
+        PipelineDeclDef p;
         assert(j.at("version").get<uint32_t>() == PIPELINE_JSON_VERSION);
         p.name = j.at("name").get<string>();
-        auto shader = j.at("vertexShader").get<string>();
-        assert(vertexShaders.contains(shader));
-        p.vertexShader = vertexShaders.at(shader);
-        shader = j.at("fragmentShader").get<string>();
-        assert(fragmentShaders.contains(shader));
-        p.fragmentShader = fragmentShaders.at(shader);
-        p.primitiveTopology =
-            j.contains("primitiveTopology") ? getPrimitiveTopologyFromStr(j.at("primitiveTopology").get<string>()) : VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        p.vertShaderName = j.at("vertShader").get<string>();
+        p.fragShaderName = j.at("fragShader").get<string>();
+        p.geomShaderName = j.value("geomShader", "");
+        p.primitiveTopology = PipelineDeclDef::getPrimitiveTopologyFromStr(j.value("primitiveTopology", "TriangleList"));
         p.depthTestEnabled = j.value("depthTestEnabled", true);
         p.depthWriteEnabled = j.value("depthWriteEnabled", true);
         p.depthCompareOp = getDepthCompareOpFromStr(j.value("depthCompareOp", "LESS"));
-
         p.vertexInputBinding = j.at("vertexInputBinding").get<uint32_t>();
-        if (j.contains("descriptorSet"))
-            p.descriptorSet = DescriptorSetDef::fromJSON(j.at("descriptorSet")); // Use custom from_json for DescriptorSetDef
-
-        if (j.contains("geometryShader")) {
-            shader = j.at("geometryShader").get<string>();
-            assert(geometryShaders.contains(shader));
-            p.geometryShader = geometryShaders.at(shader);
-        }
         p.validate();
         return p;
     }
-    static nlohmann::json toJSON(const PipelineDef &def) {
+    static nlohmann::json toJSON(const PipelineDeclDef &def) {
         nlohmann::json j;
         j["version"] = PIPELINE_JSON_VERSION;
         j["name"] = def.name;
-        j["vertexShader"] = def.vertexShader->name;
-        j["fragmentShader"] = def.fragmentShader->name;
+        j["vertShader"] = def.vertShaderName;
+        j["fragShader"] = def.fragShaderName;
         j["primitiveTopology"] = "TriangleList"; // TODO: add support for other topologies
         j["depthTestEnabled"] = def.depthTestEnabled;
         j["depthWriteEnabled"] = def.depthWriteEnabled;
         j["depthCompareOp"] = "LESS"; // TODO: add support for other compare ops
         j["vertexInputBinding"] = def.vertexInputBinding;
         j["descriptorSet"] = DescriptorSetDef::toJSON(def.descriptorSet);
-        if (def.geometryShader)
-            j["geometryShader"] = def.geometryShader->name;
+        if (!def.geomShaderName.empty())
+            j["geomShader"] = def.geomShaderName;
+        return j;
+    }
+};
+
+struct PipelineDef : public PipelineDeclDef {
+    shared_ptr<ShaderDef> vertShader;
+    shared_ptr<ShaderDef> geomShader;
+    shared_ptr<ShaderDef> fragShader;
+
+    void validate() {
+        PipelineDeclDef::validate();
+        assert(vertShader);
+        assert(fragShader);
+    }
+
+    static PipelineDef fromJSON(const nlohmann::json &j, unordered_map<string, shared_ptr<ShaderDef>> const &vertShaders,
+                                unordered_map<string, shared_ptr<ShaderDef>> const &geometryShaders,
+                                unordered_map<string, shared_ptr<ShaderDef>> const &fragmentShaders) {
+        PipelineDef def = {};
+
+        PipelineDeclDef *p = &def; // deliberately slicing this here
+        *p = PipelineDeclDef::fromJSON(j);
+
+        def.vertShader = vertShaders.at(j.at("vertShader").get<string>());
+        def.fragShader = fragmentShaders.at(j.at("fragShader").get<string>());
+        if (j.contains("geomShader")) {
+            def.geomShader = geometryShaders.at(j.at("geomShader").get<string>());
+        }
+        def.primitiveTopology = j.contains("primitiveTopology") ? PipelineDeclDef::getPrimitiveTopologyFromStr(j.at("primitiveTopology").get<string>())
+                                                                : VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        def.depthTestEnabled = j.value("depthTestEnabled", true);
+        def.depthWriteEnabled = j.value("depthWriteEnabled", true);
+        def.depthCompareOp = PipelineDeclDef::getDepthCompareOpFromStr(j.value("depthCompareOp", "LESS"));
+
+        def.vertexInputBinding = j.at("vertexInputBinding").get<uint32_t>();
+        if (j.contains("descriptorSet"))
+            def.descriptorSet = DescriptorSetDef::fromJSON(j.at("descriptorSet")); // Use custom from_json for DescriptorSetDef
+
+        def.validate();
+        return def;
+    }
+    static nlohmann::json toJSON(const PipelineDef &def) {
+        nlohmann::json j;
+        j["version"] = PIPELINE_JSON_VERSION;
+        j["name"] = def.name;
+        j["vertShader"] = def.vertShader->name;
+        j["fragShader"] = def.fragShader->name;
+        j["primitiveTopology"] = "TriangleList"; // TODO: add support for other topologies
+        j["depthTestEnabled"] = def.depthTestEnabled;
+        j["depthWriteEnabled"] = def.depthWriteEnabled;
+        j["depthCompareOp"] = "LESS"; // TODO: add support for other compare ops
+        j["vertexInputBinding"] = def.vertexInputBinding;
+        j["descriptorSet"] = DescriptorSetDef::toJSON(def.descriptorSet);
+        if (def.geomShader)
+            j["geomShader"] = def.geomShader->name;
         return j;
     }
 };
@@ -402,7 +442,7 @@ struct SceneDef {
 // not contain the resources themselves. The resources are loaded on demand.
 struct Metadata {
     unordered_map<string, shared_ptr<MeshDef>> meshes;
-    unordered_map<string, shared_ptr<ShaderDef>> vertexShaders;
+    unordered_map<string, shared_ptr<ShaderDef>> vertShaders;
     unordered_map<string, shared_ptr<ShaderDef>> geometryShaders;
     unordered_map<string, shared_ptr<ShaderDef>> fragmentShaders;
     unordered_map<string, shared_ptr<MaterialDef>> materials;

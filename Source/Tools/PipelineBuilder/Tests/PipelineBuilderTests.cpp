@@ -12,12 +12,12 @@
 
 namespace fs = std::filesystem;
 
-static PipelineDef makeTestPipelineDef() {
-    PipelineDef def;
+static PipelineDeclDef makeTestPipelineDef() {
+    PipelineDeclDef def;
     def.name = "TestPipeline";
-    def.vertexShader = std::make_shared<ShaderDef>(ShaderDef{"DebugNormals", std::filesystem::path("/")});
-    def.geometryShader = std::make_shared<ShaderDef>(ShaderDef{"DebugNormals", std::filesystem::path("/")});
-    def.fragmentShader = std::make_shared<ShaderDef>(ShaderDef{"DebugNormals", std::filesystem::path("/")});
+    def.vertShaderName = "DebugNormals";
+    def.geomShaderName = "DebugNormals";
+    def.fragShaderName = "DebugNormals";
     def.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     def.depthTestEnabled = true;
     def.depthWriteEnabled = true;
@@ -60,12 +60,13 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
         CHECK(PipelineBuilder::checkConnections(info2, info3, errMsg) == true);
     }
     SECTION("Test Pipeline Generation") {
-        PipelineDef def = makeTestPipelineDef();
-        PipelineDef res = PipelineBuilder::buildPipeline(def, builtShadersDir);
+        PipelineDeclDef def = makeTestPipelineDef();
+        std::string errMsg;
+        PipelineDeclDef res = PipelineBuilder::buildPipeline(def, builtShadersDir, errMsg);
         CHECK(res.name == "TestPipeline");
-        CHECK(res.vertexShader->name == "DebugNormals");
-        CHECK(res.geometryShader->name == "DebugNormals");
-        CHECK(res.fragmentShader->name == "DebugNormals");
+        CHECK(res.vertShaderName == "DebugNormals");
+        CHECK(res.geomShaderName == "DebugNormals");
+        CHECK(res.fragShaderName == "DebugNormals");
         CHECK(res.primitiveTopology == VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
         CHECK(res.depthTestEnabled == true);
         CHECK(res.depthWriteEnabled == true);
@@ -83,21 +84,19 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
             CHECK(!ec);
         }
         CHECK(fs::create_directory(builtPipelinesDir));
-        PipelineDef def = makeTestPipelineDef();
+        PipelineDeclDef def = makeTestPipelineDef();
         fs::path builtPipeline = builtPipelinesDir / "TestPipeline.json";
-        PipelineBuilder::buildPipelineFile(def, builtShadersDir, builtPipeline);
+        std::string errMsg;
+        PipelineBuilder::buildPipelineFile(def, builtShadersDir, builtPipeline, errMsg);
         CHECK(fs::exists(builtPipeline));
         nlohmann::json j;
         std::ifstream file(builtPipeline);
         file >> j;
-        unordered_map<string, shared_ptr<ShaderDef>> vertexShaders = {{"DebugNormals", make_shared<ShaderDef>(ShaderDef{"DebugNormals", ""})}};
-        unordered_map<string, shared_ptr<ShaderDef>> geometryShaders = {{"DebugNormals", make_shared<ShaderDef>(ShaderDef{"DebugNormals", ""})}};
-        unordered_map<string, shared_ptr<ShaderDef>> fragmentShaders = {{"DebugNormals", make_shared<ShaderDef>(ShaderDef{"DebugNormals", ""})}};
-        PipelineDef def2 = PipelineDef::fromJSON(j, vertexShaders, geometryShaders, fragmentShaders);
+        PipelineDeclDef def2 = PipelineDeclDef::fromJSON(j);
         CHECK(def2.name == def.name);
-        CHECK(def2.vertexShader->name == def.vertexShader->name);
-        CHECK(def2.geometryShader->name == def.geometryShader->name);
-        CHECK(def2.fragmentShader->name == def.fragmentShader->name);
+        CHECK(def2.vertShaderName == def.vertShaderName);
+        CHECK(def2.geomShaderName == def.geomShaderName);
+        CHECK(def2.fragShaderName == def.fragShaderName);
         CHECK(def2.primitiveTopology == def.primitiveTopology);
         CHECK(def2.depthTestEnabled == def.depthTestEnabled);
         CHECK(def2.depthWriteEnabled == def.depthWriteEnabled);

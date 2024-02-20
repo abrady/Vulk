@@ -67,7 +67,7 @@ public:
     VulkResources(Vulk &vk);
     VulkResources &loadScene(std::string name);
 
-    std::shared_ptr<VulkShaderModule> getVertexShader(std::string const &name)
+    std::shared_ptr<VulkShaderModule> getvertShader(std::string const &name)
     {
         if (!vertShaders.contains(name))
             vertShaders[name] = createShaderModule(Vertex, name);

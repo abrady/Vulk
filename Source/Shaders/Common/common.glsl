@@ -94,15 +94,3 @@ layout(location = LayoutLocation_Position) in vec3 inPosition; \
 layout(location = LayoutLocation_Normal) in vec3 inNormal; \
 layout(location = LayoutLocation_Tangent) in vec3 inTangent; \
 layout(location = LayoutLocation_TexCoord) in vec2 inTexCoord
-
-#define VERTEX_OUT(outPos, outNorm, outTangent, outTexCoord) \
-layout(location = LayoutLocation_Position) out vec3 outPos;  \
-layout(location = LayoutLocation_Normal) out vec3 outNorm; \
-layout(location = LayoutLocation_Tangent) out vec3 outTangent; \
-layout(location = LayoutLocation_TexCoord) out vec2 outTexCoord
-
-#define FRAG_IN(inPosition, inNormal, inTangent, inTexCoord)  \
-layout(location = LayoutLocation_Position) in vec3 inPosition; \
-layout(location = LayoutLocation_Normal) in vec3 inNormal; \
-layout(location = LayoutLocation_Tangent) in vec3 inTangent; \
-layout(location = LayoutLocation_TexCoord) in vec2 inTexCoord

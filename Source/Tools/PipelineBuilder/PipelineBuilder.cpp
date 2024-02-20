@@ -11,9 +11,13 @@ int main(int argc, char *argv[]) {
     argparse::ArgumentParser program("PipelineBuilder");
     program.add_argument("builtShadersDir").help("directory where the shaders are (assumes subdirs of vert/geom/frag etc.)");
     program.add_argument("pipelineOutDir").help("resulting pipeline file to write out to");
+    program.add_argument("pipelineFileIn").help("process this pipeline file");
+    program.add_argument("-v", "--verbose").help("be verbose").default_value(false);
     program.parse_args(argc, argv);
     auto builtShadersDir = fs::path(program.get<std::string>("builtShadersDir")).lexically_normal();
     auto pipelineOutDir = fs::path(program.get<std::string>("pipelineOutDir")).lexically_normal();
+    auto pipelineFileIn = fs::path(program.get<std::string>("pipelineFileIn")).lexically_normal();
+    bool verbose = program.get<bool>("-v");
     if (!fs::exists(builtShadersDir)) {
         std::cerr << "Shaders directory does not exist: " << builtShadersDir << std::endl;
         return 1;
@@ -22,10 +26,21 @@ int main(int argc, char *argv[]) {
         std::cerr << "Pipeline output directory does not exist: " << pipelineOutDir.parent_path() << std::endl;
         return 1;
     }
+    if (!fs::exists(pipelineFileIn)) {
+        std::cerr << "Pipeline file does not exist: " << pipelineFileIn << std::endl;
+        return 1;
+    }
 
-    std::cout << "Shaders Dir: " << builtShadersDir << std::endl;
-    std::cout << "Pipeline Out: " << pipelineOutDir << std::endl;
+    if (verbose) {
+        std::cout << "Shaders Dir: " << builtShadersDir << std::endl;
+        std::cout << "Pipeline Out Dir: " << pipelineOutDir << std::endl;
+        std::cout << "Processing pipeline: " << pipelineFileIn << std::endl;
+    }
+    PipelineBuilder::buildPipelineFromFile(builtShadersDir, pipelineOutDir, pipelineFileIn);
 
-    PipelineBuilder::buildPipelinesFromMetadata(builtShadersDir, pipelineOutDir);
+    if (verbose) {
+        std::cout << "PipelineBuilder: Done!\n";
+    }
+
     return 0;
 }

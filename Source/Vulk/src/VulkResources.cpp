@@ -102,8 +102,8 @@ std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(PipelineDef &def)
     shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout = dslb.build();
 
     auto pb = VulkPipelineBuilder(vk)
-                  .addVertexShaderStage(getVertexShader(def.vertexShader->name))
-                  .addFragmentShaderStage(getFragmentShader(def.fragmentShader->name))
+                  .addvertShaderStage(getvertShader(def.vertShader->name))
+                  .addFragmentShaderStage(getFragmentShader(def.fragShader->name))
                   .addVulkVertexInput(def.vertexInputBinding)
                   .setDepthTestEnabled(def.depthTestEnabled)
                   .setDepthWriteEnabled(def.depthWriteEnabled)
@@ -114,8 +114,8 @@ std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(PipelineDef &def)
                   .setDepthCompareOp(VK_COMPARE_OP_LESS)
                   .setStencilTestEnabled(false)
                   .setBlendingEnabled(true);
-    if (def.geometryShader)
-        pb.addGeometryShaderStage(getGeometryShader(def.geometryShader->name));
+    if (def.geomShader)
+        pb.addGeometryShaderStage(getGeometryShader(def.geomShader->name));
 
     auto p = pb.build(descriptorSetLayout);
     pipelines[name] = p;

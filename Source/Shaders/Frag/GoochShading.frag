@@ -21,7 +21,11 @@ layout(binding = VulkShaderBinding_MaterialUBO) uniform MaterialBuf {
 } materialBuf;
 
 
-FRAG_IN(inPosition, inNormal, inTangent, inTexCoord);
+layout(location = LayoutLocation_Position) in vec3 inPosition;
+layout(location = LayoutLocation_Normal) in vec3 inNormal;
+layout(location = LayoutLocation_Tangent) in vec3 inTangent;
+layout(location = LayoutLocation_TexCoord) in vec2 inTexCoord;
+
 layout(location = 0) out vec4 outColor;
 
 // c_shaded = s*c_highlight + (1-s)*t*c_warm + (1 - t)*c_cool

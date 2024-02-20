@@ -54,7 +54,7 @@ class VulkPipelineBuilder
 public:
     VulkPipelineBuilder(Vulk &vk);
 
-    VulkPipelineBuilder &addVertexShaderStage(std::shared_ptr<VulkShaderModule> shaderModule)
+    VulkPipelineBuilder &addvertShaderStage(std::shared_ptr<VulkShaderModule> shaderModule)
     {
         return addShaderStage(VK_SHADER_STAGE_VERTEX_BIT, shaderModule);
     }

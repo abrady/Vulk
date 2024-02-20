@@ -9,14 +9,16 @@ layout(binding = VulkShaderBinding_NormalSampler) uniform sampler2D normSampler;
 EYEPOS_UBO(eyePosUBO);
 LIGHTS_UBO(lightBuf);
 
-layout(location = LayoutLocation_Position) in vec3 fragPos;  
-layout(location = LayoutLocation_TexCoord) in vec2 fragTexCoord;
+layout(location = LayoutLocation_Position) in vec3 inPos;
+layout(location = LayoutLocation_Normal) in vec3 inNormal;
+layout(location = LayoutLocation_Tangent) in vec3 inTangent;
+layout(location = LayoutLocation_TexCoord) in vec2 inTexCoord;
 
 layout(location = 0) out vec4 outColor;
 
 void main() {
-    vec4 tex = texture(texSampler, fragTexCoord);
-    vec3 norm = vec3(texture(normSampler, fragTexCoord));
-    //outColor = basicLighting(lightBuf.light, materialBuf.material, tex, eyePosUBO.eyePos, norm, fragPos);
-    outColor = blinnPhong(tex.xyx, norm, eyePosUBO.eyePos, lightBuf.light.pos, fragPos, lightBuf.light.color, true);
+    vec4 tex = texture(texSampler, inTexCoord);
+    vec3 norm = calcTBNNormal(normSampler, inTexCoord, inNormal, inTangent);
+    //outColor = basicLighting(lightBuf.light, materialBuf.material, tex, eyePosUBO.eyePos, norm, inPos);
+    outColor = blinnPhong(tex.xyx, norm, eyePosUBO.eyePos, lightBuf.light.pos, inPos, lightBuf.light.color, true);
 }

@@ -148,8 +148,8 @@ class VertFragGen {
 {{
     "version": 1,
     "name": "{}",
-    "vertexShader": "{}",
-    "fragmentShader": "{}",
+    "vertShader": "{}",
+    "fragShader": "{}",
     "vertexInputBinding": 0,
     "descriptorSet": {{
         {}
