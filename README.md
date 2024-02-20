@@ -30,6 +30,23 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
+## 2/19 cmake fun
+I learned a little more about cmake and vcpkg and refactored the whole project as a result. did I learn anything interesting? yeah
+* vcpkg works pretty well:
+    * make a vcpkg.json and add the packages you need in the "dependencies" section.
+    * `find_package(nlohmann_json CONFIG REQUIRED)` then pulls it into the project you're building
+    * `target_link_libraries(Vulk PRIVATE nlohmann_json::nlohmann_json)` will then add it to your project (vcpkg tells you how to do this per project btw.)
+* the root project just includes the child directory projects with `add_subdirectory` to bring it all together:
+    * `add_subdirectory("${CMAKE_SOURCE_DIR}/Source/Samples")` now has the main.cpp which builds whatever sample we're rendering.
+* moving Vulk into a library was surprisingly easy
+    * `find_package` all the externalities
+    * `add_library(Vulk ${SOURCES})`
+* using vulk just requires `target_link_libraries` just like the vcpkg deps:
+    * e.g. `target_link_libraries(PipelineBuilder PRIVATE Vulk)`
+* I also accumulated all the assets being built into `build_assets` so I can depend on that in pipelinebuilder:
+    * `add_dependencies(PipelineBuilder compile_shaders build_assets)`
+
+
 ## 2/17 pipeline/shader annoyances part 2
 
 having thought about it some more, the root problem is that it is easy to have a shader use, say, a UBO, but the pipeline doesn't declare it, or an upstream shader to not bind properly to a downstream one (e.g. incorrect outputs to inputs). it feels like this could be pretty easy to fix:

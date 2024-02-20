@@ -13,7 +13,7 @@ find_package(nlohmann_json CONFIG REQUIRED)
 # Add an executable
 file(GLOB SOURCES "*.cpp")
 add_executable(PipelineBuilder ${SOURCES})
-add_dependencies(PipelineBuilder build_assets)
+add_dependencies(PipelineBuilder compile_shaders build_assets)
 
 target_link_libraries(PipelineBuilder PRIVATE Vulk)
 target_link_libraries(PipelineBuilder PRIVATE nlohmann_json::nlohmann_json)
