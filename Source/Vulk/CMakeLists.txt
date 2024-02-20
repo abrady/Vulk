@@ -14,6 +14,14 @@ find_package(glm CONFIG REQUIRED)
 # Set the project name
 project(Vulk)
 
+# packages
+find_package(glfw3 CONFIG REQUIRED)
+find_package(Vulkan REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
+find_package(Stb REQUIRED)
+find_package(glm CONFIG REQUIRED)
+find_package(assimp CONFIG REQUIRED)
+
 # Add all the source files to a library
 file(GLOB SOURCES "src/*.cpp")
 add_library(Vulk ${SOURCES})
