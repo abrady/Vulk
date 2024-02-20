@@ -39,6 +39,8 @@ include_directories("${CMAKE_SOURCE_DIR}/Source")
 include_directories("${CMAKE_SOURCE_DIR}/Source/ThirdParty/include")
 include_directories("$ENV{VK_SDK_PATH}/include")
 
+add_compile_options(-W3)
+
 ######
 ## subdirectories
 ######

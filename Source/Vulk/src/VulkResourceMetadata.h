@@ -411,4 +411,5 @@ struct Metadata {
     unordered_map<string, shared_ptr<SceneDef>> scenes;
 };
 
+extern void findAndProcessMetadata(const fs::path &path, Metadata &metadata);
 extern Metadata const *getMetadata();
