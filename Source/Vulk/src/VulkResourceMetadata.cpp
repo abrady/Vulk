@@ -135,13 +135,13 @@ ModelDef ModelDef::fromJSON(const nlohmann::json &j, unordered_map<string, share
         } break;
         case GeoMeshDefType_EquilateralTriangle: {
             float side = meshJson.at("side").get<float>();
-            uint32_t numSubdivisions = meshJson.at("numSubdivisions").get<uint32_t>();
+            uint32_t numSubdivisions = meshJson.value("numSubdivisions", 0);
             makeEquilateralTri(side, numSubdivisions, *mesh);
         } break;
         case GeoMeshDefType_Quad: {
             float w = meshJson.at("width").get<float>();
             float h = meshJson.at("height").get<float>();
-            uint32_t numSubdivisions = meshJson.at("numSubdivisions").get<uint32_t>();
+            uint32_t numSubdivisions = meshJson.value("numSubdivisions", 0);
             makeQuad(w, h, numSubdivisions, *mesh);
         } break;
         case GeoMeshDefType_Grid: {
@@ -242,7 +242,7 @@ SceneDef SceneDef::fromJSON(const nlohmann::json &j, unordered_map<string, share
     return s;
 }
 
-void findAndProcessMetadata(const fs::path &path, Metadata &metadata) {
+void findAndProcessMetadata(const fs::path path, Metadata &metadata) {
     cout << "Finding and processing metadata in " << path << endl;
     assert(fs::exists(path) && fs::is_directory(path));
 
@@ -312,12 +312,34 @@ void findAndProcessMetadata(const fs::path &path, Metadata &metadata) {
         assert(!metadata.scenes.contains(sceneDef->name));
         metadata.scenes[sceneDef->name] = sceneDef;
     }
+
+    if (metadata.scenes.size() == 0) {
+        cerr << "No scenes found in " << path << " something is probably wrong\n";
+        throw runtime_error("No scenes found in " + path.string());
+    }
+}
+
+std::filesystem::path getResourcesDir() {
+    static std::filesystem::path path;
+    static once_flag flag;
+    call_once(flag, [&]() {
+        std::filesystem::path config_path = fs::current_path();
+        cout << "loading config for config_path " << config_path << endl;
+        ifstream config_ifstream(config_path / ".." / "config.json");
+        assert(config_ifstream.is_open() && "Failed to open config.json");
+        auto config = nlohmann::json::parse(config_ifstream, nullptr, true, true); // allow comments
+        path = config.at("ResourcesDir").get<string>();
+    });
+    return path;
 }
 
 Metadata const *getMetadata() {
     static Metadata metadata;
     static once_flag flag;
-    call_once(flag, [&]() { findAndProcessMetadata(fs::current_path(), metadata); });
+    call_once(flag, [&]() {
+        fs::path path = getResourcesDir();
+        findAndProcessMetadata(path, metadata);
+    });
 
     return &metadata;
 }

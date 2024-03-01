@@ -10,3 +10,5 @@ add_executable(VulkSamples ${SOURCES})
 # Link the Vulk library to your executable
 target_link_libraries(VulkSamples PRIVATE Vulk)
 target_link_libraries(VulkSamples PRIVATE glfw)
+
+vulk_add_config_json("${CMAKE_BINARY_DIR}/Source/Samples")

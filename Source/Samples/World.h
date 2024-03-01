@@ -33,10 +33,16 @@ class World {
         VulkResources resources(vk);
         resources.loadScene(sceneName);
         scene = resources.scenes[sceneName];
+
+        // ========================================================================================================
+        // Debug stuff
+
+        // always create the debug actors/pipeline so we can render them on command.
         debugNormalsPipeline = resources.getPipeline("DebugNormals");
         auto debugNormalsPipelineDef = resources.metadata.pipelines.at("DebugNormals");
         auto debugTangentsPipelineDef = resources.metadata.pipelines.at("DebugTangents");
 
+        // could probably defer this until we actually want to render the debug normals, eh.
         SceneDef &sceneDef = *resources.metadata.scenes.at(sceneName);
         for (int i = 0; i < scene->actors.size(); ++i) {
             auto actor = scene->actors[i];

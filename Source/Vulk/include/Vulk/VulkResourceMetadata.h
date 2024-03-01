@@ -242,17 +242,39 @@ struct PipelineDeclDef {
         assert(!fragShaderName.empty());
     }
 
-    static VkPrimitiveTopology getPrimitiveTopologyFromStr(string s) {
-        static unordered_map<string, VkPrimitiveTopology> primitiveTopologyMap{
-            {"TriangleList", VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST}, {"TriangleStrip", VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP},
-            {"LineList", VK_PRIMITIVE_TOPOLOGY_LINE_LIST},         {"LineStrip", VK_PRIMITIVE_TOPOLOGY_LINE_STRIP},
+    static std::unordered_map<std::string, VkPrimitiveTopology> getPrimitiveTopologyMap() {
+        static std::unordered_map<std::string, VkPrimitiveTopology> primitiveTopologyMap{
+            {"TriangleList", VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST},
+            {"TriangleStrip", VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP},
+            {"LineList", VK_PRIMITIVE_TOPOLOGY_LINE_LIST},
+            {"LineStrip", VK_PRIMITIVE_TOPOLOGY_LINE_STRIP},
             {"PointList", VK_PRIMITIVE_TOPOLOGY_POINT_LIST},
+            {"TriangleFan", VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN},
+            {"LineListWithAdjacency", VK_PRIMITIVE_TOPOLOGY_LINE_LIST_WITH_ADJACENCY},
+            {"LineStripWithAdjacency", VK_PRIMITIVE_TOPOLOGY_LINE_STRIP_WITH_ADJACENCY},
+            {"TriangleListWithAdjacency", VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST_WITH_ADJACENCY},
+            {"TriangleStripWithAdjacency", VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY},
+            {"PatchList", VK_PRIMITIVE_TOPOLOGY_PATCH_LIST},
         };
+        return primitiveTopologyMap;
+    };
 
-        return primitiveTopologyMap.at(s);
+    static VkPrimitiveTopology primitiveTopologyFromStr(string s) {
+        return getPrimitiveTopologyMap().at(s);
     }
 
-    static VkCompareOp getDepthCompareOpFromStr(string s) {
+    static std::string primitiveTopologyToStr(VkPrimitiveTopology topology) {
+        static std::unordered_map<VkPrimitiveTopology, std::string> primitiveTopologyToStr;
+        static std::once_flag flag;
+        std::call_once(flag, [&]() {
+            for (auto const &[name, value] : getPrimitiveTopologyMap()) {
+                primitiveTopologyToStr[value] = name;
+            }
+        });
+        return primitiveTopologyToStr.at(topology);
+    }
+
+    static unordered_map<string, VkCompareOp> getDepthCompareOpMap() {
         static unordered_map<string, VkCompareOp> depthCompareOpMap{
             {"NEVER", VK_COMPARE_OP_NEVER},
             {"LESS", VK_COMPARE_OP_LESS},
@@ -263,8 +285,21 @@ struct PipelineDeclDef {
             {"GREATER_OR_EQUAL", VK_COMPARE_OP_GREATER_OR_EQUAL},
             {"ALWAYS", VK_COMPARE_OP_ALWAYS},
         };
+        return depthCompareOpMap;
+    }
+    static std::string depthCompareOpToStr(VkCompareOp op) {
+        static std::unordered_map<VkCompareOp, std::string> depthCompareOpToStr;
+        static std::once_flag flag;
+        std::call_once(flag, [&]() {
+            for (auto const &[name, value] : getDepthCompareOpMap()) {
+                depthCompareOpToStr[value] = name;
+            }
+        });
+        return depthCompareOpToStr.at(op);
+    }
 
-        return depthCompareOpMap.at(s);
+    static VkCompareOp getDepthCompareOpFromStr(string s) {
+        return getDepthCompareOpMap().at(s);
     }
 
     static PipelineDeclDef fromJSON(const nlohmann::json &j) {
@@ -274,7 +309,7 @@ struct PipelineDeclDef {
         p.vertShaderName = j.at("vertShader").get<string>();
         p.fragShaderName = j.at("fragShader").get<string>();
         p.geomShaderName = j.value("geomShader", "");
-        p.primitiveTopology = PipelineDeclDef::getPrimitiveTopologyFromStr(j.value("primitiveTopology", "TriangleList"));
+        p.primitiveTopology = PipelineDeclDef::primitiveTopologyFromStr(j.value("primitiveTopology", "TriangleList"));
         p.depthTestEnabled = j.value("depthTestEnabled", true);
         p.depthWriteEnabled = j.value("depthWriteEnabled", true);
         p.depthCompareOp = getDepthCompareOpFromStr(j.value("depthCompareOp", "LESS"));
@@ -288,10 +323,10 @@ struct PipelineDeclDef {
         j["name"] = def.name;
         j["vertShader"] = def.vertShaderName;
         j["fragShader"] = def.fragShaderName;
-        j["primitiveTopology"] = "TriangleList"; // TODO: add support for other topologies
+        j["primitiveTopology"] = PipelineDeclDef::primitiveTopologyToStr(def.primitiveTopology);
         j["depthTestEnabled"] = def.depthTestEnabled;
         j["depthWriteEnabled"] = def.depthWriteEnabled;
-        j["depthCompareOp"] = "LESS"; // TODO: add support for other compare ops
+        j["depthCompareOp"] = PipelineDeclDef::depthCompareOpToStr(def.depthCompareOp);
         j["vertexInputBinding"] = def.vertexInputBinding;
         j["descriptorSet"] = DescriptorSetDef::toJSON(def.descriptorSet);
         if (!def.geomShaderName.empty())
@@ -324,7 +359,7 @@ struct PipelineDef : public PipelineDeclDef {
         if (j.contains("geomShader")) {
             def.geomShader = geometryShaders.at(j.at("geomShader").get<string>());
         }
-        def.primitiveTopology = j.contains("primitiveTopology") ? PipelineDeclDef::getPrimitiveTopologyFromStr(j.at("primitiveTopology").get<string>())
+        def.primitiveTopology = j.contains("primitiveTopology") ? PipelineDeclDef::primitiveTopologyFromStr(j.at("primitiveTopology").get<string>())
                                                                 : VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         def.depthTestEnabled = j.value("depthTestEnabled", true);
         def.depthWriteEnabled = j.value("depthWriteEnabled", true);
@@ -343,10 +378,10 @@ struct PipelineDef : public PipelineDeclDef {
         j["name"] = def.name;
         j["vertShader"] = def.vertShader->name;
         j["fragShader"] = def.fragShader->name;
-        j["primitiveTopology"] = "TriangleList"; // TODO: add support for other topologies
+        j["primitiveTopology"] = PipelineDeclDef::primitiveTopologyToStr(def.primitiveTopology);
         j["depthTestEnabled"] = def.depthTestEnabled;
         j["depthWriteEnabled"] = def.depthWriteEnabled;
-        j["depthCompareOp"] = "LESS"; // TODO: add support for other compare ops
+        j["depthCompareOp"] = PipelineDeclDef::depthCompareOpToStr(def.depthCompareOp);
         j["vertexInputBinding"] = def.vertexInputBinding;
         j["descriptorSet"] = DescriptorSetDef::toJSON(def.descriptorSet);
         if (def.geomShader)
@@ -451,5 +486,6 @@ struct Metadata {
     unordered_map<string, shared_ptr<SceneDef>> scenes;
 };
 
-extern void findAndProcessMetadata(const fs::path &path, Metadata &metadata);
+extern void findAndProcessMetadata(const fs::path path, Metadata &metadata);
 extern Metadata const *getMetadata();
+extern std::filesystem::path getResourcesDir();

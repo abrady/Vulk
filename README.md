@@ -30,6 +30,67 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
+## 2/27 [Shadow Mapping](https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Mapping)
+* we don't have a great rasterized shadow algorithm.
+* one basic approach is to render a scene from the light's point of view, keep a depth buffer for it, and then sample that when lighting a given pixel.
+
+![](Assets/Screenshots/shadow_map_creation.png)
+
+Steps:
+1. Create a Depth Image
+First, you need a depth image where you can render the depth information from the light's perspective. This involves creating a Vulkan image with a depth format (e.g., VK_FORMAT_D32_SFLOAT), allocating memory for it, and setting it up with an appropriate image view.
+
+2. Set Up a Framebuffer for Depth Rendering
+Create a framebuffer that attaches the depth image. This framebuffer is used for rendering the scene from the light's perspective, capturing only depth information.
+
+3. Configure the Render Pass
+Define a render pass that is compatible with your depth framebuffer. This render pass should be configured to clear the depth buffer at the start and to store the depth information once rendering is done.
+
+4. Prepare the Light's View and Projection Matrices
+Compute the view and projection matrices from the light's perspective. These matrices are used to render the scene from the light's point of view, ensuring that the depth information corresponds to what the light "sees."
+
+5. Render the Scene from the Light's Perspective
+Using the configured framebuffer, render pass, and the light's view and projection matrices, render the scene. Only the depth information needs to be captured, so you can use a simple shader that outputs depth. Ensure that the geometry is rendered with the same vertex transformations as it would be from the camera's perspective, but using the light's view and projection matrices.
+
+6. Create a Shadow Map Sampler
+Set up a sampler for the depth image. This sampler will be used when rendering the scene from the camera's perspective to sample the shadow map and determine shadowing. The sampler should be configured to use comparison mode for depth comparisons.
+
+7. Integrate Shadow Mapping into the Scene Rendering
+When rendering the scene from the camera's perspective, use the shadow map to determine which fragments are in shadow. This typically involves sampling the shadow map with the fragment's position transformed into the light's clip space. Compare this depth value against the one stored in the shadow map to determine if the fragment is in shadow or lit.
+
+8. Adjust Shadow Mapping Parameters
+Tweak parameters such as the light's view and projection matrices, the depth bias (to avoid shadow acne), and the shadow map resolution to improve the quality of the shadows.
+
+
+
+## 2/24 Brightness and gamma correction
+![](Assets/Screenshots/brightness_gamma_correction.png)
+from https://learnopengl.com/Advanced-Lighting/Gamma-Correction:
+    * The top line looks like the correct brightness scale to the human eye, doubling the brightness (from 0.1 to 0.2 for example) does indeed look like it's twice as bright with nice consistent differences. However, when we're talking about the physical brightness of light e.g. amount of photons leaving a light source, the bottom scale actually displays the correct brightness. At the bottom scale, doubling the brightness returns the correct physical brightness, but since our eyes perceive brightness differently (more susceptible to changes in dark colors) it looks weird.
+
+basically the human eye has a non-linear response to brightness, whereas digital cameras etc. tend to capture and display things with linear changes in intensity which look 'wrong' to the human eye. 
+
+Enter Gamma correction which adjusts the luminance or the brightness of an image to account for this
+
+This process involves encoding and decoding luminance values using a gamma curve:
+![](Assets/Screenshots/gamma_curve1.png)
+
+(side note: the equation for this is simply V_gamma = V_linear^γ where γ=2.2 typically. the 2.2 value approximates sRGB space)
+
+You can see here that a linear brightness of .5 turns into a gamma-corrected brightness just over .2. and if you doubled the linear brightness to 1, you'd get a gamma-corrected brightness of 1 as well so you think you're making
+the color twice as bright, but it ends up being almost 5 times as bright.
+
+Why this matters:
+1. you need to make sure your textures are in linear space: textures are typically made in a format calls sRGB which is the gamma corrected color space. when you load textures you need to make sure you either convert them to linear space or (better) use Vulkan's `VK_FORMAT_R8G8B8_SRGB` flag when loading so that it is correct automatically (you may remember I was doing this accidentally when loading normal maps which was messing them up)
+2. do all your calculations in linear space
+3. output your colors in sRGB (gamma corrected) space: you can do this yourself with the above equation, or make sure your swapchain buffers are in a Vulkan supported format to get this to happen automatically (format = `VK_FORMAT_B8G8R8A8_SRGB` and colorSpace = `VK_COLOR_SPACE_SRGB_NONLINEAR_KHR`)
+
+### sRGB Textures
+
+So artists are making textures using monitors displaying things in sRGB space. Vulkan linearizes these automatically if loaded properly.
+
+I guess that's about it...
+
 ## 2/19 cmake fun
 I learned a little more about cmake and vcpkg and refactored the whole project as a result. did I learn anything interesting? yeah
 * vcpkg works pretty well:
@@ -119,13 +180,13 @@ Quads look correct tangent-wise
 
 Looking at the normal map directly: 
 * first these normals aren't normalized? maybe I'm loading them wrong, let's ee
-* oooh, I'm loading them as VK_FORMAT_R8G8B8_SRGB, but that automatically converts the texture from linear color space to sRGB space (i.e. gamma corrects them)
+* oooh, I'm loading them as VK_FORMAT_R8G8B8_SRGB, but that automatically converts the texture from sRGB space to linear space (i.e. gamma un-corrects them)
 * what I need to do is use the _UNORM format.
 * also I see this only has 3 channels but I'm loading 4, does that matter? let's see
 
 ![](Assets/Screenshots/fixed_texture_normals.png)
 
-Look at that! just had to load the normals in _UNORM format and not _SRBG which was doing some sort of correction. let's see the sphere:
+Look at that! just had to load the normals in _UNORM format and not _SRGB which was doing some sort of correction. let's see the sphere:
 
 ![](Assets/Screenshots/fixed_sphere_normals.png)
 

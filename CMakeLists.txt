@@ -50,17 +50,37 @@ include_directories("$ENV{VK_SDK_PATH}/include")
 add_compile_options(-W3)
 
 ######
-## subdirectories
+## global defines
 ######
 
-add_subdirectory("${CMAKE_SOURCE_DIR}/Source/Vulk")
-add_subdirectory("${CMAKE_SOURCE_DIR}/Source/Samples")
+# TODO: configure so it will work for release builds too
 
+message("CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
+set(GLSLC_FLAGS "-g" "--target-env=vulkan1.3" "-I${CMAKE_SOURCE_DIR}/Source/Shaders/Common") # build debug symbols and turn off optimizations
+set(BUILT_RESOURCES_TARGET_DIR "${CMAKE_BINARY_DIR}/Resources") 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    list(APPEND GLSLC_FLAGS "-O0")
+elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+    # set(BUILT_RESOURCES_TARGET_DIR "${CMAKE_BINARY_DIR}/Release") 
+else()
+    message(FATAL_ERROR "Unknown build type: ${CMAKE_BUILD_TYPE}")
+endif()
+
+
+######
+## subdirectories
+######
 # Add a custom target that builds only the tests, so we can build them all at once in our github workflow
+# NOTE: used by subprojects to add their tests to the custom target
 add_custom_target(build_tests)
 
 # this has to be before we include any subdirectories
 enable_testing()
+
+function(vulk_add_config_json target_dir)
+    message("Copying config.json to ${target_dir}")
+    configure_file(${CMAKE_SOURCE_DIR}/config.json.in ${target_dir}/config.json)
+endfunction()
 
 # Define a function to add tests and accumulate them into a custom target so we can
 # build them all at once in our github workflow
@@ -71,23 +91,9 @@ function(vulk_add_and_remember_test target)
   add_dependencies(build_tests ${target})
 endfunction()
 
-
-# add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Tools/vertfrag)
+add_subdirectory("${CMAKE_SOURCE_DIR}/Source/Vulk")
+add_subdirectory("${CMAKE_SOURCE_DIR}/Source/Samples")
 add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Tools/PipelineBuilder)
-
-# TODO: configure so it will work for release builds too
-
-
-message("CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
-set(GLSLC_FLAGS "-g" "--target-env=vulkan1.3" "-I${CMAKE_SOURCE_DIR}/Source/Shaders/Common") # build debug symbols and turn off optimizations
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(TARGET_DIR "${CMAKE_BINARY_DIR}/Debug") 
-    list(APPEND GLSLC_FLAGS "-O0")
-elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
-    set(TARGET_DIR "${CMAKE_BINARY_DIR}/Release") 
-else()
-    message(FATAL_ERROR "Unknown build type: ${CMAKE_BUILD_TYPE}")
-endif()
 
 ##############################################################################
 ## Shaders
@@ -98,7 +104,7 @@ file(GLOB SHADER_COMMON_FILES "${CMAKE_SOURCE_DIR}/Source/Shaders/Common/*")
 
 # Set the source and destination directories
 set(SHADER_SOURCE_DIR "${CMAKE_SOURCE_DIR}/Source/Shaders")
-set(SHADER_DEST_DIR "${TARGET_DIR}/Source/Shaders") 
+set(SHADER_DEST_DIR "${BUILT_RESOURCES_TARGET_DIR}/Source/Shaders") 
 
 # Create the destination directory if it doesn't exist
 file(MAKE_DIRECTORY ${SHADER_DEST_DIR})
@@ -113,7 +119,7 @@ foreach(SHADER ${VERTEX_SHADERS})
         OUTPUT "${SHADER_OUTPUT}"
         COMMAND glslc ${GLSLC_FLAGS} "${SHADER}" -o "${SHADER_OUTPUT}"
         DEPENDS ${SHADER} ${SHADER_COMMON_FILES}
-        COMMENT "building vertex shader ${SHADER_OUTPUT} from ${SHADER}"
+        COMMENT "building vertex shader ${SHADER_OUTPUT} from ${SHADER} flags ${GLSLC_FLAGS}"
     )
     list(APPEND COMPILED_SHADERS "${SHADER_OUTPUT}")
 endforeach()
@@ -127,13 +133,13 @@ foreach(SHADER ${FRAGMENT_SHADERS})
         OUTPUT "${SHADER_OUTPUT}"
         COMMAND glslc ${GLSLC_FLAGS} "${SHADER}" -o "${SHADER_OUTPUT}"
         DEPENDS ${SHADER} ${SHADER_COMMON_FILES}
-        COMMENT "building fragment shader ${SHADER_OUTPUT} from ${SHADER}"
+        COMMENT "building fragment shader ${SHADER_OUTPUT} from ${SHADER} flags ${GLSLC_FLAGS}"
     )
     list(APPEND COMPILED_SHADERS "${SHADER_OUTPUT}")
 endforeach()
 
 # Compile Geometry shaders
-file(MAKE_DIRECTORY ${SHADER_DEST_DIR}/Tess)
+file(MAKE_DIRECTORY ${SHADER_DEST_DIR}/Geom)
 file(GLOB_RECURSE GEOMETRY_SHADERS CONFIGURE_DEPENDS "${SHADER_SOURCE_DIR}/Geom/*")
 foreach(SHADER ${GEOMETRY_SHADERS})
     get_filename_component(SHADER_NAME ${SHADER} NAME_WE)
@@ -142,7 +148,7 @@ foreach(SHADER ${GEOMETRY_SHADERS})
         OUTPUT "${SHADER_OUTPUT}"
         COMMAND glslc ${GLSLC_FLAGS} "${SHADER}" -o "${SHADER_OUTPUT}"
         DEPENDS ${SHADER} ${SHADER_COMMON_FILES}
-        COMMENT "building geometry shader ${SHADER}"
+        COMMENT "building geometry shader ${SHADER} from ${SHADER} flags ${GLSLC_FLAGS}"
     )
     list(APPEND COMPILED_SHADERS "${SHADER_OUTPUT}")
 endforeach()
@@ -161,7 +167,7 @@ add_custom_target(
 function(copy_assets DIR_NAME GLOBAL_ASSETS_VAR)
     set(ASSETS_TO_BUILD ${${GLOBAL_ASSETS_VAR}}) # get the list of assets from parent scope
     set(SOURCE_DIR "${CMAKE_SOURCE_DIR}/Assets/${DIR_NAME}")
-    set(DEST_DIR "${TARGET_DIR}/Assets/${DIR_NAME}") 
+    set(DEST_DIR "${BUILT_RESOURCES_TARGET_DIR}/Assets/${DIR_NAME}") 
 
     file(MAKE_DIRECTORY ${DEST_DIR})
     file(GLOB_RECURSE ASSETS CONFIGURE_DEPENDS "${SOURCE_DIR}/*")
@@ -202,7 +208,7 @@ add_custom_target(
 ##
 # Set the source and destination directories
 set(PIPELINES_SOURCE_DIR "${CMAKE_SOURCE_DIR}/Assets/Pipelines")
-set(PIPELINES_DEST_DIR "${TARGET_DIR}/Assets/Pipelines") 
+set(PIPELINES_DEST_DIR "${BUILT_RESOURCES_TARGET_DIR}/Assets/Pipelines") 
 # Create the destination directory if it doesn't exist
 file(MAKE_DIRECTORY ${PIPELINES_DEST_DIR})
 file(GLOB_RECURSE PIPELINE_SRC_FILES CONFIGURE_DEPENDS "${PIPELINES_SOURCE_DIR}/*")

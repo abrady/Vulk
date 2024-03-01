@@ -18,10 +18,10 @@ static PipelineDeclDef makeTestPipelineDef() {
     def.vertShaderName = "DebugNormals";
     def.geomShaderName = "DebugNormals";
     def.fragShaderName = "DebugNormals";
-    def.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    def.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN;
     def.depthTestEnabled = true;
     def.depthWriteEnabled = true;
-    def.depthCompareOp = VK_COMPARE_OP_LESS;
+    def.depthCompareOp = VK_COMPARE_OP_NOT_EQUAL;
     return def;
 }
 
@@ -67,10 +67,12 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
         CHECK(res.vertShaderName == "DebugNormals");
         CHECK(res.geomShaderName == "DebugNormals");
         CHECK(res.fragShaderName == "DebugNormals");
-        CHECK(res.primitiveTopology == VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+        CHECK(res.primitiveTopology == VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN);
         CHECK(res.depthTestEnabled == true);
         CHECK(res.depthWriteEnabled == true);
-        CHECK(res.depthCompareOp == VK_COMPARE_OP_LESS);
+
+        CHECK(res.depthCompareOp == VK_COMPARE_OP_NOT_EQUAL);
+
         CHECK(res.descriptorSet.uniformBuffers[VK_SHADER_STAGE_VERTEX_BIT] ==
               std::vector<VulkShaderUBOBindings>{VulkShaderUBOBinding_Xforms, VulkShaderUBOBinding_ModelXform, VulkShaderUBOBinding_DebugNormals});
         CHECK(res.descriptorSet.uniformBuffers[VK_SHADER_STAGE_GEOMETRY_BIT] == std::vector<VulkShaderUBOBindings>{});

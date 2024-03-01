@@ -73,6 +73,8 @@ void Vulk::initWindow() {
     glfwInit();
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+    const uint32_t WIDTH = 800;
+    const uint32_t HEIGHT = 600;
 
     window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
     glfwSetWindowUserPointer(window, this);
@@ -154,7 +156,8 @@ static const std::unordered_map<VkFormat, uint32_t> numChannelsFromFormat = {
 VkImage Vulk::createTextureImage(char const *texture_path, VkDeviceMemory &textureImageMemory, VkImage &textureImage, bool isUNORM, VkFormat &formatOut) {
     int texWidth, texHeight, texChannels;
     stbi_uc *pixels = stbi_load(texture_path, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-    VkDeviceSize imageSize = texWidth * texHeight * 4; // not texChannels because we always load 4 channels because drivers prefer 32 bit aligned data...
+    VkDeviceSize imageSize = texWidth * texHeight * 4; // not texChannels because we always load 4 channels because
+                                                       // drivers prefer 32 bit aligned data...
     assert(pixels);
     VkFormat format;
     if (isUNORM) {
@@ -293,11 +296,11 @@ void Vulk::createInstance() {
 
     VkApplicationInfo appInfo{};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    appInfo.pApplicationName = "Hello Triangle";
+    appInfo.pApplicationName = "VulkAppName";
     appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.pEngineName = "No Engine";
+    appInfo.pEngineName = "VulkEngineName";
     appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.apiVersion = VK_API_VERSION_1_0;
+    appInfo.apiVersion = VK_API_VERSION_1_3;
 
     VkInstanceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -628,7 +631,8 @@ VkFormat Vulk::findSupportedFormat(const std::vector<VkFormat> &candidates, VkIm
 VkFormat Vulk::findDepthFormat() {
     return findSupportedFormat(
         {
-            // VK_FORMAT_D32_SFLOAT : we only want stencil supported buffer, not just depth buffer
+            // VK_FORMAT_D32_SFLOAT : we only want stencil supported buffer, not
+            // just depth buffer
             VK_FORMAT_D32_SFLOAT_S8_UINT,
             VK_FORMAT_D24_UNORM_S8_UINT,
         },
@@ -796,7 +800,8 @@ void Vulk::render() {
         throw std::runtime_error("failed to acquire swap chain image!");
     }
 
-    // updateUniformBuffer(currentFrame); AB: moved to derived class, but leaving here as this position might be important as a reminder
+    // updateUniformBuffer(currentFrame); AB: moved to derived class, but leaving
+    // here as this position might be important as a reminder
 
     VK_CALL(vkResetFences(device, 1, &inFlightFences[currentFrame]));
 
@@ -938,9 +943,11 @@ VKAPI_ATTR VkBool32 VKAPI_CALL Vulk::debugCallback(VkDebugUtilsMessageSeverityFl
     }
     std::cerr << "Vulk: " << severity << std::hex << messageType << " message: " << pCallbackData->pMessage << std::endl;
     if ((messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
-        // super annoying: I used vulkan configurator to see if it did anything useful and now I can't figure out how to turn this off.
-        && 0 != strcmp(pCallbackData->pMessage,
-                       "loader_get_json: Failed to open JSON file C:\\Program Files\\IntelSWTools\\GPA\\Streams\\VkLayer_state_tracker.json")) {
+        // super annoying: I used vulkan configurator to see if it did anything
+        // useful and now I can't figure out how to turn this off.
+        && 0 != strcmp(pCallbackData->pMessage, "loader_get_json: Failed to open JSON file C:\\Program "
+                                                "Files\\IntelSWTools\\GPA\\Streams\\VkLayer_state_tracker."
+                                                "json")) {
         throw std::runtime_error("validation layer error");
     }
 

@@ -1,35 +1,32 @@
 #include "Vulk/VulkResources.h"
 
-#include <unordered_map>
-#include <iostream>
 #include <filesystem>
-#include <string>
+#include <iostream>
 #include <nlohmann/json.hpp>
+#include <string>
+#include <unordered_map>
 
 #include "Vulk/VulkCamera.h"
-#include "Vulk/VulkPointLight.h"
+#include "Vulk/VulkDepthView.h"
+#include "Vulk/VulkDescriptorSetBuilder.h"
+#include "Vulk/VulkDescriptorSetLayoutBuilder.h"
 #include "Vulk/VulkMesh.h"
 #include "Vulk/VulkPipelineBuilder.h"
-#include "Vulk/VulkDescriptorSetLayoutBuilder.h"
-#include "Vulk/VulkDescriptorSetBuilder.h"
+#include "Vulk/VulkPointLight.h"
 #include "Vulk/VulkResourceMetadata.h"
 
 using namespace std;
 namespace fs = filesystem;
 
-VulkResources::VulkResources(Vulk &vk)
-    : vk(vk), metadata(*getMetadata())
-{
+VulkResources::VulkResources(Vulk &vk) : vk(vk), metadata(*getMetadata()) {
     textureSampler = std::make_shared<VulkSampler>(vk);
 }
 
-std::shared_ptr<VulkShaderModule> VulkResources::createShaderModule(ShaderType type, string const &name)
-{
+std::shared_ptr<VulkShaderModule> VulkResources::createShaderModule(ShaderType type, string const &name) {
     fs::path subdir;
     char const *suffix;
     std::unordered_map<std::string, std::shared_ptr<VulkShaderModule>> *shaders_map;
-    switch (type)
-    {
+    switch (type) {
     case Vertex:
         subdir = "Vert";
         suffix = ".vertspv";
@@ -49,7 +46,7 @@ std::shared_ptr<VulkShaderModule> VulkResources::createShaderModule(ShaderType t
         throw runtime_error("Invalid shader type");
     };
 
-    fs::path path = fs::current_path() / "Source" / "Shaders" / subdir / (name + suffix);
+    fs::path path = getResourcesDir() / "Source" / "Shaders" / subdir / (name + suffix);
     auto shaderCode = readFileIntoMem(path.string());
     VkShaderModule shaderModule = vk.createShaderModule(shaderCode);
     auto sm = make_shared<VulkShaderModule>(vk, shaderModule);
@@ -57,11 +54,9 @@ std::shared_ptr<VulkShaderModule> VulkResources::createShaderModule(ShaderType t
     return sm;
 }
 
-shared_ptr<VulkModel> VulkResources::getModel(ModelDef &modelDef)
-{
+shared_ptr<VulkModel> VulkResources::getModel(ModelDef &modelDef) {
     string name = modelDef.name;
-    if (!models.contains(name))
-    {
+    if (!models.contains(name)) {
         shared_ptr<VulkMaterialTextures> textures = getMaterialTextures(modelDef.material->name);
         auto mr = make_shared<VulkModel>(vk, getMesh(*modelDef.mesh), textures, getMaterial(modelDef.material->name));
         models[name] = mr;
@@ -69,33 +64,25 @@ shared_ptr<VulkModel> VulkResources::getModel(ModelDef &modelDef)
     return models[name];
 }
 
-std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(PipelineDef &def)
-{
+std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(PipelineDef &def) {
     string name = def.name;
-    if (pipelines.contains(name))
-    {
+    if (pipelines.contains(name)) {
         return pipelines[name];
     }
     VulkDescriptorSetLayoutBuilder dslb(vk);
 
-    for (auto &[stage, bindings] : def.descriptorSet.uniformBuffers)
-    {
-        for (auto &binding : bindings)
-        {
+    for (auto &[stage, bindings] : def.descriptorSet.uniformBuffers) {
+        for (auto &binding : bindings) {
             dslb.addUniformBuffer(stage, binding);
         }
     }
-    for (auto &[stage, bindings] : def.descriptorSet.storageBuffers)
-    {
-        for (auto &binding : bindings)
-        {
+    for (auto &[stage, bindings] : def.descriptorSet.storageBuffers) {
+        for (auto &binding : bindings) {
             dslb.addStorageBuffer(stage, binding);
         }
     }
-    for (auto &[stage, bindings] : def.descriptorSet.imageSamplers)
-    {
-        for (auto &binding : bindings)
-        {
+    for (auto &[stage, bindings] : def.descriptorSet.imageSamplers) {
+        for (auto &binding : bindings) {
             dslb.addImageSampler(stage, binding);
         }
     }
@@ -122,19 +109,15 @@ std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(PipelineDef &def)
     return p;
 }
 
-std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const &actorDef, shared_ptr<PipelineDef> pipelineDef, shared_ptr<VulkScene> scene)
-{
+std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const &actorDef, shared_ptr<PipelineDef> pipelineDef, shared_ptr<VulkScene> scene) {
     auto const &dsDef = pipelineDef->descriptorSet;
     VulkDescriptorSetBuilder builder(vk);
     shared_ptr<VulkModel> model = getModel(*actorDef.model);
     shared_ptr<VulkFrameUBOs<glm::mat4>> xformUBOs;
-    for (auto &iter : dsDef.uniformBuffers)
-    {
+    for (auto &iter : dsDef.uniformBuffers) {
         VkShaderStageFlagBits stage = (VkShaderStageFlagBits)iter.first;
-        for (VulkShaderUBOBindings binding : iter.second)
-        {
-            switch (binding)
-            {
+        for (VulkShaderUBOBindings binding : iter.second) {
+            switch (binding) {
             case VulkShaderUBOBinding_Xforms:
                 builder.addFrameUBOs(scene->sceneUBOs.xforms, stage, binding);
                 break;
@@ -181,12 +164,9 @@ std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const
     //     }
     // }
     static_assert(VulkShaderSSBOBinding_MaxBindingID == 0);
-    for (auto &[stage, samplers] : dsDef.imageSamplers)
-    {
-        for (VulkShaderTextureBindings binding : samplers)
-        {
-            switch (binding)
-            {
+    for (auto &[stage, samplers] : dsDef.imageSamplers) {
+        for (VulkShaderTextureBindings binding : samplers) {
+            switch (binding) {
             case VulkShaderTextureBinding_TextureSampler:
                 builder.addImageSampler(stage, binding, model->textures->diffuseView, textureSampler);
                 break;
@@ -201,10 +181,8 @@ std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const
     return make_shared<VulkActor>(vk, model, xformUBOs, builder.build(), getPipeline(pipelineDef->name));
 }
 
-VulkResources &VulkResources::loadScene(std::string name)
-{
-    if (scenes.contains(name))
-    {
+VulkResources &VulkResources::loadScene(std::string name) {
+    if (scenes.contains(name)) {
         return *this;
     }
     SceneDef &sceneDef = *metadata.scenes.at(name);
@@ -213,41 +191,33 @@ VulkResources &VulkResources::loadScene(std::string name)
     scene->camera = sceneDef.camera;
     *scene->sceneUBOs.pointLight.mappedUBO = *sceneDef.pointLights[0]; // just one light for now
 
-    for (auto &actorDef : sceneDef.actors)
-    {
+    for (auto &actorDef : sceneDef.actors) {
         scene->actors.push_back(createActorFromPipeline(*actorDef, actorDef->pipeline, scene));
     }
     scenes[name] = scene;
     return *this;
 }
 
-shared_ptr<VulkUniformBuffer<VulkMaterialConstants>> VulkResources::getMaterial(string const &name)
-{
-    if (!materialUBOs.contains(name))
-    {
+shared_ptr<VulkUniformBuffer<VulkMaterialConstants>> VulkResources::getMaterial(string const &name) {
+    if (!materialUBOs.contains(name)) {
         materialUBOs[name] = make_shared<VulkUniformBuffer<VulkMaterialConstants>>(vk, metadata.materials.at(name)->toVulkMaterialConstants());
     }
     return materialUBOs[name];
 }
 
-shared_ptr<VulkMesh> VulkResources::getMesh(MeshDef &meshDef)
-{
+shared_ptr<VulkMesh> VulkResources::getMesh(MeshDef &meshDef) {
     string name = meshDef.name;
-    if (meshes.contains(name))
-    {
+    if (meshes.contains(name)) {
         return meshes[name];
     }
     shared_ptr<VulkMesh> m;
-    switch (meshDef.type)
-    {
+    switch (meshDef.type) {
     case MeshDefType_Model:
         m = make_shared<VulkMesh>(VulkMesh::loadFromPath(meshDef.getModel()->path, name));
         break;
-    case MeshDefType_Mesh:
-    {
+    case MeshDefType_Mesh: {
         m = meshDef.getMesh();
-    }
-    break;
+    } break;
     default:
         throw runtime_error("Invalid mesh type");
     }
@@ -255,10 +225,8 @@ shared_ptr<VulkMesh> VulkResources::getMesh(MeshDef &meshDef)
     return m;
 }
 
-shared_ptr<VulkMaterialTextures> VulkResources::getMaterialTextures(string const &name)
-{
-    if (!materialTextures.contains(name))
-    {
+shared_ptr<VulkMaterialTextures> VulkResources::getMaterialTextures(string const &name) {
+    if (!materialTextures.contains(name)) {
         MaterialDef const &def = *metadata.materials.at(name);
         materialTextures[name] = make_shared<VulkMaterialTextures>();
         materialTextures[name]->diffuseView = !def.mapKd.empty() ? make_unique<VulkTextureView>(vk, def.mapKd, false) : nullptr;
@@ -267,10 +235,8 @@ shared_ptr<VulkMaterialTextures> VulkResources::getMaterialTextures(string const
     return materialTextures[name];
 }
 
-shared_ptr<VulkPipeline> VulkResources::getPipeline(string const &name)
-{
-    if (pipelines.contains(name))
-    {
+shared_ptr<VulkPipeline> VulkResources::getPipeline(string const &name) {
+    if (pipelines.contains(name)) {
         return pipelines[name];
     }
     auto pipelineDef = metadata.pipelines.at(name);

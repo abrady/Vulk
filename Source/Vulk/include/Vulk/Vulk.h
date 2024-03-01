@@ -23,18 +23,13 @@
 
 using namespace std::chrono_literals;
 
-const uint32_t WIDTH = 800;
-const uint32_t HEIGHT = 600;
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
-static const std::vector<const char *> validationLayers = {
-    "VK_LAYER_KHRONOS_validation"};
+static const std::vector<const char *> validationLayers = {"VK_LAYER_KHRONOS_validation"};
 
-static const std::vector<const char *> deviceExtensions = {
-    VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+static const std::vector<const char *> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
-enum VulkTextureType
-{
+enum VulkTextureType {
     VulkTextureType_Diffuse,
     VulkTextureType_Normal,
     VulkTextureType_Specular,
@@ -46,14 +41,13 @@ enum VulkTextureType
     VulkTextureType_MaxTextureTypes
 };
 
-class Vulk
-{
+class Vulk {
     std::chrono::time_point<std::chrono::steady_clock> lastFrameTime;
     std::chrono::milliseconds msPerFrame = 16ms; // 60 fps
-public:
+  public:
     void run();
 
-public:
+  public:
     VkDevice device;
     VkRenderPass renderPass;
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
@@ -66,24 +60,33 @@ public:
     uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
     VkShaderModule createShaderModule(const std::vector<char> &code);
     VkDescriptorSet createDescriptorSet(VkDescriptorSetLayout descriptorSetLayout, VkDescriptorPool descriptorPool);
-    void setMouseHandler(
-        std::function<void(GLFWwindow *, int, int, int)> onButton,
-        std::function<void(GLFWwindow *, double, double)> onMove)
-    {
-        glfwSetMouseButtonCallback(window, [](GLFWwindow *w, int button, int action, int mods)
-                                   { static_cast<Vulk *>(glfwGetWindowUserPointer(w))->onMouseButton(w, button, action, mods); });
-        glfwSetCursorPosCallback(window, [](GLFWwindow *w, double xpos, double ypos)
-                                 { static_cast<Vulk *>(glfwGetWindowUserPointer(w))->onCursorMove(w, xpos, ypos); });
+    void setMouseHandler(std::function<void(GLFWwindow *, int, int, int)> onButton, std::function<void(GLFWwindow *, double, double)> onMove) {
+        glfwSetMouseButtonCallback(window, [](GLFWwindow *w, int button, int action, int mods) {
+            static_cast<Vulk *>(glfwGetWindowUserPointer(w))->onMouseButton(w, button, action, mods);
+        });
+        glfwSetCursorPosCallback(
+            window, [](GLFWwindow *w, double xpos, double ypos) { static_cast<Vulk *>(glfwGetWindowUserPointer(w))->onCursorMove(w, xpos, ypos); });
         onMouseButton = onButton;
         onCursorMove = onMove;
         glfwSetWindowUserPointer(window, this);
     }
 
-private:
+    uint32_t getWidth() {
+        return swapChainExtent.width;
+    }
+    uint32_t getHeight() {
+        return swapChainExtent.height;
+    }
+
+    VkFormat findDepthFormat();
+    void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
+                     VkImage &image, VkDeviceMemory &imageMemory);
+
+  private:
     std::function<void(GLFWwindow *, int, int, int)> onMouseButton;
     std::function<void(GLFWwindow *, double, double)> onCursorMove;
 
-protected:
+  protected:
     virtual void init() = 0;
     virtual void drawFrame(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer) = 0;
     virtual void cleanup() = 0;
@@ -93,13 +96,12 @@ protected:
     std::vector<VkCommandBuffer> commandBuffers;
     VkExtent2D swapChainExtent;
     uint32_t currentFrame = 0; // index of the current frame in flight, always between 0 and MAX_FRAMES_IN_FLIGHT
-    virtual void handleEvents()
-    {
+    virtual void handleEvents() {
         // override this to call things like glfwGetKey and glfwGetMouseButton
     }
     virtual void keyCallback(int key, int /*scancode*/, int action, int /*mods*/);
 
-private:
+  private:
     bool enableValidationLayers = true;
     GLFWwindow *window;
 
@@ -148,9 +150,7 @@ private:
     void createCommandBuffers();
     void createDepthResources();
     VkFormat findSupportedFormat(const std::vector<VkFormat> &candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
-    VkFormat findDepthFormat();
     bool hasStencilComponent(VkFormat format);
-    void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage &image, VkDeviceMemory &imageMemory);
     void transitionImageLayout(VkImage image, VkFormat /*format*/, VkImageLayout oldLayout, VkImageLayout newLayout);
     void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
     VkCommandBuffer beginSingleTimeCommands();
@@ -162,8 +162,10 @@ private:
     VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities);
     std::vector<const char *> getRequiredExtensions();
     bool checkValidationLayerSupport();
-    static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void * /*pUserData*/);
-    static VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDebugUtilsMessengerEXT *pDebugMessenger);
+    static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType,
+                                                        const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void * /*pUserData*/);
+    static VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo,
+                                                 const VkAllocationCallbacks *pAllocator, VkDebugUtilsMessengerEXT *pDebugMessenger);
     static void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks *pAllocator);
     static void dispatchKeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
 };
