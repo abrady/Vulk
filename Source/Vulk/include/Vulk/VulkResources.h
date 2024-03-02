@@ -1,24 +1,24 @@
 #pragma once
 
-#include <unordered_map>
-#include <iostream>
 #include <filesystem>
+#include <iostream>
 #include <string>
+#include <unordered_map>
 
 #include "Vulk.h"
-#include "VulkTextureView.h"
-#include "VulkMesh.h"
-#include "VulkDescriptorSetLayoutBuilder.h"
-#include "VulkFrameUBOs.h"
+#include "VulkActor.h"
 #include "VulkBufferBuilder.h"
 #include "VulkDescriptorSetBuilder.h"
-#include "VulkPipelineBuilder.h"
-#include "VulkModel.h"
+#include "VulkDescriptorSetLayoutBuilder.h"
+#include "VulkFrameUBOs.h"
 #include "VulkMaterialTextures.h"
-#include "VulkActor.h"
+#include "VulkMesh.h"
+#include "VulkModel.h"
+#include "VulkPipelineBuilder.h"
+#include "VulkSampler.h"
 #include "VulkScene.h"
 #include "VulkShaderModule.h"
-#include "VulkSampler.h"
+#include "VulkTextureView.h"
 
 struct ActorDef;
 struct DescriptorSetDef;
@@ -31,29 +31,26 @@ struct Metadata;
 // Note:
 //  not thread safe,
 //  not currently using reference counting so materials load twice
-class VulkResources
-{
-public:
+class VulkResources {
+  public:
     Vulk &vk;
     Metadata const &metadata;
 
-private:
-    enum ShaderType
-    {
+  private:
+    enum ShaderType {
         Vertex,
         Geometry,
         Fragment
     };
 
     std::shared_ptr<VulkShaderModule> createShaderModule(ShaderType type, std::string const &name);
-    std::shared_ptr<VulkPipeline> loadPipeline(PipelineDef &pipelineDef);
 
     std::shared_ptr<VulkUniformBuffer<VulkMaterialConstants>> getMaterial(std::string const &name);
     std::shared_ptr<VulkMesh> getMesh(MeshDef &meshDef);
     std::shared_ptr<VulkMaterialTextures> getMaterialTextures(std::string const &name);
     std::shared_ptr<VulkModel> getModel(ModelDef &modelDef);
 
-public:
+  public:
     std::unordered_map<std::string, std::shared_ptr<VulkMaterialTextures>> materialTextures;
     std::unordered_map<std::string, std::shared_ptr<VulkUniformBuffer<VulkMaterialConstants>>> materialUBOs;
     std::unordered_map<std::string, std::shared_ptr<VulkMesh>> meshes;
@@ -65,22 +62,19 @@ public:
     std::shared_ptr<VulkSampler> textureSampler;
 
     VulkResources(Vulk &vk);
-    VulkResources &loadScene(std::string name);
+    VulkResources &loadScene(VkRenderPass renderPass, std::string name);
 
-    std::shared_ptr<VulkShaderModule> getvertShader(std::string const &name)
-    {
+    std::shared_ptr<VulkShaderModule> getvertShader(std::string const &name) {
         if (!vertShaders.contains(name))
             vertShaders[name] = createShaderModule(Vertex, name);
         return vertShaders.at(name);
     }
-    std::shared_ptr<VulkShaderModule> getGeometryShader(std::string const &name)
-    {
+    std::shared_ptr<VulkShaderModule> getGeometryShader(std::string const &name) {
         if (!geomShaders.contains(name))
             geomShaders[name] = createShaderModule(Geometry, name);
         return geomShaders.at(name);
     }
-    std::shared_ptr<VulkShaderModule> getFragmentShader(std::string const &name)
-    {
+    std::shared_ptr<VulkShaderModule> getFragmentShader(std::string const &name) {
         if (!fragShaders.contains(name))
             fragShaders[name] = createShaderModule(Fragment, name);
         return fragShaders.at(name);
@@ -88,5 +82,8 @@ public:
 
     std::shared_ptr<VulkActor> createActorFromPipeline(ActorDef const &actorDef, std::shared_ptr<PipelineDef> pipelineDef, std::shared_ptr<VulkScene> scene);
 
-    std::shared_ptr<VulkPipeline> getPipeline(std::string const &name);
+    std::shared_ptr<VulkPipeline> loadPipeline(VkRenderPass renderPass, std::string const &name);
+    std::shared_ptr<VulkPipeline> getPipeline(std::string const &name) {
+        return pipelines.at(name);
+    }
 };

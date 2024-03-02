@@ -24,12 +24,13 @@ My goal for this project is to transition from the hand-coded samples I was doin
 # TODOs
 
 * DONE VulkResources should only need to live during the loading phase
-* get some more models and make a scene. <https://github.com/alecjacobson/common-3d-test-models> ?
+* rename PipelineBUILDER.h to PipelineCOMPILER.h or something similar: builders are what I call the foo.bar.baz.build() paradigm
 * clean up our vertex input buffers, too much crap
 * invert the TBN matrix: So now that we have a TBN matrix, how are we going to use it? There are two ways we can use a TBN matrix for normal mapping, and we'll demonstrate both of them:
   * We take the TBN matrix that transforms any vector from tangent to world space, give it to the fragment shader, and transform the sampled normal from tangent space to world space using the TBN matrix; the normal is then in the same space as the other lighting variables.
   * We take the inverse of the TBN matrix that transforms any vector from world space to tangent space, and use this matrix to transform not the normal, but the other relevant lighting variables to tangent space; the normal is then again in the same space as the other lighting variables. - this is better because we can do this in vertex space and then use the interpolated values.
 * <https://github.com/KHeresy/openxr-simple-example> : integrate with OpenXR
+* probably need schematized json files at some point. is thrift too heavyweight?
 
 # Log
 
@@ -59,7 +60,7 @@ When rendering the scene from the camera's perspective, use the shadow map to de
 8. Adjust Shadow Mapping Parameters
 Tweak parameters such as the light's view and projection matrices, the depth bias (to avoid shadow acne), and the shadow map resolution to improve the quality of the shadows.
 
-## 3/1/24 shadow mapping
+## 3/2/24 shadow mapping
 
 It looks like to make a shadowmap I need to make my own renderpass to make the imageview that I can sample from. so let's build that and see what happens:
 

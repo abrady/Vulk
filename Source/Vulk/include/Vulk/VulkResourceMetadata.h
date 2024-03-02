@@ -225,7 +225,7 @@ struct DescriptorSetDef {
 struct PipelineDeclDef {
     string name;
     string vertShaderName;
-    string geomShaderName;
+    string geomShaderName; // optional
     string fragShaderName;
 
     VkPrimitiveTopology primitiveTopology;
@@ -235,6 +235,37 @@ struct PipelineDeclDef {
 
     uint32_t vertexInputBinding;
     DescriptorSetDef descriptorSet;
+
+    struct Blending {
+        bool enabled = false;
+        string colorMask = "RGBA";
+        VkColorComponentFlags getColorMask() {
+            VkColorComponentFlags mask = 0;
+            if (colorMask.find("R") != string::npos)
+                mask |= VK_COLOR_COMPONENT_R_BIT;
+            if (colorMask.find("G") != string::npos)
+                mask |= VK_COLOR_COMPONENT_G_BIT;
+            if (colorMask.find("B") != string::npos)
+                mask |= VK_COLOR_COMPONENT_B_BIT;
+            if (colorMask.find("A") != string::npos)
+                mask |= VK_COLOR_COMPONENT_A_BIT;
+            return mask;
+        }
+
+        static Blending fromJSON(const nlohmann::json &j) {
+            Blending b;
+            b.enabled = j.at("enabled").get<bool>();
+            if (j.contains("colorMask"))
+                b.colorMask = j.at("colorMask").get<string>();
+            return b;
+        }
+        static nlohmann::json toJSON(const Blending &b) {
+            nlohmann::json j;
+            j["enabled"] = b.enabled;
+            j["colorMask"] = b.colorMask;
+            return j;
+        }
+    } blending;
 
     void validate() {
         assert(!name.empty());
@@ -314,6 +345,8 @@ struct PipelineDeclDef {
         p.depthWriteEnabled = j.value("depthWriteEnabled", true);
         p.depthCompareOp = getDepthCompareOpFromStr(j.value("depthCompareOp", "LESS"));
         p.vertexInputBinding = j.at("vertexInputBinding").get<uint32_t>();
+        if (j.contains("blending"))
+            p.blending = Blending::fromJSON(j["blending"]);
         p.validate();
         return p;
     }
@@ -331,6 +364,7 @@ struct PipelineDeclDef {
         j["descriptorSet"] = DescriptorSetDef::toJSON(def.descriptorSet);
         if (!def.geomShaderName.empty())
             j["geomShader"] = def.geomShaderName;
+        j["blending"] = Blending::toJSON(def.blending);
         return j;
     }
 };

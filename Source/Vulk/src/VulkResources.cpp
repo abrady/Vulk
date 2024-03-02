@@ -64,11 +64,11 @@ shared_ptr<VulkModel> VulkResources::getModel(ModelDef &modelDef) {
     return models[name];
 }
 
-std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(PipelineDef &def) {
-    string name = def.name;
+std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(VkRenderPass renderPass, std::string const &name) {
     if (pipelines.contains(name)) {
         return pipelines[name];
     }
+    PipelineDef &def = *metadata.pipelines.at(name);
     VulkDescriptorSetLayoutBuilder dslb(vk);
 
     for (auto &[stage, bindings] : def.descriptorSet.uniformBuffers) {
@@ -88,23 +88,24 @@ std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(PipelineDef &def) {
     }
     shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout = dslb.build();
 
-    auto pb = VulkPipelineBuilder(vk)
-                  .addvertShaderStage(getvertShader(def.vertShader->name))
-                  .addFragmentShaderStage(getFragmentShader(def.fragShader->name))
-                  .addVulkVertexInput(def.vertexInputBinding)
-                  .setDepthTestEnabled(def.depthTestEnabled)
-                  .setDepthWriteEnabled(def.depthWriteEnabled)
-                  .setDepthCompareOp(def.depthCompareOp)
-                  .setPrimitiveTopology(def.primitiveTopology)
-                  .setLineWidth(1.0f)
-                  .setCullMode(VK_CULL_MODE_BACK_BIT)
-                  .setDepthCompareOp(VK_COMPARE_OP_LESS)
-                  .setStencilTestEnabled(false)
-                  .setBlendingEnabled(true);
-    if (def.geomShader)
+    VulkPipelineBuilder pb(vk);
+    pb.addvertShaderStage(getvertShader(def.vertShader->name))
+        .addFragmentShaderStage(getFragmentShader(def.fragShader->name))
+        .addVulkVertexInput(def.vertexInputBinding)
+        .setDepthTestEnabled(def.depthTestEnabled)
+        .setDepthWriteEnabled(def.depthWriteEnabled)
+        .setDepthCompareOp(def.depthCompareOp)
+        .setPrimitiveTopology(def.primitiveTopology)
+        .setLineWidth(1.0f)
+        .setCullMode(VK_CULL_MODE_BACK_BIT)
+        .setDepthCompareOp(VK_COMPARE_OP_LESS)
+        .setStencilTestEnabled(false)
+        .setBlending(def.blending.enabled, def.blending.getColorMask());
+    if (def.geomShader) {
         pb.addGeometryShaderStage(getGeometryShader(def.geomShader->name));
+    }
 
-    auto p = pb.build(descriptorSetLayout);
+    auto p = pb.build(renderPass, descriptorSetLayout);
     pipelines[name] = p;
     return p;
 }
@@ -181,7 +182,7 @@ std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const
     return make_shared<VulkActor>(vk, model, xformUBOs, builder.build(), getPipeline(pipelineDef->name));
 }
 
-VulkResources &VulkResources::loadScene(std::string name) {
+VulkResources &VulkResources::loadScene(VkRenderPass renderPass, std::string name) {
     if (scenes.contains(name)) {
         return *this;
     }
@@ -192,6 +193,7 @@ VulkResources &VulkResources::loadScene(std::string name) {
     *scene->sceneUBOs.pointLight.mappedUBO = *sceneDef.pointLights[0]; // just one light for now
 
     for (auto &actorDef : sceneDef.actors) {
+        loadPipeline(renderPass, actorDef->pipeline->name);
         scene->actors.push_back(createActorFromPipeline(*actorDef, actorDef->pipeline, scene));
     }
     scenes[name] = scene;
@@ -233,12 +235,4 @@ shared_ptr<VulkMaterialTextures> VulkResources::getMaterialTextures(string const
         materialTextures[name]->normalView = !def.mapNormal.empty() ? make_unique<VulkTextureView>(vk, def.mapNormal, true) : nullptr;
     }
     return materialTextures[name];
-}
-
-shared_ptr<VulkPipeline> VulkResources::getPipeline(string const &name) {
-    if (pipelines.contains(name)) {
-        return pipelines[name];
-    }
-    auto pipelineDef = metadata.pipelines.at(name);
-    return loadPipeline(*pipelineDef);
 }

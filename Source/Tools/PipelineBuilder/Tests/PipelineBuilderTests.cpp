@@ -12,7 +12,7 @@
 
 namespace fs = std::filesystem;
 
-static PipelineDeclDef makeTestPipelineDef() {
+static PipelineDeclDef makeTestPipelineDeclDef() {
     PipelineDeclDef def;
     def.name = "TestPipeline";
     def.vertShaderName = "DebugNormals";
@@ -22,6 +22,10 @@ static PipelineDeclDef makeTestPipelineDef() {
     def.depthTestEnabled = true;
     def.depthWriteEnabled = true;
     def.depthCompareOp = VK_COMPARE_OP_NOT_EQUAL;
+    def.blending = {
+        .enabled = true,
+        .colorMask = "RB",
+    };
     return def;
 }
 
@@ -60,7 +64,7 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
         CHECK(PipelineBuilder::checkConnections(info2, info3, errMsg) == true);
     }
     SECTION("Test Pipeline Generation") {
-        PipelineDeclDef def = makeTestPipelineDef();
+        PipelineDeclDef def = makeTestPipelineDeclDef();
         std::string errMsg;
         PipelineDeclDef res = PipelineBuilder::buildPipeline(def, builtShadersDir, errMsg);
         CHECK(res.name == "TestPipeline");
@@ -86,7 +90,7 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
             CHECK(!ec);
         }
         CHECK(fs::create_directory(builtPipelinesDir));
-        PipelineDeclDef def = makeTestPipelineDef();
+        PipelineDeclDef def = makeTestPipelineDeclDef();
         fs::path builtPipeline = builtPipelinesDir / "TestPipeline.json";
         std::string errMsg;
         PipelineBuilder::buildPipelineFile(def, builtShadersDir, builtPipeline, errMsg);
@@ -103,5 +107,9 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
         CHECK(def2.depthTestEnabled == def.depthTestEnabled);
         CHECK(def2.depthWriteEnabled == def.depthWriteEnabled);
         CHECK(def2.depthCompareOp == def.depthCompareOp);
+        CHECK(def2.blending.enabled == def.blending.enabled);
+        CHECK(def2.blending.colorMask == def.blending.colorMask);
+        CHECK(def2.blending.getColorMask() == def.blending.getColorMask());
+        CHECK(sizeof(def) == 464); // reminder to add new fields to the test
     }
 }

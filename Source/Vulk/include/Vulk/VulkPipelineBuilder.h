@@ -1,34 +1,31 @@
 #pragma once
 
-#include <vulkan/vulkan.h>
 #include "Common/ClassNonCopyableNonMovable.h"
 #include "VulkDescriptorSetLayoutBuilder.h"
 #include "VulkShaderModule.h"
+#include <vulkan/vulkan.h>
 
-class VulkPipeline : public ClassNonCopyableNonMovable
-{
-private:
+class VulkPipeline : public ClassNonCopyableNonMovable {
+  private:
     Vulk &vk;
     std::vector<std::shared_ptr<VulkShaderModule>> shaderModules;
 
-public:
+  public:
     VkPipeline pipeline;
     VkPipelineLayout pipelineLayout;
     std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout;
 
-    VulkPipeline(Vulk &vk, VkPipeline pipeline, VkPipelineLayout pipelineLayout, std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout, std::vector<std::shared_ptr<VulkShaderModule>> shaderModules)
-        : vk(vk), pipeline(pipeline), pipelineLayout(pipelineLayout), descriptorSetLayout(descriptorSetLayout), shaderModules(shaderModules)
-    {
+    VulkPipeline(Vulk &vk, VkPipeline pipeline, VkPipelineLayout pipelineLayout, std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout,
+                 std::vector<std::shared_ptr<VulkShaderModule>> shaderModules)
+        : vk(vk), pipeline(pipeline), pipelineLayout(pipelineLayout), descriptorSetLayout(descriptorSetLayout), shaderModules(shaderModules) {
     }
-    ~VulkPipeline()
-    {
+    ~VulkPipeline() {
         vkDestroyPipeline(vk.device, pipeline, nullptr);
         vkDestroyPipelineLayout(vk.device, pipelineLayout, nullptr);
     }
 };
 
-class VulkPipelineBuilder
-{
+class VulkPipelineBuilder {
     Vulk &vk;
 
     std::vector<std::shared_ptr<VulkShaderModule>> shaderModules;
@@ -51,21 +48,18 @@ class VulkPipelineBuilder
     VulkPipelineBuilder &addShaderStage(VkShaderStageFlagBits stage, std::shared_ptr<VulkShaderModule> shaderModule);
     VulkPipelineBuilder &addVertexInputField(uint32_t binding, uint32_t location, uint32_t offset, VkFormat format);
 
-public:
+  public:
     VulkPipelineBuilder(Vulk &vk);
 
-    VulkPipelineBuilder &addvertShaderStage(std::shared_ptr<VulkShaderModule> shaderModule)
-    {
+    VulkPipelineBuilder &addvertShaderStage(std::shared_ptr<VulkShaderModule> shaderModule) {
         return addShaderStage(VK_SHADER_STAGE_VERTEX_BIT, shaderModule);
     }
 
-    VulkPipelineBuilder &addFragmentShaderStage(std::shared_ptr<VulkShaderModule> shaderModule)
-    {
+    VulkPipelineBuilder &addFragmentShaderStage(std::shared_ptr<VulkShaderModule> shaderModule) {
         return addShaderStage(VK_SHADER_STAGE_FRAGMENT_BIT, shaderModule);
     }
 
-    VulkPipelineBuilder &addGeometryShaderStage(std::shared_ptr<VulkShaderModule> shaderModule)
-    {
+    VulkPipelineBuilder &addGeometryShaderStage(std::shared_ptr<VulkShaderModule> shaderModule) {
         return addShaderStage(VK_SHADER_STAGE_GEOMETRY_BIT, shaderModule);
     }
 
@@ -93,14 +87,15 @@ public:
 
     VulkPipelineBuilder &addVulkVertexInput(uint32_t binding);
 
-    VulkPipelineBuilder &setBlendingEnabled(bool enabled, VkColorComponentFlags colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT);
+    VulkPipelineBuilder &setBlending(bool enabled, VkColorComponentFlags colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+                                                                                          VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT);
 
-    void build(std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout, VkPipelineLayout *pipelineLayout, VkPipeline *graphicsPipeline);
-    std::shared_ptr<VulkPipeline> build(std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout)
-    {
+    void build(VkRenderPass renderPass, std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout, VkPipelineLayout *pipelineLayout,
+               VkPipeline *graphicsPipeline);
+    std::shared_ptr<VulkPipeline> build(VkRenderPass renderPass, std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout) {
         VkPipelineLayout pipelineLayout;
         VkPipeline graphicsPipeline;
-        build(descriptorSetLayout, &pipelineLayout, &graphicsPipeline);
+        build(renderPass, descriptorSetLayout, &pipelineLayout, &graphicsPipeline);
         return std::make_shared<VulkPipeline>(vk, graphicsPipeline, pipelineLayout, descriptorSetLayout, shaderModules);
     }
 };

@@ -131,7 +131,9 @@ VulkPipelineBuilder &VulkPipelineBuilder::addVulkVertexInput(uint32_t binding) {
         .addVertexInputFieldVec2(binding, VulkVertBindingLocation_TexCoordBinding, offsetof(Vertex, uv));
 }
 
-VulkPipelineBuilder &VulkPipelineBuilder::setBlendingEnabled(bool enabled, VkColorComponentFlags colorWriteMask) {
+// enabling means the existing value in the framebuffer will be blended with the new value output from the shader
+// while disabling it will just overwrite the existing value
+VulkPipelineBuilder &VulkPipelineBuilder::setBlending(bool enabled, VkColorComponentFlags colorWriteMask) {
     colorBlendAttachment.blendEnable = enabled;
     if (enabled) {
         colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
@@ -145,7 +147,8 @@ VulkPipelineBuilder &VulkPipelineBuilder::setBlendingEnabled(bool enabled, VkCol
     return *this;
 }
 
-void VulkPipelineBuilder::build(std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout, VkPipelineLayout *pipelineLayout, VkPipeline *graphicsPipeline) {
+void VulkPipelineBuilder::build(VkRenderPass renderPass, std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout, VkPipelineLayout *pipelineLayout,
+                                VkPipeline *graphicsPipeline) {
     VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     vertexInputInfo.vertexBindingDescriptionCount = 1;
@@ -177,7 +180,7 @@ void VulkPipelineBuilder::build(std::shared_ptr<VulkDescriptorSetLayout> descrip
     pipelineInfo.pColorBlendState = &colorBlending;
     pipelineInfo.pDynamicState = &dynamicState;
     pipelineInfo.layout = *pipelineLayout;
-    pipelineInfo.renderPass = vk.renderPass;
+    pipelineInfo.renderPass = renderPass;
     pipelineInfo.subpass = 0;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 

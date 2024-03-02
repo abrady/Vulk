@@ -161,7 +161,7 @@ class PipelineBuilder {
         nlohmann::json pipelineOutJSON = PipelineDeclDef::toJSON(pipelineOut);
 
         std::ofstream outFile(pipelineFileOut);
-        outFile << pipelineOutJSON;
+        outFile << pipelineOutJSON.dump(4);
         outFile.close();
     }
 
@@ -183,7 +183,7 @@ class PipelineBuilder {
         std::ifstream inFile(pipelineFileIn);
         inFile >> pipelineInJSON;
         inFile.close();
-        auto def = PipelineDeclDef::fromJSON(pipelineInJSON);
+        PipelineDeclDef def = PipelineDeclDef::fromJSON(pipelineInJSON);
 
         std::string errMsg;
         buildPipelineFile(def, builtShadersDir, pipelineDirOut / pipelineFileIn.filename(), errMsg);

@@ -16,21 +16,22 @@
             "externalConsole": false,
             "preLaunchTask": "CMake: build"
         },
+        // `Source/Tools/PipelineBuilder/Debug/PipelineBuilder`.exe C:/open/Github/Vulk/build/Resources/Source/Shaders C:/open/Github/Vulk/build/Resources/Assets/Pipelines C:/open/Github/Vulk/Assets/Pipelines/DebugNormals.pipeline
         {
             "name": "PipelineBuilder - Debug",
             "program": "${workspaceFolder}/build/Source/Tools/PipelineBuilder/Debug/PipelineBuilder.exe",
             "type": "cppvsdbg",
             "request": "launch",
-            "cwd": "${workspaceRoot}/Build/Debug",
+            "cwd": "${workspaceRoot}/Build",
             "args": [
-                "${workspaceFolder}/build/Debug/Source/Shaders",
-                "${workspaceFolder}/build/Debug/Assets/Pipelines",
-                "${workspaceFolder}/Assets/Pipelines/DebugNormals.pipeline"
+                "${workspaceFolder}/build/Resources/Source/Shaders",
+                "${workspaceFolder}/build/Resources/Assets/Pipelines",
+                "${workspaceFolder}/Assets/Pipelines/ShadowMap.pipeline"
             ],
             "stopAtEntry": false,
             "environment": [],
             "externalConsole": false,
-            "preLaunchTask": "CMake: build"
+            // "preLaunchTask": "CMake: build"
         },
         {
             "name": "(gdb) Attach",
