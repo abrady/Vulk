@@ -66,6 +66,54 @@ class World {
         ubo.proj[1][1] *= -1;
     }
 
+    void drawFrame(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer) {
+        renderShadowMapImageForLight(*scene->sceneUBOs.pointLight.mappedUBO);
+        drawMainStuff(commandBuffer, frameBuffer);
+    }
+
+    void renderShadowMapImageForLight(VulkPointLight &light) {
+        // render the scene from the light's perspective
+        }
+
+    void drawMainStuff(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer) {
+        VkCommandBufferBeginInfo beginInfo{};
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+        VK_CALL(vkBeginCommandBuffer(commandBuffer, &beginInfo));
+
+        VkRenderPassBeginInfo renderPassInfo{};
+        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        renderPassInfo.renderPass = vk.renderPass;
+        renderPassInfo.framebuffer = frameBuffer;
+        renderPassInfo.renderArea.offset = {0, 0};
+        renderPassInfo.renderArea.extent = vk.swapChainExtent;
+
+        std::array<VkClearValue, 2> clearValues{};
+        clearValues[0].color = {{0.1f, 0.0f, 0.1f, 1.0f}};
+        clearValues[1].depthStencil = {1.0f, 0};
+
+        renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+        renderPassInfo.pClearValues = clearValues.data();
+
+        VkViewport viewport{};
+        viewport.x = 0.0f;
+        viewport.y = 0.0f;
+        viewport.width = (float)vk.swapChainExtent.width;
+        viewport.height = (float)vk.swapChainExtent.height;
+        viewport.minDepth = 0.0f;
+        viewport.maxDepth = 1.0f;
+
+        VkRect2D scissor{};
+        scissor.offset = {0, 0};
+        scissor.extent = vk.swapChainExtent;
+
+        vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+        render(commandBuffer, vk.currentFrame, viewport, scissor);
+        vkCmdEndRenderPass(commandBuffer);
+
+        VK_CALL(vkEndCommandBuffer(commandBuffer));
+    }
+
     void render(VkCommandBuffer commandBuffer, uint32_t currentFrame, VkViewport const &viewport, VkRect2D const &scissor) {
         updateXformsUBO(*scene->sceneUBOs.xforms.ptrs[currentFrame], viewport);
         *scene->sceneUBOs.eyePos.ptrs[currentFrame] = scene->camera.eye;
