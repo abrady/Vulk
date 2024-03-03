@@ -191,10 +191,10 @@ ActorDef ActorDef::fromJSON(const nlohmann::json &j, unordered_map<string, share
         glm::vec3 pos = glm::vec3(0);
         glm::vec3 rot = glm::vec3(0);
         glm::vec3 scale = glm::vec3(1);
-        if (jx.contains("position"))
-            pos = jx.at("position").get<glm::vec3>();
-        if (jx.contains("rotationYPR"))
-            rot = jx.at("rotationYPR").get<glm::vec3>();
+        if (jx.contains("pos"))
+            pos = jx.at("pos").get<glm::vec3>();
+        if (jx.contains("YPR"))
+            rot = jx.at("YPR").get<glm::vec3>();
         if (jx.contains("scale"))
             scale = jx.at("scale").get<glm::vec3>();
         xform = glm::translate(glm::mat4(1.0f), pos) * glm::yawPitchRoll(rot.y, rot.x, rot.z) * glm::scale(glm::mat4(1.0f), scale);

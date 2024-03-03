@@ -60,7 +60,7 @@ When rendering the scene from the camera's perspective, use the shadow map to de
 8. Adjust Shadow Mapping Parameters
 Tweak parameters such as the light's view and projection matrices, the depth bias (to avoid shadow acne), and the shadow map resolution to improve the quality of the shadows.
 
-## 3/2/24 shadow mapping
+## 3/2/24 shadow mapping: render the shadow map
 
 It looks like to make a shadowmap I need to make my own renderpass to make the imageview that I can sample from. so let's build that and see what happens:
 
@@ -69,6 +69,18 @@ It looks like to make a shadowmap I need to make my own renderpass to make the i
   * renders the camera's view of the scene
 
 One thing right now is that SampleRunner only has one implicit renderpass. Let's not refactor anything just yet, but consider pulling the renderpass into the scene or something in the future
+
+Let's see what we got:
+![](Assets/Screenshots/depth_buf_screenshot.png)
+Here's the depth buffer as it is rendered.
+
+![](Assets/Screenshots/depth_draw_calls.png)
+
+And here are the depth only drawcalls.
+
+One thing to keep in mind with renderdoc is that you can scale the visualization, so if everything show up white you can click this to fix the scale by clicking that wand in the top right corner. you can see the range change to 0.997 - 1 so the contrast is clearer:
+
+![](Assets/Screenshots/scaled_depth_buffer_values.png)
 
 ## 2/27 [Shadow Mapping](https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Mapping)
 
