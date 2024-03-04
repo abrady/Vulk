@@ -1,8 +1,7 @@
 #include "Vulk/VulkDescriptorSetUpdater.h"
-#include "Vulk/VulkTextureView.h"
+#include "Vulk/VulkImageView.h"
 
-VulkDescriptorSetUpdater &VulkDescriptorSetUpdater::addUniformBuffer(VkBuffer buf, VkDeviceSize range, uint32_t binding)
-{
+VulkDescriptorSetUpdater &VulkDescriptorSetUpdater::addUniformBuffer(VkBuffer buf, VkDeviceSize range, uint32_t binding) {
     auto uniformBufferInfo = std::make_unique<VkDescriptorBufferInfo>();
     uniformBufferInfo->buffer = buf;
     uniformBufferInfo->offset = 0;
@@ -21,11 +20,11 @@ VulkDescriptorSetUpdater &VulkDescriptorSetUpdater::addUniformBuffer(VkBuffer bu
     return *this;
 }
 
-VulkDescriptorSetUpdater &VulkDescriptorSetUpdater::addImageSampler(std::shared_ptr<VulkTextureView> textureImageView, std::shared_ptr<VulkSampler> textureSampler, uint32_t binding)
-{
+VulkDescriptorSetUpdater &VulkDescriptorSetUpdater::addImageSampler(std::shared_ptr<VulkTextureView> textureImageView,
+                                                                    std::shared_ptr<VulkSampler> textureSampler, uint32_t binding) {
     auto imageInfo = std::make_unique<VkDescriptorImageInfo>();
     imageInfo->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    imageInfo->imageView = textureImageView->textureImageView;
+    imageInfo->imageView = textureImageView->imageView;
     imageInfo->sampler = textureSampler->get();
 
     VkWriteDescriptorSet writeDescriptorSet{};
@@ -44,8 +43,7 @@ VulkDescriptorSetUpdater &VulkDescriptorSetUpdater::addImageSampler(std::shared_
     return *this;
 }
 
-VulkDescriptorSetUpdater &VulkDescriptorSetUpdater::addStorageBuffer(VkBuffer buf, VkDeviceSize range, uint32_t binding)
-{
+VulkDescriptorSetUpdater &VulkDescriptorSetUpdater::addStorageBuffer(VkBuffer buf, VkDeviceSize range, uint32_t binding) {
     auto storageInfo = std::make_unique<VkDescriptorBufferInfo>();
     storageInfo->buffer = buf;
     storageInfo->offset = 0;
@@ -65,7 +63,6 @@ VulkDescriptorSetUpdater &VulkDescriptorSetUpdater::addStorageBuffer(VkBuffer bu
     return *this;
 }
 
-void VulkDescriptorSetUpdater::update(VkDevice device)
-{
+void VulkDescriptorSetUpdater::update(VkDevice device) {
     vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 }

@@ -55,9 +55,9 @@ class VulkDepthRenderpass : public ClassNonCopyableNonMovable {
             framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
             framebufferInfo.renderPass = renderPass;
             framebufferInfo.attachmentCount = 1;
-            framebufferInfo.pAttachments = &depthViews[i]->depthImageView; // Pointer to the depth image view
-            framebufferInfo.width = extent.width;                          // Width of the shadow map
-            framebufferInfo.height = extent.height;                        // Height of the shadow map
+            framebufferInfo.pAttachments = &depthViews[i]->depthView->imageView; // Pointer to the depth image view
+            framebufferInfo.width = extent.width;                                // Width of the shadow map
+            framebufferInfo.height = extent.height;                              // Height of the shadow map
             framebufferInfo.layers = 1;
 
             VK_CALL(vkCreateFramebuffer(vk.device, &framebufferInfo, nullptr, &frameBuffers[i]));

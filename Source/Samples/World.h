@@ -38,12 +38,13 @@ class World {
 
   public:
     World(Vulk &vk, std::string sceneName) : vk(vk) {
+        shadowMapRenderpass = std::make_shared<VulkDepthRenderpass>(vk);
+
         VulkResources resources(vk);
-        resources.loadScene(vk.renderPass, sceneName);
+        resources.loadScene(vk.renderPass, sceneName, shadowMapRenderpass->depthViews);
         scene = resources.scenes[sceneName];
         SceneDef &sceneDef = *resources.metadata.scenes.at(sceneName);
 
-        shadowMapRenderpass = std::make_shared<VulkDepthRenderpass>(vk);
         shadowMapPipeline = resources.loadPipeline(shadowMapRenderpass->renderPass, "ShadowMap");
         auto shadowMapPipelineDef = resources.metadata.pipelines.at("ShadowMap");
         for (int i = 0; i < scene->actors.size(); ++i) {

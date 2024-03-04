@@ -2,7 +2,7 @@
 #include <catch.hpp>
 
 #include "../PipelineBuilder.h"
-#include "Vulk/VulkShaderEnums_generated.h"
+#include "VulkShaderEnums_generated.h"
 #include "spirv_cross/spirv_glsl.hpp"
 #include <filesystem>
 #include <fstream>

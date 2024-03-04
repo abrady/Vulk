@@ -49,7 +49,7 @@ class VulkDescriptorSetBuilder {
         std::shared_ptr<VulkTextureView> imageView;
         std::shared_ptr<VulkSampler> sampler;
     };
-    std::unordered_map<VulkShaderTextureBinding, SamplerSetUpdaterInfo> samplerSetInfos;
+    std::array<std::unordered_map<VulkShaderTextureBinding, SamplerSetUpdaterInfo>, MAX_FRAMES_IN_FLIGHT> perFrameSamplerSetInfos;
 
   public:
     VulkDescriptorSetBuilder(Vulk &vk) : vk(vk), layoutBuilder(vk), poolBuilder(vk) {
@@ -76,11 +76,21 @@ class VulkDescriptorSetBuilder {
         return *this;
     }
 
-    VulkDescriptorSetBuilder &addImageSampler(VkShaderStageFlags stageFlags, VulkShaderTextureBinding bindingID, std::shared_ptr<VulkTextureView> imageView,
-                                              std::shared_ptr<VulkSampler> sampler) {
+    // for non-mutable image views that are the same for both frames.
+    VulkDescriptorSetBuilder &addBothFramesImageSampler(VkShaderStageFlags stageFlags, VulkShaderTextureBinding bindingID,
+                                                        std::shared_ptr<VulkTextureView> imageView, std::shared_ptr<VulkSampler> sampler) {
         layoutBuilder.addImageSampler(stageFlags, bindingID);
         poolBuilder.addCombinedImageSamplerCount(MAX_FRAMES_IN_FLIGHT);
-        samplerSetInfos[bindingID] = {imageView, sampler};
+        perFrameSamplerSetInfos[0][bindingID] = {imageView, sampler};
+        perFrameSamplerSetInfos[1][bindingID] = {imageView, sampler};
+        return *this;
+    }
+
+    VulkDescriptorSetBuilder &addFrameImageSampler(uint32_t frame, VkShaderStageFlags stageFlags, VulkShaderTextureBinding bindingID,
+                                                   std::shared_ptr<VulkTextureView> imageView, std::shared_ptr<VulkSampler> sampler) {
+        layoutBuilder.addImageSampler(stageFlags, bindingID);
+        poolBuilder.addCombinedImageSamplerCount(1);
+        perFrameSamplerSetInfos[frame][bindingID] = {imageView, sampler};
         return *this;
     }
 
@@ -98,7 +108,7 @@ class VulkDescriptorSetBuilder {
             for (auto &pair : perFrameInfos[i].ssboSetInfos) {
                 updater.addStorageBuffer(pair.second.buf, pair.second.range, pair.first);
             }
-            for (auto &pair : samplerSetInfos) {
+            for (auto &pair : perFrameSamplerSetInfos[i]) {
                 updater.addImageSampler(pair.second.imageView, pair.second.sampler, pair.first);
             }
 

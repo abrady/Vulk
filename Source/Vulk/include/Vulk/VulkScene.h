@@ -7,6 +7,8 @@
 #include "VulkUniformBuffer.h"
 #include "VulkUtil.h"
 
+class VulkDepthView;
+
 struct VulkSceneUBOs {
     struct XformsUBO {
         alignas(16) glm::mat4 world;
@@ -29,6 +31,8 @@ class VulkScene {
     VulkCamera camera;
     std::vector<std::shared_ptr<VulkActor>> actors;
     std::shared_ptr<VulkUniformBuffer<VulkLightViewProjUBO>> lightViewProjUBO;
+    std::array<std::shared_ptr<VulkDepthView>, MAX_FRAMES_IN_FLIGHT> shadowMapViews;
+
     // debug
     std::shared_ptr<VulkUniformBuffer<VulkDebugNormalsUBO>> debugNormalsUBO;
     std::shared_ptr<VulkUniformBuffer<VulkDebugTangentsUBO>> debugTangentsUBO;

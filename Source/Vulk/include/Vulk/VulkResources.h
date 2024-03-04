@@ -11,6 +11,7 @@
 #include "VulkDescriptorSetBuilder.h"
 #include "VulkDescriptorSetLayoutBuilder.h"
 #include "VulkFrameUBOs.h"
+#include "VulkImageView.h"
 #include "VulkMaterialTextures.h"
 #include "VulkMesh.h"
 #include "VulkModel.h"
@@ -18,7 +19,6 @@
 #include "VulkSampler.h"
 #include "VulkScene.h"
 #include "VulkShaderModule.h"
-#include "VulkTextureView.h"
 
 struct ActorDef;
 struct DescriptorSetDef;
@@ -62,7 +62,8 @@ class VulkResources {
     std::shared_ptr<VulkSampler> textureSampler;
 
     VulkResources(Vulk &vk);
-    VulkResources &loadScene(VkRenderPass renderPass, std::string name);
+    std::shared_ptr<VulkScene> loadScene(VkRenderPass renderPass, std::string name,
+                                         std::array<std::shared_ptr<VulkDepthView>, MAX_FRAMES_IN_FLIGHT> shadowMapViews);
 
     std::shared_ptr<VulkShaderModule> getvertShader(std::string const &name) {
         if (!vertShaders.contains(name))

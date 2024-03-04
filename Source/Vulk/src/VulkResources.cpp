@@ -174,10 +174,15 @@ std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const
         for (VulkShaderTextureBinding binding : samplers) {
             switch (binding) {
             case VulkShaderTextureBinding_TextureSampler:
-                builder.addImageSampler(stage, binding, model->textures->diffuseView, textureSampler);
+                builder.addBothFramesImageSampler(stage, binding, model->textures->diffuseView, textureSampler);
                 break;
             case VulkShaderTextureBinding_NormalSampler:
-                builder.addImageSampler(stage, binding, model->textures->normalView, textureSampler);
+                builder.addBothFramesImageSampler(stage, binding, model->textures->normalView, textureSampler);
+                break;
+            case VulkShaderTextureBinding_ShadowSampler:
+                for (uint32_t i = 0; i < scene->shadowMapViews.size(); i++) {
+                    builder.addFrameImageSampler(i, stage, binding, scene->shadowMapViews[i]->depthView, textureSampler);
+                }
                 break;
             default:
                 throw runtime_error("Invalid texture binding");
@@ -185,15 +190,18 @@ std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const
         }
     }
     return make_shared<VulkActor>(vk, model, xformUBOs, builder.build(), getPipeline(pipelineDef->name));
+    static_assert(VulkShaderTextureBinding_MAX == VulkShaderTextureBinding_ShadowSampler);
 }
 
-VulkResources &VulkResources::loadScene(VkRenderPass renderPass, std::string name) {
+std::shared_ptr<VulkScene> VulkResources::loadScene(VkRenderPass renderPass, std::string name,
+                                                    std::array<std::shared_ptr<VulkDepthView>, MAX_FRAMES_IN_FLIGHT> shadowMapViews) {
     if (scenes.contains(name)) {
-        return *this;
+        return scenes[name];
     }
     SceneDef &sceneDef = *metadata.scenes.at(name);
     shared_ptr<VulkScene> scene = make_shared<VulkScene>(vk);
 
+    scene->shadowMapViews = shadowMapViews;
     scene->camera = sceneDef.camera;
     *scene->sceneUBOs.pointLight.mappedUBO = *sceneDef.pointLights[0]; // just one light for now
 
@@ -201,8 +209,7 @@ VulkResources &VulkResources::loadScene(VkRenderPass renderPass, std::string nam
         loadPipeline(renderPass, actorDef->pipeline->name);
         scene->actors.push_back(createActorFromPipeline(*actorDef, actorDef->pipeline, scene));
     }
-    scenes[name] = scene;
-    return *this;
+    return scenes[name] = scene;
 }
 
 shared_ptr<VulkUniformBuffer<VulkMaterialConstants>> VulkResources::getMaterial(string const &name) {
