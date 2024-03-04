@@ -37,7 +37,7 @@
 // #include <vulkan/vk_enum_string_helper.h>
 #include <vulkan/vulkan.h>
 
-#include "VulkShaderEnums.h"
+#include "VulkShaderEnums_generated.h"
 
 #define VK_CALL(func)                                                                                                                                          \
     do {                                                                                                                                                       \
@@ -94,6 +94,10 @@ struct VulkDebugNormalsUBO {
 
 struct VulkDebugTangentsUBO {
     float length = .1f; // how long to render the debug tangent
+};
+
+struct VulkLightViewProjUBO {
+    glm::mat4 viewProj;
 };
 
 class VulkMesh;

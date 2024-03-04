@@ -117,7 +117,7 @@ std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const
     shared_ptr<VulkFrameUBOs<glm::mat4>> xformUBOs;
     for (auto &iter : dsDef.uniformBuffers) {
         VkShaderStageFlagBits stage = (VkShaderStageFlagBits)iter.first;
-        for (VulkShaderUBOBindings binding : iter.second) {
+        for (VulkShaderUBOBinding binding : iter.second) {
             switch (binding) {
             case VulkShaderUBOBinding_Xforms:
                 builder.addFrameUBOs(scene->sceneUBOs.xforms, stage, binding);
@@ -146,15 +146,20 @@ std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const
                     scene->debugTangentsUBO = make_shared<VulkUniformBuffer<VulkDebugTangentsUBO>>(vk);
                 builder.addUniformBuffer(*scene->debugTangentsUBO, stage, binding);
                 break;
+            case VulkShaderUBOBinding_LightViewProjUBO:
+                if (scene->lightViewProjUBO == nullptr)
+                    scene->lightViewProjUBO = make_shared<VulkUniformBuffer<VulkLightViewProjUBO>>(vk);
+                builder.addUniformBuffer(*scene->lightViewProjUBO, stage, binding);
+                break;
             default:
                 throw runtime_error("Invalid UBO binding");
             }
-            static_assert(VulkShaderUBOBinding_MaxBindingID == VulkShaderUBOBinding_DebugTangents);
+            static_assert(VulkShaderUBOBinding_MAX == VulkShaderUBOBinding_LightViewProjUBO);
         }
     }
     // for (auto &[stage, ssbos] : dsDef.storageBuffers)
     // {
-    //     for (VulkShaderSSBOBindings binding : ssbos)
+    //     for (VulkShaderSSBOBinding binding : ssbos)
     //     {
     //         switch (binding)
     //         {
@@ -166,7 +171,7 @@ std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const
     // }
     static_assert(VulkShaderSSBOBinding_MaxBindingID == 0);
     for (auto &[stage, samplers] : dsDef.imageSamplers) {
-        for (VulkShaderTextureBindings binding : samplers) {
+        for (VulkShaderTextureBinding binding : samplers) {
             switch (binding) {
             case VulkShaderTextureBinding_TextureSampler:
                 builder.addImageSampler(stage, binding, model->textures->diffuseView, textureSampler);

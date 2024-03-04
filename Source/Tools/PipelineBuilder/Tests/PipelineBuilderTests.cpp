@@ -2,7 +2,7 @@
 #include <catch.hpp>
 
 #include "../PipelineBuilder.h"
-#include "Vulk/VulkShaderEnums.h"
+#include "Vulk/VulkShaderEnums_generated.h"
 #include "spirv_cross/spirv_glsl.hpp"
 #include <filesystem>
 #include <fstream>
@@ -78,9 +78,9 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
         CHECK(res.depthCompareOp == VK_COMPARE_OP_NOT_EQUAL);
 
         CHECK(res.descriptorSet.uniformBuffers[VK_SHADER_STAGE_VERTEX_BIT] ==
-              std::vector<VulkShaderUBOBindings>{VulkShaderUBOBinding_Xforms, VulkShaderUBOBinding_ModelXform, VulkShaderUBOBinding_DebugNormals});
-        CHECK(res.descriptorSet.uniformBuffers[VK_SHADER_STAGE_GEOMETRY_BIT] == std::vector<VulkShaderUBOBindings>{});
-        CHECK(res.descriptorSet.uniformBuffers[VK_SHADER_STAGE_FRAGMENT_BIT] == std::vector<VulkShaderUBOBindings>{VulkShaderUBOBinding_EyePos});
+              std::vector<VulkShaderUBOBinding>{VulkShaderUBOBinding_Xforms, VulkShaderUBOBinding_ModelXform, VulkShaderUBOBinding_DebugNormals});
+        CHECK(res.descriptorSet.uniformBuffers[VK_SHADER_STAGE_GEOMETRY_BIT] == std::vector<VulkShaderUBOBinding>{});
+        CHECK(res.descriptorSet.uniformBuffers[VK_SHADER_STAGE_FRAGMENT_BIT] == std::vector<VulkShaderUBOBinding>{VulkShaderUBOBinding_EyePos});
     }
     SECTION("buildPipelineFile") {
         fs::path builtPipelinesDir = fs::path(__FILE__).parent_path() / "pipelines";

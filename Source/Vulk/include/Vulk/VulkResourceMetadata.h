@@ -54,9 +54,9 @@ struct MaterialDef {
 };
 
 struct DescriptorSetDef {
-    unordered_map<VkShaderStageFlagBits, vector<VulkShaderUBOBindings>> uniformBuffers;
-    unordered_map<VkShaderStageFlagBits, vector<VulkShaderSSBOBindings>> storageBuffers;
-    unordered_map<VkShaderStageFlagBits, vector<VulkShaderTextureBindings>> imageSamplers;
+    unordered_map<VkShaderStageFlagBits, vector<VulkShaderUBOBinding>> uniformBuffers;
+    unordered_map<VkShaderStageFlagBits, vector<VulkShaderSSBOBinding>> storageBuffers;
+    unordered_map<VkShaderStageFlagBits, vector<VulkShaderTextureBinding>> imageSamplers;
 
     void validate() {
     }
@@ -70,8 +70,8 @@ struct DescriptorSetDef {
         return shaderStageToStr.at(stage);
     }
 
-    static vector<pair<string, VulkShaderUBOBindings>> const &getUBOBindings() {
-        static vector<pair<string, VulkShaderUBOBindings>> bindings = {
+    static vector<pair<string, VulkShaderUBOBinding>> const &getUBOBindings() {
+        static vector<pair<string, VulkShaderUBOBinding>> bindings = {
             {"xforms", VulkShaderUBOBinding_Xforms},
             {"lights", VulkShaderUBOBinding_Lights},
             {"eyePos", VulkShaderUBOBinding_EyePos},
@@ -79,13 +79,14 @@ struct DescriptorSetDef {
             {"materialUBO", VulkShaderUBOBinding_MaterialUBO},
             {"debugNormals", VulkShaderUBOBinding_DebugNormals},
             {"debugTangents", VulkShaderUBOBinding_DebugTangents},
+            {"lightViewProj", VulkShaderUBOBinding_LightViewProjUBO},
         };
         return bindings;
-        static_assert(VulkShaderUBOBinding_MaxBindingID == VulkShaderUBOBinding_DebugTangents, "this function must be kept in sync with VulkShaderUBOBindings");
+        static_assert(VulkShaderUBOBinding_MAX == VulkShaderUBOBinding_LightViewProjUBO, "this function must be kept in sync with VulkShaderUBOBinding");
     }
 
-    static VulkShaderUBOBindings shaderUBOBindingFromStr(string const &binding) {
-        static unordered_map<string, VulkShaderUBOBindings> bindings;
+    static VulkShaderUBOBinding shaderUBOBindingFromStr(string const &binding) {
+        static unordered_map<string, VulkShaderUBOBinding> bindings;
         static once_flag flag;
         call_once(flag, [&]() {
             for (auto const &[name, value] : getUBOBindings()) {
@@ -96,18 +97,19 @@ struct DescriptorSetDef {
         return bindings.at(binding);
     }
 
-    static vector<pair<string, VulkShaderTextureBindings>> const &getTextureBindings() {
-        static vector<pair<string, VulkShaderTextureBindings>> bindings = {
-            {"textureSampler", VulkShaderTextureBinding_TextureSampler},
-            {"textureSampler2", VulkShaderTextureBinding_TextureSampler2},
-            {"textureSampler3", VulkShaderTextureBinding_TextureSampler3},
-            {"normalSampler", VulkShaderTextureBinding_NormalSampler},
+    static vector<pair<string, VulkShaderTextureBinding>> const &getTextureBindings() {
+        static vector<pair<string, VulkShaderTextureBinding>> bindings = {
+            {"textureSampler", VulkShaderTextureBinding_TextureSampler},   {"textureSampler2", VulkShaderTextureBinding_TextureSampler2},
+            {"textureSampler3", VulkShaderTextureBinding_TextureSampler3}, {"normalSampler", VulkShaderTextureBinding_NormalSampler},
+            {"shadowSampler", VulkShaderTextureBinding_ShadowSampler},
         };
+        static_assert(VulkShaderTextureBinding_MAX == VulkShaderTextureBinding_ShadowSampler,
+                      "this function must be kept in sync with VulkShaderTextureBinding");
         return bindings;
     }
 
-    static VulkShaderTextureBindings shaderTextureBindingFromStr(string const &binding) {
-        static unordered_map<string, VulkShaderTextureBindings> bindings;
+    static VulkShaderTextureBinding shaderTextureBindingFromStr(string const &binding) {
+        static unordered_map<string, VulkShaderTextureBinding> bindings;
         static once_flag flag;
         call_once(flag, [&]() {
             for (auto const &[name, value] : getTextureBindings()) {
@@ -116,12 +118,10 @@ struct DescriptorSetDef {
             }
         });
         return bindings.at(binding);
-        static_assert(VulkShaderTextureBinding_MaxBindingID == VulkShaderTextureBinding_NormalSampler,
-                      "this function must be kept in sync with VulkShaderTextureBindings");
     }
 
-    static VulkShaderSSBOBindings shaderSSBOBindingFromStr(string const &binding) {
-        static unordered_map<string, VulkShaderSSBOBindings> bindings{};
+    static VulkShaderSSBOBinding shaderSSBOBindingFromStr(string const &binding) {
+        static unordered_map<string, VulkShaderSSBOBinding> bindings{};
         return bindings.at(binding);
     }
 
@@ -153,8 +153,8 @@ struct DescriptorSetDef {
         return ds;
     }
 
-    static string shaderUBOBindingToStr(VulkShaderUBOBindings binding) {
-        static unordered_map<VulkShaderUBOBindings, string> bindings;
+    static string shaderUBOBindingToStr(VulkShaderUBOBinding binding) {
+        static unordered_map<VulkShaderUBOBinding, string> bindings;
         static once_flag flag;
         call_once(flag, [&]() {
             for (auto const &[name, value] : DescriptorSetDef::getUBOBindings()) {
@@ -165,13 +165,13 @@ struct DescriptorSetDef {
         return bindings.at(binding);
     }
 
-    static string shaderSSBOBindingToStr(VulkShaderSSBOBindings binding) {
-        static unordered_map<VulkShaderSSBOBindings, string> bindings;
+    static string shaderSSBOBindingToStr(VulkShaderSSBOBinding binding) {
+        static unordered_map<VulkShaderSSBOBinding, string> bindings;
         return bindings.at(binding);
     }
 
-    static string shaderTextureBindingToStr(VulkShaderTextureBindings binding) {
-        static unordered_map<VulkShaderTextureBindings, string> bindings;
+    static string shaderTextureBindingToStr(VulkShaderTextureBinding binding) {
+        static unordered_map<VulkShaderTextureBinding, string> bindings;
         static once_flag flag;
         call_once(flag, [&]() {
             for (auto const &[name, value] : DescriptorSetDef::getTextureBindings()) {
@@ -222,6 +222,31 @@ struct DescriptorSetDef {
 #define PIPELINE_JSON_VERSION 1
 // PipelineDeclDef is used to declare a pipeline that is transformed into a PipelineDef during the build process
 // e.g. it lives in the Assets/Pipelines directory
+// comprehensive example:
+// {
+//     "version": 1,
+//     "name": "LitShadowMappedModel",
+//     "vertShader": "LitShadowMappedModel",
+//     "fragShader": "LitShadowMappedModel",
+//     "vertexInputBinding": 0,
+//     "descriptorSet": {
+//         "vert": {
+//             "uniformBuffers": [
+//                 "xforms",
+//                 "modelXform",
+//             ]
+//         },
+//         "frag": {
+//             "uniformBuffers": [
+//                 "lights",
+//                 "eyePos",
+//             ]
+//             "imageSamplers": [
+//                 "shadowMap"
+//             ]
+//         }
+//     }
+// }
 struct PipelineDeclDef {
     string name;
     string vertShaderName;

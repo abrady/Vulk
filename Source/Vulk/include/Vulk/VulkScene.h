@@ -1,16 +1,14 @@
 #pragma once
 
-#include "VulkUtil.h"
 #include "VulkActor.h"
 #include "VulkCamera.h"
 #include "VulkFrameUBOs.h"
 #include "VulkPointLight.h"
 #include "VulkUniformBuffer.h"
+#include "VulkUtil.h"
 
-struct VulkSceneUBOs
-{
-    struct XformsUBO
-    {
+struct VulkSceneUBOs {
+    struct XformsUBO {
         alignas(16) glm::mat4 world;
         alignas(16) glm::mat4 view;
         alignas(16) glm::mat4 proj;
@@ -19,20 +17,22 @@ struct VulkSceneUBOs
     VulkFrameUBOs<XformsUBO> xforms;
     VulkFrameUBOs<glm::vec3> eyePos;
     VulkUniformBuffer<VulkPointLight> pointLight;
-    VulkSceneUBOs(Vulk &vk) : xforms(vk), eyePos(vk), pointLight(vk) {}
+    VulkSceneUBOs(Vulk &vk) : xforms(vk), eyePos(vk), pointLight(vk) {
+    }
 };
 
-class VulkScene
-{
+class VulkScene {
     Vulk &vk;
 
-public:
+  public:
     VulkSceneUBOs sceneUBOs;
     VulkCamera camera;
     std::vector<std::shared_ptr<VulkActor>> actors;
+    std::shared_ptr<VulkUniformBuffer<VulkLightViewProjUBO>> lightViewProjUBO;
     // debug
     std::shared_ptr<VulkUniformBuffer<VulkDebugNormalsUBO>> debugNormalsUBO;
     std::shared_ptr<VulkUniformBuffer<VulkDebugTangentsUBO>> debugTangentsUBO;
 
-    VulkScene(Vulk &vk) : vk(vk), sceneUBOs(vk) {}
+    VulkScene(Vulk &vk) : vk(vk), sceneUBOs(vk) {
+    }
 };

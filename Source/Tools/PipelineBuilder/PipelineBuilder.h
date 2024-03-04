@@ -8,16 +8,15 @@
 #include <vector>
 
 #include "Vulk/VulkResourceMetadata.h"
-#include "Vulk/VulkShaderEnums.h"
 
 #include <nlohmann/json.hpp>
 
 struct ShaderInfo {
     std::string name;
     std::string entryPoint;
-    std::unordered_map<VulkShaderUBOBindings, std::string> uboBindings;
-    std::unordered_map<VulkShaderSSBOBindings, std::string> sboBindings;
-    std::unordered_map<VulkShaderTextureBindings, std::string> samplerBindings;
+    std::unordered_map<VulkShaderUBOBinding, std::string> uboBindings;
+    std::unordered_map<VulkShaderSSBOBinding, std::string> sboBindings;
+    std::unordered_map<VulkShaderTextureBinding, std::string> samplerBindings;
     std::unordered_map<uint32_t, std::string> inputLocations;
     std::unordered_map<uint32_t, std::string> outputLocations;
 };
@@ -37,21 +36,21 @@ class PipelineBuilder {
         for (const spirv_cross::Resource &resource : resources.uniform_buffers) {
             unsigned set = glsl.get_decoration(resource.id, spv::DecorationDescriptorSet);
             unsigned binding = glsl.get_decoration(resource.id, spv::DecorationBinding);
-            parsedShader.uboBindings[(VulkShaderUBOBindings)binding] = resource.name;
+            parsedShader.uboBindings[(VulkShaderUBOBinding)binding] = resource.name;
         }
 
         // For SBOs
         for (const spirv_cross::Resource &resource : resources.storage_buffers) {
             unsigned set = glsl.get_decoration(resource.id, spv::DecorationDescriptorSet);
             unsigned binding = glsl.get_decoration(resource.id, spv::DecorationBinding);
-            parsedShader.sboBindings[(VulkShaderSSBOBindings)binding] = resource.name;
+            parsedShader.sboBindings[(VulkShaderSSBOBinding)binding] = resource.name;
         }
 
         // For Samplers
         for (const spirv_cross::Resource &resource : resources.sampled_images) {
             unsigned set = glsl.get_decoration(resource.id, spv::DecorationDescriptorSet);
             unsigned binding = glsl.get_decoration(resource.id, spv::DecorationBinding);
-            parsedShader.samplerBindings[(VulkShaderTextureBindings)binding] = resource.name;
+            parsedShader.samplerBindings[(VulkShaderTextureBinding)binding] = resource.name;
         }
 
         // Inputs

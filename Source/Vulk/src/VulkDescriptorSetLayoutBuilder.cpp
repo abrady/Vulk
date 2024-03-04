@@ -1,73 +1,59 @@
 #include "Vulk/VulkDescriptorSetLayoutBuilder.h"
-#include "Vulk/VulkUtil.h"
 #include "Vulk/Vulk.h"
+#include "Vulk/VulkUtil.h"
 
-VulkDescriptorSetLayout::VulkDescriptorSetLayout(Vulk &vk, VkDescriptorSetLayout layout) : vk(vk), layout(layout) {}
-VulkDescriptorSetLayout::~VulkDescriptorSetLayout()
-{
+VulkDescriptorSetLayout::VulkDescriptorSetLayout(Vulk &vk, VkDescriptorSetLayout layout) : vk(vk), layout(layout) {
+}
+VulkDescriptorSetLayout::~VulkDescriptorSetLayout() {
     vkDestroyDescriptorSetLayout(vk.device, layout, nullptr);
 }
 
-VulkDescriptorSetLayoutBuilder &VulkDescriptorSetLayoutBuilder::addUniformBuffer(VkShaderStageFlags stageFlags, VulkShaderUBOBindings binding)
-{
-    if (!layoutBindingsMap.contains(binding))
-    {
+VulkDescriptorSetLayoutBuilder &VulkDescriptorSetLayoutBuilder::addUniformBuffer(VkShaderStageFlags stageFlags, VulkShaderUBOBinding binding) {
+    if (!layoutBindingsMap.contains(binding)) {
         VkDescriptorSetLayoutBinding layoutBinding{};
         layoutBinding.binding = binding;
         layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         layoutBinding.descriptorCount = 1;
         layoutBinding.stageFlags = stageFlags;
         layoutBindingsMap[binding] = layoutBinding;
-    }
-    else
-    {
+    } else {
         layoutBindingsMap[binding].stageFlags |= stageFlags;
     }
     return *this;
 }
 
-VulkDescriptorSetLayoutBuilder &VulkDescriptorSetLayoutBuilder::addImageSampler(VkShaderStageFlags stageFlags, VulkShaderTextureBindings binding)
-{
-    if (!layoutBindingsMap.contains(binding))
-    {
+VulkDescriptorSetLayoutBuilder &VulkDescriptorSetLayoutBuilder::addImageSampler(VkShaderStageFlags stageFlags, VulkShaderTextureBinding binding) {
+    if (!layoutBindingsMap.contains(binding)) {
         VkDescriptorSetLayoutBinding layoutBinding{};
         layoutBinding.binding = binding;
         layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         layoutBinding.descriptorCount = 1;
         layoutBinding.stageFlags = stageFlags;
         layoutBindingsMap[binding] = layoutBinding;
-    }
-    else
-    {
+    } else {
         layoutBindingsMap[binding].stageFlags |= stageFlags;
     }
     return *this;
 }
 
-VulkDescriptorSetLayoutBuilder &VulkDescriptorSetLayoutBuilder::addStorageBuffer(VkShaderStageFlags stageFlags, VulkShaderSSBOBindings binding)
-{
-    if (!layoutBindingsMap.contains(binding))
-    {
+VulkDescriptorSetLayoutBuilder &VulkDescriptorSetLayoutBuilder::addStorageBuffer(VkShaderStageFlags stageFlags, VulkShaderSSBOBinding binding) {
+    if (!layoutBindingsMap.contains(binding)) {
         VkDescriptorSetLayoutBinding layoutBinding{};
         layoutBinding.binding = binding;
         layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
         layoutBinding.descriptorCount = 1;
         layoutBinding.stageFlags = stageFlags;
         layoutBindingsMap[binding] = layoutBinding;
-    }
-    else
-    {
+    } else {
         layoutBindingsMap[binding].stageFlags |= stageFlags;
     }
     return *this;
 }
 
-std::shared_ptr<VulkDescriptorSetLayout> VulkDescriptorSetLayoutBuilder::build()
-{
+std::shared_ptr<VulkDescriptorSetLayout> VulkDescriptorSetLayoutBuilder::build() {
     std::vector<VkDescriptorSetLayoutBinding> layoutBindings;
     layoutBindings.reserve(layoutBindingsMap.size());
-    for (auto &pair : layoutBindingsMap)
-    {
+    for (auto &pair : layoutBindingsMap) {
         layoutBindings.push_back(pair.second);
     }
     VkDescriptorSetLayoutCreateInfo layoutCreateInfo{};

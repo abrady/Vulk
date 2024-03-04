@@ -17,6 +17,7 @@
             "preLaunchTask": "CMake: build"
         },
         // `Source/Tools/PipelineBuilder/Debug/PipelineBuilder`.exe C:/open/Github/Vulk/build/Resources/Source/Shaders C:/open/Github/Vulk/build/Resources/Assets/Pipelines C:/open/Github/Vulk/Assets/Pipelines/DebugNormals.pipeline
+        // building C:/open/Github/Vulk/build/Resources/Assets/Pipelines/LitShadowMappedModel.pipeline from C:/open/Github/Vulk/Assets/Pipelines/LitShadowMappedModel.pipeline
         {
             "name": "PipelineBuilder - Debug",
             "program": "${workspaceFolder}/build/Source/Tools/PipelineBuilder/Debug/PipelineBuilder.exe",
@@ -26,7 +27,7 @@
             "args": [
                 "${workspaceFolder}/build/Resources/Source/Shaders",
                 "${workspaceFolder}/build/Resources/Assets/Pipelines",
-                "${workspaceFolder}/Assets/Pipelines/ShadowMap.pipeline"
+                "${workspaceFolder}/Assets/Pipelines/LitShadowMappedModel.pipeline"
             ],
             "stopAtEntry": false,
             "environment": [],

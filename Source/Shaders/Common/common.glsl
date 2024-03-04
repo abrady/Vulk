@@ -13,6 +13,8 @@ const int VulkShaderBinding_MirrorPlaneUBO = 9;
 const int VulkShaderBinding_MaterialUBO = 10;
 const int VulkShaderBinding_DebugNormalsUBO = 11;
 const int VulkShaderBinding_DebugTangentsUBO = 12;
+const int VulkShaderBinding_LightViewProjUBO = 13;
+const int VulkShaderBinding_ShadowSampler = 13;
 
 const int LayoutLocation_Color = 0;
 const int LayoutLocation_Position = 1;
@@ -21,6 +23,7 @@ const int LayoutLocation_Tangent = 3;
 const int LayoutLocation_TexCoord = 4;
 const int LayoutLocation_Height = 5;
 const int LayoutLocation_Position2 = 6;
+const int LayoutLocation_PosLightSpace = 7;
 
 
 

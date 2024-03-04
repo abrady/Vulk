@@ -1,0 +1,59 @@
+enum VulkVertBindingLocation : byte {
+    ColorBinding = 0,
+    PosBinding = 1,
+    NormalBinding = 2,
+    TangentBinding = 3,
+    TexCoordBinding = 4,
+    HeightBinding = 5,
+    Pos2Binding = 6,
+    PosLightSpace = 7,
+}
+
+
+// keep in sync with Source\Shaders\Common\common.glsl
+// every binding needs to be globally unique across all shaders in a given pipeline
+enum VulkShaderBindings : byte {
+    XformsUBO = 0,
+    TextureSampler = 1,
+    Lights = 2,
+    EyePos = 3,
+    TextureSampler2 = 4,
+    TextureSampler3 = 5,
+    WavesXform = 6,
+    NormalSampler = 7,
+    ModelXform = 8,
+    MirrorPlaneUBO = 9,
+    MaterialUBO = 10,
+    DebugNormalsUBO = 11,
+    DebugTangentsUBO = 12,
+    LightViewProjUBO = 13,
+    ShadowSampler = 14,
+}
+
+enum VulkShaderUBOBinding : byte {
+    Xforms = 0,
+    Lights = 2,
+    EyePos = 3,
+    ModelXform = 8,
+    MaterialUBO = 10,
+    DebugNormals = 11,
+    DebugTangents = 12,
+    LightViewProjUBO = 13,
+}
+
+enum VulkShaderDebugUBO : byte {
+    DebugNormals = 11,
+    DebugTangents = 12,
+}
+
+enum VulkShaderSSBOBinding : byte {
+    MaxBindingID = 0
+}
+
+enum VulkShaderTextureBinding : byte {
+    TextureSampler = 1,
+    TextureSampler2 = 4,
+    TextureSampler3 = 5,
+    NormalSampler = 7,
+    ShadowSampler = 14,
+}

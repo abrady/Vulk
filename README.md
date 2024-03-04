@@ -30,7 +30,7 @@ My goal for this project is to transition from the hand-coded samples I was doin
   * We take the TBN matrix that transforms any vector from tangent to world space, give it to the fragment shader, and transform the sampled normal from tangent space to world space using the TBN matrix; the normal is then in the same space as the other lighting variables.
   * We take the inverse of the TBN matrix that transforms any vector from world space to tangent space, and use this matrix to transform not the normal, but the other relevant lighting variables to tangent space; the normal is then again in the same space as the other lighting variables. - this is better because we can do this in vertex space and then use the interpolated values.
 * <https://github.com/KHeresy/openxr-simple-example> : integrate with OpenXR
-* probably need schematized json files at some point. is thrift too heavyweight?
+* probably need schematized json files at some point. flatbuffers looks like the winner based on some quick research
 
 # Log
 
@@ -59,6 +59,15 @@ When rendering the scene from the camera's perspective, use the shadow map to de
 
 8. Adjust Shadow Mapping Parameters
 Tweak parameters such as the light's view and projection matrices, the depth bias (to avoid shadow acne), and the shadow map resolution to improve the quality of the shadows.
+
+## 3/3/24 sampling the depth
+
+Now that we have the depth buffer we need to get the closest depth for each vert:
+
+1. project each vert just like before for generating the lightmap, pass this as an output of the vertex shader to the frag shader as e.g. out/inPosLightSpace
+2. the frag shader then gets the inPosLightSpace in clip coords and divides by w to get into NDC (normalized device coordinates) space. the z value of this is your depth.
+3. by convention this is from -1 to 1 in the x and y axes but your depth buffer is a texture and expects things in the range of 0-1 so just multiply by .5 and and add .5
+4. at this point you have a uv for the depth buffer, sample it, and compare that with the depth value of the fragment's depth from step 2 and you know if it is visible to the light nor not.
 
 ## 3/2/24 shadow mapping: render the shadow map
 
