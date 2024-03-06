@@ -78,9 +78,9 @@ class World {
     }
 
     VulkPauseableTimer rotateWorldTimer;
-    float rotationTime;
     void updateXformsUBO(VkCommandBuffer commandBuffer, VulkSceneUBOs::XformsUBO &ubo, VkViewport const &viewport, glm::mat4 lookAt, float nearClip = 0.1f,
                          float farClip = 100.0f) {
+        float rotationTime = rotateWorldTimer.getElapsedTime(); // make sure this stays the same for the entire frame
         ubo.world = glm::rotate(glm::mat4(1.0f), rotationTime * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         ubo.view = lookAt;
         ubo.proj = glm::perspective(glm::radians(45.0f), viewport.width / (float)viewport.height, nearClip, farClip);
@@ -88,21 +88,12 @@ class World {
     }
 
     void drawFrame(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer) {
-        rotationTime = rotateWorldTimer.getElapsedTime(); // make sure this stays the same for the entire frame
-        VkCommandBufferBeginInfo beginInfo{};
-        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        // set up the global ubos
+        // - the xforms which is just to say the world, view, and proj matrices
+        // - the actor local transforms (if necessary, not doing this currently)
+        // - the eyePos
+        // - the lightViewProj : both for shadow map and for sampling during the main render
 
-        std::shared_ptr<VulkTextureView> depthView = shadowMapRenderpass->depthViews[vk.currentFrame]->depthView;
-
-        VK_CALL(vkBeginCommandBuffer(commandBuffer, &beginInfo));
-        renderShadowMapImageForLight(commandBuffer, *scene->sceneUBOs.pointLight.mappedUBO);
-        vk.transitionImageLayout(commandBuffer, depthView->image, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-        drawMainStuff(commandBuffer, frameBuffer);
-        vk.transitionImageLayout(commandBuffer, depthView->image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-        VK_CALL(vkEndCommandBuffer(commandBuffer));
-    }
-
-    void renderShadowMapImageForLight(VkCommandBuffer commandBuffer, VulkPointLight &light) {
         VkViewport viewport{};
         viewport.x = 0.0f;
         viewport.y = 0.0f;
@@ -111,15 +102,37 @@ class World {
         viewport.minDepth = 0.0f;
         viewport.maxDepth = 1.0f;
 
+        glm::vec3 fwd = scene->camera.getForwardVec();
+        glm::vec3 lookAt = scene->camera.eye + fwd;
+        glm::vec3 up = scene->camera.getUpVec();
+        *scene->sceneUBOs.eyePos.ptrs[vk.currentFrame] = scene->camera.eye;
+
+        updateXformsUBO(commandBuffer, *scene->sceneUBOs.xforms.ptrs[vk.currentFrame], viewport, glm::lookAt(scene->camera.eye, lookAt, up),
+                        scene->camera.nearClip, scene->camera.farClip);
+
         glm::vec3 camFwd = scene->camera.getForwardVec();
-        glm::vec3 focusPt =
-            scene->camera.eye + camFwd; // TODO: figure out what this should be (we're picking a somewhat arbitrary point in front of the camera to focus on)
-        glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f); // TODO: also kinda arbitrary up vec.
-        glm::mat4 lookAt = glm::lookAt(light.pos, focusPt, up);
-        updateXformsUBO(commandBuffer, *scene->sceneUBOs.xforms.ptrs[vk.currentFrame], viewport, lookAt);
+        glm::vec3 focusPt = scene->camera.eye + camFwd; // TODO: figure out what this should be
+        up = glm::vec3(0.0f, 1.0f, 0.0f);               // TODO: also kinda arbitrary up vec.
+        glm::mat4 lightView = glm::lookAt(scene->sceneUBOs.pointLight.mappedUBO->pos, focusPt, up);
+        glm::mat4 lightProj = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 100.0f);
+        scene->lightViewProjUBO->mappedUBO->viewProj = lightProj * lightView;
 
+        // now render
+        VkCommandBufferBeginInfo beginInfo{};
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+        std::shared_ptr<VulkTextureView> depthView = shadowMapRenderpass->depthViews[vk.currentFrame]->depthView;
+
+        VK_CALL(vkBeginCommandBuffer(commandBuffer, &beginInfo));
+        renderShadowMapImageForLight(commandBuffer, viewport, *scene->sceneUBOs.pointLight.mappedUBO);
+        vk.transitionImageLayout(commandBuffer, depthView->image, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        drawMainStuff(commandBuffer, viewport, frameBuffer);
+        vk.transitionImageLayout(commandBuffer, depthView->image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+        VK_CALL(vkEndCommandBuffer(commandBuffer));
+    }
+
+    void renderShadowMapImageForLight(VkCommandBuffer commandBuffer, VkViewport const &viewport, VulkPointLight &light) {
         VkClearValue clearColor = {1.0f, 0.0f, 0.0f, 0.0f}; // Use 1.0f for depth clearing
-
         VkRenderPassBeginInfo renderPassBeginInfo = {};
         renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
         renderPassBeginInfo.renderPass = shadowMapRenderpass->renderPass;
@@ -150,7 +163,7 @@ class World {
         vkCmdEndRenderPass(commandBuffer);
     }
 
-    void drawMainStuff(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer) {
+    void drawMainStuff(VkCommandBuffer commandBuffer, VkViewport const &viewport, VkFramebuffer frameBuffer) {
         VkRenderPassBeginInfo renderPassInfo{};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
         renderPassInfo.renderPass = vk.renderPass;
@@ -165,14 +178,6 @@ class World {
         renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
         renderPassInfo.pClearValues = clearValues.data();
 
-        VkViewport viewport{};
-        viewport.x = 0.0f;
-        viewport.y = 0.0f;
-        viewport.width = (float)vk.swapChainExtent.width;
-        viewport.height = (float)vk.swapChainExtent.height;
-        viewport.minDepth = 0.0f;
-        viewport.maxDepth = 1.0f;
-
         VkRect2D scissor{};
         scissor.offset = {0, 0};
         scissor.extent = vk.swapChainExtent;
@@ -183,13 +188,6 @@ class World {
     }
 
     void render(VkCommandBuffer commandBuffer, uint32_t currentFrame, VkViewport const &viewport, VkRect2D const &scissor) {
-        glm::vec3 fwd = scene->camera.getForwardVec();
-        glm::vec3 lookAt = scene->camera.eye + fwd;
-        glm::vec3 up = scene->camera.getUpVec();
-        updateXformsUBO(commandBuffer, *scene->sceneUBOs.xforms.ptrs[currentFrame], viewport, glm::lookAt(scene->camera.eye, lookAt, up),
-                        scene->camera.nearClip, scene->camera.farClip);
-        *scene->sceneUBOs.eyePos.ptrs[currentFrame] = scene->camera.eye;
-
         // render the scene?
         for (auto &actor : scene->actors) {
             auto model = actor->model;

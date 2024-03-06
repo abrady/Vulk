@@ -74,9 +74,11 @@ It has:
 * subpass+ do the actual rendering
 * each of which has a pipeline defines the shaders etc.
 
-So what I need to do is:
+Okay, refactoring done, here's the result:
 
-1. adapt my renderpass
+![](Assets/Screenshots/shadowmap_bad.png)
+
+Hey! yes this is definitely incorrect, but we no longer have incorrect matrices, so I just need to debug this. progress!
 
 ## 3/4/24 debugging the shader map
 
