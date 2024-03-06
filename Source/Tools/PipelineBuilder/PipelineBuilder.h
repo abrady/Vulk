@@ -104,7 +104,7 @@ class PipelineBuilder {
         }
     }
 
-    static PipelineDeclDef buildPipeline(PipelineDeclDef pipelineIn, std::filesystem::path builtShadersDir, std::string &errMsgOut) {
+    static PipelineDeclDef buildPipeline(PipelineDeclDef pipelineIn, std::filesystem::path builtShadersDir) {
         if (!std::filesystem::exists(builtShadersDir)) {
             std::cerr << "Shaders directory does not exist: " << builtShadersDir << std::endl;
             throw std::runtime_error("PipelineBuilder: Shaders directory does not exist");
@@ -129,6 +129,7 @@ class PipelineBuilder {
             updateDSDef(info, "frag", pipelineOut.descriptorSet);
         }
 
+        std::string errMsgOut;
         for (int i = 0; i < shaderInfos.size() - 1; i++) {
             std::string errMsg;
             if (!checkConnections(shaderInfos[i], shaderInfos[i + 1], errMsg)) {
@@ -136,12 +137,14 @@ class PipelineBuilder {
                 errMsgOut += errMsg;
             }
         }
+        if (!errMsgOut.empty()) {
+            throw std::runtime_error(errMsgOut);
+        }
 
         return pipelineOut;
     }
 
-    static void buildPipelineFile(PipelineDeclDef pipelineIn, std::filesystem::path builtShadersDir, std::filesystem::path pipelineFileOut,
-                                  std::string &errMsgOut) {
+    static void buildPipelineFile(PipelineDeclDef pipelineIn, std::filesystem::path builtShadersDir, std::filesystem::path pipelineFileOut) {
         if (!std::filesystem::exists(builtShadersDir)) {
             std::cerr << "Shaders directory does not exist: " << builtShadersDir << std::endl;
             throw std::runtime_error("PipelineBuilder: Shaders directory does not exist");
@@ -151,12 +154,7 @@ class PipelineBuilder {
             throw std::runtime_error("PipelineBuilder: Output directory does not exist");
         }
 
-        std::string errMsg;
-        PipelineDeclDef pipelineOut = buildPipeline(pipelineIn, builtShadersDir, errMsg);
-        if (!errMsg.empty()) {
-            errMsgOut += errMsg;
-            return;
-        }
+        PipelineDeclDef pipelineOut = buildPipeline(pipelineIn, builtShadersDir);
         nlohmann::json pipelineOutJSON = PipelineDeclDef::toJSON(pipelineOut);
 
         std::ofstream outFile(pipelineFileOut);
@@ -184,12 +182,7 @@ class PipelineBuilder {
         inFile.close();
         PipelineDeclDef def = PipelineDeclDef::fromJSON(pipelineInJSON);
 
-        std::string errMsg;
-        buildPipelineFile(def, builtShadersDir, pipelineDirOut / pipelineFileIn.filename(), errMsg);
-        if (!errMsg.empty()) {
-            std::cerr << "Errors building pipelines: \n" << errMsg << std::endl;
-            throw std::runtime_error("PipelineBuilder: Errors building pipelines");
-        }
+        buildPipelineFile(def, builtShadersDir, pipelineDirOut / pipelineFileIn.filename());
     }
 
     // static void buildPipelinesFromMetadata(std::filesystem::path builtShadersDir, std::filesystem::path pipelineDirOut, std::string optPipeline = "") {
@@ -224,7 +217,7 @@ class PipelineBuilder {
         std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
         if (!file.is_open()) {
-            throw std::runtime_error("Failed to open file!");
+            VULK_THROW("Failed to open file " + filename.string());
         }
 
         size_t fileSize = (size_t)file.tellg();

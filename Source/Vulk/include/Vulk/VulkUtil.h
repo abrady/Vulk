@@ -37,6 +37,7 @@
 // #include <vulkan/vk_enum_string_helper.h>
 #include <vulkan/vulkan.h>
 
+#include "VulkException.h"
 #include "VulkShaderEnums_generated.h"
 
 #define VK_CALL(func)                                                                                                                                          \

@@ -65,8 +65,7 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
     }
     SECTION("Test Pipeline Generation") {
         PipelineDeclDef def = makeTestPipelineDeclDef();
-        std::string errMsg;
-        PipelineDeclDef res = PipelineBuilder::buildPipeline(def, builtShadersDir, errMsg);
+        PipelineDeclDef res = PipelineBuilder::buildPipeline(def, builtShadersDir);
         CHECK(res.name == "TestPipeline");
         CHECK(res.vertShaderName == "DebugNormals");
         CHECK(res.geomShaderName == "DebugNormals");
@@ -92,8 +91,7 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
         CHECK(fs::create_directory(builtPipelinesDir));
         PipelineDeclDef def = makeTestPipelineDeclDef();
         fs::path builtPipeline = builtPipelinesDir / "TestPipeline.json";
-        std::string errMsg;
-        PipelineBuilder::buildPipelineFile(def, builtShadersDir, builtPipeline, errMsg);
+        PipelineBuilder::buildPipelineFile(def, builtShadersDir, builtPipeline);
         CHECK(fs::exists(builtPipeline));
         nlohmann::json j;
         std::ifstream file(builtPipeline);
