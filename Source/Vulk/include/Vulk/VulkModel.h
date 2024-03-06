@@ -7,7 +7,6 @@
 
 #include "Vulk.h"
 #include "VulkBufferBuilder.h"
-#include "VulkDescriptorSetBuilder.h"
 #include "VulkDescriptorSetLayoutBuilder.h"
 #include "VulkFrameUBOs.h"
 #include "VulkImageView.h"

@@ -2,7 +2,9 @@
 #include "Vulk/Vulk.h"
 #include "Vulk/VulkUtil.h"
 
-VulkDescriptorSetLayout::VulkDescriptorSetLayout(Vulk &vk, VkDescriptorSetLayout layout) : vk(vk), layout(layout) {
+VulkDescriptorSetLayout::VulkDescriptorSetLayout(Vulk &vk, VkDescriptorSetLayout layout, std::vector<VkDescriptorSetLayoutBinding> bindings,
+                                                 VkDescriptorSetLayoutCreateInfo createInfo)
+    : vk(vk), layout(layout), bindings(bindings), createInfo(createInfo) {
 }
 VulkDescriptorSetLayout::~VulkDescriptorSetLayout() {
     vkDestroyDescriptorSetLayout(vk.device, layout, nullptr);
@@ -60,8 +62,8 @@ std::shared_ptr<VulkDescriptorSetLayout> VulkDescriptorSetLayoutBuilder::build()
     layoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     layoutCreateInfo.bindingCount = static_cast<uint32_t>(layoutBindings.size());
     layoutCreateInfo.pBindings = layoutBindings.data();
-
     VkDescriptorSetLayout descriptorSetLayout;
+
     VK_CALL(vkCreateDescriptorSetLayout(vk.device, &layoutCreateInfo, nullptr, &descriptorSetLayout));
-    return std::make_shared<VulkDescriptorSetLayout>(vk, descriptorSetLayout);
+    return std::make_shared<VulkDescriptorSetLayout>(vk, descriptorSetLayout, std::move(layoutBindings), std::move(layoutCreateInfo));
 }

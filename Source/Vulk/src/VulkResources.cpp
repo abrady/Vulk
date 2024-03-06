@@ -69,24 +69,30 @@ std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(VkRenderPass renderPas
         return pipelines[name];
     }
     PipelineDef &def = *metadata.pipelines.at(name);
-    VulkDescriptorSetLayoutBuilder dslb(vk);
-
-    for (auto &[stage, bindings] : def.descriptorSet.uniformBuffers) {
-        for (auto &binding : bindings) {
-            dslb.addUniformBuffer(stage, binding);
+    shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout;
+    uint32_t dsHash = def.descriptorSet.hash();
+    if (descriptorSetLayoutCache.contains(dsHash)) {
+        descriptorSetLayout = descriptorSetLayoutCache[dsHash];
+    } else {
+        VulkDescriptorSetLayoutBuilder dslb(vk);
+        for (auto &[stage, bindings] : def.descriptorSet.uniformBuffers) {
+            for (auto &binding : bindings) {
+                dslb.addUniformBuffer(stage, binding);
+            }
         }
-    }
-    for (auto &[stage, bindings] : def.descriptorSet.storageBuffers) {
-        for (auto &binding : bindings) {
-            dslb.addStorageBuffer(stage, binding);
+        for (auto &[stage, bindings] : def.descriptorSet.storageBuffers) {
+            for (auto &binding : bindings) {
+                dslb.addStorageBuffer(stage, binding);
+            }
         }
-    }
-    for (auto &[stage, bindings] : def.descriptorSet.imageSamplers) {
-        for (auto &binding : bindings) {
-            dslb.addImageSampler(stage, binding);
+        for (auto &[stage, bindings] : def.descriptorSet.imageSamplers) {
+            for (auto &binding : bindings) {
+                dslb.addImageSampler(stage, binding);
+            }
         }
+        descriptorSetLayout = dslb.build();
+        descriptorSetLayoutCache[dsHash] = descriptorSetLayout;
     }
-    shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout = dslb.build();
 
     VulkPipelineBuilder pb(vk);
     pb.addvertShaderStage(getvertShader(def.vertShader->name))
@@ -115,6 +121,10 @@ std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const
     VulkDescriptorSetBuilder builder(vk);
     shared_ptr<VulkModel> model = getModel(*actorDef.model);
     shared_ptr<VulkFrameUBOs<glm::mat4>> xformUBOs;
+    uint32_t const dsHash = dsDef.hash();
+    if (descriptorSetLayoutCache.contains(dsHash)) {
+        builder.setDescriptorSetLayout(descriptorSetLayoutCache[dsHash]);
+    }
     for (auto &iter : dsDef.uniformBuffers) {
         VkShaderStageFlagBits stage = (VkShaderStageFlagBits)iter.first;
         for (VulkShaderUBOBinding binding : iter.second) {
@@ -189,7 +199,9 @@ std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const
             }
         }
     }
-    return make_shared<VulkActor>(vk, model, xformUBOs, builder.build(), getPipeline(pipelineDef->name));
+    std::shared_ptr<VulkDescriptorSetInfo> info = builder.build();
+    descriptorSetLayoutCache[dsHash] = info->descriptorSetLayout;
+    return make_shared<VulkActor>(vk, model, xformUBOs, info, getPipeline(pipelineDef->name));
     static_assert(VulkShaderTextureBinding_MAX == VulkShaderTextureBinding_ShadowSampler);
 }
 

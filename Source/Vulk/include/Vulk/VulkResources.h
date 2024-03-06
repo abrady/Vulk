@@ -8,7 +8,6 @@
 #include "Vulk.h"
 #include "VulkActor.h"
 #include "VulkBufferBuilder.h"
-#include "VulkDescriptorSetBuilder.h"
 #include "VulkDescriptorSetLayoutBuilder.h"
 #include "VulkFrameUBOs.h"
 #include "VulkImageView.h"
@@ -27,10 +26,11 @@ struct ModelDef;
 struct PipelineDef;
 struct Metadata;
 
-// load resources used for rendering a set of things: shaders, meshes, textures, materials, etc.
-// Note:
-//  not thread safe,
-//  not currently using reference counting so materials load twice
+// It is expected that an instance of this will be made for a world/level/scene, the approriate resources will be loaded
+// off of it, and then this can be destructed at the end of the loading process to free up unused resources
+// while used resources will be kept alive by the shared_ptrs that are returned to the caller.
+//
+// Note: not thread safe
 class VulkResources {
   public:
     Vulk &vk;
@@ -49,6 +49,8 @@ class VulkResources {
     std::shared_ptr<VulkMesh> getMesh(MeshDef &meshDef);
     std::shared_ptr<VulkMaterialTextures> getMaterialTextures(std::string const &name);
     std::shared_ptr<VulkModel> getModel(ModelDef &modelDef);
+
+    std::unordered_map<uint32_t, std::shared_ptr<VulkDescriptorSetLayout>> descriptorSetLayoutCache;
 
   public:
     std::unordered_map<std::string, std::shared_ptr<VulkMaterialTextures>> materialTextures;

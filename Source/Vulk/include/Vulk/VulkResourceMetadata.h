@@ -58,6 +58,29 @@ struct DescriptorSetDef {
     unordered_map<VkShaderStageFlagBits, vector<VulkShaderSSBOBinding>> storageBuffers;
     unordered_map<VkShaderStageFlagBits, vector<VulkShaderTextureBinding>> imageSamplers;
 
+    uint32_t hash() const {
+        uint32_t h = 0;
+        for (auto const &[stage, bindings] : uniformBuffers) {
+            h ^= stage;
+            for (auto const &binding : bindings) {
+                h ^= binding;
+            }
+        }
+        for (auto const &[stage, bindings] : storageBuffers) {
+            h ^= stage;
+            for (auto const &binding : bindings) {
+                h ^= binding;
+            }
+        }
+        for (auto const &[stage, bindings] : imageSamplers) {
+            h ^= stage;
+            for (auto const &binding : bindings) {
+                h ^= binding;
+            }
+        }
+        return h;
+    }
+
     void validate() {
     }
 

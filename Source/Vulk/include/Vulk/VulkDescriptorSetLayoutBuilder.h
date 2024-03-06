@@ -9,8 +9,13 @@ class VulkDescriptorSetLayout : public ClassNonCopyableNonMovable {
 
   public:
     VkDescriptorSetLayout layout;
-    VulkDescriptorSetLayout(Vulk &vk, VkDescriptorSetLayout layout);
+    VulkDescriptorSetLayout(Vulk &vk, VkDescriptorSetLayout layout, std::vector<VkDescriptorSetLayoutBinding> bindings,
+                            VkDescriptorSetLayoutCreateInfo createInfo);
     ~VulkDescriptorSetLayout();
+
+    // just for debugging
+    std::vector<VkDescriptorSetLayoutBinding> const bindings;
+    VkDescriptorSetLayoutCreateInfo const createInfo{};
 };
 
 class VulkDescriptorSetLayoutBuilder {

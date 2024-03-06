@@ -12,21 +12,25 @@
 #include "VulkUtil.h"
 
 class VulkTextureView;
+class VulkDescriptorSetLayout;
 
-struct VulkDescriptorSetInfo : public ClassNonCopyableNonMovable {
+class VulkDescriptorSetInfo : public ClassNonCopyableNonMovable {
     Vulk &vk;
-    VkDescriptorSetLayout descriptorSetLayout;
+
+  public:
+    // These need to be kept around as long as the descriptor set is in use
+    std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout;
     VkDescriptorPool descriptorPool;
+
     std::array<std::shared_ptr<VulkDescriptorSet>, MAX_FRAMES_IN_FLIGHT> descriptorSets;
 
-    VulkDescriptorSetInfo(Vulk &vk, VkDescriptorSetLayout descriptorSetLayout, VkDescriptorPool descriptorPool,
+    VulkDescriptorSetInfo(Vulk &vk, std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout, VkDescriptorPool descriptorPool,
                           std::array<std::shared_ptr<VulkDescriptorSet>, MAX_FRAMES_IN_FLIGHT> &&descriptorSets)
         : vk(vk), descriptorSetLayout(descriptorSetLayout), descriptorPool(descriptorPool), descriptorSets(std::move(descriptorSets)) {
     }
 
     ~VulkDescriptorSetInfo() {
         vkDestroyDescriptorPool(vk.device, descriptorPool, nullptr);
-        vkDestroyDescriptorSetLayout(vk.device, descriptorSetLayout, nullptr);
     }
 };
 
@@ -34,6 +38,7 @@ class VulkDescriptorSetBuilder {
     Vulk &vk;
     VulkDescriptorSetLayoutBuilder layoutBuilder;
     VulkDescriptorPoolBuilder poolBuilder;
+    std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayoutOverride;
     struct BufSetUpdaterInfo {
         VkBuffer buf;
         VkDeviceSize range;
@@ -53,6 +58,12 @@ class VulkDescriptorSetBuilder {
 
   public:
     VulkDescriptorSetBuilder(Vulk &vk) : vk(vk), layoutBuilder(vk), poolBuilder(vk) {
+    }
+
+    // if we have this cached and it matches the current layout just use it. make sure you know what you're doing
+    VulkDescriptorSetBuilder &setDescriptorSetLayout(std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout) {
+        this->descriptorSetLayoutOverride = descriptorSetLayout;
+        return *this;
     }
 
     template <typename T>
@@ -95,7 +106,12 @@ class VulkDescriptorSetBuilder {
     }
 
     std::shared_ptr<VulkDescriptorSetInfo> build() {
-        std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout = layoutBuilder.build();
+        std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout;
+        if (this->descriptorSetLayoutOverride) {
+            descriptorSetLayout = this->descriptorSetLayoutOverride;
+        } else {
+            descriptorSetLayout = layoutBuilder.build();
+        }
         VkDescriptorPool pool = poolBuilder.build(MAX_FRAMES_IN_FLIGHT);
         std::array<std::shared_ptr<VulkDescriptorSet>, MAX_FRAMES_IN_FLIGHT> descriptorSets;
         for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
@@ -114,9 +130,6 @@ class VulkDescriptorSetBuilder {
 
             updater.update(vk.device);
         }
-        // crappy ownership pass.
-        VkDescriptorSetLayout layout = descriptorSetLayout->layout;
-        descriptorSetLayout->layout = VK_NULL_HANDLE;
-        return std::make_shared<VulkDescriptorSetInfo>(vk, layout, pool, std::move(descriptorSets));
+        return std::make_shared<VulkDescriptorSetInfo>(vk, descriptorSetLayout, pool, std::move(descriptorSets));
     }
 };
