@@ -10,6 +10,7 @@
 #include "Vulk/VulkDescriptorPoolBuilder.h"
 #include "Vulk/VulkDescriptorSetBuilder.h"
 #include "Vulk/VulkDescriptorSetUpdater.h"
+#include "Vulk/VulkFence.h"
 #include "Vulk/VulkGeo.h"
 #include "Vulk/VulkPipelineBuilder.h"
 #include "Vulk/VulkResourceMetadata.h"
@@ -26,19 +27,21 @@ class World {
     std::shared_ptr<VulkDepthRenderpass> shadowMapRenderpass;
     std::vector<std::shared_ptr<VulkActor>> shadowMapActors;
     std::shared_ptr<VulkPipeline> shadowMapPipeline;
+    std::shared_ptr<VulkFence> shadowMapFence;
 
     std::shared_ptr<VulkPipeline> debugNormalsPipeline;
     std::vector<std::shared_ptr<VulkActor>> debugTangentsActors;
     std::vector<std::shared_ptr<VulkActor>> debugNormalsActors;
 
     struct Debug {
-        bool renderNormals = true;
-        bool renderTangents = true;
+        bool renderNormals = false;
+        bool renderTangents = false;
     } debug;
 
   public:
     World(Vulk &vk, std::string sceneName) : vk(vk) {
         shadowMapRenderpass = std::make_shared<VulkDepthRenderpass>(vk);
+        shadowMapFence = std::make_shared<VulkFence>(vk);
 
         VulkResources resources(vk);
         resources.loadScene(vk.renderPass, sceneName, shadowMapRenderpass->depthViews);
@@ -76,7 +79,8 @@ class World {
 
     VulkPauseableTimer rotateWorldTimer;
     float rotationTime;
-    void updateXformsUBO(VulkSceneUBOs::XformsUBO &ubo, VkViewport const &viewport, glm::mat4 lookAt, float nearClip = 0.1f, float farClip = 100.0f) {
+    void updateXformsUBO(VkCommandBuffer commandBuffer, VulkSceneUBOs::XformsUBO &ubo, VkViewport const &viewport, glm::mat4 lookAt, float nearClip = 0.1f,
+                         float farClip = 100.0f) {
         ubo.world = glm::rotate(glm::mat4(1.0f), rotationTime * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         ubo.view = lookAt;
         ubo.proj = glm::perspective(glm::radians(45.0f), viewport.width / (float)viewport.height, nearClip, farClip);
@@ -88,9 +92,13 @@ class World {
         VkCommandBufferBeginInfo beginInfo{};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
+        std::shared_ptr<VulkTextureView> depthView = shadowMapRenderpass->depthViews[vk.currentFrame]->depthView;
+
         VK_CALL(vkBeginCommandBuffer(commandBuffer, &beginInfo));
         renderShadowMapImageForLight(commandBuffer, *scene->sceneUBOs.pointLight.mappedUBO);
+        vk.transitionImageLayout(commandBuffer, depthView->image, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         drawMainStuff(commandBuffer, frameBuffer);
+        vk.transitionImageLayout(commandBuffer, depthView->image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
         VK_CALL(vkEndCommandBuffer(commandBuffer));
     }
 
@@ -108,7 +116,7 @@ class World {
             scene->camera.eye + camFwd; // TODO: figure out what this should be (we're picking a somewhat arbitrary point in front of the camera to focus on)
         glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f); // TODO: also kinda arbitrary up vec.
         glm::mat4 lookAt = glm::lookAt(light.pos, focusPt, up);
-        updateXformsUBO(*scene->sceneUBOs.xforms.ptrs[vk.currentFrame], viewport, lookAt);
+        updateXformsUBO(commandBuffer, *scene->sceneUBOs.xforms.ptrs[vk.currentFrame], viewport, lookAt);
 
         VkClearValue clearColor = {1.0f, 0.0f, 0.0f, 0.0f}; // Use 1.0f for depth clearing
 
@@ -178,8 +186,8 @@ class World {
         glm::vec3 fwd = scene->camera.getForwardVec();
         glm::vec3 lookAt = scene->camera.eye + fwd;
         glm::vec3 up = scene->camera.getUpVec();
-        updateXformsUBO(*scene->sceneUBOs.xforms.ptrs[currentFrame], viewport, glm::lookAt(scene->camera.eye, lookAt, up), scene->camera.nearClip,
-                        scene->camera.farClip);
+        updateXformsUBO(commandBuffer, *scene->sceneUBOs.xforms.ptrs[currentFrame], viewport, glm::lookAt(scene->camera.eye, lookAt, up),
+                        scene->camera.nearClip, scene->camera.farClip);
         *scene->sceneUBOs.eyePos.ptrs[currentFrame] = scene->camera.eye;
 
         // render the scene?

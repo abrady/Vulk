@@ -35,44 +35,40 @@
  */
 #pragma once
 
-#include <vulkan/vulkan.h>
-#include "Vulk.h"
 #include "Common/ClassNonCopyableNonMovable.h"
+#include "Vulk.h"
+#include <vulkan/vulkan.h>
 
-template <typename T>
-class VulkUniformBuffer : public ClassNonCopyableNonMovable
-{
+template <typename T> class VulkUniformBuffer : public ClassNonCopyableNonMovable {
     Vulk &vk;
     VkDeviceMemory mem;
 
-    void init()
-    {
+    void init() {
         VkDeviceSize bufferSize = sizeof(T);
         vk.createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, buf, mem);
         vkMapMemory(vk.device, mem, 0, bufferSize, 0, (void **)&mappedUBO);
     }
 
-public:
+  public:
     VkBuffer buf;
     T *mappedUBO;
 
-    VulkUniformBuffer(Vulk &vk) : vk(vk)
-    {
+    VulkUniformBuffer(Vulk &vk) : vk(vk) {
         init();
     }
 
-    VulkUniformBuffer(Vulk &vk, T const &data) : vk(vk)
-    {
+    VulkUniformBuffer(Vulk &vk, T const &data) : vk(vk) {
         init();
         *mappedUBO = data;
     }
 
-    ~VulkUniformBuffer()
-    {
+    ~VulkUniformBuffer() {
         vkUnmapMemory(vk.device, mem);
         vkDestroyBuffer(vk.device, buf, nullptr);
         vkFreeMemory(vk.device, mem, nullptr);
     }
 
-    VkDeviceSize getSize() const { return sizeof(T); }
+    VkDeviceSize getSize() const {
+        return sizeof(T);
+    }
 };

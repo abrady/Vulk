@@ -60,6 +60,52 @@ When rendering the scene from the camera's perspective, use the shadow map to de
 8. Adjust Shadow Mapping Parameters
 Tweak parameters such as the light's view and projection matrices, the depth bias (to avoid shadow acne), and the shadow map resolution to improve the quality of the shadows.
 
+## 3/4/24 debugging the shader map
+
+Not getting any shadows:
+
+![](Assets/Screenshots/buggy_shadow_map.png)
+
+It's pretty clear the shadow map is using the view's depth buffer and not the light's view. let's debug... okay so the shadowmap creation shader is clearly getting the ubo for the view transform. probably shouldn't have used the same value for both.
+
+so...
+
+1. I could put a pipeline barrier to make sure the ubo is used
+2. I could use a different ubo for the light,
+
+2 is probably the right long term approach, but let's try the mem barrier just to learn how it works:
+
+```
+// before this: update the UBO
+
+VkMemoryBarrier memoryBarrier = {};
+memoryBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+memoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT; // After CPU UBO update
+memoryBarrier.dstAccessMask = VK_ACCESS_UNIFORM_READ_BIT; // Before vertex shader reads UBO
+
+vkCmdPipelineBarrier(
+    commandBuffer,
+    VK_PIPELINE_STAGE_HOST_BIT, // After this stage
+    VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, // Before this stage
+    0, // Flags
+    1, &memoryBarrier,
+    0, nullptr, // No buffer memory barriers
+    0, nullptr  // No image memory barriers
+);
+```
+
+Similar to the image transition:
+
+* specify the before/after stage where this barrier can go
+
+Different than the image transition:
+
+* VkImageMemoryBarrier is the type for the transition, vs. VkMemoryBarrier here
+
+Note that src/dstAccessMask and the VK_PIPELINE_... params work together to define what the barriers are,
+e.g. all HOST_WRITEs must be finished in the HOST stage
+before any UNIFORM_READs can happen in the VERTEX_SHADER
+
 ## 3/3/24 sampling the depth
 
 Now that we have the depth buffer we need to get the closest depth for each vert:
@@ -74,6 +120,50 @@ Running into some speedbumps:
 ### ds updater specified VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL but the shadowmap is VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
 
 why does the graphics card care? VkImageLayout is an enumeration in Vulkan that specifies the layout of image data. The layout of an image represents the arrangement of the image data in memory and can affect how the image data is accessed.
+
+I need to transition this image view to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL using pipeline barriers, how exciting. I've been wanting to get some of this.
+
+To do that we make a pipeline memory barrier. At a high level you say:
+
+1. here's what the current type is and what I want it to be (old/newLayout)
+2. what part of the image to convert: depth/color/stencil
+3. after which the op starts and before which it has to finish (pipline state frag test/frag shader)
+
+This is the call to to create the barrier, see the annotations:
+
+```
+VkImageMemoryBarrier barrier = {};
+barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+barrier.oldLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;      // 1. old layout: this is a depth buffer
+barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;              // 1. new layout: we want it to be readable by a shader
+barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+barrier.image = depthImage;                                                // image to convert
+barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;           // 2. we only care about the depth part of the image
+barrier.subresourceRange.baseMipLevel = 0;
+barrier.subresourceRange.levelCount = 1;
+barrier.subresourceRange.baseArrayLayer = 0;
+barrier.subresourceRange.layerCount = 1;
+barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+vkCmdPipelineBarrier(
+    commandBuffer,
+    VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, // the stage we're coming from: Depth/stencil attachment output stage
+    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, // the stage we're going to be using this in: Fragment shader stage
+    0,
+    0, nullptr,
+    0, nullptr,
+    1, &barrier
+);
+```
+
+#### Key Parts of this
+
+##### oldLayout/newLayout
+
+we're telling the GPU to turn this memory from a format we can write to, to one that can be used in a sampler for getting depth values.
+
+The layout of an image can be changed using a layout transition, which is performed using a pipeline barrier. When you transition an image to a new layout, you need to specify the old and new layouts in a VkImageMemoryBarrier structure, and then submit this barrier using vkCmdPipelineBarrier.
 
 Here are the possible values for VkImageLayout:
 
@@ -90,33 +180,39 @@ Here are the possible values for VkImageLayout:
 * VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL: The image is optimal for read-only stencil access in a shader, and is also a depth attachment.
 * VK_IMAGE_LAYOUT_PRESENT_SRC_KHR: The image is optimal for presentation with a swapchain.
 
-The layout of an image can be changed using a layout transition, which is performed using a pipeline barrier. When you transition an image to a new layout, you need to specify the old and new layouts in a VkImageMemoryBarrier structure, and then submit this barrier using vkCmdPipelineBarrier.
+##### srcAccessMask/dstAccessMask
 
-It looks like I need to transition this image view to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL using pipeline barriers, how exciting. I've been wanting to get some of this.
+* VK_ACCESS_INDIRECT_COMMAND_READ_BIT: Indicates that a command read operation can occur.
+* VK_ACCESS_INDEX_READ_BIT: Used for reading from an index buffer.
+* VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT: Specifies that a vertex buffer can be read.
+* VK_ACCESS_UNIFORM_READ_BIT: Indicates that reading from a uniform buffer is possible.
+* VK_ACCESS_INPUT_ATTACHMENT_READ_BIT: Used for reading an input attachment within a fragment shader.
+* VK_ACCESS_SHADER_READ_BIT and VK_ACCESS_SHADER_WRITE_BIT: Specify that shader reads and writes can occur, respectively.
+* VK_ACCESS_COLOR_ATTACHMENT_READ_BIT and VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT: Indicate that operations can read from and write to a color attachment, respectively.
+* VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT and VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT: Used for depth and stencil buffer accesses.
+* VK_ACCESS_TRANSFER_READ_BIT and VK_ACCESS_TRANSFER_WRITE_BIT: Specify that transfer operations can read from or write to a resource.
+* VK_ACCESS_HOST_READ_BIT and VK_ACCESS_HOST_WRITE_BIT: Indicate that the host (CPU) can read from or write to a resource.
 
-```
-VkImageMemoryBarrier barrier = {};
-barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-barrier.oldLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-barrier.image = depthImage;
-barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-barrier.subresourceRange.baseMipLevel = 0;
-barrier.subresourceRange.levelCount = 1;
-barrier.subresourceRange.baseArrayLayer = 0;
-barrier.subresourceRange.layerCount = 1;
-vkCmdPipelineBarrier(
-    commandBuffer,
-    VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, // Depth/stencil attachment output stage
-    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, // Fragment shader stage
-    0,
-    0, nullptr,
-    0, nullptr,
-    1, &barrier
-);
-```
+##### stages (VkPipelineStageFlags) VK_PIPELINE_STAGE_*
+
+Just your standard pipeline stages.
+
+* VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT: This is the earliest point in the pipeline. Using this flag typically means that the operation could be executed at any stage in the pipeline.
+* VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT: This stage is where indirect draw call parameters are read from a buffer.
+* VK_PIPELINE_STAGE_VERTEX_INPUT_BIT: This stage is where vertex and index buffers are read.
+* VK_PIPELINE_STAGE_VERTEX_SHADER_BIT: This stage is where vertex shader operations are performed.
+* VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT and VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT: These stages are where tessellation control and evaluation shader operations are performed, respectively.
+* VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT: This stage is where geometry shader operations are performed.
+* VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT: This stage is where fragment shader operations are performed.
+* VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT and VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT: These stages are where depth and stencil testing are performed.
+* VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT: This stage is where color values are written to color attachments.
+* VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT: This stage is where compute shader operations are performed.
+* VK_PIPELINE_STAGE_TRANSFER_BIT: This stage is where transfer operations (like copying data between buffers or images) are performed.
+* VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT: This is the latest point in the pipeline. Using this flag typically means that the operation doesn't have any specific stage dependencies and could be executed at any later point in the pipeline.
+* VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT: This is a shortcut for specifying all stages of the graphics pipeline.
+* VK_PIPELINE_STAGE_ALL_COMMANDS_BIT: This is a shortcut for specifying all stages of both the graphics and compute pipelines.
+
+These flags can be combined using bitwise OR operations to specify multiple stages. For example, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT would specify both the vertex shader and fragment shader stages.
 
 ## 3/2/24 shadow mapping: render the shadow map
 
