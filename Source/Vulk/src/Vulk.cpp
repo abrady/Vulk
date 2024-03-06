@@ -207,7 +207,7 @@ uint32_t Vulk::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags propert
         }
     }
 
-    throw std::runtime_error("failed to find suitable memory type!");
+    VULK_THROW("failed to find suitable memory type!");
 }
 
 VkShaderModule Vulk::createShaderModule(const std::vector<char> &code) {
@@ -297,7 +297,7 @@ void Vulk::recreateSwapChain() {
 
 void Vulk::createInstance() {
     if (enableValidationLayers && !checkValidationLayerSupport()) {
-        throw std::runtime_error("validation layers requested, but not available!");
+        VULK_THROW("validation layers requested, but not available!");
     }
 
     VkApplicationInfo appInfo{};
@@ -394,7 +394,7 @@ void Vulk::pickPhysicalDevice() {
     VK_CALL(vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr));
 
     if (deviceCount == 0) {
-        throw std::runtime_error("failed to find GPUs with Vulkan support!");
+        VULK_THROW("failed to find GPUs with Vulkan support!");
     }
 
     std::vector<VkPhysicalDevice> devices(deviceCount);
@@ -408,7 +408,7 @@ void Vulk::pickPhysicalDevice() {
     }
 
     if (physicalDevice == VK_NULL_HANDLE) {
-        throw std::runtime_error("failed to find a suitable GPU!");
+        VULK_THROW("failed to find a suitable GPU!");
     }
 }
 
@@ -631,7 +631,7 @@ VkFormat Vulk::findSupportedFormat(const std::vector<VkFormat> &candidates, VkIm
         }
     }
 
-    throw std::runtime_error("failed to find supported format!");
+    VULK_THROW("failed to find supported format!");
 }
 
 VkFormat Vulk::findDepthFormat() {
@@ -722,7 +722,7 @@ void Vulk::transitionImageLayout(VkCommandBuffer commandBuffer, VkImage image, V
         destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
         aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
     } else {
-        throw std::invalid_argument("unsupported layout transition!");
+        VULK_THROW("unsupported layout transition : " + std::to_string(oldLayout) + " -> " + std::to_string(newLayout));
     }
 
     barrier.subresourceRange.aspectMask = aspectMask;
@@ -802,7 +802,7 @@ void Vulk::createSyncObjects() {
         if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) != VK_SUCCESS ||
             vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS ||
             vkCreateFence(device, &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create synchronization objects for a frame!");
+            VULK_THROW("failed to create synchronization objects for a frame!");
         }
     }
 }
@@ -817,7 +817,7 @@ void Vulk::render() {
         recreateSwapChain();
         return;
     } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-        throw std::runtime_error("failed to acquire swap chain image!");
+        VULK_THROW("failed to acquire swap chain image!");
     }
 
     // updateUniformBuffer(currentFrame); AB: moved to derived class, but leaving
@@ -866,7 +866,7 @@ void Vulk::render() {
         framebufferResized = false;
         recreateSwapChain();
     } else if (result != VK_SUCCESS) {
-        throw std::runtime_error("failed to present swap chain image!");
+        VULK_THROW("failed to present swap chain image!");
     }
 
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
@@ -968,7 +968,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL Vulk::debugCallback(VkDebugUtilsMessageSeverityFl
         && 0 != strcmp(pCallbackData->pMessage, "loader_get_json: Failed to open JSON file C:\\Program "
                                                 "Files\\IntelSWTools\\GPA\\Streams\\VkLayer_state_tracker."
                                                 "json")) {
-        throw std::runtime_error("validation layer error");
+        VULK_THROW("validation layer error");
     }
 
     return VK_FALSE;

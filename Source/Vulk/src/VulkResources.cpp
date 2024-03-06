@@ -43,7 +43,7 @@ std::shared_ptr<VulkShaderModule> VulkResources::createShaderModule(ShaderType t
         shaders_map = &fragShaders;
         break;
     default:
-        throw runtime_error("Invalid shader type");
+        VULK_THROW("Invalid shader type");
     };
 
     fs::path path = getResourcesDir() / "Source" / "Shaders" / subdir / (name + suffix);
@@ -162,7 +162,7 @@ std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const
                 builder.addUniformBuffer(*scene->lightViewProjUBO, stage, binding);
                 break;
             default:
-                throw runtime_error("Invalid UBO binding");
+                VULK_THROW("Invalid UBO binding");
             }
             static_assert(VulkShaderUBOBinding_MAX == VulkShaderUBOBinding_LightViewProjUBO);
         }
@@ -175,7 +175,7 @@ std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const
     //         {
     //         case VulkShaderSSBOBinding_MaxBindingID:
     //         default:
-    //             throw runtime_error("Invalid SSBO binding");
+    //             VULK_THROW("Invalid SSBO binding");
     //         }
     //     }
     // }
@@ -195,7 +195,7 @@ std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const
                 }
                 break;
             default:
-                throw runtime_error("Invalid texture binding");
+                VULK_THROW("Invalid texture binding");
             }
         }
     }
@@ -245,7 +245,7 @@ shared_ptr<VulkMesh> VulkResources::getMesh(MeshDef &meshDef) {
         m = meshDef.getMesh();
     } break;
     default:
-        throw runtime_error("Invalid mesh type");
+        VULK_THROW("Invalid mesh type");
     }
     meshes[name] = m;
     return m;

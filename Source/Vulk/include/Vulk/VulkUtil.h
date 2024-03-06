@@ -45,8 +45,7 @@
         VkResult vkcall_macro_result = (func);                                                                                                                 \
         if (vkcall_macro_result != VK_SUCCESS) {                                                                                                               \
             std::cerr << "Vulkan error: " << (vkcall_macro_result) << " at " << __FILE__ << ":" << __LINE__ << std::endl;                                      \
-            throw std::runtime_error(std::string("Vulkan error: ") + std::to_string(vkcall_macro_result) + " at " + __FILE__ + ":" +                           \
-                                     std::to_string(__LINE__));                                                                                                \
+            VULK_THROW(std::string("Vulkan error: ") + std::to_string(vkcall_macro_result) + " at " + __FILE__ + ":" + std::to_string(__LINE__));              \
         }                                                                                                                                                      \
     } while (0)
 

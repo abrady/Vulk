@@ -107,7 +107,7 @@ class PipelineBuilder {
     static PipelineDeclDef buildPipeline(PipelineDeclDef pipelineIn, std::filesystem::path builtShadersDir) {
         if (!std::filesystem::exists(builtShadersDir)) {
             std::cerr << "Shaders directory does not exist: " << builtShadersDir << std::endl;
-            throw std::runtime_error("PipelineBuilder: Shaders directory does not exist");
+            VULK_THROW("PipelineBuilder: Shaders directory does not exist");
         }
 
         PipelineDeclDef pipelineOut = pipelineIn;
@@ -138,7 +138,7 @@ class PipelineBuilder {
             }
         }
         if (!errMsgOut.empty()) {
-            throw std::runtime_error(errMsgOut);
+            VULK_THROW(errMsgOut);
         }
 
         return pipelineOut;
@@ -147,11 +147,11 @@ class PipelineBuilder {
     static void buildPipelineFile(PipelineDeclDef pipelineIn, std::filesystem::path builtShadersDir, std::filesystem::path pipelineFileOut) {
         if (!std::filesystem::exists(builtShadersDir)) {
             std::cerr << "Shaders directory does not exist: " << builtShadersDir << std::endl;
-            throw std::runtime_error("PipelineBuilder: Shaders directory does not exist");
+            VULK_THROW("PipelineBuilder: Shaders directory does not exist");
         }
         if (!std::filesystem::exists(pipelineFileOut.parent_path())) {
             std::cerr << "Output directory does not exist: " << pipelineFileOut.parent_path() << std::endl;
-            throw std::runtime_error("PipelineBuilder: Output directory does not exist");
+            VULK_THROW("PipelineBuilder: Output directory does not exist");
         }
 
         PipelineDeclDef pipelineOut = buildPipeline(pipelineIn, builtShadersDir);
@@ -165,15 +165,15 @@ class PipelineBuilder {
     static void buildPipelineFromFile(std::filesystem::path builtShadersDir, std::filesystem::path pipelineDirOut, fs::path pipelineFileIn) {
         if (!std::filesystem::exists(pipelineFileIn)) {
             std::cerr << "Pipeline file does not exist: " << pipelineFileIn << std::endl;
-            throw std::runtime_error("PipelineBuilder: Pipeline file does not exist");
+            VULK_THROW("PipelineBuilder: Pipeline file does not exist");
         }
         if (!std::filesystem::exists(builtShadersDir)) {
             std::cerr << "Shaders directory does not exist: " << builtShadersDir << std::endl;
-            throw std::runtime_error("PipelineBuilder: Shaders directory does not exist");
+            VULK_THROW("PipelineBuilder: Shaders directory does not exist");
         }
         if (!std::filesystem::exists(pipelineDirOut)) {
             std::cerr << "Output directory does not exist: " << pipelineDirOut << std::endl;
-            throw std::runtime_error("PipelineBuilder: Output directory does not exist");
+            VULK_THROW("PipelineBuilder: Output directory does not exist");
         }
 
         nlohmann::json pipelineInJSON;
@@ -188,11 +188,11 @@ class PipelineBuilder {
     // static void buildPipelinesFromMetadata(std::filesystem::path builtShadersDir, std::filesystem::path pipelineDirOut, std::string optPipeline = "") {
     //     if (!std::filesystem::exists(builtShadersDir)) {
     //         std::cerr << "Shaders directory does not exist: " << builtShadersDir << std::endl;
-    //         throw std::runtime_error("PipelineBuilder: Shaders directory does not exist");
+    //         VULK_THROW("PipelineBuilder: Shaders directory does not exist");
     //     }
     //     if (!std::filesystem::exists(pipelineDirOut)) {
     //         std::cerr << "Output directory does not exist: " << pipelineDirOut << std::endl;
-    //         throw std::runtime_error("PipelineBuilder: Output directory does not exist");
+    //         VULK_THROW("PipelineBuilder: Output directory does not exist");
     //     }
 
     //     Metadata m = {};
@@ -208,7 +208,7 @@ class PipelineBuilder {
     //     }
     //     if (!errMsg.empty()) {
     //         std::cerr << "Errors building pipelines: \n" << errMsg << std::endl;
-    //         throw std::runtime_error("PipelineBuilder: Errors building pipelines");
+    //         VULK_THROW("PipelineBuilder: Errors building pipelines");
     //     }
     // }
 

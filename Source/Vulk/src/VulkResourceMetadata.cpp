@@ -20,12 +20,12 @@ namespace nlohmann {
 
 MaterialDef loadMaterialDef(const fs::path &file) {
     if (!fs::exists(file)) {
-        throw std::runtime_error("Material file does not exist: " + file.string());
+        VULK_THROW("Material file does not exist: " + file.string());
     }
 
     std::ifstream mtlFile(file);
     if (!mtlFile.is_open()) {
-        throw std::runtime_error("Failed to open material file: " + file.string());
+        VULK_THROW("Failed to open material file: " + file.string());
     }
 
     MaterialDef material;
@@ -40,7 +40,7 @@ MaterialDef loadMaterialDef(const fs::path &file) {
         auto processPath = [&](const std::string &relativePath) -> fs::path {
             fs::path absPath = fs::absolute(basePath / relativePath);
             if (!fs::exists(absPath)) {
-                throw std::runtime_error("Referenced file does not exist: " + absPath.string());
+                VULK_THROW("Referenced file does not exist: " + absPath.string());
             }
             return absPath;
         };
@@ -158,12 +158,12 @@ ModelDef ModelDef::fromJSON(const nlohmann::json &j, unordered_map<string, share
             makeAxes(length, *mesh);
         } break;
         default:
-            throw runtime_error("Unknown GeoMesh type: " + type);
+            VULK_THROW("Unknown GeoMesh type: " + type);
         }
         return ModelDef(name, make_shared<MeshDef>(name, mesh), material);
     }
     default:
-        throw runtime_error("Unknown MeshDef type: " + meshDefType);
+        VULK_THROW("Unknown MeshDef type: " + meshDefType);
     };
 }
 
@@ -180,7 +180,7 @@ ActorDef ActorDef::fromJSON(const nlohmann::json &j, unordered_map<string, share
     } else if (j.contains("inlineModel")) {
         a.model = make_shared<ModelDef>(ModelDef::fromJSON(j.at("inlineModel"), meshes, materials));
     } else {
-        throw runtime_error("ActorDef must contain either a model or an inlineModel");
+        VULK_THROW("ActorDef must contain either a model or an inlineModel");
     }
 
     // make the transform
@@ -227,7 +227,7 @@ SceneDef SceneDef::fromJSON(const nlohmann::json &j, unordered_map<string, share
             auto falloffEnd = light.contains("falloffEnd") ? light.at("falloffEnd").get<float>() : 0.f;
             s.pointLights.push_back(make_shared<VulkPointLight>(pos, falloffStart, color, falloffEnd));
         } else {
-            throw runtime_error("Unknown light type: " + type);
+            VULK_THROW("Unknown light type: " + type);
         }
     };
 
@@ -315,7 +315,7 @@ void findAndProcessMetadata(const fs::path path, Metadata &metadata) {
 
     if (metadata.scenes.size() == 0) {
         cerr << "No scenes found in " << path << " something is probably wrong\n";
-        throw runtime_error("No scenes found in " + path.string());
+        VULK_THROW("No scenes found in " + path.string());
     }
 }
 
