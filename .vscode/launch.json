@@ -5,16 +5,16 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "VulkanRenderer - Debug",
-            "program": "${workspaceFolder}/Build/Debug/VulkanRenderer.exe",
+            "name": "VulkSamples - Debug",
+            "program": "${workspaceFolder}/Build/Source/Samples/Debug/VulkSamples.exe",
             "type": "cppvsdbg",
             "request": "launch",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "${workspaceRoot}/Build/Debug",
+            "cwd": "${workspaceRoot}/Build/Source/Samples/Debug/",
             "environment": [],
-            "externalConsole": false,
-            "preLaunchTask": "CMake: build"
+            "preLaunchTask": "CMake: build",
+            "visualizerFile": "${workspaceFolder}/Source/Tools/MSVC/Natvis/glm.natvis",
         },
         // `Source/Tools/PipelineBuilder/Debug/PipelineBuilder`.exe C:/open/Github/Vulk/build/Resources/Source/Shaders C:/open/Github/Vulk/build/Resources/Assets/Pipelines C:/open/Github/Vulk/Assets/Pipelines/DebugNormals.pipeline
         // building C:/open/Github/Vulk/build/Resources/Assets/Pipelines/LitShadowMappedModel.pipeline from C:/open/Github/Vulk/Assets/Pipelines/LitShadowMappedModel.pipeline
@@ -27,11 +27,10 @@
             "args": [
                 "${workspaceFolder}/build/Resources/Source/Shaders",
                 "${workspaceFolder}/build/Resources/Assets/Pipelines",
-                "${workspaceFolder}/Assets/Pipelines/LitShadowMappedModel.pipeline"
+                "${workspaceFolder}/Assets/Pipelines/ShadowMap.pipeline"
             ],
             "stopAtEntry": false,
             "environment": [],
-            "externalConsole": false,
             // "preLaunchTask": "CMake: build"
         },
         {

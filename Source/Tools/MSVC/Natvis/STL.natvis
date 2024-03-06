@@ -2,19 +2,9 @@
 <!--
 Copyright (c) Microsoft Corporation.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-from: https://github.com/microsoft/STL/blob/main/stl/debugger/STL.natvis
--->
 
-<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
-  <Type Name="std::unordered_map&lt;*&gt;" Priority="MediumHigh">
-    <DisplayString>{{ size={_List._Size} }}</DisplayString>
-    <Expand>
-      <LinkedListItems>
-        <Size>_List._Size</Size>
-        <HeadPointer>_List._Myhead</HeadPointer>
-        <NextPointer>_Next</NextPointer>
-        <ValueNodePointer>_Myval</ValueNodePointer>
-      </LinkedListItems>
-    </Expand>
-  </Type>
-</AutoVisualizer>
+this isn't needed, instead it comes from:
+C:\Users\abrady\.vscode\extensions\ms-vscode.cpptools-1.19.5-win32-x64\debugAdapters\vsdbg\bin\Visualizers
+
+regardless we can only load one .natvis file at a time so: check out glm.natvis
+-->
