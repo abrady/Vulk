@@ -60,6 +60,24 @@ When rendering the scene from the camera's perspective, use the shadow map to de
 8. Adjust Shadow Mapping Parameters
 Tweak parameters such as the light's view and projection matrices, the depth bias (to avoid shadow acne), and the shadow map resolution to improve the quality of the shadows.
 
+## 3/5/24 renderpass, shmenderpass
+
+My efforts at synchronization have been failing. Vulkan was warning me about not having internal dependencies when I tried to put a pipeline barrier in. I could spend
+more time trying to get it working so I can learn about this in more detail, but instead it looks like the best practice is to have two renderpasses.
+
+Time for a refresher...
+a renderpass describes the operations you perform to render to a framebuffer.
+
+It has:
+
+* framebuffer is what is rendered to
+* subpass+ do the actual rendering
+* each of which has a pipeline defines the shaders etc.
+
+So what I need to do is:
+
+1. adapt my renderpass
+
 ## 3/4/24 debugging the shader map
 
 Not getting any shadows:
