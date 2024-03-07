@@ -23,8 +23,9 @@ void main() {
     projCoords = projCoords * 0.5 + 0.5; // To texture coordinates
     float closestDepth = texture(shadowSampler, projCoords.xy).r;
     float currentDepth = projCoords.z;
-    // TODO: apparently introducing a bias to closestDepth+ + bias is a good idea to prevent 'shadow acne'
-    if (currentDepth > closestDepth) {
+    // introducing a bias to reduce shadow acne. e.g. if we've sampled the same depth as we've projected
+    // we'll get strange behavior so just expect it to be a biased amount further to be in shadow
+    if (currentDepth > closestDepth + 0.01) {
         // In shadow
         outColor = vec4(0.0, 0.0, 0.0, 1.0); // just for testing
     } else {

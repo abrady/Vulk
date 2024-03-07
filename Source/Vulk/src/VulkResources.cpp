@@ -19,7 +19,8 @@ using namespace std;
 namespace fs = filesystem;
 
 VulkResources::VulkResources(Vulk &vk) : vk(vk), metadata(*getMetadata()) {
-    textureSampler = std::make_shared<VulkSampler>(vk);
+    textureSampler = VulkSampler::createImageSampler(vk);
+    shadowMapSampler = VulkSampler::createShadowSampler(vk);
 }
 
 std::shared_ptr<VulkShaderModule> VulkResources::createShaderModule(ShaderType type, string const &name) {
@@ -189,9 +190,9 @@ std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const
             case VulkShaderTextureBinding_NormalSampler:
                 builder.addBothFramesImageSampler(stage, binding, model->textures->normalView, textureSampler);
                 break;
-            case VulkShaderTextureBinding_ShadowSampler:
+            case VulkShaderTextureBinding_ShadowMapSampler:
                 for (uint32_t i = 0; i < scene->shadowMapViews.size(); i++) {
-                    builder.addFrameImageSampler(i, stage, binding, scene->shadowMapViews[i]->depthView, textureSampler);
+                    builder.addFrameImageSampler(i, stage, binding, scene->shadowMapViews[i]->depthView, shadowMapSampler);
                 }
                 break;
             default:
@@ -202,7 +203,7 @@ std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const
     std::shared_ptr<VulkDescriptorSetInfo> info = builder.build();
     descriptorSetLayoutCache[dsHash] = info->descriptorSetLayout;
     return make_shared<VulkActor>(vk, model, xformUBOs, info, getPipeline(pipelineDef->name));
-    static_assert(VulkShaderTextureBinding_MAX == VulkShaderTextureBinding_ShadowSampler);
+    static_assert(VulkShaderTextureBinding_MAX == VulkShaderTextureBinding_ShadowMapSampler);
 }
 
 std::shared_ptr<VulkScene> VulkResources::loadScene(VkRenderPass renderPass, std::string name,

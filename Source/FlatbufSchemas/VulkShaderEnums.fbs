@@ -27,7 +27,7 @@ enum VulkShaderBindings : byte {
     DebugNormalsUBO = 11,
     DebugTangentsUBO = 12,
     LightViewProjUBO = 13,
-    ShadowSampler = 14,
+    ShadowMapSampler = 14,
 }
 
 enum VulkShaderUBOBinding : byte {
@@ -55,5 +55,5 @@ enum VulkShaderTextureBinding : byte {
     TextureSampler2 = 4,
     TextureSampler3 = 5,
     NormalSampler = 7,
-    ShadowSampler = 14,
+    ShadowMapSampler = 14,
 }

@@ -115,7 +115,8 @@ class World {
         up = glm::vec3(0.0f, 1.0f, 0.0f);               // TODO: also kinda arbitrary up vec.
         glm::mat4 lightView = glm::lookAt(scene->sceneUBOs.pointLight.mappedUBO->pos, focusPt, up);
         glm::mat4 lightProj = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 100.0f);
-        scene->lightViewProjUBO->mappedUBO->viewProj = lightProj * lightView;
+        glm::mat4 viewProj = lightProj * lightView;
+        scene->lightViewProjUBO->mappedUBO->viewProj = viewProj;
 
         // now render
         VkCommandBufferBeginInfo beginInfo{};

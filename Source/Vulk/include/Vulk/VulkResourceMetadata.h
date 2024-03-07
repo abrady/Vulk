@@ -124,9 +124,9 @@ struct DescriptorSetDef {
         static vector<pair<string, VulkShaderTextureBinding>> bindings = {
             {"textureSampler", VulkShaderTextureBinding_TextureSampler},   {"textureSampler2", VulkShaderTextureBinding_TextureSampler2},
             {"textureSampler3", VulkShaderTextureBinding_TextureSampler3}, {"normalSampler", VulkShaderTextureBinding_NormalSampler},
-            {"shadowSampler", VulkShaderTextureBinding_ShadowSampler},
+            {"shadowSampler", VulkShaderTextureBinding_ShadowMapSampler},
         };
-        static_assert(VulkShaderTextureBinding_MAX == VulkShaderTextureBinding_ShadowSampler,
+        static_assert(VulkShaderTextureBinding_MAX == VulkShaderTextureBinding_ShadowMapSampler,
                       "this function must be kept in sync with VulkShaderTextureBinding");
         return bindings;
     }

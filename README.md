@@ -60,6 +60,54 @@ When rendering the scene from the camera's perspective, use the shadow map to de
 8. Adjust Shadow Mapping Parameters
 Tweak parameters such as the light's view and projection matrices, the depth bias (to avoid shadow acne), and the shadow map resolution to improve the quality of the shadows.
 
+## 3/6/24 renderpass part 2
+
+Let's fire up renderdoc and see what's going on with this depth buffer not looking the way I expect it to
+
+viewProj matrix for the light cpu side:
+
+```c++
+  row 1: [0.310685  0        -0.950513 3.82051]
+  row 2: [0.731499  0.638546  0.239098 -1.47435]
+  row 3: [-0.607553 0.770354 -0.198585 5.02655]
+  row 4: [-0.606946 0.769584 -0.198387 5.12152]
+```
+
+in the vert shader:
+
+* viewProjMatrix.row0 _35.viewProjMatrix.row0 float4 0.31068492, 0.00, -0.95051295, 3.82051015
+* viewProjMatrix.row1 _35.viewProjMatrix.row1 float4 0.73149949, 0.63854563, 0.23909813, -1.47435224
+* viewProjMatrix.row2 _35.viewProjMatrix.row2 float4 -0.60755348, 0.77035427, -0.19858511, 5.02654839
+* viewProjMatrix.row3 _35.viewProjMatrix.row3 float4 -0.60694593, 0.76958394, -0.19838652, 5.12152195
+
+Looks good. now let's view the shadowmap:
+
+![](Assets/Screenshots/shadowmap1.png)
+
+Well it looks like the sphere is in the view, but the plane isn't. hypothetically this should work though...
+
+Let's see what's happening when we try to use it to actually light the model
+
+* closestDepth _195.x float 0.98442852
+* currentDepth _203.x float 0.98949158
+
+These are 0.00506306 apart, which is causing the test to fail. let me try upping my bias here to .006 and see what happens.
+
+![](Assets/Screenshots/spherelitagain.png)
+
+That seems to have worked, but the background still looks like ass, why?
+
+![](Assets/Screenshots/shadowmap_clamped_values.png)
+
+Aha! the background being outside the light's frustum was causing UVs outside the 0-1 range. The best fix, I assume, is to deal with this in the sampler:
+
+* samplerInfo.addressModeU/V = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER
+* samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+
+These two things result in 1.0 for the depth if outside the frustum, a little indirect, but problem solved.
+
+The next thing is that black stuff at the bottom right which I did not include in my screenshot. why is that happening?
+
 ## 3/5/24 renderpass, shmenderpass
 
 My efforts at synchronization have been failing. Vulkan was warning me about not having internal dependencies when I tried to put a pipeline barrier in. I could spend

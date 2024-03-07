@@ -61,7 +61,7 @@ class VulkResources {
     std::unordered_map<std::string, std::shared_ptr<VulkModel>> models;
     std::unordered_map<std::string, std::shared_ptr<VulkScene>> scenes;
     std::unordered_map<std::string, std::shared_ptr<VulkShaderModule>> vertShaders, geomShaders, fragShaders;
-    std::shared_ptr<VulkSampler> textureSampler;
+    std::shared_ptr<VulkSampler> textureSampler, shadowMapSampler;
 
     VulkResources(Vulk &vk);
     std::shared_ptr<VulkScene> loadScene(VkRenderPass renderPass, std::string name,
