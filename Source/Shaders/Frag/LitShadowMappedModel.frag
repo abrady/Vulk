@@ -22,7 +22,7 @@ void main() {
     vec3 projCoords = inPosLightSpace.xyz / inPosLightSpace.w; // To NDC
     projCoords = projCoords * 0.5 + 0.5; // To texture coordinates
     float closestDepth = texture(shadowSampler, projCoords.xy).r;
-    float currentDepth = projCoords.z;
+    float currentDepth = clamp(projCoords.z, 0.0, 1.0); // just in case the z is outside the frustum
     // introducing a bias to reduce shadow acne. e.g. if we've sampled the same depth as we've projected
     // we'll get strange behavior so just expect it to be a biased amount further to be in shadow
     if (currentDepth > closestDepth + 0.01) {

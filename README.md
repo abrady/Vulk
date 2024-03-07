@@ -23,9 +23,8 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # TODOs
 
-* DONE VulkResources should only need to live during the loading phase
 * rename PipelineBUILDER.h to PipelineCOMPILER.h or something similar: builders are what I call the foo.bar.baz.build() paradigm
-* clean up our vertex input buffers, too much crap
+* clean up our vertex input buffers so we can handle passing only parameters we use.
 * invert the TBN matrix: So now that we have a TBN matrix, how are we going to use it? There are two ways we can use a TBN matrix for normal mapping, and we'll demonstrate both of them:
   * We take the TBN matrix that transforms any vector from tangent to world space, give it to the fragment shader, and transform the sampled normal from tangent space to world space using the TBN matrix; the normal is then in the same space as the other lighting variables.
   * We take the inverse of the TBN matrix that transforms any vector from world space to tangent space, and use this matrix to transform not the normal, but the other relevant lighting variables to tangent space; the normal is then again in the same space as the other lighting variables. - this is better because we can do this in vertex space and then use the interpolated values.
@@ -33,29 +32,6 @@ My goal for this project is to transition from the hand-coded samples I was doin
 * probably need schematized json files at some point. flatbuffers looks like the winner based on some quick research
 
 # Log
-
-Shadow Mapping Steps:
-
-1. Create a Depth Image
-First, you need a depth image where you can render the depth information from the light's perspective. This involves creating a Vulkan image with a depth format (e.g., VK_FORMAT_D32_SFLOAT), allocating memory for it, and setting it up with an appropriate image view.
-
-2. Set Up a Framebuffer for Depth Rendering
-Create a framebuffer that attaches the depth image. This framebuffer is used for rendering the scene from the light's perspective, capturing only depth information.
-
-3. Configure the Render Pass
-Define a render pass that is compatible with your depth framebuffer. This render pass should be configured to clear the depth buffer at the start and to store the depth information once rendering is done.
-
-4. Prepare the Light's View and Projection Matrices
-Compute the view and projection matrices from the light's perspective. These matrices are used to render the scene from the light's point of view, ensuring that the depth information corresponds to what the light "sees."
-
-5. Render the Scene from the Light's Perspective
-Using the configured framebuffer, render pass, and the light's view and projection matrices, render the scene. Only the depth information needs to be captured, so you can use a simple shader that outputs depth. Ensure that the geometry is rendered with the same vertex transformations as it would be from the camera's perspective, but using the light's view and projection matrices.
-
-6. Create a Shadow Map Sampler
-Set up a sampler for the depth image. This sampler will be used when rendering the scene from the camera's perspective to sample the shadow map and determine shadowing. The sampler should be configured to use comparison mode for depth comparisons.
-
-7. Integrate Shadow Mapping into the Scene Rendering
-When rendering the scene from the camera's perspective, use the shadow map to determine which fragments are in shadow. This typically involves sampling the shadow map with the fragment's position transformed into the light's clip space. Compare this depth value against the one stored in the shadow map to determine if the fragment is in shadow or lit.
 
 8. Adjust Shadow Mapping Parameters
 Tweak parameters such as the light's view and projection matrices, the depth bias (to avoid shadow acne), and the shadow map resolution to improve the quality of the shadows.
@@ -107,6 +83,12 @@ Aha! the background being outside the light's frustum was causing UVs outside th
 These two things result in 1.0 for the depth if outside the frustum, a little indirect, but problem solved.
 
 The next thing is that black stuff at the bottom right which I did not include in my screenshot. why is that happening?
+
+Ah! the z value was also outside the frustum. you gotta be careful with these frustums (frusta?) apparently. here's the fix:
+
+* float currentDepth = clamp(projCoords.z, 0.0, 1.0);
+
+holy cow, except for making things in shadows totally black, it actually looks like it is working! cool!
 
 ## 3/5/24 renderpass, shmenderpass
 
@@ -562,4 +544,6 @@ the cardinality of these things with respect to the model is:
     * vertex buffers: 1:1 (or many to 1) - take a ref to
     *
 
-cardin
+# Done Todos
+
+* DONE VulkResources should only need to live during the loading phase
