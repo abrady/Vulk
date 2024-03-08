@@ -103,7 +103,8 @@
         "variant": "cpp",
         "cinttypes": "cpp",
         "expected": "cpp",
-        "queue": "cpp"
+        "queue": "cpp",
+        "stacktrace": "cpp"
     },
     "files.eol": "\n"
 }

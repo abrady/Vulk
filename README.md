@@ -36,7 +36,40 @@ My goal for this project is to transition from the hand-coded samples I was doin
 8. Adjust Shadow Mapping Parameters
 Tweak parameters such as the light's view and projection matrices, the depth bias (to avoid shadow acne), and the shadow map resolution to improve the quality of the shadows.
 
-## 3/6/24 renderpass part 2
+## what next?
+
+Continuing to read <https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Mapping> I see that I already handled the frustum and border color problems, huzzah! What else does it talk about?
+
+### PCF
+
+## 3/7/24 more goofing around
+
+![](Assets/Screenshots/shadowmapbug2.png)
+
+Here it looks a little strange, kinda like the sphere is occluding itself?
+
+![](Assets/Screenshots/shadowmap_bug2_closer.png)
+
+However if I move the camera just a scooch closer it suddenly works.
+
+1. for sure it looks like part of the sphere's shadow is falling outside the light's frustum for the shadowmap, so that's easy to fix.
+2. this stange striping on the sphere is strange. here's another screenshot:
+
+![](Assets/Screenshots/shadowmap_sphere_bug3.png)
+
+almost looks like a nan type error. to renderdoc!
+
+Okay, it is pretty clearly related to sampling:
+
+* the artifacts are all in shadow while the other parts aren't
+* when I debug I can find a frag further back, but the depth sample is also further back so it isn't shadowed.
+
+conclusion: my depth buffer is the problem. some investigation:
+
+* the depth buffer is 800x600, because I just copy-pasta'd some code. changing that to 1024x1024
+* the format has a stencil buffer, we don't really need that, I should get rid of that...
+
+## 3/6/24 shadowmap renderpass part 2
 
 Let's fire up renderdoc and see what's going on with this depth buffer not looking the way I expect it to
 

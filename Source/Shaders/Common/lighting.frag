@@ -12,22 +12,18 @@ vec4 blinnPhong(vec3 texColor, vec3 normal, vec3 viewPos, vec3 lightPos, vec3 fr
     // diffuse
     vec3 lightDir = normalize(lightPos - fragPos);
     float diff = max(dot(lightDir, normal), 0.0);
-    vec3 diffuse = diff * texColor;
+    vec3 diffuse = diff * texColor * lightColor;
     // specular
     vec3 viewDir = normalize(viewPos - fragPos);
-    vec3 reflectDir = reflect(-lightDir, normal);
     float spec = 0.0;
-    if(blinn)
-    {
+    if (blinn) {
         vec3 halfwayDir = normalize(lightDir + viewDir);  
         spec = pow(max(dot(normal, halfwayDir), 0.0), 32.0);
-    }
-    else
-    {
+    } else {
         vec3 reflectDir = reflect(-lightDir, normal);
         spec = pow(max(dot(viewDir, reflectDir), 0.0), 8.0);
     }
-    vec3 specular = vec3(0.3) * spec; // assuming bright white light texColor
+    vec3 specular = spec * lightColor;
     return vec4(ambient + diffuse + specular, 1.0);
 }
 

@@ -25,14 +25,13 @@ void main() {
     float currentDepth = clamp(projCoords.z, 0.0, 1.0); // just in case the z is outside the frustum
     // introducing a bias to reduce shadow acne. e.g. if we've sampled the same depth as we've projected
     // we'll get strange behavior so just expect it to be a biased amount further to be in shadow
+    vec3 lightColor = lightBuf.light.color;
+    vec4 tex = texture(texSampler, inTexCoord);
+    vec3 norm = calcTBNNormal(normSampler, inTexCoord, inNormal, inTangent);
     if (currentDepth > closestDepth + 0.01) {
-        // In shadow
-        outColor = vec4(0.0, 0.0, 0.0, 1.0); // just for testing
-    } else {
-        // Not in shadow
-        vec4 tex = texture(texSampler, inTexCoord);
-        vec3 norm = calcTBNNormal(normSampler, inTexCoord, inNormal, inTangent);
-        //outColor = basicLighting(lightBuf.light, materialBuf.material, tex, eyePosUBO.eyePos, norm, inPos);
-        outColor = blinnPhong(tex.xyx, norm, eyePosUBO.eyePos, lightBuf.light.pos, inPos, lightBuf.light.color, true);
-    }
+        // In shadow - handwave 
+        tex *= 0.5;
+        lightColor *= 0.01;
+    } 
+    outColor = blinnPhong(tex.xyx, norm, eyePosUBO.eyePos, lightBuf.light.pos, inPos, lightColor, true);
 }

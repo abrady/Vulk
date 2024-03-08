@@ -78,15 +78,6 @@ class World {
     }
 
     VulkPauseableTimer rotateWorldTimer;
-    void updateXformsUBO(VkCommandBuffer commandBuffer, VulkSceneUBOs::XformsUBO &ubo, VkViewport const &viewport, glm::mat4 lookAt, float nearClip = 0.1f,
-                         float farClip = 100.0f) {
-        float rotationTime = rotateWorldTimer.getElapsedTime(); // make sure this stays the same for the entire frame
-        ubo.world = glm::rotate(glm::mat4(1.0f), rotationTime * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        ubo.view = lookAt;
-        ubo.proj = glm::perspective(glm::radians(45.0f), viewport.width / (float)viewport.height, nearClip, farClip);
-        ubo.proj[1][1] *= -1;
-    }
-
     void drawFrame(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer) {
         // set up the global ubos
         // - the xforms which is just to say the world, view, and proj matrices
@@ -102,19 +93,30 @@ class World {
         viewport.minDepth = 0.0f;
         viewport.maxDepth = 1.0f;
 
+        float rotationTime = rotateWorldTimer.getElapsedTime(); // make sure this stays the same for the entire frame
+        float nearClip = 0.1f;
+        float farClip = 100.0f;
+
         glm::vec3 fwd = scene->camera.getForwardVec();
         glm::vec3 lookAt = scene->camera.eye + fwd;
         glm::vec3 up = scene->camera.getUpVec();
         *scene->sceneUBOs.eyePos.ptrs[vk.currentFrame] = scene->camera.eye;
 
-        updateXformsUBO(commandBuffer, *scene->sceneUBOs.xforms.ptrs[vk.currentFrame], viewport, glm::lookAt(scene->camera.eye, lookAt, up),
-                        scene->camera.nearClip, scene->camera.farClip);
+        VulkSceneUBOs::XformsUBO &ubo = *scene->sceneUBOs.xforms.ptrs[vk.currentFrame];
+        ubo.world = glm::rotate(glm::mat4(1.0f), rotationTime * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        ubo.view = glm::lookAt(scene->camera.eye, lookAt, up);
+        ubo.proj = glm::perspective(glm::radians(45.0f), viewport.width / (float)viewport.height, nearClip, farClip);
+        ubo.proj[1][1] *= -1;
 
+        // set up the light view proj
+
+        VulkPointLight &light = *scene->sceneUBOs.pointLight.mappedUBO;
         glm::vec3 camFwd = scene->camera.getForwardVec();
-        glm::vec3 focusPt = scene->camera.eye + camFwd; // TODO: figure out what this should be
-        up = glm::vec3(0.0f, 1.0f, 0.0f);               // TODO: also kinda arbitrary up vec.
-        glm::mat4 lightView = glm::lookAt(scene->sceneUBOs.pointLight.mappedUBO->pos, focusPt, up);
-        glm::mat4 lightProj = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 100.0f);
+        glm::vec3 focusPt = scene->camera.eye + (nearClip + farClip) / 2.0f * camFwd; // look at the middle of the cam frustum
+        up = glm::vec3(0.0f, 1.0f, 0.0f);
+        glm::mat4 lightView = glm::lookAt(light.pos, focusPt, up);
+
+        glm::mat4 lightProj = glm::perspective(glm::radians(120.0f), 1.0f, 0.1f, 100.0f);
         glm::mat4 viewProj = lightProj * lightView;
         scene->lightViewProjUBO->mappedUBO->viewProj = viewProj;
 
@@ -270,7 +272,13 @@ class World {
                 camera.pitch -= 15.0f;
             else if (key == GLFW_KEY_SPACE)
                 rotateWorldTimer.toggle();
-            else
+            else if (key == GLFW_KEY_N) {
+                debug.renderNormals = !debug.renderNormals;
+                std::cout << "render normals: " << debug.renderNormals << std::endl;
+            } else if (key == GLFW_KEY_T) {
+                debug.renderTangents = !debug.renderTangents;
+                std::cout << "render tangents: " << debug.renderTangents << std::endl;
+            } else
                 handled = false;
             if (handled) {
                 camera.yaw = fmodf(camera.yaw, 360.0f);
