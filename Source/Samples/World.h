@@ -127,14 +127,22 @@ class World {
         std::shared_ptr<VulkTextureView> depthView = shadowMapRenderpass->depthViews[vk.currentFrame]->depthView;
 
         VK_CALL(vkBeginCommandBuffer(commandBuffer, &beginInfo));
-        renderShadowMapImageForLight(commandBuffer, viewport, *scene->sceneUBOs.pointLight.mappedUBO);
+        renderShadowMapImageForLight(commandBuffer, *scene->sceneUBOs.pointLight.mappedUBO);
         vk.transitionImageLayout(commandBuffer, depthView->image, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         drawMainStuff(commandBuffer, viewport, frameBuffer);
         vk.transitionImageLayout(commandBuffer, depthView->image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
         VK_CALL(vkEndCommandBuffer(commandBuffer));
     }
 
-    void renderShadowMapImageForLight(VkCommandBuffer commandBuffer, VkViewport const &viewport, VulkPointLight &light) {
+    void renderShadowMapImageForLight(VkCommandBuffer commandBuffer, VulkPointLight &light) {
+        VkViewport viewport{};
+        viewport.x = 0.0f;
+        viewport.y = 0.0f;
+        viewport.width = (float)shadowMapRenderpass->extent.width;
+        viewport.height = (float)shadowMapRenderpass->extent.height;
+        viewport.minDepth = 0.0f;
+        viewport.maxDepth = 1.0f;
+
         VkClearValue clearColor = {1.0f, 0.0f, 0.0f, 0.0f}; // Use 1.0f for depth clearing
         VkRenderPassBeginInfo renderPassBeginInfo = {};
         renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;

@@ -15,11 +15,16 @@ class VulkDepthRenderpass : public ClassNonCopyableNonMovable {
     VkRenderPass renderPass;
     std::array<std::shared_ptr<VulkDepthView>, MAX_FRAMES_IN_FLIGHT> depthViews;
     std::array<VkFramebuffer, MAX_FRAMES_IN_FLIGHT> frameBuffers;
-    VkExtent2D extent;
+    VkExtent2D extent = {1024, 1024};
+    VkFormat depthFormat = VK_FORMAT_D32_SFLOAT;
 
     VulkDepthRenderpass(Vulk &vkIn) : vk(vkIn) {
+        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+            depthViews[i] = std::make_unique<VulkDepthView>(vk, extent, depthFormat);
+        }
+
         VkAttachmentDescription depthAttachment = {};
-        depthAttachment.format = vk.findDepthFormat(); // Custom function to select a supported depth format
+        depthAttachment.format = depthFormat;
         depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
         depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;   // Clear depth at the start of the render pass
         depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE; // Store the depth information after rendering
@@ -39,25 +44,20 @@ class VulkDepthRenderpass : public ClassNonCopyableNonMovable {
         VkRenderPassCreateInfo renderPassInfo = {};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
         renderPassInfo.attachmentCount = 1;
-        renderPassInfo.pAttachments = &depthAttachment; // Array of attachment descriptions
+        renderPassInfo.pAttachments = &depthAttachment;
         renderPassInfo.subpassCount = 1;
         renderPassInfo.pSubpasses = &subpassDescription;
 
         VK_CALL(vkCreateRenderPass(vk.device, &renderPassInfo, nullptr, &renderPass));
 
-        // TODO: just copying the rendered extents. It doesn't have to be this size I'm sure
-        extent = vk.swapChainExtent;
-
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-            depthViews[i] = std::make_unique<VulkDepthView>(vk);
-
             VkFramebufferCreateInfo framebufferInfo = {};
             framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
             framebufferInfo.renderPass = renderPass;
             framebufferInfo.attachmentCount = 1;
-            framebufferInfo.pAttachments = &depthViews[i]->depthView->imageView; // Pointer to the depth image view
-            framebufferInfo.width = extent.width;                                // Width of the shadow map
-            framebufferInfo.height = extent.height;                              // Height of the shadow map
+            framebufferInfo.pAttachments = &depthViews[i]->depthView->imageView;
+            framebufferInfo.width = extent.width;
+            framebufferInfo.height = extent.height;
             framebufferInfo.layers = 1;
 
             VK_CALL(vkCreateFramebuffer(vk.device, &framebufferInfo, nullptr, &frameBuffers[i]));
