@@ -94,11 +94,11 @@ class World {
         viewport.maxDepth = 1.0f;
 
         float rotationTime = rotateWorldTimer.getElapsedTime(); // make sure this stays the same for the entire frame
-        float nearClip = 0.1f;
-        float farClip = 100.0f;
+        float nearClip = scene->camera.nearClip;
+        float farClip = scene->camera.farClip;
 
-        glm::vec3 fwd = scene->camera.getForwardVec();
-        glm::vec3 lookAt = scene->camera.eye + fwd;
+        glm::vec3 const fwd = scene->camera.getForwardVec();
+        glm::vec3 lookAt = scene->camera.lookAt;
         glm::vec3 up = scene->camera.getUpVec();
         *scene->sceneUBOs.eyePos.ptrs[vk.currentFrame] = scene->camera.eye;
 
@@ -111,12 +111,13 @@ class World {
         // set up the light view proj
 
         VulkPointLight &light = *scene->sceneUBOs.pointLight.mappedUBO;
-        glm::vec3 camFwd = scene->camera.getForwardVec();
-        glm::vec3 focusPt = scene->camera.eye + (nearClip + farClip) / 2.0f * camFwd; // look at the middle of the cam frustum
-        up = glm::vec3(0.0f, 1.0f, 0.0f);
-        glm::mat4 lightView = glm::lookAt(light.pos, focusPt, up);
-
-        glm::mat4 lightProj = glm::perspective(glm::radians(120.0f), 1.0f, 0.1f, 100.0f);
+        // glm::vec3 focusPt = scene->camera.eye + (nearClip + farClip) / 2.0f * fwd; // look at the middle of the cam frustum
+        // up = glm::vec3(0.0f, 1.0f, 0.0f);
+        // glm::mat4 lightView = glm::lookAt(light.pos, focusPt, up);
+        glm::mat4 lightView = ubo.view; // just take the same view for testing
+        glm::mat4 p = ubo.proj;
+        p[1][1] *= -1;
+        glm::mat4 lightProj = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 100.0f);
         glm::mat4 viewProj = lightProj * lightView;
         scene->lightViewProjUBO->mappedUBO->viewProj = viewProj;
 
