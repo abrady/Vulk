@@ -188,16 +188,10 @@ ActorDef ActorDef::fromJSON(const nlohmann::json &j, unordered_map<string, share
     if (j.contains("xform")) {
         auto jx = j.at("xform");
 
-        glm::vec3 pos = glm::vec3(0);
-        glm::vec3 rot = glm::vec3(0);
-        glm::vec3 scale = glm::vec3(1);
-        if (jx.contains("pos"))
-            pos = jx.at("pos").get<glm::vec3>();
-        if (jx.contains("YPR"))
-            rot = jx.at("YPR").get<glm::vec3>();
-        if (jx.contains("scale"))
-            scale = jx.at("scale").get<glm::vec3>();
-        xform = glm::translate(glm::mat4(1.0f), pos) * glm::yawPitchRoll(rot.y, rot.x, rot.z) * glm::scale(glm::mat4(1.0f), scale);
+        glm::vec3 pos = jx.value("pos", glm::vec3(0));
+        glm::vec3 rot = glm::radians(jx.value("rot", glm::vec3(0)));
+        glm::vec3 scale = jx.value("scale", glm::vec3(1));
+        xform = glm::translate(glm::mat4(1.0f), pos) * glm::eulerAngleXYZ(rot.x, rot.y, rot.z) * glm::scale(glm::mat4(1.0f), scale);
     }
     a.xform = xform;
     a.validate();

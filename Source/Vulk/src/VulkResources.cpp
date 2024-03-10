@@ -104,7 +104,7 @@ std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(VkRenderPass renderPas
         .setDepthCompareOp(def.depthCompareOp)
         .setPrimitiveTopology(def.primitiveTopology)
         .setLineWidth(1.0f)
-        .setCullMode(VK_CULL_MODE_BACK_BIT)
+        // .setCullMode(VK_CULL_MODE_BACK_BIT)
         .setDepthCompareOp(VK_COMPARE_OP_LESS)
         .setStencilTestEnabled(false)
         .setBlending(def.blending.enabled, def.blending.getColorMask());

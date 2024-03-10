@@ -42,6 +42,66 @@ Continuing to read <https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Map
 
 ### PCF
 
+## 3/10/24 lightmap generation is messed up
+
+trying to get more data about why I'm seeing the funny issue on the edges of things I done broke my lightmap creation. sigh. good learning experience though.
+
+Let's start by debugging the verts. the problem is that it is hard to interpret projection matrices, so let's see what we can learn about them:
+
+* NDC: normalized device coordinates x, y should be between -1 and 1 and z is 0-1 (in opengl it is -1 to 1, just watch out)
+
+![](Assets/Screenshots/NDCs_badmaybe.png)
+
+I do see that my NDCs are all very close to 1 in the z value. it feels like if the far plane is at, say, 100, than they should be much closer to -1 if I understand this correctly
+
+This seems like a good thread to pull on:
+
+### Projection matrix refresher
+
+Vulkan uses a right handed coordinate system and a depth range of 0 to 1
+
+```
+[ f/aspect, 0,     0,              0             ]
+[ 0,        f,     0,              0             ]
+[ 0,        0,     (f+n)/(n-f),    fn/(n-f)     ]
+[ 0,        0,     -1,             0             ]
+```
+
+simplified perspective matrix. the secret sauce is in the -1 in the third column: it sets the w to the z value so things further away down the z axis get shrunk down
+
+* n = near clip (.1)
+* f = far clip (100)
+* aspect = aspect ratio (1)
+
+```
+[ 100,      0,     0,              0             ]
+[ 0,      100,     0,              0             ]
+[ 0,        0,  (100.1)/(-99.9), 10/(-99.9)      ]
+[ 0,        0,     -1,             0             ]
+```
+
+## 3/8/24 how do we fix this issue
+
+### first make sure we understand it
+
+we're checking if currentDepth > closestDepth + 0.01 for shadowing.
+
+example pixel that is not shadowed:
+
+* currentDepth 0.98946941
+* closestDepth 0.98885888
+* 0.00061053 deeper than closest depth, but this fails the 0.01 test, so is considered in the light
+
+example pixel that is shadowed:
+
+* currentDepth 0.98946172
+* closestDepth 0.97924232
+* 0.0102194 deeper, just over the 0.01 threshold, so in shadow
+
+note that the non-shadowed has a greater depth! by 0.00000769. it would appear that the texture sampling is off by just enough that passes while the other succeeds
+
+so: I think the problem is how we're sampling the depth texture. I wonder if we can introduce anything to fix this? like what if we take multiple samples?
+
 ## 3/7/24 more goofing around
 
 ![](Assets/Screenshots/shadowmapbug2.png)

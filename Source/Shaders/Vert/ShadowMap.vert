@@ -14,5 +14,7 @@ layout(location = LayoutLocation_Position) out vec3 outPos;
 void main()
 {
     mat4 worldXform = xform.world * modelUBO.xform;
-    gl_Position = light.viewProjMatrix * worldXform * vec4(inPos, 1.0);
+    vec4 pos = light.viewProjMatrix * worldXform * vec4(inPos, 1.0);
+    outPos = pos.xyz/pos.w;
+    gl_Position = pos;
 }

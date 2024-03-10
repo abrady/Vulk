@@ -28,7 +28,7 @@ void main() {
     vec3 lightColor = lightBuf.light.color;
     vec4 tex = texture(texSampler, inTexCoord);
     vec3 norm = calcTBNNormal(normSampler, inTexCoord, inNormal, inTangent);
-    if (currentDepth > closestDepth + 0.01) {
+    if (currentDepth > closestDepth + 0.005) {
         // In shadow - handwave 
         tex *= 0.5;
         lightColor *= 0.01;
