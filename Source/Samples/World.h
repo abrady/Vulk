@@ -106,17 +106,14 @@ class World {
         ubo.world = glm::rotate(glm::mat4(1.0f), rotationTime * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         ubo.view = glm::lookAt(scene->camera.eye, lookAt, up);
         ubo.proj = glm::perspective(glm::radians(45.0f), viewport.width / (float)viewport.height, nearClip, farClip);
-        ubo.proj[1][1] *= -1;
+        // ubo.proj[1][1] *= -1;
 
         // set up the light view proj
 
         VulkPointLight &light = *scene->sceneUBOs.pointLight.mappedUBO;
-        // glm::vec3 focusPt = scene->camera.eye + (nearClip + farClip) / 2.0f * fwd; // look at the middle of the cam frustum
-        // up = glm::vec3(0.0f, 1.0f, 0.0f);
-        // glm::mat4 lightView = glm::lookAt(light.pos, focusPt, up);
-        glm::mat4 lightView = ubo.view; // just take the same view for testing
-        glm::mat4 p = ubo.proj;
-        p[1][1] *= -1;
+        glm::vec3 focusPt = scene->camera.lookAt;
+        up = glm::vec3(0.0f, 1.0f, 0.0f);
+        glm::mat4 lightView = glm::lookAt(light.pos, focusPt, up);
         glm::mat4 lightProj = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 100.0f);
         glm::mat4 viewProj = lightProj * lightView;
         scene->lightViewProjUBO->mappedUBO->viewProj = viewProj;
