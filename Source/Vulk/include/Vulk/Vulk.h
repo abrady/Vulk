@@ -71,13 +71,6 @@ class Vulk {
         glfwSetWindowUserPointer(window, this);
     }
 
-    uint32_t getWidth() {
-        return swapChainExtent.width;
-    }
-    uint32_t getHeight() {
-        return swapChainExtent.height;
-    }
-
     VkFormat findSupportedFormat(const std::vector<VkFormat> &candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
     VkFormat findDepthFormat();
     void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties,

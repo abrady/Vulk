@@ -12,7 +12,7 @@
 #include "VulkImageView.h"
 #include "VulkMaterialTextures.h"
 #include "VulkMesh.h"
-#include "VulkPipelineBuilder.h"
+#include "VulkPipeline.h"
 
 // a model is the minimal set of things needed to render something in a visually interesting way. it consists of:
 // * a mesh

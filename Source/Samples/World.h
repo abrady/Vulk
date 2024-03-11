@@ -12,7 +12,7 @@
 #include "Vulk/VulkDescriptorSetUpdater.h"
 #include "Vulk/VulkFence.h"
 #include "Vulk/VulkGeo.h"
-#include "Vulk/VulkPipelineBuilder.h"
+#include "Vulk/VulkPipeline.h"
 #include "Vulk/VulkResourceMetadata.h"
 #include "Vulk/VulkResources.h"
 #include "Vulk/VulkScene.h"
@@ -48,7 +48,7 @@ class World {
         scene = resources.scenes[sceneName];
         SceneDef &sceneDef = *resources.metadata.scenes.at(sceneName);
 
-        shadowMapPipeline = resources.loadPipeline(shadowMapRenderpass->renderPass, "ShadowMap");
+        shadowMapPipeline = resources.loadPipeline(shadowMapRenderpass->renderPass, shadowMapRenderpass->extent, "ShadowMap");
         auto shadowMapPipelineDef = resources.metadata.pipelines.at("ShadowMap");
         for (int i = 0; i < scene->actors.size(); ++i) {
             auto actor = scene->actors[i];
@@ -61,8 +61,8 @@ class World {
         // Debug stuff
 
         // always create the debug actors/pipeline so we can render them on command.
-        debugNormalsPipeline = resources.loadPipeline(vk.renderPass, "DebugNormals");
-        resources.loadPipeline(vk.renderPass, "DebugTangents"); // TODO: does this even need to be a separate pipeline?
+        debugNormalsPipeline = resources.loadPipeline(vk.renderPass, vk.swapChainExtent, "DebugNormals");
+        resources.loadPipeline(vk.renderPass, vk.swapChainExtent, "DebugTangents"); // TODO: does this even need to be a separate pipeline?
         auto debugNormalsPipelineDef = resources.metadata.pipelines.at("DebugNormals");
         auto debugTangentsPipelineDef = resources.metadata.pipelines.at("DebugTangents");
 
@@ -131,14 +131,6 @@ class World {
     }
 
     void renderShadowMapImageForLight(VkCommandBuffer commandBuffer, VulkPointLight &light) {
-        VkViewport viewport{};
-        viewport.x = 0.0f;
-        viewport.y = 0.0f;
-        viewport.width = (float)shadowMapRenderpass->extent.width;
-        viewport.height = (float)shadowMapRenderpass->extent.height;
-        viewport.minDepth = 0.0f;
-        viewport.maxDepth = 1.0f;
-
         VkClearValue clearColor = {1.0f, 0.0f, 0.0f, 0.0f}; // Use 1.0f for depth clearing
         VkRenderPassBeginInfo renderPassBeginInfo = {};
         renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -149,19 +141,12 @@ class World {
         renderPassBeginInfo.clearValueCount = 1;
         renderPassBeginInfo.pClearValues = &clearColor;
 
-        VkRect2D scissor{};
-        scissor.offset = {0, 0};
-        scissor.extent = vk.swapChainExtent;
-
         vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
         for (auto &actor : shadowMapActors) {
             auto model = actor->model;
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipeline);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout, 0, 1,
                                     &actor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet, 0, nullptr);
-            vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-            vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
-
             VkDeviceSize offsets[] = {0};
             vkCmdBindVertexBuffers(commandBuffer, 0, 1, &model->vertBuf.buf, offsets);
             vkCmdBindIndexBuffer(commandBuffer, model->indexBuf.buf, 0, VK_INDEX_TYPE_UINT32);
@@ -185,25 +170,18 @@ class World {
         renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
         renderPassInfo.pClearValues = clearValues.data();
 
-        VkRect2D scissor{};
-        scissor.offset = {0, 0};
-        scissor.extent = vk.swapChainExtent;
-
         vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-        render(commandBuffer, vk.currentFrame, viewport, scissor);
+        render(commandBuffer, vk.currentFrame);
         vkCmdEndRenderPass(commandBuffer);
     }
 
-    void render(VkCommandBuffer commandBuffer, uint32_t currentFrame, VkViewport const &viewport, VkRect2D const &scissor) {
+    void render(VkCommandBuffer commandBuffer, uint32_t currentFrame) {
         // render the scene?
         for (auto &actor : scene->actors) {
             auto model = actor->model;
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipeline);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout, 0, 1,
                                     &actor->dsInfo->descriptorSets[currentFrame]->descriptorSet, 0, nullptr);
-            vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-            vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
-
             VkDeviceSize offsets[] = {0};
             vkCmdBindVertexBuffers(commandBuffer, 0, 1, &model->vertBuf.buf, offsets);
             vkCmdBindIndexBuffer(commandBuffer, model->indexBuf.buf, 0, VK_INDEX_TYPE_UINT32);
@@ -218,8 +196,6 @@ class World {
                 vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipeline);
                 vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout, 0, 1,
                                         &actor->dsInfo->descriptorSets[currentFrame]->descriptorSet, 0, nullptr);
-                vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-                vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
                 VkDeviceSize offsets[] = {0};
                 vkCmdBindVertexBuffers(commandBuffer, 0, 1, &model->vertBuf.buf, offsets);
@@ -235,8 +211,6 @@ class World {
                 vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipeline);
                 vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout, 0, 1,
                                         &actor->dsInfo->descriptorSets[currentFrame]->descriptorSet, 0, nullptr);
-                vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-                vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
                 VkDeviceSize offsets[] = {0};
                 vkCmdBindVertexBuffers(commandBuffer, 0, 1, &model->vertBuf.buf, offsets);

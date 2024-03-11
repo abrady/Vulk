@@ -3,7 +3,7 @@
 #include "Vulk.h"
 #include "VulkMesh.h"
 #include "VulkModel.h"
-#include "VulkPipelineBuilder.h"
+#include "VulkPipeline.h"
 #include "VulkUniformBuffer.h"
 
 struct VulkSceneUBOs;

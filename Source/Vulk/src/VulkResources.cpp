@@ -65,7 +65,7 @@ shared_ptr<VulkModel> VulkResources::getModel(ModelDef &modelDef) {
     return models[name];
 }
 
-std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(VkRenderPass renderPass, std::string const &name) {
+std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(VkRenderPass renderPass, VkExtent2D extent, std::string const &name) {
     if (pipelines.contains(name)) {
         return pipelines[name];
     }
@@ -104,6 +104,8 @@ std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(VkRenderPass renderPas
         .setDepthCompareOp(def.depthCompareOp)
         .setPrimitiveTopology(def.primitiveTopology)
         .setLineWidth(1.0f)
+        .setScissor(extent)
+        .setViewport(extent)
         // .setCullMode(VK_CULL_MODE_BACK_BIT)
         .setDepthCompareOp(VK_COMPARE_OP_LESS)
         .setStencilTestEnabled(false)
@@ -219,7 +221,7 @@ std::shared_ptr<VulkScene> VulkResources::loadScene(VkRenderPass renderPass, std
     *scene->sceneUBOs.pointLight.mappedUBO = *sceneDef.pointLights[0]; // just one light for now
 
     for (auto &actorDef : sceneDef.actors) {
-        loadPipeline(renderPass, actorDef->pipeline->name);
+        loadPipeline(renderPass, vk.swapChainExtent, actorDef->pipeline->name);
         scene->actors.push_back(createActorFromPipeline(*actorDef, actorDef->pipeline, scene));
     }
     return scenes[name] = scene;

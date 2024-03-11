@@ -2,28 +2,9 @@
 
 #include "Common/ClassNonCopyableNonMovable.h"
 #include "VulkDescriptorSetLayoutBuilder.h"
+#include "VulkPipeline.h"
 #include "VulkShaderModule.h"
 #include <vulkan/vulkan.h>
-
-class VulkPipeline : public ClassNonCopyableNonMovable {
-  private:
-    Vulk &vk;
-    std::vector<std::shared_ptr<VulkShaderModule>> shaderModules;
-
-  public:
-    VkPipeline pipeline;
-    VkPipelineLayout pipelineLayout;
-    std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout;
-
-    VulkPipeline(Vulk &vk, VkPipeline pipeline, VkPipelineLayout pipelineLayout, std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout,
-                 std::vector<std::shared_ptr<VulkShaderModule>> shaderModules)
-        : vk(vk), pipeline(pipeline), pipelineLayout(pipelineLayout), descriptorSetLayout(descriptorSetLayout), shaderModules(shaderModules) {
-    }
-    ~VulkPipeline() {
-        vkDestroyPipeline(vk.device, pipeline, nullptr);
-        vkDestroyPipelineLayout(vk.device, pipelineLayout, nullptr);
-    }
-};
 
 class VulkPipelineBuilder {
     Vulk &vk;
@@ -41,6 +22,8 @@ class VulkPipelineBuilder {
     VkPipelineColorBlendStateCreateInfo colorBlending{};
     std::vector<VkDynamicState> dynamicStates;
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+    VkRect2D scissor{};
+    VkViewport viewport{};
 
     VkPrimitiveTopology primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
@@ -89,6 +72,9 @@ class VulkPipelineBuilder {
 
     VulkPipelineBuilder &setBlending(bool enabled, VkColorComponentFlags colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
                                                                                           VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT);
+
+    VulkPipelineBuilder &setScissor(VkExtent2D extent);
+    VulkPipelineBuilder &setViewport(VkExtent2D extent);
 
     void build(VkRenderPass renderPass, std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout, VkPipelineLayout *pipelineLayout,
                VkPipeline *graphicsPipeline);

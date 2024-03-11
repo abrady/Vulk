@@ -14,7 +14,7 @@
 #include "VulkMaterialTextures.h"
 #include "VulkMesh.h"
 #include "VulkModel.h"
-#include "VulkPipelineBuilder.h"
+#include "VulkPipeline.h"
 #include "VulkSampler.h"
 #include "VulkScene.h"
 #include "VulkShaderModule.h"
@@ -85,7 +85,7 @@ class VulkResources {
 
     std::shared_ptr<VulkActor> createActorFromPipeline(ActorDef const &actorDef, std::shared_ptr<PipelineDef> pipelineDef, std::shared_ptr<VulkScene> scene);
 
-    std::shared_ptr<VulkPipeline> loadPipeline(VkRenderPass renderPass, std::string const &name);
+    std::shared_ptr<VulkPipeline> loadPipeline(VkRenderPass renderPass, VkExtent2D extent, std::string const &name);
     std::shared_ptr<VulkPipeline> getPipeline(std::string const &name) {
         return pipelines.at(name);
     }

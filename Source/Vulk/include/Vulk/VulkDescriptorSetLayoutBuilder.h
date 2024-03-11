@@ -1,22 +1,8 @@
 #pragma once
 
 #include "Common/ClassNonCopyableNonMovable.h"
+#include "VulkDescriptorSetLayout.h"
 #include "VulkUtil.h"
-class Vulk;
-
-class VulkDescriptorSetLayout : public ClassNonCopyableNonMovable {
-    Vulk &vk;
-
-  public:
-    VkDescriptorSetLayout layout;
-    VulkDescriptorSetLayout(Vulk &vk, VkDescriptorSetLayout layout, std::vector<VkDescriptorSetLayoutBinding> bindings,
-                            VkDescriptorSetLayoutCreateInfo createInfo);
-    ~VulkDescriptorSetLayout();
-
-    // just for debugging
-    std::vector<VkDescriptorSetLayoutBinding> const bindings;
-    VkDescriptorSetLayoutCreateInfo const createInfo{};
-};
 
 class VulkDescriptorSetLayoutBuilder {
     Vulk &vk;

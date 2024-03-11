@@ -17,8 +17,8 @@ VulkPipelineBuilder::VulkPipelineBuilder(Vulk &vk) : vk(vk) {
     inputAssembly.primitiveRestartEnable = VK_FALSE;
 
     viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    viewportState.viewportCount = 1;
-    viewportState.scissorCount = 1;
+    viewportState.viewportCount = 0;
+    viewportState.scissorCount = 0;
 
     multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
     multisampling.sampleShadingEnable = VK_FALSE;
@@ -44,7 +44,7 @@ VulkPipelineBuilder::VulkPipelineBuilder(Vulk &vk) : vk(vk) {
     colorBlending.blendConstants[2] = 0.0f;
     colorBlending.blendConstants[3] = 0.0f;
 
-    dynamicStates = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+    // dynamicStates = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 }
 
 VulkPipelineBuilder &VulkPipelineBuilder::addShaderStage(VkShaderStageFlagBits stage, char const *path) {
@@ -149,6 +149,7 @@ VulkPipelineBuilder &VulkPipelineBuilder::setBlending(bool enabled, VkColorCompo
 
 void VulkPipelineBuilder::build(VkRenderPass renderPass, std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout, VkPipelineLayout *pipelineLayout,
                                 VkPipeline *graphicsPipeline) {
+    assert(viewport.maxDepth > 0.f);
     VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     vertexInputInfo.vertexBindingDescriptionCount = 1;
@@ -229,5 +230,31 @@ VulkPipelineBuilder &VulkPipelineBuilder::setFrontStencilReference(uint32_t refe
 
 VulkPipelineBuilder &VulkPipelineBuilder::copyFrontStencilToBack() {
     depthStencil.back = depthStencil.front;
+    return *this;
+}
+
+VulkPipelineBuilder &setScissor(VkExtent2D extent);
+VulkPipelineBuilder &setViewport(VkExtent2D extent);
+
+VulkPipelineBuilder &VulkPipelineBuilder::setScissor(VkExtent2D extent) {
+    assert(viewportState.pScissors == nullptr);
+    scissor.offset = {0, 0};
+    scissor.extent = extent;
+    viewportState.scissorCount = 1;
+    viewportState.pScissors = &scissor;
+    return *this;
+}
+
+VulkPipelineBuilder &VulkPipelineBuilder::setViewport(VkExtent2D extent) {
+    assert(viewportState.pViewports == nullptr);
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = static_cast<float>(extent.width);
+    viewport.height = static_cast<float>(extent.height);
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+
+    viewportState.viewportCount = 1;
+    viewportState.pViewports = &viewport;
     return *this;
 }

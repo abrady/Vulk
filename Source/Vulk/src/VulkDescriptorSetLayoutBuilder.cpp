@@ -2,14 +2,6 @@
 #include "Vulk/Vulk.h"
 #include "Vulk/VulkUtil.h"
 
-VulkDescriptorSetLayout::VulkDescriptorSetLayout(Vulk &vk, VkDescriptorSetLayout layout, std::vector<VkDescriptorSetLayoutBinding> bindings,
-                                                 VkDescriptorSetLayoutCreateInfo createInfo)
-    : vk(vk), layout(layout), bindings(bindings), createInfo(createInfo) {
-}
-VulkDescriptorSetLayout::~VulkDescriptorSetLayout() {
-    vkDestroyDescriptorSetLayout(vk.device, layout, nullptr);
-}
-
 VulkDescriptorSetLayoutBuilder &VulkDescriptorSetLayoutBuilder::addUniformBuffer(VkShaderStageFlags stageFlags, VulkShaderUBOBinding binding) {
     if (!layoutBindingsMap.contains(binding)) {
         VkDescriptorSetLayoutBinding layoutBinding{};

@@ -2,26 +2,32 @@
 # e.g. mkdir Build; cd Build; cmake -DCMAKE_TOOLCHAIN_FILE=<path_to>/buildsystems/vcpkg.cmake ..
 # cmake -DCMAKE_BUILD_TYPE=Debug - for Debug Build
 
-cmake_minimum_required (VERSION 3.8)
-project ("VulkanRoot")
+cmake_minimum_required (VERSION 3.13)
+project ("VulkanRoot" CXX)
 
-find_package(nlohmann_json CONFIG REQUIRED)
+# some quick lessons here:
+# - vcpkg needs to be in the system path for this to work.
+# Check if vcpkg is bootstrapped
+# if(NOT EXISTS "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake")
+#   message(STATUS "Bootstrapping vcpkg...")
+#   execute_process(COMMAND ${CMAKE_SOURCE_DIR}/vcpkg/bootstrap-vcpkg.bat
+#                   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/vcpkg)
+#   execute_process(COMMAND ${CMAKE_SOURCE_DIR}/vcpkg/vcpkg integrate install
+#                   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/vcpkg)
+# endif()
+
+# Set the toolchain file
+# set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
+message(STATUS "Using vcpkg toolchain file: ${CMAKE_TOOLCHAIN_FILE}")
+
+
 find_package(glfw3 CONFIG REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
 find_package(Vulkan REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(Stb REQUIRED)
 find_package(glm CONFIG REQUIRED)
 
-
-# Check if vcpkg is bootstrapped
-if(NOT EXISTS "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake")
-  message(STATUS "Bootstrapping vcpkg...")
-  execute_process(COMMAND ${CMAKE_SOURCE_DIR}/vcpkg/bootstrap-vcpkg.bat
-                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/vcpkg)
-endif()
-
-# Set the toolchain file
-set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
 
 ######
 ## project setup
