@@ -33,14 +33,72 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
-8. Adjust Shadow Mapping Parameters
-Tweak parameters such as the light's view and projection matrices, the depth bias (to avoid shadow acne), and the shadow map resolution to improve the quality of the shadows.
-
 ## what next?
 
 Continuing to read <https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Mapping> I see that I already handled the frustum and border color problems, huzzah! What else does it talk about?
 
 ### PCF
+
+## 3/10/24 lightmap works
+
+![](Assets/Screenshots/lightmap_basic_works.png)
+
+In the end the dumb thing I did was this: you need to normalize the x and y from -1 to 1 to 0 to 1 by halving and adding .5 to them. I was doing this to the z value as well
+
+feeling dumb that this took so long, but also feeling good that I figured it out!
+
+What did I learn with this?
+
+* nearly working might be hiding a big bug
+* dig deep into small problems and find the simplest repro case you can
+
+## 3/10/24 lightmap kinda works
+
+But something is funny. if I
+
+* take a quad 12/12 with 6 verts
+* put the camera at 0,0,10
+* put the light at 0,0,10,
+* have the same frustum for both
+
+then I would expect the depth to be the same, right? It's not happening
+
+Looking in renderdoc I see:
+
+* currentDepth: 0.97138041
+* closestDepth: 0.94276088
+
+So the sampled depth is almost .03 closer, why?
+
+on the c++ side I have:
+
+* ubo.view [[1 -0 -0 0] [0 1 -0 0] [0 0 1 0] [-0 -0 -10 1]]
+* lightView [[1 -0 -0 0] [0 1 -0 0] [0 0 1 0] [-0 -0 -10 1]]
+* ubo.proj  [[1.81066 0 0 0] [0 2.41421 0 0] [0 0 -1.0101 -1] [0 0 -1.0101 0]]
+* lightProj [[1.81066 0 0 0] [0 2.41421 0 0] [0 0 -1.0101 -1] [0 0 -1.0101 0]]
+
+So the view and projection matrices are the same.
+
+viewProj
+
+* row 1: [1.81066 0 0 0]
+* row 2: [0 2.41421 0 0]
+* row 3: [0 0 -1.0101 9.09091]
+* row 4: [0 0 -1 10]
+
+Let's check the shadow transformation:
+
+* viewProjMatrix.row0: 1.81066012, 0.00, 0.00, 0.00
+* viewProjMatrix.row1: 0.00, 2.41421342, 0.00, 0.00
+* viewProjMatrix.row2: 0.00, 0.00, -1.01010096, 9.09090805
+* viewProjMatrix.row3: 0.00, 0.00, -1.00, 10.00
+
+same as viewProj
+
+Let's see what the lighting pass is doing:
+
+* depth outPosLightspace: x, y, 14.14141273 15
+* light outPosLightspace: x, y, 14.14141273 15
 
 ## 3/10/24 lightmap generation is messed up
 
@@ -60,7 +118,7 @@ This seems like a good thread to pull on:
 
 Vulkan uses a right handed coordinate system and a depth range of 0 to 1
 
-```
+```c
 [ f/aspect, 0,     0,              0             ]
 [ 0,        f,     0,              0             ]
 [ 0,        0,     (f+n)/(n-f),    fn/(n-f)     ]
@@ -73,7 +131,7 @@ simplified perspective matrix. the secret sauce is in the -1 in the third column
 * f = far clip (100)
 * aspect = aspect ratio (1)
 
-```
+```c
 [ 100,      0,     0,              0             ]
 [ 0,      100,     0,              0             ]
 [ 0,        0,  (100.1)/(-99.9), 10/(-99.9)      ]
@@ -218,7 +276,7 @@ so...
 
 2 is probably the right long term approach, but let's try the mem barrier just to learn how it works:
 
-```
+```c
 // before this: update the UBO
 
 VkMemoryBarrier memoryBarrier = {};
@@ -274,7 +332,7 @@ To do that we make a pipeline memory barrier. At a high level you say:
 
 This is the call to to create the barrier, see the annotations:
 
-```
+```c
 VkImageMemoryBarrier barrier = {};
 barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 barrier.oldLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;      // 1. old layout: this is a depth buffer

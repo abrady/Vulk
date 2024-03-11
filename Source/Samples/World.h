@@ -110,9 +110,9 @@ class World {
         // set up the light view proj
         VulkPointLight &light = *scene->sceneUBOs.pointLight.mappedUBO;
         glm::vec3 lightLookAt = scene->camera.lookAt;
-        // up = glm::vec3(0.0f, 1.0f, 0.0f);
-        glm::mat4 lightView = ubo.view; // glm::lookAt(light.pos, lightLookAt, up);
-        glm::mat4 lightProj = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 100.0f);
+        up = glm::vec3(0.0f, 1.0f, 0.0f);
+        glm::mat4 lightView = glm::lookAt(light.pos, lightLookAt, up);
+        glm::mat4 lightProj = glm::perspective(glm::radians(45.0f), viewport.width / (float)viewport.height, nearClip, farClip);
         glm::mat4 viewProj = lightProj * lightView;
         scene->lightViewProjUBO->mappedUBO->viewProj = viewProj;
 

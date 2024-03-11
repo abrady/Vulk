@@ -15,10 +15,13 @@ class VulkDepthRenderpass : public ClassNonCopyableNonMovable {
     VkRenderPass renderPass;
     std::array<std::shared_ptr<VulkDepthView>, MAX_FRAMES_IN_FLIGHT> depthViews;
     std::array<VkFramebuffer, MAX_FRAMES_IN_FLIGHT> frameBuffers;
-    VkExtent2D extent = {1024, 1024};
+    VkExtent2D extent = {};
     VkFormat depthFormat = VK_FORMAT_D32_SFLOAT;
 
     VulkDepthRenderpass(Vulk &vkIn) : vk(vkIn) {
+        // I've been told matching the aspect ratio is important for shadow mapping
+        extent.width = 1024;
+        extent.height = static_cast<uint32_t>(1024 * (static_cast<float>(vk.swapChainExtent.height) / vk.swapChainExtent.width));
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
             depthViews[i] = std::make_unique<VulkDepthView>(vk, extent, depthFormat);
         }

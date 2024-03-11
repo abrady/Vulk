@@ -20,15 +20,15 @@ layout(location = 0) out vec4 outColor;
 
 void main() {
     vec3 projCoords = inPosLightSpace.xyz / inPosLightSpace.w; // To NDC
-    projCoords = projCoords * 0.5 + 0.5; // To texture coordinates
-    float closestDepth = texture(shadowSampler, projCoords.xy).r;
+    vec2 depthUVs = projCoords.xy * 0.5 + 0.5; // To texture coordinates
+    float closestDepth = texture(shadowSampler, depthUVs).r;
     float currentDepth = clamp(projCoords.z, 0.0, 1.0); // just in case the z is outside the frustum
     // introducing a bias to reduce shadow acne. e.g. if we've sampled the same depth as we've projected
     // we'll get strange behavior so just expect it to be a biased amount further to be in shadow
     vec3 lightColor = lightBuf.light.color;
     vec4 tex = texture(texSampler, inTexCoord);
     vec3 norm = calcTBNNormal(normSampler, inTexCoord, inNormal, inTangent);
-    if (currentDepth > closestDepth + 0.005) {
+    if (currentDepth > closestDepth + 0.001) {
         // In shadow - handwave 
         tex *= 0.5;
         lightColor *= 0.01;

@@ -7,7 +7,7 @@ struct VulkCamera {
     glm::vec3 lookAt = glm::vec3(0.0f, 0.0f, 0.0f);
     float yaw = 180.0f;
     float pitch = -15.0f;
-    float nearClip = 0.01f;
+    float nearClip = 1.f;
     float farClip = 100.0f;
 
     void setLookAt(glm::vec3 eyeIn, glm::vec3 target);

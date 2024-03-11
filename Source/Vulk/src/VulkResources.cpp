@@ -6,7 +6,6 @@
 #include <string>
 #include <unordered_map>
 
-#include "Vulk/VulkCamera.h"
 #include "Vulk/VulkDepthView.h"
 #include "Vulk/VulkDescriptorSetBuilder.h"
 #include "Vulk/VulkDescriptorSetLayoutBuilder.h"

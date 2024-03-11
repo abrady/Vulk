@@ -3,7 +3,7 @@
 #include "common.glsl"
 
 
-layout(location = LayoutLocation_Position) in vec3 inPos;
+//layout(location = LayoutLocation_Position) in vec3 inPos;
 
 
 // the pipeline automatically handles the depth check
