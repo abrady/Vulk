@@ -5,16 +5,26 @@
 cmake_minimum_required (VERSION 3.13)
 project ("VulkanRoot" CXX)
 
-# some quick lessons here:
+# Notes
 # - vcpkg needs to be in the system path for this to work.
+# - make sure you ran 'git submodule update --init --recursive' to get the submodules
 # Check if vcpkg is bootstrapped
-# if(NOT EXISTS "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake")
-#   message(STATUS "Bootstrapping vcpkg...")
-#   execute_process(COMMAND ${CMAKE_SOURCE_DIR}/vcpkg/bootstrap-vcpkg.bat
-#                   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/vcpkg)
-#   execute_process(COMMAND ${CMAKE_SOURCE_DIR}/vcpkg/vcpkg integrate install
-#                   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/vcpkg)
-# endif()
+find_program(VCPKG_EXECUTABLE NAMES vcpkg PATHS "${CMAKE_SOURCE_DIR}/vcpkg" NO_DEFAULT_PATH)
+if(NOT VCPKG_EXECUTABLE)
+  message(STATUS "Bootstrapping vcpkg...")
+  execute_process(COMMAND git submodule update --init --recursive
+                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+  execute_process(COMMAND ${CMAKE_SOURCE_DIR}/vcpkg/bootstrap-vcpkg.bat
+                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/vcpkg)
+  # Find vcpkg executable again after bootstrapping
+  find_program(VCPKG_EXECUTABLE NAMES vcpkg PATHS "${CMAKE_SOURCE_DIR}/vcpkg" NO_DEFAULT_PATH)
+endif()
+if(VCPKG_EXECUTABLE)
+  execute_process(COMMAND ${VCPKG_EXECUTABLE} integrate install
+                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/vcpkg)
+else()
+  message(FATAL_ERROR "Could not find vcpkg executable")
+endif()
 
 # Set the toolchain file
 # set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
