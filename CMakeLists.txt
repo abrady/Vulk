@@ -1,13 +1,8 @@
-# this uses vcpkg to manage dependencies so don't forget to run vcpkg integrate install to get the path and build with it
-# e.g. mkdir Build; cd Build; cmake -DCMAKE_TOOLCHAIN_FILE=<path_to>/buildsystems/vcpkg.cmake ..
-# cmake -DCMAKE_BUILD_TYPE=Debug - for Debug Build
-
+# The only prerequisite here is that cmake is installed and in your path to run this
+# it also uses vcpkg to manage dependencies, but tries to bootstrap this from within the repo
 cmake_minimum_required (VERSION 3.13)
 project ("VulkanRoot" CXX)
 
-# Notes
-# - vcpkg needs to be in the system path for this to work.
-# - make sure you ran 'git submodule update --init --recursive' to get the submodules
 # Check if vcpkg is bootstrapped
 find_program(VCPKG_EXECUTABLE NAMES vcpkg PATHS "${CMAKE_SOURCE_DIR}/vcpkg" NO_DEFAULT_PATH)
 if(NOT VCPKG_EXECUTABLE)
