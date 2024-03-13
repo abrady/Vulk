@@ -20,18 +20,19 @@
         // building C:/open/Github/Vulk/build/Resources/Assets/Pipelines/LitShadowMappedModel.pipeline from C:/open/Github/Vulk/Assets/Pipelines/LitShadowMappedModel.pipeline
         {
             "name": "PipelineBuilder - Debug",
-            "program": "${workspaceFolder}/build/Source/Tools/PipelineBuilder/Debug/PipelineBuilder.exe",
+            "program": "${workspaceFolder}/build/Source/Tools/BuildTool/Debug/BuildTool.exe",
             "type": "cppvsdbg",
             "request": "launch",
             "cwd": "${workspaceRoot}/Build",
             "args": [
+                "pipeline",
                 "${workspaceFolder}/build/Resources/Source/Shaders",
                 "${workspaceFolder}/build/Resources/Assets/Pipelines",
                 "${workspaceFolder}/Assets/Pipelines/ShadowMap.pipeline"
             ],
             "stopAtEntry": false,
             "environment": [],
-            // "preLaunchTask": "CMake: build"
+            "preLaunchTask": "CMake: build buildtool"
         },
         {
             "name": "(gdb) Attach",

@@ -1,0 +1,14 @@
+enum MeshDefType : byte {
+    Model,
+    Mesh,
+}
+
+enum GeoMeshDefType : byte {
+    Sphere,
+    Cylinder,
+    EquilateralTriangle,
+    Quad,
+    Grid,
+    Axes,
+}
+

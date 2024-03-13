@@ -1,4 +1,7 @@
 #pragma once
+#include <cereal/archives/binary.hpp>
+#include <cereal/archives/json.hpp>
+#include <cereal/types/memory.hpp>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -14,15 +17,19 @@
 #include "VulkGeo.h"
 #include "VulkModel.h"
 #include "VulkPointLight.h"
+#include "VulkResourceMetadata_generated.h"
 #include "VulkScene.h"
 #include "VulkShaderModule.h"
-
 using namespace std;
 namespace fs = std::filesystem;
 
 struct ShaderDef {
     string name;
     fs::path path;
+
+    template <class Archive> void serialize(Archive &ar) {
+        ar(CEREAL_NVP(name), CEREAL_NVP(path));
+    }
 };
 
 struct MaterialDef {
@@ -50,6 +57,11 @@ struct MaterialDef {
         m.Ks = Ks;
         m.d = d;
         return m;
+    }
+
+    template <class Archive> void serialize(Archive &ar) {
+        ar(CEREAL_NVP(name), CEREAL_NVP(mapKa), CEREAL_NVP(mapKd), CEREAL_NVP(mapKs), CEREAL_NVP(mapNormal), CEREAL_NVP(Ns), CEREAL_NVP(Ni), CEREAL_NVP(d),
+           CEREAL_NVP(Ka), CEREAL_NVP(Kd), CEREAL_NVP(Ks));
     }
 };
 
@@ -91,6 +103,16 @@ struct DescriptorSetDef {
             {VK_SHADER_STAGE_GEOMETRY_BIT, "geom"},
         };
         return shaderStageToStr.at(stage);
+    }
+
+    static VkShaderStageFlagBits getShaderStageFromStr(std::string s) {
+        static unordered_map<string, VkShaderStageFlagBits> shaderStageFromStr{
+            {"vert", VK_SHADER_STAGE_VERTEX_BIT},
+            {"frag", VK_SHADER_STAGE_FRAGMENT_BIT},
+            {"geom", VK_SHADER_STAGE_GEOMETRY_BIT},
+        };
+
+        return shaderStageFromStr.at(s);
     }
 
     static vector<pair<string, VulkShaderUBOBinding>> const &getUBOBindings() {
@@ -230,46 +252,101 @@ struct DescriptorSetDef {
         }
         return j;
     }
-
-    static VkShaderStageFlagBits getShaderStageFromStr(std::string s) {
-        static unordered_map<string, VkShaderStageFlagBits> shaderStageFromStr{
-            {"vert", VK_SHADER_STAGE_VERTEX_BIT},
-            {"frag", VK_SHADER_STAGE_FRAGMENT_BIT},
-            {"geom", VK_SHADER_STAGE_GEOMETRY_BIT},
-        };
-
-        return shaderStageFromStr.at(s);
-    }
 };
 
+namespace cereal {
+    template <class Archive> std::string save_minimal(const Archive &, const VkShaderStageFlagBits &m) {
+        return DescriptorSetDef::shaderStageToStr(m);
+    }
+
+    template <class Archive> void load_minimal(const Archive &, VkShaderStageFlagBits &m, const std::string &value) {
+        m = DescriptorSetDef::getShaderStageFromStr(value);
+    }
+
+    template <class Archive> std::string save_minimal(const Archive &, const VulkShaderUBOBinding &m) {
+        return EnumNameVulkShaderUBOBinding(m);
+    }
+
+    template <class Archive> void load_minimal(const Archive &, VulkShaderUBOBinding &m, const std::string &value) {
+        static unordered_map<string, VulkShaderUBOBinding> bindings;
+        static once_flag flag;
+        call_once(flag, [&]() {
+            const char *const *names = EnumNamesVulkShaderUBOBinding();
+            for (int i = 0; names[i]; i++) {
+                auto name = names[i];
+                if (*name)
+                    bindings[name] = i;
+            }
+        });
+        m = bindings.at(value);
+    }
+
+    template <class Archive> std::string save_minimal(const Archive &, const VulkShaderSSBOBinding &m) {
+        return EnumNameVulkShaderSSBOBinding(m);
+    }
+
+    template <class Archive> void load_minimal(const Archive &, VulkShaderSSBOBinding &m, const std::string &value) {
+        static unordered_map<string, VulkShaderSSBOBinding> bindings;
+        static once_flag flag;
+        call_once(flag, [&]() {
+            const char *const *names = EnumNamesVulkShaderSSBOBinding();
+            for (int i = 0; names[i]; i++) {
+                auto name = names[i];
+                if (*name)
+                    bindings[name] = i;
+            }
+        });
+        m = bindings.at(value);
+    }
+
+    template <class Archive> std::string save_minimal(const Archive &, const VulkShaderTextureBinding &m) {
+        return EnumNameVulkShaderTextureBinding(m);
+    }
+
+    template <class Archive> void load_minimal(const Archive &, VulkShaderTextureBinding &m, const std::string &value) {
+        static unordered_map<string, VulkShaderTextureBinding> bindings;
+        static once_flag flag;
+        call_once(flag, [&]() {
+            const char *const *names = EnumNamesVulkShaderTextureBinding();
+            for (int i = 0; names[i]; i++) {
+                auto name = names[i];
+                if (*name)
+                    bindings[name] = i;
+            }
+        });
+        m = bindings.at(value);
+    }
+} // namespace cereal
+
 #define PIPELINE_JSON_VERSION 1
-// PipelineDeclDef is used to declare a pipeline that is transformed into a PipelineDef during the build process
-// e.g. it lives in the Assets/Pipelines directory
-// comprehensive example:
-// {
-//     "version": 1,
-//     "name": "LitShadowMappedModel",
-//     "vertShader": "LitShadowMappedModel",
-//     "fragShader": "LitShadowMappedModel",
-//     "vertexInputBinding": 0,
-//     "descriptorSet": {
-//         "vert": {
-//             "uniformBuffers": [
-//                 "xforms",
-//                 "modelXform",
-//             ]
-//         },
-//         "frag": {
-//             "uniformBuffers": [
-//                 "lights",
-//                 "eyePos",
-//             ]
-//             "imageSamplers": [
-//                 "shadowMap"
-//             ]
-//         }
-//     }
-// }
+
+namespace cereal {
+    template <class Archive> std::string save_minimal(const Archive &, const VkColorComponentFlags &m) {
+        string mask;
+        if (m & VK_COLOR_COMPONENT_R_BIT)
+            mask += "R";
+        if (m & VK_COLOR_COMPONENT_G_BIT)
+            mask += "G";
+        if (m & VK_COLOR_COMPONENT_B_BIT)
+            mask += "B";
+        if (m & VK_COLOR_COMPONENT_A_BIT)
+            mask += "A";
+        return mask;
+    }
+
+    template <class Archive> void load_minimal(const Archive &, VkColorComponentFlags &mask, const std::string &colorMask) {
+        VkColorComponentFlags mask = 0;
+        if (colorMask.find("R") != string::npos)
+            mask |= VK_COLOR_COMPONENT_R_BIT;
+        if (colorMask.find("G") != string::npos)
+            mask |= VK_COLOR_COMPONENT_G_BIT;
+        if (colorMask.find("B") != string::npos)
+            mask |= VK_COLOR_COMPONENT_B_BIT;
+        if (colorMask.find("A") != string::npos)
+            mask |= VK_COLOR_COMPONENT_A_BIT;
+    }
+} // namespace cereal
+
 struct PipelineDeclDef {
     string name;
     string vertShaderName;
@@ -283,6 +360,8 @@ struct PipelineDeclDef {
 
     uint32_t vertexInputBinding;
     DescriptorSetDef descriptorSet;
+
+    VkCullModeFlags cullMode = VK_CULL_MODE_BACK_BIT;
 
     struct Blending {
         bool enabled = false;
@@ -313,7 +392,17 @@ struct PipelineDeclDef {
             j["colorMask"] = b.colorMask;
             return j;
         }
+
+        template <class Archive> void serialize(Archive &ar) {
+            ar(CEREAL_NVP(enabled), CEREAL_NVP(colorMask));
+        }
     } blending;
+
+    template <class Archive> void serialize(Archive &ar) {
+        ar(CEREAL_NVP(name), CEREAL_NVP(vertShaderName), CEREAL_NVP(geomShaderName), CEREAL_NVP(fragShaderName), CEREAL_NVP(primitiveTopology),
+           CEREAL_NVP(depthTestEnabled), CEREAL_NVP(depthWriteEnabled), CEREAL_NVP(depthCompareOp), CEREAL_NVP(vertexInputBinding), CEREAL_NVP(descriptorSet),
+           CEREAL_NVP(blending), CEREAL_NVP(cullMode));
+    }
 
     void validate() {
         assert(!name.empty());
@@ -395,6 +484,7 @@ struct PipelineDeclDef {
         p.vertexInputBinding = j.at("vertexInputBinding").get<uint32_t>();
         if (j.contains("blending"))
             p.blending = Blending::fromJSON(j["blending"]);
+        p.cullMode = j.value("cullMode", VK_CULL_MODE_BACK_BIT);
         p.validate();
         return p;
     }
@@ -421,6 +511,10 @@ struct PipelineDef : public PipelineDeclDef {
     shared_ptr<ShaderDef> vertShader;
     shared_ptr<ShaderDef> geomShader;
     shared_ptr<ShaderDef> fragShader;
+
+    template <class Archive> void serialize(Archive &ar) {
+        ar(cereal::base_class<PipelineDeclDef>(this), CEREAL_NVP(vertShader), CEREAL_NVP(geomShader), CEREAL_NVP(fragShader));
+    }
 
     void validate() {
         PipelineDeclDef::validate();
@@ -472,17 +566,11 @@ struct PipelineDef : public PipelineDeclDef {
     }
 };
 
-enum MeshDefType {
-    MeshDefType_Model,
-    MeshDefType_Mesh,
-};
-
 struct ModelMeshDef {
     fs::path path;
-};
-
-struct GeoMeshDef {
-    VulkMesh mesh;
+    template <class Archive> void serialize(Archive &ar) {
+        ar(CEREAL_NVP(path));
+    }
 };
 
 struct MeshDef {
@@ -497,6 +585,15 @@ struct MeshDef {
     shared_ptr<VulkMesh> getMesh() {
         assert(type == MeshDefType_Mesh);
         return mesh;
+    }
+
+    template <class Archive> void serialize(Archive &ar) {
+        ar(CEREAL_NVP(name), CEREAL_NVP(type));
+        if (type == MeshDefType_Model) {
+            ar(CEREAL_NVP(model));
+        } else {
+            ar(CEREAL_NVP(mesh));
+        }
     }
 
   private:
@@ -517,6 +614,10 @@ struct ModelDef {
 
     static ModelDef fromJSON(const nlohmann::json &j, unordered_map<string, shared_ptr<MeshDef>> const &meshes,
                              unordered_map<string, shared_ptr<MaterialDef>> materials);
+
+    template <class Archive> void serialize(Archive &ar) {
+        ar(CEREAL_NVP(name), CEREAL_NVP(mesh), CEREAL_NVP(material));
+    }
 };
 
 struct ActorDef {
@@ -535,6 +636,10 @@ struct ActorDef {
     static ActorDef fromJSON(const nlohmann::json &j, unordered_map<string, shared_ptr<PipelineDef>> const &pipelines,
                              unordered_map<string, shared_ptr<ModelDef>> const &models, unordered_map<string, shared_ptr<MeshDef>> meshes,
                              unordered_map<string, shared_ptr<MaterialDef>> materials);
+
+    template <class Archive> void serialize(Archive &ar) {
+        ar(CEREAL_NVP(name), CEREAL_NVP(pipeline), CEREAL_NVP(model), CEREAL_NVP(xform));
+    }
 };
 
 #define SCENE_JSON_VERSION 1
@@ -553,6 +658,10 @@ struct SceneDef {
     static SceneDef fromJSON(const nlohmann::json &j, unordered_map<string, shared_ptr<PipelineDef>> const &pipelines,
                              unordered_map<string, shared_ptr<ModelDef>> const &models, unordered_map<string, shared_ptr<MeshDef>> const &meshes,
                              unordered_map<string, shared_ptr<MaterialDef>> const &materials);
+
+    template <class Archive> void serialize(Archive &ar) {
+        ar(CEREAL_NVP(name), CEREAL_NVP(camera), CEREAL_NVP(pointLights), CEREAL_NVP(actors), CEREAL_NVP(actorMap));
+    }
 };
 
 // The metadata is valid up to the point of loading resources, but does
@@ -566,6 +675,11 @@ struct Metadata {
     unordered_map<string, shared_ptr<ModelDef>> models;
     unordered_map<string, shared_ptr<PipelineDef>> pipelines;
     unordered_map<string, shared_ptr<SceneDef>> scenes;
+
+    template <class Archive> void serialize(Archive &ar) {
+        ar(CEREAL_NVP(meshes), CEREAL_NVP(vertShaders), CEREAL_NVP(geometryShaders), CEREAL_NVP(fragmentShaders), CEREAL_NVP(materials), CEREAL_NVP(models),
+           CEREAL_NVP(pipelines), CEREAL_NVP(scenes));
+    }
 };
 
 extern void findAndProcessMetadata(const fs::path path, Metadata &metadata);

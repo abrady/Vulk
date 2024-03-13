@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+enum VulkShaderUBOBinding {
+    Xforms = 0;
+    Lights = 2;
+    EyePos = 3;
+    ModelXform = 8;
+    MaterialUBO = 10;
+    DebugNormals = 11;
+    DebugTangents = 12;
+    LightViewProjUBO = 13;
+}
+
+enum VulkSamplerBinding {
+    TextureSampler = 1;
+    TextureSampler2 = 4;
+    TextureSampler3 = 5;
+    NormalSampler = 7;
+    ShadowMapSampler = 14;
+}
+message VulkShaderUBOBindingList {
+    repeated VulkShaderUBOBinding items = 1;
+}
+
+message VulkSamplerBindingsList {
+    repeated VulkSamplerBinding items = 1;
+}
+
+message DescriptorSetDef {
+    map<int32, VulkShaderUBOBindingList> uniformBuffers = 1;
+    map<int32, VulkSamplerBindingsList> imageSamplers = 2;
+}

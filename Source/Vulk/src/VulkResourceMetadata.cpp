@@ -92,14 +92,6 @@ static unordered_map<string, MeshDefType> meshDefTypeMap{
     {"Mesh", MeshDefType_Mesh},
 };
 
-enum GeoMeshDefType {
-    GeoMeshDefType_Sphere,
-    GeoMeshDefType_Cylinder,
-    GeoMeshDefType_EquilateralTriangle,
-    GeoMeshDefType_Quad,
-    GeoMeshDefType_Grid,
-    GeoMeshDefType_Axes,
-};
 static unordered_map<string, GeoMeshDefType> geoMeshDefTypeMap{
     {"Sphere", GeoMeshDefType_Sphere}, {"Cylinder", GeoMeshDefType_Cylinder}, {"Triangle", GeoMeshDefType_EquilateralTriangle},
     {"Quad", GeoMeshDefType_Quad},     {"Grid", GeoMeshDefType_Grid},         {"Axes", GeoMeshDefType_Axes},

@@ -39,6 +39,17 @@ Continuing to read <https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Map
 
 ### PCF
 
+## 3/13/24 Summary of shadow mapping from a code standpoint
+
+To get shadowmaps working I hacked something into World.h where I:
+
+* made a 'shadowmap' pipeline
+
+## 3/13/24 Peter panning
+
+One of the downsides of the bias factor is that you can ignore things that should be shadowed, but there's a trick! normally back-facing triangles are culled
+by the graphics pipeline, but in the case of shadows, assuming closed surfaces, you can cull the front faces.
+
 ## 3/10/24 lightmap works
 
 ![](Assets/Screenshots/lightmap_basic_works.png)

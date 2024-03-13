@@ -4,22 +4,22 @@ cmake_minimum_required (VERSION 3.13)
 project ("VulkanRoot" CXX)
 
 # Check if vcpkg is bootstrapped
-find_program(VCPKG_EXECUTABLE NAMES vcpkg PATHS "${CMAKE_SOURCE_DIR}/vcpkg" NO_DEFAULT_PATH)
-if(NOT VCPKG_EXECUTABLE)
-  message(STATUS "Bootstrapping vcpkg...")
-  execute_process(COMMAND git submodule update --init --recursive
-                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-  execute_process(COMMAND ${CMAKE_SOURCE_DIR}/vcpkg/bootstrap-vcpkg.bat
-                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/vcpkg)
-  # Find vcpkg executable again after bootstrapping
-  find_program(VCPKG_EXECUTABLE NAMES vcpkg PATHS "${CMAKE_SOURCE_DIR}/vcpkg" NO_DEFAULT_PATH)
-endif()
-if(VCPKG_EXECUTABLE)
-  execute_process(COMMAND ${VCPKG_EXECUTABLE} integrate install
-                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/vcpkg)
-else()
-  message(FATAL_ERROR "Could not find vcpkg executable")
-endif()
+# find_program(VCPKG_EXECUTABLE NAMES vcpkg PATHS "${CMAKE_SOURCE_DIR}/vcpkg" NO_DEFAULT_PATH)
+# if(NOT VCPKG_EXECUTABLE)
+#   message(STATUS "Bootstrapping vcpkg...")
+#   execute_process(COMMAND git submodule update --init --recursive
+#                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+#   execute_process(COMMAND ${CMAKE_SOURCE_DIR}/vcpkg/bootstrap-vcpkg.bat
+#                   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/vcpkg)
+#   # Find vcpkg executable again after bootstrapping
+#   find_program(VCPKG_EXECUTABLE NAMES vcpkg PATHS "${CMAKE_SOURCE_DIR}/vcpkg" NO_DEFAULT_PATH)
+# endif()
+# if(VCPKG_EXECUTABLE)
+#   execute_process(COMMAND ${VCPKG_EXECUTABLE} integrate install
+#                   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/vcpkg)
+# else()
+#   message(FATAL_ERROR "Could not find vcpkg executable")
+# endif()
 
 # Set the toolchain file
 # set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
@@ -104,7 +104,7 @@ endfunction()
 
 add_subdirectory("${CMAKE_SOURCE_DIR}/Source/Vulk")
 add_subdirectory("${CMAKE_SOURCE_DIR}/Source/Samples")
-add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Tools/PipelineBuilder)
+add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Tools/BuildTool)
 
 ##############################################################################
 ## Shaders
@@ -230,8 +230,8 @@ foreach(FILE ${PIPELINE_SRC_FILES})
     set(OUTPUT_FILE "${PIPELINES_DEST_DIR}/${FILE_NAME}")
     add_custom_command(
         OUTPUT ${OUTPUT_FILE}
-        COMMAND $<TARGET_FILE:PipelineBuilder> ${SHADER_DEST_DIR} ${PIPELINES_DEST_DIR} ${FILE}
-        DEPENDS PipelineBuilder ${FILE}
+        COMMAND $<TARGET_FILE:BuildTool> pipeline ${SHADER_DEST_DIR} ${PIPELINES_DEST_DIR} ${FILE}
+        DEPENDS BuildTool ${FILE}
         COMMENT "building ${OUTPUT_FILE} from ${FILE}"
     )
     list(APPEND PIPELINEBUILDER_OUTPUT_FILES ${OUTPUT_FILE})

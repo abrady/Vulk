@@ -1,1 +1,33 @@
-{"depthCompareOp":"LESS","depthTestEnabled":true,"depthWriteEnabled":true,"descriptorSet":{"frag":{"uniformBuffers":["eyePos"]},"vert":{"imageSamplers":["normalSampler"],"uniformBuffers":["xforms","modelXform","debugNormals"]}},"fragShader":"DebugNormals","geomShader":"DebugNormals","name":"TestPipeline","primitiveTopology":"TriangleList","version":1,"vertShader":"DebugNormals","vertexInputBinding":3435973836}
+{
+    "blending": {
+        "colorMask": "RB",
+        "enabled": true
+    },
+    "depthCompareOp": "NOT_EQUAL",
+    "depthTestEnabled": true,
+    "depthWriteEnabled": true,
+    "descriptorSet": {
+        "frag": {
+            "uniformBuffers": [
+                "eyePos"
+            ]
+        },
+        "vert": {
+            "imageSamplers": [
+                "normalSampler"
+            ],
+            "uniformBuffers": [
+                "xforms",
+                "modelXform",
+                "debugNormals"
+            ]
+        }
+    },
+    "fragShader": "DebugNormals",
+    "geomShader": "DebugNormals",
+    "name": "TestPipeline",
+    "primitiveTopology": "TriangleFan",
+    "version": 1,
+    "vertShader": "DebugNormals",
+    "vertexInputBinding": 3435973836
+}

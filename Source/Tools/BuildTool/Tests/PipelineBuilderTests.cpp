@@ -22,6 +22,7 @@ static PipelineDeclDef makeTestPipelineDeclDef() {
     def.depthTestEnabled = true;
     def.depthWriteEnabled = true;
     def.depthCompareOp = VK_COMPARE_OP_NOT_EQUAL;
+    def.cullMode = VK_CULL_MODE_BACK_BIT;
     def.blending = {
         .enabled = true,
         .colorMask = "RB",
@@ -108,6 +109,7 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
         CHECK(def2.blending.enabled == def.blending.enabled);
         CHECK(def2.blending.colorMask == def.blending.colorMask);
         CHECK(def2.blending.getColorMask() == def.blending.getColorMask());
-        CHECK(sizeof(def) == 464); // reminder to add new fields to the test
+        CHECK(def2.cullMode == def.cullMode);
+        CHECK(sizeof(def) == 472); // reminder to add new fields to the test
     }
 }

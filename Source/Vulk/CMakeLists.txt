@@ -14,6 +14,10 @@ find_package(Stb REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(assimp CONFIG REQUIRED)
 find_package(flatbuffers CONFIG REQUIRED)
+# find_package(Protobuf REQUIRED)
+find_package(cereal CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
+
 
 # Add all the source files to a library
 file(GLOB SOURCES "src/*.cpp")
@@ -29,6 +33,9 @@ target_link_libraries(Vulk PRIVATE nlohmann_json::nlohmann_json)
 target_link_libraries(Vulk PRIVATE glm::glm-header-only)
 target_link_libraries(Vulk PRIVATE assimp::assimp)
 target_link_libraries(Vulk PRIVATE flatbuffers::flatbuffers)
+#target_link_libraries(Vulk PRIVATE protobuf::libprotoc protobuf::libprotobuf protobuf::libprotobuf-lite)
+target_link_libraries(Vulk PRIVATE cereal::cereal)
+target_link_libraries(Vulk PRIVATE spdlog::spdlog)
 
 if(MSVC)
   file(GLOB MY_PROJECT_NATVIS_FILES "${CMAKE_SOURCE_DIR}/Source/Tools/MSVC/Natvis/*.natvis")
@@ -54,7 +61,7 @@ set(GENERATED_HEADERS_DIR ${CMAKE_BINARY_DIR}/generated/Vulk)
 file(MAKE_DIRECTORY ${GENERATED_HEADERS_DIR})
 
 # List of schema files
-file(GLOB FLATBUF_SCHEMA_FILES "${CMAKE_SOURCE_DIR}/Source/FlatbufSchemas/*.fbs")
+file(GLOB FLATBUF_SCHEMA_FILES "${CMAKE_SOURCE_DIR}/Source/Schemas/Flatbuf/*.fbs")
 #message("schema files: ${FLATBUF_SCHEMA_FILES}")
 
 # Generate commands for each schema file
@@ -79,3 +86,39 @@ add_dependencies(Vulk GenerateFlatBuffersSchemas)
 # Include the generated headers in your project
 # NOTE: these are 'public' so anyone using this library will have access to these too
 target_include_directories(Vulk PUBLIC ${GENERATED_HEADERS_DIR})
+
+######
+## Protobuf generation
+######
+
+# find_program(PROTOC_EXECUTABLE NAMES protoc REQUIRED)
+
+# file(GLOB PROTO_FILES "${CMAKE_SOURCE_DIR}/Source/Schemas/Protobuf/*.proto")
+# #message("protobuf schema files: ${PROTO_FILES}")
+
+# foreach(PROTO_FILE ${PROTO_FILES})
+#     message("processing protobuf file: ${PROTO_FILE} with protoc: ${PROTOC_EXECUTABLE}")
+#     get_filename_component(PROTO_NAME ${PROTO_FILE} NAME_WE)
+#     set(GENERATED_SRC ${GENERATED_HEADERS_DIR}/${PROTO_NAME}.pb.cc)
+#     set(GENERATED_HDR ${GENERATED_HEADERS_DIR}/${PROTO_NAME}.pb.h)
+    
+#     add_custom_command(
+#       OUTPUT ${GENERATED_SRC} ${GENERATED_HDR}
+#       COMMAND ${PROTOC_EXECUTABLE}
+#       ARGS --cpp_out=${GENERATED_HEADERS_DIR}
+#            --proto_path=${CMAKE_SOURCE_DIR}/Source/Schemas/Protobuf
+#            ${PROTO_FILE}
+#       DEPENDS ${PROTO_FILE}
+#       COMMENT "Generating C++ protocol buffer for ${PROTO_NAME}"
+#       VERBATIM
+#   )
+#     list(APPEND GENERATED_SRCS ${GENERATED_SRC})
+#     list(APPEND GENERATED_HDRS ${GENERATED_HDR})
+# endforeach()
+
+# include_directories(${GENERATED_HEADERS_DIR})
+# target_sources(Vulk PRIVATE ${GENERATED_SRCS} ${GENERATED_HDRS})
+# target_link_libraries(Vulk PRIVATE ${Protobuf_LIBRARIES})
+
+
+
