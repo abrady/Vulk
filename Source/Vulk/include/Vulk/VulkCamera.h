@@ -1,6 +1,9 @@
 #pragma once
 
 #include "VulkUtil.h"
+#include <cereal/archives/binary.hpp>
+#include <cereal/archives/json.hpp>
+#include <cereal/types/memory.hpp>
 
 struct VulkCamera {
     glm::vec3 eye = glm::vec3(0.4f, .85f, 2.4f);
@@ -15,4 +18,8 @@ struct VulkCamera {
     glm::vec3 getForwardVec();
     glm::vec3 getRightVec();
     glm::vec3 getUpVec();
+
+    template <class Archive> void serialize(Archive &archive) {
+        archive(CEREAL_NVP(eye), CEREAL_NVP(lookAt), CEREAL_NVP(yaw), CEREAL_NVP(pitch), CEREAL_NVP(nearClip), CEREAL_NVP(farClip));
+    }
 };

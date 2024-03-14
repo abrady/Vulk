@@ -1,11 +1,13 @@
 {
-    "blending": {
-        "colorMask": "RB",
-        "enabled": true
-    },
-    "depthCompareOp": "NOT_EQUAL",
+    "name": "TestPipeline",
+    "vertShader": "DebugNormals",
+    "geomShader": "DebugNormals",
+    "fragShader": "DebugNormals",
+    "primitiveTopology": "TriangleFan",
     "depthTestEnabled": true,
     "depthWriteEnabled": true,
+    "depthCompareOp": "NOT_EQUAL",
+    "vertexInputBinding": 3435973836,
     "descriptorSet": {
         "frag": {
             "uniformBuffers": [
@@ -23,11 +25,9 @@
             ]
         }
     },
-    "fragShader": "DebugNormals",
-    "geomShader": "DebugNormals",
-    "name": "TestPipeline",
-    "primitiveTopology": "TriangleFan",
-    "version": 1,
-    "vertShader": "DebugNormals",
-    "vertexInputBinding": 3435973836
+    "blending": {
+        "enabled": true,
+        "colorMask": "RB"
+    },
+    "version": 1
 }

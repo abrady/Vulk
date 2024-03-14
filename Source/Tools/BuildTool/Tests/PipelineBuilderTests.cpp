@@ -1,7 +1,7 @@
-#define CATCH_CONFIG_MAIN // This tells Catch to provide a main() - only do this in one cpp file
 #include <catch.hpp>
 
 #include "../PipelineBuilder.h"
+#include "VulkResourceMetadata_generated.h"
 #include "VulkShaderEnums_generated.h"
 #include "spirv_cross/spirv_glsl.hpp"
 #include <filesystem>
@@ -18,15 +18,20 @@ static PipelineDeclDef makeTestPipelineDeclDef() {
     def.vertShaderName = "DebugNormals";
     def.geomShaderName = "DebugNormals";
     def.fragShaderName = "DebugNormals";
-    def.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN;
+    def.primitiveTopology = VulkPrimitiveTopology_TriangleFan;
     def.depthTestEnabled = true;
     def.depthWriteEnabled = true;
-    def.depthCompareOp = VK_COMPARE_OP_NOT_EQUAL;
+    def.depthCompareOp = VulkCompareOp_NOT_EQUAL;
     def.cullMode = VK_CULL_MODE_BACK_BIT;
     def.blending = {
         .enabled = true,
         .colorMask = "RB",
     };
+    // def.descriptorSet.uniformBuffers[VK_SHADER_STAGE_VERTEX_BIT] = {VulkShaderUBOBinding_Xforms, VulkShaderUBOBinding_ModelXform,
+    //                                                                 VulkShaderUBOBinding_DebugNormals};
+    // def.descriptorSet.uniformBuffers[VK_SHADER_STAGE_GEOMETRY_BIT] = {VulkShaderUBOBinding_Xforms};
+    // def.descriptorSet.uniformBuffers[VK_SHADER_STAGE_FRAGMENT_BIT] = {VulkShaderUBOBinding_EyePos};
+    // def.descriptorSet.imageSamplers[VK_SHADER_STAGE_FRAGMENT_BIT] = {VulkShaderTextureBinding_NormalSampler, VulkShaderTextureBinding_ShadowMapSampler};
     return def;
 }
 
@@ -83,7 +88,7 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
         CHECK(res.descriptorSet.uniformBuffers[VK_SHADER_STAGE_FRAGMENT_BIT] == std::vector<VulkShaderUBOBinding>{VulkShaderUBOBinding_EyePos});
     }
     SECTION("buildPipelineFile") {
-        fs::path builtPipelinesDir = fs::path(__FILE__).parent_path() / "pipelines";
+        fs::path builtPipelinesDir = fs::path(__FILE__).parent_path() / "build" / "pipelines";
         if (fs::exists(builtPipelinesDir)) {
             std::error_code ec;
             fs::remove_all(builtPipelinesDir, ec);
@@ -110,6 +115,6 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
         CHECK(def2.blending.colorMask == def.blending.colorMask);
         CHECK(def2.blending.getColorMask() == def.blending.getColorMask());
         CHECK(def2.cullMode == def.cullMode);
-        CHECK(sizeof(def) == 472); // reminder to add new fields to the test
+        CHECK(sizeof(def) == 464); // reminder to add new fields to the test
     }
 }

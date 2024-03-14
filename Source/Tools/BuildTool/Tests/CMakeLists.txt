@@ -1,5 +1,6 @@
 # Add an executable for the tests
-add_executable(BuildToolTests PipelineBuilderTests.cpp)
+file(GLOB SOURCES "*.cpp")
+add_executable(BuildToolTests ${SOURCES})
 
 find_package(spirv_cross_reflect CONFIG REQUIRED)
 find_package(spirv_cross_core CONFIG REQUIRED)

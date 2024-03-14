@@ -10,7 +10,7 @@ void VulkCamera::setLookAt(glm::vec3 eyeIn, glm::vec3 target) {
 }
 
 glm::mat3 VulkCamera::getRotMat() {
-    return glm::eulerAngleXY(glm::radians(pitch), glm::radians(yaw));
+    return glm::mat3(glm::eulerAngleXY(glm::radians(pitch), glm::radians(yaw)));
 }
 glm::vec3 VulkCamera::getForwardVec() {
     return getRotMat()[2];

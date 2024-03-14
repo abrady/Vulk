@@ -1,6 +1,11 @@
 #pragma once
 
 #include "spirv_cross/spirv_glsl.hpp"
+#include <cereal/archives/binary.hpp>
+#include <cereal/archives/json.hpp>
+#include <cereal/cereal.hpp>
+#include <cereal/types/memory.hpp>
+#include <cereal/types/vector.hpp>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -155,10 +160,11 @@ class PipelineBuilder {
         }
 
         PipelineDeclDef pipelineOut = buildPipeline(pipelineIn, builtShadersDir);
-        nlohmann::json pipelineOutJSON = PipelineDeclDef::toJSON(pipelineOut);
-
         std::ofstream outFile(pipelineFileOut);
-        outFile << pipelineOutJSON.dump(4);
+        {
+            cereal::JSONOutputArchive output(outFile);
+            pipelineOut.serialize(output); // Serialize data to the file
+        }
         outFile.close();
     }
 

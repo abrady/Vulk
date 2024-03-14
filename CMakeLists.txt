@@ -166,7 +166,7 @@ endforeach()
 
 # Add a custom target to trigger the shader compilation
 add_custom_target(
-    compile_shaders 
+    CompileShadersTarget 
     DEPENDS ${COMPILED_SHADERS}
 )
 
@@ -199,21 +199,55 @@ function(copy_assets DIR_NAME GLOBAL_ASSETS_VAR)
 endfunction()
 
 # accumulate the assets to build in this
-set(GLOBAL_ASSETS_TO_BUILD "")
+set(GLOBAL_ASSETS_TO_COPY "")
 
 # these assets don't need any processing, but we need everything in the build
 # directory to be usable by the executable
-set(STRAIGHT_COPY_DIRECTORIES Scenes Shaders Models Textures Materials)
+set(STRAIGHT_COPY_DIRECTORIES Shaders Models Textures Materials)
 foreach(DIR ${STRAIGHT_COPY_DIRECTORIES})
-    copy_assets(${DIR} GLOBAL_ASSETS_TO_BUILD)
+    copy_assets(${DIR} GLOBAL_ASSETS_TO_COPY)
+endforeach()
+
+##
+# build buildable assets
+##
+
+function(build_assets DIR_NAME GLOBAL_ASSETS_VAR)
+    set(ASSETS_TO_BUILD ${${GLOBAL_ASSETS_VAR}}) # get the list of assets from parent scope
+    set(SOURCE_DIR "${CMAKE_SOURCE_DIR}/Assets/${DIR_NAME}")
+    set(DEST_DIR "${BUILT_RESOURCES_TARGET_DIR}/Assets/${DIR_NAME}") 
+
+    file(MAKE_DIRECTORY ${DEST_DIR})
+    file(GLOB_RECURSE ASSETS CONFIGURE_DEPENDS "${SOURCE_DIR}/*")
+    foreach(ASSET_FILE ${ASSETS})
+        file(RELATIVE_PATH REL_PATH "${SOURCE_DIR}" "${ASSET_FILE}")
+        set(DEST "${DEST_DIR}/${REL_PATH}")
+        get_filename_component(DEST_FILE_DIR "${DEST}" DIRECTORY)
+        file(MAKE_DIRECTORY "${DEST_FILE_DIR}")
+        add_custom_command(
+            OUTPUT "${DEST}"
+            COMMAND $<TARGET_FILE:BuildTool> ${DIR_NAME} "${ASSET_FILE}" "${DEST}"
+            DEPENDS "${ASSET_FILE}"
+            COMMENT "Copying ${DIR_NAME} ${ASSET_FILE} to ${DEST}"
+        )
+        list(APPEND ASSETS_TO_BUILD "${DEST}")
+    endforeach()
+    set(${GLOBAL_ASSETS_VAR} "${ASSETS_TO_BUILD}" PARENT_SCOPE) # set the list of assets in parent scope (equivalent to return value)
+endfunction()
+
+set(GLOBAL_ASSETS_TO_BUILD "")
+set(BUILDTOOL_RESOURCE_DIRS scenes)
+foreach(DIR ${BUILDTOOL_RESOURCE_DIRS})
+    build_assets(${DIR} GLOBAL_ASSETS_TO_BUILD)
 endforeach()
 
 add_custom_target(
-    build_assets
+    BuildAssetsTarget
     ALL    
-    DEPENDS ${GLOBAL_ASSETS_TO_BUILD} compile_shaders
+    DEPENDS ${GLOBAL_ASSETS_TO_COPY} ${GLOBAL_ASSETS_TO_BUILD} CompileShadersTarget
 )
 
+ 
 ##
 # build the pipelines
 ##

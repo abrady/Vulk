@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Common/ClassNonCopyableNonMovable.h"
 #include "VulkDescriptorSetLayoutBuilder.h"
 #include "VulkPipeline.h"
+#include "VulkResourceMetadata_generated.h"
 #include "VulkShaderModule.h"
 #include <vulkan/vulkan.h>
 
@@ -46,11 +46,19 @@ class VulkPipelineBuilder {
         return addShaderStage(VK_SHADER_STAGE_GEOMETRY_BIT, shaderModule);
     }
 
+    VulkPipelineBuilder &setPrimitiveTopology(VulkPrimitiveTopology topology) {
+        setPrimitiveTopology(static_cast<VkPrimitiveTopology>(topology));
+        return *this;
+    }
     VulkPipelineBuilder &setPrimitiveTopology(VkPrimitiveTopology topology);
     VulkPipelineBuilder &setLineWidth(float lineWidth);
     VulkPipelineBuilder &setCullMode(VkCullModeFlags cullMode);
     VulkPipelineBuilder &setDepthTestEnabled(bool enabled);
     VulkPipelineBuilder &setDepthWriteEnabled(bool enabled);
+    VulkPipelineBuilder &setDepthCompareOp(VulkCompareOp compareOp) {
+        setDepthCompareOp(static_cast<VkCompareOp>(compareOp));
+        return *this;
+    }
     VulkPipelineBuilder &setDepthCompareOp(VkCompareOp compareOp);
     VulkPipelineBuilder &setStencilTestEnabled(bool enabled);
     VulkPipelineBuilder &setFrontStencilFailOp(VkStencilOp failOp);

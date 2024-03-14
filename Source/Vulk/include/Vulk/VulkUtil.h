@@ -5,6 +5,7 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
+#define GLM_FORCE_EXPLICIT_CTOR
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #define GLM_ENABLE_EXPERIMENTAL
@@ -85,6 +86,10 @@ struct Vertex {
     glm::vec3 normal;
     glm::vec3 tangent;
     glm::vec2 uv;
+
+    template <class Archive> void serialize(Archive &archive) {
+        archive(CEREAL_NVP(pos), CEREAL_NVP(normal), CEREAL_NVP(tangent), CEREAL_NVP(uv));
+    }
 };
 
 struct VulkDebugNormalsUBO {
@@ -105,8 +110,6 @@ class VulkMesh;
 SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface);
 QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface);
 std::vector<char> readFileIntoMem(const std::string &filename);
-
-#include <glm/glm.hpp>
 
 class VulkPauseableTimer {
   public:

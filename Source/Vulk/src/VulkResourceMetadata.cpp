@@ -37,12 +37,12 @@ MaterialDef loadMaterialDef(const fs::path &file) {
         std::string prefix;
         lineStream >> prefix;
 
-        auto processPath = [&](const std::string &relativePath) -> fs::path {
+        auto processPath = [&](const std::string &relativePath) -> std::string {
             fs::path absPath = fs::absolute(basePath / relativePath);
             if (!fs::exists(absPath)) {
                 VULK_THROW("Referenced file does not exist: " + absPath.string());
             }
-            return absPath;
+            return absPath.string();
         };
 
         if (prefix == "newmtl") {
@@ -87,29 +87,19 @@ MaterialDef loadMaterialDef(const fs::path &file) {
     return material;
 }
 
-static unordered_map<string, MeshDefType> meshDefTypeMap{
-    {"Model", MeshDefType_Model},
-    {"Mesh", MeshDefType_Mesh},
-};
-
-static unordered_map<string, GeoMeshDefType> geoMeshDefTypeMap{
-    {"Sphere", GeoMeshDefType_Sphere}, {"Cylinder", GeoMeshDefType_Cylinder}, {"Triangle", GeoMeshDefType_EquilateralTriangle},
-    {"Quad", GeoMeshDefType_Quad},     {"Grid", GeoMeshDefType_Grid},         {"Axes", GeoMeshDefType_Axes},
-};
-
 ModelDef ModelDef::fromJSON(const nlohmann::json &j, unordered_map<string, shared_ptr<MeshDef>> const &meshes,
                             unordered_map<string, shared_ptr<MaterialDef>> materials) {
     assert(j.at("version").get<uint32_t>() == MODEL_JSON_VERSION);
     auto name = j.at("name").get<string>();
     auto material = materials.at(j.at("material").get<string>());
-    MeshDefType meshDefType = j.contains("type") ? meshDefTypeMap.at(j.at("type").get<string>()) : MeshDefType_Model;
+    MeshDefType meshDefType = EnumLookup<MeshDefType>::getEnumFromStr(j.value("type", "Model"));
     switch (meshDefType) {
     case MeshDefType_Model:
         return ModelDef(name, meshes.at(j.at("mesh").get<string>()), material);
     case MeshDefType_Mesh: {
         shared_ptr<VulkMesh> mesh = make_shared<VulkMesh>();
         auto meshJson = j.at("GeoMesh");
-        GeoMeshDefType type = geoMeshDefTypeMap.at(meshJson.at("type").get<string>());
+        GeoMeshDefType type = EnumLookup<GeoMeshDefType>::getEnumFromStr(meshJson.at("type").get<string>());
         switch (type) {
         case GeoMeshDefType_Sphere: {
             float radius = meshJson.at("radius").get<float>();
@@ -256,23 +246,23 @@ void findAndProcessMetadata(const fs::path path, Metadata &metadata) {
                 loadInfos[ext][loadInfo.j.at("name")] = loadInfo;
             } else if (ext == ".vertspv") {
                 assert(!metadata.vertShaders.contains(stem));
-                metadata.vertShaders[stem] = make_shared<ShaderDef>(stem, entry.path());
+                metadata.vertShaders[stem] = make_shared<ShaderDef>(stem, entry.path().string());
             } else if (ext == ".geomspv") {
                 assert(!metadata.geometryShaders.contains(stem));
-                metadata.geometryShaders[stem] = make_shared<ShaderDef>(stem, entry.path());
+                metadata.geometryShaders[stem] = make_shared<ShaderDef>(stem, entry.path().string());
             } else if (ext == ".fragspv") {
                 assert(!metadata.fragmentShaders.contains(stem));
-                metadata.fragmentShaders[stem] = make_shared<ShaderDef>(stem, entry.path());
+                metadata.fragmentShaders[stem] = make_shared<ShaderDef>(stem, entry.path().string());
             } else if (ext == ".mtl") {
                 assert(!metadata.materials.contains(stem));
-                auto material = make_shared<MaterialDef>(loadMaterialDef(entry.path()));
+                auto material = make_shared<MaterialDef>(loadMaterialDef(entry.path().string()));
                 metadata.materials[material->name] = material;
             } else if (ext == ".obj") {
                 if (metadata.meshes.contains(stem)) {
                     cerr << "Mesh already exists: " << stem << endl;
                 }
                 assert(!metadata.meshes.contains(stem));
-                ModelMeshDef mmd{entry.path()};
+                ModelMeshDef mmd{entry.path().string()};
                 metadata.meshes[stem] = make_shared<MeshDef>(stem, mmd);
             }
         }

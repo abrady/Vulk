@@ -104,7 +104,10 @@
         "cinttypes": "cpp",
         "expected": "cpp",
         "queue": "cpp",
-        "stacktrace": "cpp"
+        "stacktrace": "cpp",
+        "bitset": "cpp",
+        "complex": "cpp",
+        "source_location": "cpp"
     },
     "files.eol": "\n"
 }

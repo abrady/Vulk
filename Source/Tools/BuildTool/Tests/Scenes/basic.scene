@@ -1,0 +1,51 @@
+{
+    "version": 1,
+    "name": "basic",
+    "camera": {
+        "eye": [
+            0.4,
+            1,
+            2.5
+        ],
+        "target": [
+            0,
+            0,
+            0
+        ]
+    },
+    "lights": [
+        {
+            "name": "Light1",
+            "type": "point",
+            "pos": [
+                0,
+                10,
+                0
+            ],
+            "color": [
+                1,
+                1,
+                1
+            ]
+        }
+    ],
+    "actors": [
+        {
+            "name": "skull",
+            "model": "Skull",
+            "pipeline": "LitModel",
+            "xform": {
+                "pos": [
+                    0,
+                    0,
+                    0
+                ],
+                "YPR": [
+                    0,
+                    0,
+                    0
+                ]
+            }
+        }
+    ]
+}
