@@ -10,21 +10,15 @@ class VulkCereal {
         return instance;
     };
 
-    template <typename T> void fromFile(std::filesystem::path path, T &obj) {
-        std::ifstream file(path);
-        if (!file.is_open()) {
-            VULK_THROW("Failed to open file: " + path.string());
-        }
-        if (useJSON) {
-            cereal::JSONInputArchive archive(file);
-            obj.serialize(archive);
-        } else {
-            cereal::BinaryInputArchive archive(file);
-            obj.serialize(archive);
-        }
+    std::filesystem::path fileFromPath(std::filesystem::path path) {
+        std::string ext = useJSON ? ".json" : ".bin";
+        return path.replace_extension(ext);
     }
 
     template <typename T> void toFile(std::filesystem::path path, T &obj) {
+        if (path.extension() != ".json" && path.extension() != ".bin") {
+            VULK_THROW("Unknown file extension: " + path.string());
+        }
         std::ofstream file(path);
         if (!file.is_open()) {
             VULK_THROW("Failed to open file: " + path.string());
@@ -37,11 +31,27 @@ class VulkCereal {
             obj.serialize(archive);
         }
     }
+
+    template <typename T> void fromFile(std::filesystem::path path, T &obj) {
+        std::ifstream file(path);
+        if (!file.is_open()) {
+            VULK_THROW("Failed to open file: " + path.string());
+        }
+        if (path.extension() == ".json") {
+            cereal::JSONInputArchive archive(file);
+            obj.serialize(archive);
+        } else if (path.extension() == ".bin") {
+            cereal::BinaryInputArchive archive(file);
+            obj.serialize(archive);
+        } else {
+            VULK_THROW("Unknown file extension: " + path.extension().string());
+        }
+    }
 };
 
 namespace cereal {
 
-    // this errors because this is just an int, not a real type
+    // this errors because this is just an int, not a real type: you'll get duplicate definition errors
     // template <class Archive> std::string save_minimal(const Archive &, const VkColorComponentFlags &m) {
     //     string mask;
     //     if (m & VK_COLOR_COMPONENT_R_BIT)

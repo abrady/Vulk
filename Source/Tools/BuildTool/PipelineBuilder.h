@@ -163,7 +163,7 @@ class PipelineBuilder {
         VulkCereal::inst()->toFile(pipelineFileOut, pipelineOut);
     }
 
-    static void buildPipelineFromFile(std::filesystem::path builtShadersDir, std::filesystem::path pipelineDirOut, fs::path pipelineFileIn) {
+    static void buildPipelineFromFile(std::filesystem::path builtShadersDir, std::filesystem::path pipelineFileOut, fs::path pipelineFileIn) {
         if (!std::filesystem::exists(pipelineFileIn)) {
             std::cerr << "Pipeline file does not exist: " << pipelineFileIn << std::endl;
             VULK_THROW("PipelineBuilder: Pipeline file does not exist");
@@ -172,8 +172,8 @@ class PipelineBuilder {
             std::cerr << "Shaders directory does not exist: " << builtShadersDir << std::endl;
             VULK_THROW("PipelineBuilder: Shaders directory does not exist");
         }
-        if (!std::filesystem::exists(pipelineDirOut)) {
-            std::cerr << "Output directory does not exist: " << pipelineDirOut << std::endl;
+        if (!std::filesystem::exists(pipelineFileOut.parent_path())) {
+            std::cerr << "Output directory does not exist: " << pipelineFileOut << std::endl;
             VULK_THROW("PipelineBuilder: Output directory does not exist");
         }
 
@@ -183,16 +183,16 @@ class PipelineBuilder {
         inFile.close();
         SourcePipelineDef def = SourcePipelineDef::fromJSON(pipelineInJSON);
 
-        buildPipelineFile(def, builtShadersDir, pipelineDirOut / pipelineFileIn.filename());
+        buildPipelineFile(def, builtShadersDir, pipelineFileOut);
     }
 
-    // static void buildPipelinesFromMetadata(std::filesystem::path builtShadersDir, std::filesystem::path pipelineDirOut, std::string optPipeline = "") {
+    // static void buildPipelinesFromMetadata(std::filesystem::path builtShadersDir, std::filesystem::path pipelineFileOut, std::string optPipeline = "") {
     //     if (!std::filesystem::exists(builtShadersDir)) {
     //         std::cerr << "Shaders directory does not exist: " << builtShadersDir << std::endl;
     //         VULK_THROW("PipelineBuilder: Shaders directory does not exist");
     //     }
-    //     if (!std::filesystem::exists(pipelineDirOut)) {
-    //         std::cerr << "Output directory does not exist: " << pipelineDirOut << std::endl;
+    //     if (!std::filesystem::exists(pipelineFileOut)) {
+    //         std::cerr << "Output directory does not exist: " << pipelineFileOut << std::endl;
     //         VULK_THROW("PipelineBuilder: Output directory does not exist");
     //     }
 
@@ -200,11 +200,11 @@ class PipelineBuilder {
     //     findAndProcessMetadata(builtShadersDir.parent_path(), m);
     //     std::string errMsg;
     //     if (optPipeline.size() > 0) {
-    //         buildPipelineFile(*m.pipelines.at(optPipeline), builtShadersDir, pipelineDirOut / (optPipeline + ".json"), errMsg);
+    //         buildPipelineFile(*m.pipelines.at(optPipeline), builtShadersDir, pipelineFileOut / (optPipeline + ".json"), errMsg);
     //     } else {
     //         for (auto &pipeline : m.pipelines) {
     //             PipelineDeclDef def = *pipeline.second;
-    //             buildPipelineFile(def, builtShadersDir, pipelineDirOut / (pipeline.first + ".json"), errMsg);
+    //             buildPipelineFile(def, builtShadersDir, pipelineFileOut / (pipeline.first + ".json"), errMsg);
     //         }
     //     }
     //     if (!errMsg.empty()) {

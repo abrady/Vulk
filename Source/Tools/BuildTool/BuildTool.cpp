@@ -108,14 +108,14 @@ int sceneBuilder(fs::path sceneFileIn, fs::path sceneOutDir, bool verbose) {
     return 0;
 }
 
-int pipelineBuilder(fs::path builtShadersDir, fs::path pipelineOutDir, fs::path pipelineFileIn, bool verbose) {
+int pipelineBuilder(fs::path builtShadersDir, fs::path pipelineFileOut, fs::path pipelineFileIn, bool verbose) {
     LOG("PipelineBuilder: Building pipeline from file: {}", pipelineFileIn.string());
     if (!fs::exists(builtShadersDir)) {
         std::cerr << "Shaders directory does not exist: " << builtShadersDir << std::endl;
         return 1;
     }
-    if (!fs::exists(pipelineOutDir.parent_path())) {
-        std::cerr << "Pipeline output directory does not exist: " << pipelineOutDir.parent_path() << std::endl;
+    if (!fs::exists(pipelineFileOut.parent_path())) {
+        std::cerr << "Pipeline output directory does not exist: " << pipelineFileOut.parent_path() << std::endl;
         return 1;
     }
     if (!fs::exists(pipelineFileIn)) {
@@ -125,16 +125,16 @@ int pipelineBuilder(fs::path builtShadersDir, fs::path pipelineOutDir, fs::path 
 
     if (verbose) {
         std::cout << "Shaders Dir: " << builtShadersDir << std::endl;
-        std::cout << "Pipeline Out Dir: " << pipelineOutDir << std::endl;
+        std::cout << "Pipeline Out Dir: " << pipelineFileOut << std::endl;
         std::cout << "Processing pipeline: " << pipelineFileIn << std::endl;
     }
     try {
-        PipelineBuilder::buildPipelineFromFile(builtShadersDir, pipelineOutDir, pipelineFileIn);
+        PipelineBuilder::buildPipelineFromFile(builtShadersDir, pipelineFileOut, pipelineFileIn);
     } catch (std::exception &e) {
         std::cerr << "PipelineBuilder: Error: " << e.what() << std::endl;
         return 1;
     }
-    PipelineBuilder::buildPipelineFromFile(builtShadersDir, pipelineOutDir, pipelineFileIn);
+    PipelineBuilder::buildPipelineFromFile(builtShadersDir, pipelineFileOut, pipelineFileIn);
 
     if (verbose) {
         std::cout << "PipelineBuilder: Done!\n";
@@ -149,15 +149,15 @@ int main(int argc, char **argv) {
     CLI::App *pipeline = app.add_subcommand("pipeline", "build the pipeline file");
     fs::path builtShadersDir;
     pipeline->add_option("builtShadersDir", builtShadersDir, "Directory where the built shaders are located (for reading).");
-    fs::path pipelineOutDir;
-    pipeline->add_option("pipelineOutDir", pipelineOutDir, "Directory where the pipelines are built to."); // Corrected here
+    fs::path pipelineFileOut;
+    pipeline->add_option("pipelineFileOut", pipelineFileOut, "Directory where the pipelines are built to."); // Corrected here
     fs::path pipelineFileIn;
     pipeline->add_option("pipelineFileIn", pipelineFileIn, "Pipeline file to build."); // Corrected here
     bool verbose = false;
     pipeline->add_flag("-v, --verbose", verbose, "be verbose");
 
     pipeline->callback(
-        [&builtShadersDir, &pipelineOutDir, &pipelineFileIn, &verbose]() { pipelineBuilder(builtShadersDir, pipelineOutDir, pipelineFileIn, verbose); });
+        [&builtShadersDir, &pipelineFileOut, &pipelineFileIn, &verbose]() { pipelineBuilder(builtShadersDir, pipelineFileOut, pipelineFileIn, verbose); });
 
     CLI11_PARSE(app, argc, argv);
 }

@@ -203,7 +203,7 @@ set(GLOBAL_ASSETS_TO_COPY "")
 
 # these assets don't need any processing, but we need everything in the build
 # directory to be usable by the executable
-set(STRAIGHT_COPY_DIRECTORIES Shaders Models Textures Materials)
+set(STRAIGHT_COPY_DIRECTORIES scenes Models Textures Materials)
 foreach(DIR ${STRAIGHT_COPY_DIRECTORIES})
     copy_assets(${DIR} GLOBAL_ASSETS_TO_COPY)
 endforeach()
@@ -236,7 +236,7 @@ function(build_assets DIR_NAME GLOBAL_ASSETS_VAR)
 endfunction()
 
 set(GLOBAL_ASSETS_TO_BUILD "")
-set(BUILDTOOL_RESOURCE_DIRS scenes)
+set(BUILDTOOL_RESOURCE_DIRS )
 foreach(DIR ${BUILDTOOL_RESOURCE_DIRS})
     build_assets(${DIR} GLOBAL_ASSETS_TO_BUILD)
 endforeach()
@@ -261,12 +261,12 @@ file(GLOB_RECURSE PIPELINE_SRC_FILES CONFIGURE_DEPENDS "${PIPELINES_SOURCE_DIR}/
 
 foreach(FILE ${PIPELINE_SRC_FILES})
     get_filename_component(FILE_NAME ${FILE} NAME)
-    set(OUTPUT_FILE "${PIPELINES_DEST_DIR}/${FILE_NAME}")
+    set(OUTPUT_FILE "${PIPELINES_DEST_DIR}/${FILE_NAME}.bin")
     add_custom_command(
         OUTPUT ${OUTPUT_FILE}
-        COMMAND $<TARGET_FILE:BuildTool> pipeline ${SHADER_DEST_DIR} ${PIPELINES_DEST_DIR} ${FILE}
+        COMMAND $<TARGET_FILE:BuildTool> pipeline ${SHADER_DEST_DIR} ${OUTPUT_FILE} ${FILE}
         DEPENDS BuildTool ${FILE}
-        COMMENT "building ${OUTPUT_FILE} from ${FILE}"
+        # COMMENT "building ${OUTPUT_FILE} from ${FILE}"
     )
     list(APPEND PIPELINEBUILDER_OUTPUT_FILES ${OUTPUT_FILE})
 endforeach()
