@@ -82,39 +82,45 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
         CHECK(res.descriptorSet.uniformBuffers[VK_SHADER_STAGE_GEOMETRY_BIT] == std::vector<VulkShaderUBOBinding>{});
         CHECK(res.descriptorSet.uniformBuffers[VK_SHADER_STAGE_FRAGMENT_BIT] == std::vector<VulkShaderUBOBinding>{VulkShaderUBOBinding_EyePos});
     }
+
     SECTION("buildPipelineFile") {
-        VulkCereal::inst()->useJSON = true;
-        fs::path builtPipelinesDir = fs::path(__FILE__).parent_path() / "build" / "pipelines";
-        if (fs::exists(builtPipelinesDir)) {
-            std::error_code ec;
-            fs::remove_all(builtPipelinesDir, ec);
-            CHECK(!ec);
-        }
-        CHECK(fs::create_directory(builtPipelinesDir));
-        SourcePipelineDef def = makeTestPipelineDeclDef();
-        fs::path builtPipeline = builtPipelinesDir / "TestPipeline.json";
-        PipelineBuilder::buildPipelineFile(def, builtShadersDir, builtPipeline);
-        CHECK(fs::exists(builtPipeline));
-        nlohmann::json j;
-        BuiltPipelineDef def2;
-        VulkCereal::inst()->fromFile(builtPipeline, def2);
-        CHECK(def2.name == def.name);
-        CHECK(def2.vertShaderName == def.vertShaderName);
-        CHECK(def2.geomShaderName == def.geomShaderName);
-        CHECK(def2.fragShaderName == def.fragShaderName);
-        CHECK(def2.primitiveTopology == def.primitiveTopology);
-        CHECK(def2.depthTestEnabled == def.depthTestEnabled);
-        CHECK(def2.depthWriteEnabled == def.depthWriteEnabled);
-        CHECK(def2.depthCompareOp == def.depthCompareOp);
-        CHECK(def2.blending.enabled == def.blending.enabled);
-        CHECK(def2.blending.colorMask == def.blending.colorMask);
-        CHECK(def2.blending.getColorMask() == def.blending.getColorMask());
-        CHECK(def2.cullMode == def.cullMode);
-        CHECK(sizeof(def) == 224);  // reminder to add new fields to the test
-        CHECK(sizeof(def2) == 512); // reminder to add new fields to the test
-        CHECK(def2.descriptorSet.uniformBuffers[VK_SHADER_STAGE_VERTEX_BIT] ==
-              std::vector<VulkShaderUBOBinding>{VulkShaderUBOBinding_Xforms, VulkShaderUBOBinding_ModelXform, VulkShaderUBOBinding_DebugNormals});
-        CHECK(def2.descriptorSet.uniformBuffers[VK_SHADER_STAGE_FRAGMENT_BIT] == std::vector<VulkShaderUBOBinding>{VulkShaderUBOBinding_EyePos});
-        CHECK(def2.descriptorSet.imageSamplers[VK_SHADER_STAGE_VERTEX_BIT] == std::vector<VulkShaderTextureBinding>{VulkShaderTextureBinding_NormalSampler});
+        VulkCereal::inst()->useJSON = false;
+        do {
+            VulkCereal::inst()->useJSON = !VulkCereal::inst()->useJSON;
+
+            fs::path builtPipelinesDir = fs::path(__FILE__).parent_path() / "build" / "pipelines";
+            if (fs::exists(builtPipelinesDir)) {
+                std::error_code ec;
+                fs::remove_all(builtPipelinesDir, ec);
+                CHECK(!ec);
+            }
+            CHECK(fs::create_directory(builtPipelinesDir));
+            SourcePipelineDef def = makeTestPipelineDeclDef();
+            fs::path builtPipeline = builtPipelinesDir / "TestPipeline.json";
+            PipelineBuilder::buildPipelineFile(def, builtShadersDir, builtPipeline);
+            CHECK(fs::exists(builtPipeline));
+            nlohmann::json j;
+            BuiltPipelineDef def2;
+            VulkCereal::inst()->fromFile(builtPipeline, def2);
+            CHECK(def2.name == def.name);
+            CHECK(def2.vertShaderName == def.vertShaderName);
+            CHECK(def2.geomShaderName == def.geomShaderName);
+            CHECK(def2.fragShaderName == def.fragShaderName);
+            CHECK(def2.primitiveTopology == def.primitiveTopology);
+            CHECK(def2.depthTestEnabled == def.depthTestEnabled);
+            CHECK(def2.depthWriteEnabled == def.depthWriteEnabled);
+            CHECK(def2.depthCompareOp == def.depthCompareOp);
+            CHECK(def2.blending.enabled == def.blending.enabled);
+            CHECK(def2.blending.colorMask == def.blending.colorMask);
+            CHECK(def2.blending.getColorMask() == def.blending.getColorMask());
+            CHECK(def2.cullMode == def.cullMode);
+            CHECK(sizeof(def) == 224);  // reminder to add new fields to the test
+            CHECK(sizeof(def2) == 512); // reminder to add new fields to the test
+            CHECK(def2.descriptorSet.uniformBuffers[VK_SHADER_STAGE_VERTEX_BIT] ==
+                  std::vector<VulkShaderUBOBinding>{VulkShaderUBOBinding_Xforms, VulkShaderUBOBinding_ModelXform, VulkShaderUBOBinding_DebugNormals});
+            CHECK(def2.descriptorSet.uniformBuffers[VK_SHADER_STAGE_FRAGMENT_BIT] == std::vector<VulkShaderUBOBinding>{VulkShaderUBOBinding_EyePos});
+            CHECK(def2.descriptorSet.imageSamplers[VK_SHADER_STAGE_VERTEX_BIT] ==
+                  std::vector<VulkShaderTextureBinding>{VulkShaderTextureBinding_NormalSampler});
+        } while (VulkCereal::inst()->useJSON);
     }
 }
