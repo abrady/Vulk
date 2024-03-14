@@ -149,7 +149,7 @@ ModelDef ModelDef::fromJSON(const nlohmann::json &j, unordered_map<string, share
     };
 }
 
-ActorDef ActorDef::fromJSON(const nlohmann::json &j, unordered_map<string, shared_ptr<PipelineDef>> const &pipelines,
+ActorDef ActorDef::fromJSON(const nlohmann::json &j, unordered_map<string, shared_ptr<BuiltPipelineDef>> const &pipelines,
                             unordered_map<string, shared_ptr<ModelDef>> const &models, unordered_map<string, shared_ptr<MeshDef>> meshes,
                             unordered_map<string, shared_ptr<MaterialDef>> materials) {
     ActorDef a;
@@ -180,7 +180,7 @@ ActorDef ActorDef::fromJSON(const nlohmann::json &j, unordered_map<string, share
     return a;
 }
 
-SceneDef SceneDef::fromJSON(const nlohmann::json &j, unordered_map<string, shared_ptr<PipelineDef>> const &pipelines,
+SceneDef SceneDef::fromJSON(const nlohmann::json &j, unordered_map<string, shared_ptr<BuiltPipelineDef>> const &pipelines,
                             unordered_map<string, shared_ptr<ModelDef>> const &models, unordered_map<string, shared_ptr<MeshDef>> const &meshes,
                             unordered_map<string, shared_ptr<MaterialDef>> const &materials) {
     SceneDef s;
@@ -273,7 +273,7 @@ void findAndProcessMetadata(const fs::path path, Metadata &metadata) {
 
     for (auto const &[name, loadInfo] : loadInfos[".pipeline"]) {
         auto pipelineDef =
-            make_shared<PipelineDef>(PipelineDef::fromJSON(loadInfo.j, metadata.vertShaders, metadata.geometryShaders, metadata.fragmentShaders));
+            make_shared<BuiltPipelineDef>(BuiltPipelineDef::fromFile(loadInfo.path, metadata.vertShaders, metadata.geometryShaders, metadata.fragmentShaders));
         assert(!metadata.pipelines.contains(pipelineDef->name));
         metadata.pipelines[pipelineDef->name] = pipelineDef;
     }

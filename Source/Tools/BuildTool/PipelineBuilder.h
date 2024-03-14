@@ -109,13 +109,13 @@ class PipelineBuilder {
         }
     }
 
-    static PipelineDeclDef buildPipeline(PipelineDeclDef pipelineIn, std::filesystem::path builtShadersDir) {
+    static BuiltPipelineDef buildPipeline(SourcePipelineDef pipelineIn, std::filesystem::path builtShadersDir) {
         if (!std::filesystem::exists(builtShadersDir)) {
             std::cerr << "Shaders directory does not exist: " << builtShadersDir << std::endl;
             VULK_THROW("PipelineBuilder: Shaders directory does not exist");
         }
 
-        PipelineDeclDef pipelineOut = pipelineIn;
+        BuiltPipelineDef pipelineOut(pipelineIn);
 
         std::vector<ShaderInfo> shaderInfos;
         if (!pipelineIn.vertShaderName.empty()) {
@@ -149,7 +149,7 @@ class PipelineBuilder {
         return pipelineOut;
     }
 
-    static void buildPipelineFile(PipelineDeclDef pipelineIn, std::filesystem::path builtShadersDir, std::filesystem::path pipelineFileOut) {
+    static void buildPipelineFile(SourcePipelineDef pipelineIn, std::filesystem::path builtShadersDir, std::filesystem::path pipelineFileOut) {
         if (!std::filesystem::exists(builtShadersDir)) {
             std::cerr << "Shaders directory does not exist: " << builtShadersDir << std::endl;
             VULK_THROW("PipelineBuilder: Shaders directory does not exist");
@@ -159,13 +159,8 @@ class PipelineBuilder {
             VULK_THROW("PipelineBuilder: Output directory does not exist");
         }
 
-        PipelineDeclDef pipelineOut = buildPipeline(pipelineIn, builtShadersDir);
-        std::ofstream outFile(pipelineFileOut);
-        {
-            cereal::JSONOutputArchive output(outFile);
-            pipelineOut.serialize(output); // Serialize data to the file
-        }
-        outFile.close();
+        BuiltPipelineDef pipelineOut = buildPipeline(pipelineIn, builtShadersDir);
+        VulkCereal::inst()->toFile(pipelineFileOut, pipelineOut);
     }
 
     static void buildPipelineFromFile(std::filesystem::path builtShadersDir, std::filesystem::path pipelineDirOut, fs::path pipelineFileIn) {
@@ -186,7 +181,7 @@ class PipelineBuilder {
         std::ifstream inFile(pipelineFileIn);
         inFile >> pipelineInJSON;
         inFile.close();
-        PipelineDeclDef def = PipelineDeclDef::fromJSON(pipelineInJSON);
+        SourcePipelineDef def = SourcePipelineDef::fromJSON(pipelineInJSON);
 
         buildPipelineFile(def, builtShadersDir, pipelineDirOut / pipelineFileIn.filename());
     }

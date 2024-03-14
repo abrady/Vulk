@@ -23,7 +23,7 @@ struct ActorDef;
 struct DescriptorSetDef;
 struct MeshDef;
 struct ModelDef;
-struct PipelineDef;
+struct BuiltPipelineDef;
 struct Metadata;
 
 // It is expected that an instance of this will be made for a world/level/scene, the approriate resources will be loaded
@@ -83,7 +83,8 @@ class VulkResources {
         return fragShaders.at(name);
     }
 
-    std::shared_ptr<VulkActor> createActorFromPipeline(ActorDef const &actorDef, std::shared_ptr<PipelineDef> pipelineDef, std::shared_ptr<VulkScene> scene);
+    std::shared_ptr<VulkActor> createActorFromPipeline(ActorDef const &actorDef, std::shared_ptr<BuiltPipelineDef> pipelineDef,
+                                                       std::shared_ptr<VulkScene> scene);
 
     std::shared_ptr<VulkPipeline> loadPipeline(VkRenderPass renderPass, VkExtent2D extent, std::string const &name);
     std::shared_ptr<VulkPipeline> getPipeline(std::string const &name) {

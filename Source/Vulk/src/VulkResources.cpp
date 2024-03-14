@@ -68,7 +68,7 @@ std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(VkRenderPass renderPas
     if (pipelines.contains(name)) {
         return pipelines[name];
     }
-    PipelineDef &def = *metadata.pipelines.at(name);
+    BuiltPipelineDef &def = *metadata.pipelines.at(name);
     shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout;
     uint32_t dsHash = def.descriptorSet.hash();
     if (descriptorSetLayoutCache.contains(dsHash)) {
@@ -118,7 +118,8 @@ std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(VkRenderPass renderPas
     return p;
 }
 
-std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const &actorDef, shared_ptr<PipelineDef> pipelineDef, shared_ptr<VulkScene> scene) {
+std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const &actorDef, shared_ptr<BuiltPipelineDef> pipelineDef,
+                                                                  shared_ptr<VulkScene> scene) {
     auto const &dsDef = pipelineDef->descriptorSet;
     VulkDescriptorSetBuilder builder(vk);
     shared_ptr<VulkModel> model = getModel(*actorDef.model);

@@ -39,6 +39,27 @@ Continuing to read <https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Map
 
 ### PCF
 
+## 3/13/24 yet another dumb refactor
+
+* I was annoyed with how tedious adding new things to json parsing was, I looked around and decided  [Cereal](https://uscilab.github.io/cereal/) was the way to go
+* this turned out to be more of a pain then I thought it would be but I learned a bit.
+
+What I learned:
+
+1. trying to write a custom serializer for anything that could be a fundamental type or a single param ctor type that wasn't marked explicit will screw you
+
+* fs::path : tried this, started getting duplicate definition of string errors
+* Any of the Vk* types that I wanted to store in nice strings was a no-go, they're all VkFlags and you'd get duplicate def errors
+
+2. I mixed source assets and built assets.
+
+* Why this was a problem:
+  * I'd hacked this a bit in the 'pipelinedecldef'/'pipelinedef' structs but that was a hack
+  * Not having a clean divide between built assets and source was confusing, and even when looking at existing tests I nearly broke them.
+* source data is different than built data. initially I was just copying things over, but once I started building pipelines this became clearly necessary
+* having a 'SourceXXXDef' and 'BuiltXXXDef' allows me to cleanly keep variables that only show up in the built side out of the source data and avoiding confusion
+  * right now BuiltXXXDef derives from SourceXXXDef. is this dumb? probably, but the alternative is duplicate copying of a bunch of fields.
+
 ## 3/13/24 Summary of shadow mapping from a code standpoint
 
 To get shadowmaps working I hacked something into World.h where I:

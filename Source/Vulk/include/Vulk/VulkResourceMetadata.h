@@ -16,12 +16,14 @@
 #include <nlohmann/json.hpp>
 
 #include "VulkCamera.h"
+#include "VulkCereal.h"
 #include "VulkGeo.h"
 #include "VulkModel.h"
 #include "VulkPointLight.h"
 #include "VulkResourceMetadata_generated.h"
 #include "VulkScene.h"
 #include "VulkShaderModule.h"
+
 using namespace std;
 namespace fs = std::filesystem;
 
@@ -142,10 +144,10 @@ template <typename EnumType> struct EnumLookup {
 };
 
 #define FlatBufEnumSaveMinimal(EnumType)                                                                                                                       \
-    template <class Archive> std::string save_minimal(Archive const &archive, EnumType const &type) {                                                          \
+    template <class Archive> std::string save_minimal(Archive const &, EnumType const &type) {                                                                 \
         return EnumLookup<EnumType>::getStrFromEnum(type);                                                                                                     \
     }                                                                                                                                                          \
-    template <class Archive> void load_minimal(Archive const &archive, EnumType &type, std::string const &value) {                                             \
+    template <class Archive> void load_minimal(Archive const &, EnumType &type, std::string const &value) {                                                    \
         type = EnumLookup<EnumType>::getEnumFromStr(value.c_str());                                                                                            \
     }
 
@@ -327,7 +329,8 @@ namespace cereal {
     }
 } // namespace cereal
 
-struct PipelineDeclDef {
+// represents the original pipeline declaration in the assets dir
+struct SourcePipelineDef {
     string name;
     string vertShaderName;
     string geomShaderName; // optional
@@ -339,7 +342,6 @@ struct PipelineDeclDef {
     VulkCompareOp depthCompareOp;
 
     uint32_t vertexInputBinding;
-    DescriptorSetDef descriptorSet;
 
     VkCullModeFlags cullMode = VK_CULL_MODE_BACK_BIT;
 
@@ -381,7 +383,7 @@ struct PipelineDeclDef {
     template <class Archive> void serialize(Archive &ar) {
         ar(CEREAL_NVP(name), cereal::make_nvp("vertShader", vertShaderName), cereal::make_nvp("geomShader", geomShaderName),
            cereal::make_nvp("fragShader", fragShaderName), CEREAL_NVP(primitiveTopology), CEREAL_NVP(depthTestEnabled), CEREAL_NVP(depthWriteEnabled),
-           CEREAL_NVP(depthCompareOp), CEREAL_NVP(vertexInputBinding), CEREAL_NVP(descriptorSet), CEREAL_NVP(blending), CEREAL_NVP(cullMode));
+           CEREAL_NVP(depthCompareOp), CEREAL_NVP(vertexInputBinding), CEREAL_NVP(blending), CEREAL_NVP(cullMode));
     }
 
     void validate() {
@@ -390,8 +392,8 @@ struct PipelineDeclDef {
         assert(!fragShaderName.empty());
     }
 
-    static PipelineDeclDef fromJSON(const nlohmann::json &j) {
-        PipelineDeclDef p;
+    static SourcePipelineDef fromJSON(const nlohmann::json &j) {
+        SourcePipelineDef p;
         p.name = j.at("name").get<string>();
         p.vertShaderName = j.at("vertShader").get<string>();
         p.fragShaderName = j.at("fragShader").get<string>();
@@ -407,7 +409,7 @@ struct PipelineDeclDef {
         p.validate();
         return p;
     }
-    static nlohmann::json toJSON(const PipelineDeclDef &def) {
+    static nlohmann::json toJSON(const SourcePipelineDef &def) {
         nlohmann::json j;
         j["name"] = def.name;
         j["vertShader"] = def.vertShaderName;
@@ -417,7 +419,6 @@ struct PipelineDeclDef {
         j["depthWriteEnabled"] = def.depthWriteEnabled;
         j["depthCompareOp"] = EnumLookup<VulkCompareOp>::getStrFromEnum(def.depthCompareOp);
         j["vertexInputBinding"] = def.vertexInputBinding;
-        j["descriptorSet"] = DescriptorSetDef::toJSON(def.descriptorSet);
         if (!def.geomShaderName.empty())
             j["geomShader"] = def.geomShaderName;
         j["blending"] = Blending::toJSON(def.blending);
@@ -425,60 +426,40 @@ struct PipelineDeclDef {
     }
 };
 
-struct PipelineDef : public PipelineDeclDef {
+struct BuiltPipelineDef : public SourcePipelineDef {
     shared_ptr<ShaderDef> vertShader;
     shared_ptr<ShaderDef> geomShader;
     shared_ptr<ShaderDef> fragShader;
+    DescriptorSetDef descriptorSet;
 
     template <class Archive> void serialize(Archive &ar) {
-        ar(cereal::base_class<PipelineDeclDef>(this), CEREAL_NVP(vertShader), CEREAL_NVP(geomShader), CEREAL_NVP(fragShader));
+        ar(cereal::base_class<SourcePipelineDef>(this), CEREAL_NVP(vertShader), CEREAL_NVP(geomShader), CEREAL_NVP(fragShader), CEREAL_NVP(descriptorSet));
     }
 
     void validate() {
-        PipelineDeclDef::validate();
+        SourcePipelineDef::validate();
         assert(vertShader);
         assert(fragShader);
     }
 
-    static PipelineDef fromJSON(const nlohmann::json &j, unordered_map<string, shared_ptr<ShaderDef>> const &vertShaders,
-                                unordered_map<string, shared_ptr<ShaderDef>> const &geometryShaders,
-                                unordered_map<string, shared_ptr<ShaderDef>> const &fragmentShaders) {
-        PipelineDef def = {};
-
-        PipelineDeclDef *p = &def; // deliberately slicing this here
-        *p = PipelineDeclDef::fromJSON(j);
-
-        def.vertShader = vertShaders.at(j.at("vertShader").get<string>());
-        def.fragShader = fragmentShaders.at(j.at("fragShader").get<string>());
-        if (j.contains("geomShader")) {
-            def.geomShader = geometryShaders.at(j.at("geomShader").get<string>());
+    void fixup(unordered_map<string, shared_ptr<ShaderDef>> const &vertShaders, unordered_map<string, shared_ptr<ShaderDef>> const &geometryShaders,
+               unordered_map<string, shared_ptr<ShaderDef>> const &fragmentShaders) {
+        vertShader = vertShaders.at(vertShaderName);
+        fragShader = fragmentShaders.at(fragShaderName);
+        if (!geomShaderName.empty()) {
+            geomShader = geometryShaders.at(geomShaderName);
         }
-        def.primitiveTopology = EnumLookup<VulkPrimitiveTopology>::getEnumFromStr(j.value("primitiveTopology", "TriangleList"));
-        def.depthTestEnabled = j.value("depthTestEnabled", true);
-        def.depthWriteEnabled = j.value("depthWriteEnabled", true);
-        def.depthCompareOp = EnumLookup<VulkCompareOp>::getEnumFromStr(j.value("depthCompareOp", "LESS"));
-
-        def.vertexInputBinding = j.at("vertexInputBinding").get<uint32_t>();
-        if (j.contains("descriptorSet"))
-            def.descriptorSet = DescriptorSetDef::fromJSON(j.at("descriptorSet")); // Use custom from_json for DescriptorSetDef
-
-        def.validate();
-        return def;
+        validate();
     }
-    static nlohmann::json toJSON(const PipelineDef &def) {
-        nlohmann::json j;
-        j["name"] = def.name;
-        j["vertShader"] = def.vertShader->name;
-        j["fragShader"] = def.fragShader->name;
-        j["primitiveTopology"] = EnumLookup<VulkPrimitiveTopology>::getStrFromEnum(def.primitiveTopology);
-        j["depthTestEnabled"] = def.depthTestEnabled;
-        j["depthWriteEnabled"] = def.depthWriteEnabled;
-        j["depthCompareOp"] = EnumLookup<VulkCompareOp>::getStrFromEnum(def.depthCompareOp);
-        j["vertexInputBinding"] = def.vertexInputBinding;
-        j["descriptorSet"] = DescriptorSetDef::toJSON(def.descriptorSet);
-        if (def.geomShader)
-            j["geomShader"] = def.geomShader->name;
-        return j;
+
+    static BuiltPipelineDef fromFile(const fs::path &path, unordered_map<string, shared_ptr<ShaderDef>> const &vertShaders,
+                                     unordered_map<string, shared_ptr<ShaderDef>> const &geometryShaders,
+                                     unordered_map<string, shared_ptr<ShaderDef>> const &fragmentShaders) {
+
+        BuiltPipelineDef def;
+        VulkCereal::inst()->fromFile(path, def);
+        def.fixup(vertShaders, geometryShaders, fragmentShaders);
+        return def;
     }
 };
 
@@ -539,7 +520,7 @@ struct ModelDef {
 
 struct ActorDef {
     string name;
-    shared_ptr<PipelineDef> pipeline;
+    shared_ptr<BuiltPipelineDef> pipeline;
     shared_ptr<ModelDef> model;
     glm::mat4 xform = glm::mat4(1.0f);
 
@@ -550,7 +531,7 @@ struct ActorDef {
         assert(xform != glm::mat4(0.0f));
     }
 
-    static ActorDef fromJSON(const nlohmann::json &j, unordered_map<string, shared_ptr<PipelineDef>> const &pipelines,
+    static ActorDef fromJSON(const nlohmann::json &j, unordered_map<string, shared_ptr<BuiltPipelineDef>> const &pipelines,
                              unordered_map<string, shared_ptr<ModelDef>> const &models, unordered_map<string, shared_ptr<MeshDef>> meshes,
                              unordered_map<string, shared_ptr<MaterialDef>> materials);
 
@@ -572,7 +553,7 @@ struct SceneDef {
         assert(!actors.empty());
     }
 
-    static SceneDef fromJSON(const nlohmann::json &j, unordered_map<string, shared_ptr<PipelineDef>> const &pipelines,
+    static SceneDef fromJSON(const nlohmann::json &j, unordered_map<string, shared_ptr<BuiltPipelineDef>> const &pipelines,
                              unordered_map<string, shared_ptr<ModelDef>> const &models, unordered_map<string, shared_ptr<MeshDef>> const &meshes,
                              unordered_map<string, shared_ptr<MaterialDef>> const &materials);
 
@@ -590,7 +571,7 @@ struct Metadata {
     unordered_map<string, shared_ptr<ShaderDef>> fragmentShaders;
     unordered_map<string, shared_ptr<MaterialDef>> materials;
     unordered_map<string, shared_ptr<ModelDef>> models;
-    unordered_map<string, shared_ptr<PipelineDef>> pipelines;
+    unordered_map<string, shared_ptr<BuiltPipelineDef>> pipelines;
     unordered_map<string, shared_ptr<SceneDef>> scenes;
 
     template <class Archive> void serialize(Archive &ar) {

@@ -12,8 +12,8 @@
 
 namespace fs = std::filesystem;
 
-static PipelineDeclDef makeTestPipelineDeclDef() {
-    PipelineDeclDef def;
+static SourcePipelineDef makeTestPipelineDeclDef() {
+    SourcePipelineDef def;
     def.name = "TestPipeline";
     def.vertShaderName = "DebugNormals";
     def.geomShaderName = "DebugNormals";
@@ -27,11 +27,6 @@ static PipelineDeclDef makeTestPipelineDeclDef() {
         .enabled = true,
         .colorMask = "RB",
     };
-    // def.descriptorSet.uniformBuffers[VK_SHADER_STAGE_VERTEX_BIT] = {VulkShaderUBOBinding_Xforms, VulkShaderUBOBinding_ModelXform,
-    //                                                                 VulkShaderUBOBinding_DebugNormals};
-    // def.descriptorSet.uniformBuffers[VK_SHADER_STAGE_GEOMETRY_BIT] = {VulkShaderUBOBinding_Xforms};
-    // def.descriptorSet.uniformBuffers[VK_SHADER_STAGE_FRAGMENT_BIT] = {VulkShaderUBOBinding_EyePos};
-    // def.descriptorSet.imageSamplers[VK_SHADER_STAGE_FRAGMENT_BIT] = {VulkShaderTextureBinding_NormalSampler, VulkShaderTextureBinding_ShadowMapSampler};
     return def;
 }
 
@@ -70,8 +65,8 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
         CHECK(PipelineBuilder::checkConnections(info2, info3, errMsg) == true);
     }
     SECTION("Test Pipeline Generation") {
-        PipelineDeclDef def = makeTestPipelineDeclDef();
-        PipelineDeclDef res = PipelineBuilder::buildPipeline(def, builtShadersDir);
+        SourcePipelineDef def = makeTestPipelineDeclDef();
+        BuiltPipelineDef res = PipelineBuilder::buildPipeline(def, builtShadersDir);
         CHECK(res.name == "TestPipeline");
         CHECK(res.vertShaderName == "DebugNormals");
         CHECK(res.geomShaderName == "DebugNormals");
@@ -88,6 +83,7 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
         CHECK(res.descriptorSet.uniformBuffers[VK_SHADER_STAGE_FRAGMENT_BIT] == std::vector<VulkShaderUBOBinding>{VulkShaderUBOBinding_EyePos});
     }
     SECTION("buildPipelineFile") {
+        VulkCereal::inst()->useJSON = true;
         fs::path builtPipelinesDir = fs::path(__FILE__).parent_path() / "build" / "pipelines";
         if (fs::exists(builtPipelinesDir)) {
             std::error_code ec;
@@ -95,14 +91,13 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
             CHECK(!ec);
         }
         CHECK(fs::create_directory(builtPipelinesDir));
-        PipelineDeclDef def = makeTestPipelineDeclDef();
+        SourcePipelineDef def = makeTestPipelineDeclDef();
         fs::path builtPipeline = builtPipelinesDir / "TestPipeline.json";
         PipelineBuilder::buildPipelineFile(def, builtShadersDir, builtPipeline);
         CHECK(fs::exists(builtPipeline));
         nlohmann::json j;
-        std::ifstream file(builtPipeline);
-        file >> j;
-        PipelineDeclDef def2 = PipelineDeclDef::fromJSON(j);
+        BuiltPipelineDef def2;
+        VulkCereal::inst()->fromFile(builtPipeline, def2);
         CHECK(def2.name == def.name);
         CHECK(def2.vertShaderName == def.vertShaderName);
         CHECK(def2.geomShaderName == def.geomShaderName);
@@ -115,6 +110,11 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
         CHECK(def2.blending.colorMask == def.blending.colorMask);
         CHECK(def2.blending.getColorMask() == def.blending.getColorMask());
         CHECK(def2.cullMode == def.cullMode);
-        CHECK(sizeof(def) == 464); // reminder to add new fields to the test
+        CHECK(sizeof(def) == 224);  // reminder to add new fields to the test
+        CHECK(sizeof(def2) == 512); // reminder to add new fields to the test
+        CHECK(def2.descriptorSet.uniformBuffers[VK_SHADER_STAGE_VERTEX_BIT] ==
+              std::vector<VulkShaderUBOBinding>{VulkShaderUBOBinding_Xforms, VulkShaderUBOBinding_ModelXform, VulkShaderUBOBinding_DebugNormals});
+        CHECK(def2.descriptorSet.uniformBuffers[VK_SHADER_STAGE_FRAGMENT_BIT] == std::vector<VulkShaderUBOBinding>{VulkShaderUBOBinding_EyePos});
+        CHECK(def2.descriptorSet.imageSamplers[VK_SHADER_STAGE_VERTEX_BIT] == std::vector<VulkShaderTextureBinding>{VulkShaderTextureBinding_NormalSampler});
     }
 }
