@@ -3,6 +3,23 @@
 cmake_minimum_required (VERSION 3.13)
 project ("VulkanRoot" CXX)
 
+######
+## project setup
+######
+
+if(NOT CMAKE_BUILD_TYPE)
+    message("CMAKE_BUILD_TYPE not set, defaulting to Debug")
+    set(CMAKE_BUILD_TYPE Debug)
+endif()
+
+
+set(CMAKE_GENERATOR_PLATFORM x64)
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+add_compile_options(-W3)
+
+
 # Check if vcpkg is bootstrapped
 # find_program(VCPKG_EXECUTABLE NAMES vcpkg PATHS "${CMAKE_SOURCE_DIR}/vcpkg" NO_DEFAULT_PATH)
 # if(NOT VCPKG_EXECUTABLE)
@@ -33,22 +50,6 @@ find_package(nlohmann_json CONFIG REQUIRED)
 find_package(Stb REQUIRED)
 find_package(glm CONFIG REQUIRED)
 
-
-######
-## project setup
-######
-
-if(NOT CMAKE_BUILD_TYPE)
-    message("CMAKE_BUILD_TYPE not set, defaulting to Debug")
-    set(CMAKE_BUILD_TYPE Debug)
-endif()
-
-
-set(CMAKE_GENERATOR_PLATFORM x64)
-set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-add_compile_options(-W3)
 
 ######
 ## global includes
@@ -107,8 +108,18 @@ add_subdirectory("${CMAKE_SOURCE_DIR}/Source/Samples")
 add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Tools/BuildTool)
 
 ##############################################################################
-## Shaders
+## Assets
 ##############################################################################
+
+# File to write
+set(ASSETS_OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/built_assets.txt")
+
+# Ensure the file is empty before we start writing
+file(WRITE ${ASSETS_OUTPUT_FILE} "")
+
+######
+## Shaders
+######
 
 # TODO: glslc has a -M option that will print a makefile dependency, so we could use that instead of globbing
 file(GLOB SHADER_COMMON_FILES "${CMAKE_SOURCE_DIR}/Source/Shaders/Common/*")
@@ -170,11 +181,17 @@ add_custom_target(
     DEPENDS ${COMPILED_SHADERS}
 )
 
+# Append each file name to the file
+foreach(SOURCE_FILE ${COMPILED_SHADERS})
+    file(APPEND ${ASSETS_OUTPUT_FILE} "${SOURCE_FILE}\n")
+endforeach()
 
-##############################################################################
-## Assets
-##############################################################################
 
+######
+## Copied assets
+######
+
+# define a function to copy assets from the source directory to the build directory
 function(copy_assets DIR_NAME GLOBAL_ASSETS_VAR)
     set(ASSETS_TO_BUILD ${${GLOBAL_ASSETS_VAR}}) # get the list of assets from parent scope
     set(SOURCE_DIR "${CMAKE_SOURCE_DIR}/Assets/${DIR_NAME}")
@@ -199,14 +216,20 @@ function(copy_assets DIR_NAME GLOBAL_ASSETS_VAR)
 endfunction()
 
 # accumulate the assets to build in this
-set(GLOBAL_ASSETS_TO_COPY "")
+set(COPIED_ASSETS "")
 
 # these assets don't need any processing, but we need everything in the build
 # directory to be usable by the executable
 set(STRAIGHT_COPY_DIRECTORIES scenes Models Textures Materials)
 foreach(DIR ${STRAIGHT_COPY_DIRECTORIES})
-    copy_assets(${DIR} GLOBAL_ASSETS_TO_COPY)
+    copy_assets(${DIR} COPIED_ASSETS)
 endforeach()
+
+# Append each file name to the file
+foreach(SOURCE_FILE ${COPIED_ASSETS})
+    file(APPEND ${ASSETS_OUTPUT_FILE} "${SOURCE_FILE}\n")
+endforeach()
+
 
 ##
 # build buildable assets
@@ -235,18 +258,22 @@ function(build_assets DIR_NAME GLOBAL_ASSETS_VAR)
     set(${GLOBAL_ASSETS_VAR} "${ASSETS_TO_BUILD}" PARENT_SCOPE) # set the list of assets in parent scope (equivalent to return value)
 endfunction()
 
-set(GLOBAL_ASSETS_TO_BUILD "")
+set(BUILT_ASSETS "")
 set(BUILDTOOL_RESOURCE_DIRS )
 foreach(DIR ${BUILDTOOL_RESOURCE_DIRS})
-    build_assets(${DIR} GLOBAL_ASSETS_TO_BUILD)
+    build_assets(${DIR} BUILT_ASSETS)
 endforeach()
 
 add_custom_target(
     BuildAssetsTarget
     ALL    
-    DEPENDS ${GLOBAL_ASSETS_TO_COPY} ${GLOBAL_ASSETS_TO_BUILD} CompileShadersTarget
+    DEPENDS ${GLOBAL_ASSETS_TO_COPY} ${BUILT_ASSETS} CompileShadersTarget
 )
 
+# Append each file name to the file
+foreach(SOURCE_FILE ${BUILT_ASSETS})
+    file(APPEND ${ASSETS_OUTPUT_FILE} "${SOURCE_FILE}\n")
+endforeach()
  
 ##
 # build the pipelines
@@ -261,20 +288,26 @@ file(GLOB_RECURSE PIPELINE_SRC_FILES CONFIGURE_DEPENDS "${PIPELINES_SOURCE_DIR}/
 
 foreach(FILE ${PIPELINE_SRC_FILES})
     get_filename_component(FILE_NAME ${FILE} NAME)
-    set(OUTPUT_FILE "${PIPELINES_DEST_DIR}/${FILE_NAME}.bin")
+    set(ASSETS_OUTPUT_FILE "${PIPELINES_DEST_DIR}/${FILE_NAME}.bin")
     add_custom_command(
-        OUTPUT ${OUTPUT_FILE}
-        COMMAND $<TARGET_FILE:BuildTool> pipeline ${SHADER_DEST_DIR} ${OUTPUT_FILE} ${FILE}
+        OUTPUT ${ASSETS_OUTPUT_FILE}
+        COMMAND $<TARGET_FILE:BuildTool> pipeline ${SHADER_DEST_DIR} ${ASSETS_OUTPUT_FILE} ${FILE}
         DEPENDS BuildTool ${FILE}
-        # COMMENT "building ${OUTPUT_FILE} from ${FILE}"
+        # COMMENT "building ${ASSETS_OUTPUT_FILE} from ${FILE}"
     )
-    list(APPEND PIPELINEBUILDER_OUTPUT_FILES ${OUTPUT_FILE})
+    list(APPEND PIPELINEBUILDER_ASSETS_OUTPUT_FILES ${ASSETS_OUTPUT_FILE})
 endforeach()
 # Create a custom target that depends on the output of the previous commands
 add_custom_target(
     RunPipelineBuilder ALL
-    DEPENDS ${PIPELINEBUILDER_OUTPUT_FILES}
+    DEPENDS ${PIPELINEBUILDER_ASSETS_OUTPUT_FILES}
 )
+
+# Append each file name to the file
+foreach(SOURCE_FILE ${PIPELINEBUILDER_ASSETS_OUTPUT_FILES})
+    file(APPEND ${ASSETS_OUTPUT_FILE} "${SOURCE_FILE}\n")
+endforeach()
+
 # Make your main target depend on the RunPipelineBuilder target
 message("Adding dependency on RunPipelineBuilder")
 add_dependencies(VulkSamples RunPipelineBuilder)

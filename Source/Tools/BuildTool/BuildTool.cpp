@@ -50,34 +50,6 @@ inline std::shared_ptr<spdlog::logger> &GetLogger() {
 #define ERROR(...) GetLogger()->error(__VA_ARGS__)
 namespace fs = std::filesystem;
 
-struct MyData {
-    int x;
-    int y;
-    glm::vec3 vec;
-    // Serialize the MyData struct for JSON output
-    template <class Archive> void serialize(Archive &ar) {
-        ar(CEREAL_NVP(x), CEREAL_NVP(y), CEREAL_NVP(vec));
-    }
-};
-
-struct MaterialDef2 {
-    std::string name;
-    std::string mapKa; // Ambient texture map
-    // std::string mapKd;     // Diffuse texture map
-    // std::string mapKs;     // Specular texture map
-    // std::string mapNormal; // Normal map (specified as 'bump' in the file)
-    // float Ns;              // Specular exponent (shininess)
-    // float Ni;              // Optical density (index of refraction)
-    // float d;               // Transparency (dissolve)
-    // glm::vec3 Ka;          // Ambient color
-    // glm::vec3 Kd;          // Diffuse color
-    // glm::vec3 Ks;          // Specular color
-
-    template <class Archive> void serialize(Archive &ar) {
-        ar(name, mapKa);
-    }
-};
-
 int sceneBuilder(fs::path sceneFileIn, fs::path sceneOutDir, bool verbose) {
     LOG("SceneBuilder: Building scene from file: {}", sceneFileIn.string());
     if (!fs::exists(sceneFileIn)) {
@@ -155,9 +127,15 @@ int main(int argc, char **argv) {
     pipeline->add_option("pipelineFileIn", pipelineFileIn, "Pipeline file to build."); // Corrected here
     bool verbose = false;
     pipeline->add_flag("-v, --verbose", verbose, "be verbose");
-
     pipeline->callback(
         [&builtShadersDir, &pipelineFileOut, &pipelineFileIn, &verbose]() { pipelineBuilder(builtShadersDir, pipelineFileOut, pipelineFileIn, verbose); });
 
-    CLI11_PARSE(app, argc, argv);
+    // CLI::App *scene = app.add_subcommand("scene", "build the scene file");
+    // fs::path sceneFileIn;
+    // scene->add_option("sceneFileIn", sceneFileIn, "Scene file to build.");
+    // fs::path sceneOutDir;
+    // scene->add_option("sceneOutDir", sceneOutDir, "Directory where the scenes are built to.");
+    // scene->add_flag("-v, --verbose", verbose, "be verbose");
+    // scene->callback([&sceneFileIn, &sceneOutDir, &verbose]() { sceneBuilder(sceneFileIn, sceneOutDir, verbose); });
+    // CLI11_PARSE(app, argc, argv);
 }

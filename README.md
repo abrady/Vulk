@@ -39,6 +39,11 @@ Continuing to read <https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Map
 
 ### PCF
 
+## 3/14/24 Peter panning
+
+One of the downsides of the bias factor is that you can ignore things that should be shadowed, but there's a trick! normally back-facing triangles are culled
+by the graphics pipeline, but in the case of shadows, assuming closed surfaces, you can cull the front faces. let's enable that and see if it fixes some of these issues
+
 ## 3/13/24 yet another dumb refactor
 
 * I was annoyed with how tedious adding new things to json parsing was, I looked around and decided  [Cereal](https://uscilab.github.io/cereal/) was the way to go
@@ -59,17 +64,6 @@ What I learned:
 * source data is different than built data. initially I was just copying things over, but once I started building pipelines this became clearly necessary
 * having a 'SourceXXXDef' and 'BuiltXXXDef' allows me to cleanly keep variables that only show up in the built side out of the source data and avoiding confusion
   * right now BuiltXXXDef derives from SourceXXXDef. is this dumb? probably, but the alternative is duplicate copying of a bunch of fields.
-
-## 3/13/24 Summary of shadow mapping from a code standpoint
-
-To get shadowmaps working I hacked something into World.h where I:
-
-* made a 'shadowmap' pipeline
-
-## 3/13/24 Peter panning
-
-One of the downsides of the bias factor is that you can ignore things that should be shadowed, but there's a trick! normally back-facing triangles are culled
-by the graphics pipeline, but in the case of shadows, assuming closed surfaces, you can cull the front faces.
 
 ## 3/10/24 lightmap works
 

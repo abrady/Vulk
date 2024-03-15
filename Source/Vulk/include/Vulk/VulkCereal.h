@@ -10,9 +10,9 @@ class VulkCereal {
         return instance;
     };
 
-    std::filesystem::path fileFromPath(std::filesystem::path path) {
+    std::filesystem::path addFileExtension(std::filesystem::path path) {
         std::string ext = useJSON ? ".json" : ".bin";
-        return path.replace_extension(ext);
+        return std::filesystem::path(path.string() + ext);
     }
 
     template <typename T> void toFile(std::filesystem::path path, T &obj) {
@@ -139,5 +139,4 @@ namespace cereal {
     template <class Archive> void serialize(Archive &archive, glm::dquat &q) {
         archive(q.x, q.y, q.z, q.w);
     }
-
 } // namespace cereal

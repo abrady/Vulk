@@ -96,7 +96,7 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
             }
             CHECK(fs::create_directory(builtPipelinesDir));
             SourcePipelineDef def = makeTestPipelineDeclDef();
-            fs::path builtPipeline = VulkCereal::inst()->fileFromPath(builtPipelinesDir / "TestPipeline");
+            fs::path builtPipeline = VulkCereal::inst()->addFileExtension(builtPipelinesDir / "TestPipeline");
             PipelineBuilder::buildPipelineFile(def, builtShadersDir, builtPipeline);
             CHECK(fs::exists(builtPipeline));
             nlohmann::json j;
