@@ -35,3 +35,9 @@ class VulkException : public std::exception {
 };
 
 #define VULK_THROW(msg) throw VulkException(msg)
+#define VULK_THROW_IF(cond, msg)                                                                                                                               \
+    do {                                                                                                                                                       \
+        if (cond) {                                                                                                                                            \
+            VULK_THROW(msg);                                                                                                                                   \
+        }                                                                                                                                                      \
+    } while (0)

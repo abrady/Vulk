@@ -9,10 +9,14 @@
 class VulkPipelineBuilder {
     Vulk &vk;
 
+    struct VertInput {
+        VkVertexInputBindingDescription binding = {};
+        VkVertexInputAttributeDescription attribute = {};
+    };
+
     std::vector<std::shared_ptr<VulkShaderModule>> shaderModules;
     std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
-    VkVertexInputBindingDescription bindingDescription = {};
-    std::vector<VkVertexInputAttributeDescription> attributeDescriptions = {};
+    std::unordered_map<VulkVertInputLocation, VertInput> vertInputs;
     VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
     VkPipelineViewportStateCreateInfo viewportState{};
     VkPipelineRasterizationStateCreateInfo rasterizer{};
@@ -64,11 +68,8 @@ class VulkPipelineBuilder {
 
     // The binding says 'verts are in binding 0', and the stride says 'this is how far apart each vertex is'
     // then the field describe fields within the vertices: pos, normal, etc.
-    VulkPipelineBuilder &addVertexInputBindingDescription(uint32_t binding, uint32_t stride, VkVertexInputRate inputRate = VK_VERTEX_INPUT_RATE_VERTEX);
     VulkPipelineBuilder &addVertexInputFieldVec3(uint32_t binding, uint32_t location, uint32_t fieldOffset);
     VulkPipelineBuilder &addVertexInputFieldVec2(uint32_t binding, uint32_t location, uint32_t fieldOffset);
-
-    VulkPipelineBuilder &addVulkVertexInput(uint32_t binding);
 
     VulkPipelineBuilder &setBlending(bool enabled, VkColorComponentFlags colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
                                                                                           VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT);

@@ -18,7 +18,6 @@
 #include "VulkCamera.h"
 #include "VulkCereal.h"
 #include "VulkGeo.h"
-#include "VulkModel.h"
 #include "VulkPointLight.h"
 #include "VulkResourceMetadata_generated.h"
 #include "VulkScene.h"
@@ -32,12 +31,12 @@ namespace fs = std::filesystem;
 
 template <typename T> struct EnumNameGetter;
 
-template <> struct EnumNameGetter<VulkVertBindingLocation> {
+template <> struct EnumNameGetter<VulkVertInputLocation> {
     static const char *const *getNames() {
-        return EnumNamesVulkVertBindingLocation();
+        return EnumNamesVulkVertInputLocation();
     }
-    static VulkVertBindingLocation getMin() {
-        return VulkVertBindingLocation_MIN;
+    static VulkVertInputLocation getMin() {
+        return VulkVertInputLocation_MIN;
     }
 };
 
@@ -351,7 +350,7 @@ struct SourcePipelineDef {
     bool depthWriteEnabled;
     VkCompareOp depthCompareOp;
 
-    uint32_t vertexInputBinding;
+    VulkVertInputLocationMask vertInputs;
 
     VkCullModeFlags cullMode = VK_CULL_MODE_BACK_BIT;
 
@@ -393,7 +392,7 @@ struct SourcePipelineDef {
     template <class Archive> void serialize(Archive &ar) {
         ar(CEREAL_NVP(name), cereal::make_nvp("vertShader", vertShaderName), cereal::make_nvp("geomShader", geomShaderName),
            cereal::make_nvp("fragShader", fragShaderName), CEREAL_NVP(primitiveTopology), CEREAL_NVP(depthTestEnabled), CEREAL_NVP(depthWriteEnabled),
-           CEREAL_NVP(depthCompareOp), CEREAL_NVP(vertexInputBinding), CEREAL_NVP(blending), CEREAL_NVP(cullMode));
+           CEREAL_NVP(depthCompareOp), CEREAL_NVP(vertInputs), CEREAL_NVP(blending), CEREAL_NVP(cullMode));
     }
 
     void validate() {
@@ -412,7 +411,11 @@ struct SourcePipelineDef {
         p.depthTestEnabled = j.value("depthTestEnabled", true);
         p.depthWriteEnabled = j.value("depthWriteEnabled", true);
         p.depthCompareOp = (VkCompareOp)EnumLookup<VulkCompareOp>::getEnumFromStr(j.value("depthCompareOp", "LESS"));
-        p.vertexInputBinding = j.at("vertexInputBinding").get<uint32_t>();
+        std::vector<std::string> vertInputs = j.at("vertInputs").get<std::vector<std::string>>();
+        p.vertInputs = 0;
+        for (auto const &value : vertInputs) {
+            p.vertInputs |= EnumLookup<VulkVertInputLocation>::getEnumFromStr(value);
+        }
         if (j.contains("blending"))
             p.blending = Blending::fromJSON(j["blending"]);
         p.cullMode = (VkCullModeFlags)EnumLookup<VulkCullModeFlags>::getEnumFromStr(j.value("cullMode", "BACK"));

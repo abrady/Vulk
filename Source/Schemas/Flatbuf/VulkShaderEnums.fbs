@@ -1,12 +1,23 @@
-enum VulkVertBindingLocation : byte {
-    ColorBinding = 0,
-    PosBinding = 1,
-    NormalBinding = 2,
-    TangentBinding = 3,
-    TexCoordBinding = 4,
-    HeightBinding = 5,
-    Pos2Binding = 6,
+enum VulkVertInputLocation : byte {
+    Color = 0,
+    Pos = 1,
+    Normal = 2,
+    Tangent = 3,
+    TexCoord = 4,
+    Height = 5,
+    Pos2 = 6,
     PosLightSpace = 7,
+}
+
+enum VulkVertInputLocationMask : uint32 {
+    Color = 1,
+    Pos = 2,
+    Normal = 4,
+    Tangent = 8,
+    TexCoord = 16,
+    Height = 32,
+    Pos2 = 64,
+    PosLightSpace = 128,
 }
 
 

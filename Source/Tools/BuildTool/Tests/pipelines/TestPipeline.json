@@ -7,7 +7,10 @@
     "depthTestEnabled": true,
     "depthWriteEnabled": true,
     "depthCompareOp": "NOT_EQUAL",
-    "vertexInputBinding": 3435973836,
+    "vertInputs": [
+        "Color",
+        "Normal"
+    ],
     "descriptorSet": {
         "frag": {
             "uniformBuffers": [

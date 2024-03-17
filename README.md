@@ -23,14 +23,16 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # TODOs
 
-* rename PipelineBUILDER.h to PipelineCOMPILER.h or something similar: builders are what I call the foo.bar.baz.build() paradigm
+* x rename PipelineBUILDER.h to PipelineCOMPILER.h or something similar: builders are what I call the foo.bar.baz.build() paradigm
 * clean up our vertex input buffers so we can handle passing only parameters we use.
+  * fix up debugtangents/normals too
 * invert the TBN matrix: So now that we have a TBN matrix, how are we going to use it? There are two ways we can use a TBN matrix for normal mapping, and we'll demonstrate both of them:
   * We take the TBN matrix that transforms any vector from tangent to world space, give it to the fragment shader, and transform the sampled normal from tangent space to world space using the TBN matrix; the normal is then in the same space as the other lighting variables.
   * We take the inverse of the TBN matrix that transforms any vector from world space to tangent space, and use this matrix to transform not the normal, but the other relevant lighting variables to tangent space; the normal is then again in the same space as the other lighting variables. - this is better because we can do this in vertex space and then use the interpolated values.
 * <https://github.com/KHeresy/openxr-simple-example> : integrate with OpenXR
 * probably need schematized json files at some point. flatbuffers looks like the winner based on some quick research
-* * <https://www.reddit.com/r/GraphicsProgramming/comments/1ay0j70/realtime_pbr_catchup_developments_in_recent_years/> - chock full of links
+* <https://www.reddit.com/r/GraphicsProgramming/comments/1ay0j70/realtime_pbr_catchup_developments_in_recent_years/> - chock full of links
+* now that I'm using flatc for enum metadata I could generate common.glsl in the build tools...
 
 # Log
 
@@ -50,7 +52,32 @@ Use a physically based BRDF.
 
 * rename PipelineBuilder DONE
 * I've wanted to get the vertex struct broken up for a while. let's do that... the right way to do this is probably at the GPU buffer level, no need to break it up beforehand I think?
-  * this happens in VulkMesh?
+  * vertex has the following fields:  pos, normal, tangent, uv
+  * DONE this happens in VulkMesh? VulkModel!
+    * needs a set of buffers, one for each field
+    * these need to be in an array for passing to vkCmdBindVertexBuffers
+  * DONE currently pipelines specify the binding, instead we should have a field specifying what they use
+    * why did I think vertexInputBinding was a good idea? remove that
+    * read the values from pipeline and set
+  * get the pipeline builder to work properly
+    * we need to include a VkVertexInputBindingDescription and a VkVertexInputAttributeDescription for each type in the vertex
+    * the location in the shader seems like a good approach: LayoutLocation_Position, LayoutLocation_Normal, etc.
+  * rendering
+    * vkCmdBindVertexBuffers can take an array
+      * the VkVertexInputBindingDescription specifies which buffer corresponds to which location
+
+### Refresher: VkVertexInputBindingDescription and VkVertexInputAttributeDescription
+
+* the binding description specifies how the buffer binds to vkCmdBindVertexBuffers. e.g. vkCmdBindVertexBuffers(commandBuffer, 0, numBufs, bufs, offsets);
+  * 0 is the first binding number you're starting with.
+  * numVertBufs is the number of buffers you're binding.
+  * model->vertBufs is the array of buffer handles, where model->vertBufs[1] should indeed be the normals buffer, given that its corresponding binding value is 1.
+  * offsets is an array of offsets into the buffers being bound; each offset corresponds to its respective buffer in model->vertBufs.
+* the attribute description specifies how these map to the location in the shader
+  * it is connected to the binding via the 'binding' field.
+  * it specifies the vert shader location via the 'location' param, duh.
+  * it has a type so the GPU knows how to interpret it, e.g. VK_FORMAT_R32G32B32_SFLOAT
+  * for complex types it also has an offset into the struct. e.g. 4 for the second thing in the struct.
 
 ## 3/16/24 [Parallax Mapping](https://learnopengl.com/Advanced-Lighting/Parallax-Mapping)
 

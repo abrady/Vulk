@@ -23,6 +23,7 @@ static SourcePipelineDef makeTestPipelineDeclDef() {
     def.depthWriteEnabled = true;
     def.depthCompareOp = VulkCompareOp_NOT_EQUAL;
     def.cullMode = VK_CULL_MODE_BACK_BIT;
+    def.vertInputs = VulkVertInputLocationMask_Pos | VulkVertInputLocationMask_Normal | VulkVertInputLocationMask_Tangent;
     def.blending = {
         .enabled = true,
         .colorMask = "RB",
@@ -38,12 +39,12 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
         CHECK(info.uboBindings[VulkShaderUBOBinding_Xforms] == "UniformBufferObject");
         CHECK(info.uboBindings[VulkShaderUBOBinding_ModelXform] == "ModelXformUBO");
         CHECK(info.uboBindings[VulkShaderUBOBinding_DebugNormals] == "DebugNormalsUBO");
-        CHECK(info.inputLocations[VulkVertBindingLocation_PosBinding] == "inPosition");
-        CHECK(info.inputLocations[VulkVertBindingLocation_NormalBinding] == "inNormal");
-        CHECK(info.inputLocations[VulkVertBindingLocation_TangentBinding] == "inTangent");
-        CHECK(info.outputLocations[VulkVertBindingLocation_PosBinding] == "outWorldPos");
-        CHECK(info.outputLocations[VulkVertBindingLocation_NormalBinding] == "outWorldNorm");
-        CHECK(info.outputLocations[VulkVertBindingLocation_Pos2Binding] == "outProjPos");
+        CHECK(info.inputLocations[VulkVertInputLocation_PosBinding] == "inPosition");
+        CHECK(info.inputLocations[VulkVertInputLocation_NormalBinding] == "inNormal");
+        CHECK(info.inputLocations[VulkVertInputLocation_TangentBinding] == "inTangent");
+        CHECK(info.outputLocations[VulkVertInputLocation_PosBinding] == "outWorldPos");
+        CHECK(info.outputLocations[VulkVertInputLocation_NormalBinding] == "outWorldNorm");
+        CHECK(info.outputLocations[VulkVertInputLocation_Pos2Binding] == "outProjPos");
     }
     SECTION("Test Gooch Frag") {
         ShaderInfo info = PipelineBuilder::getShaderInfo(builtShadersDir / "frag" / "GoochShading.fragspv");
@@ -114,6 +115,7 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
             CHECK(def2.blending.colorMask == def.blending.colorMask);
             CHECK(def2.blending.getColorMask() == def.blending.getColorMask());
             CHECK(def2.cullMode == def.cullMode);
+            CHECK(def2.vertInputs == def.vertInputs);
             CHECK(sizeof(def) == 224);  // reminder to add new fields to the test
             CHECK(sizeof(def2) == 512); // reminder to add new fields to the test
             CHECK(def2.descriptorSet.uniformBuffers[VK_SHADER_STAGE_VERTEX_BIT] ==

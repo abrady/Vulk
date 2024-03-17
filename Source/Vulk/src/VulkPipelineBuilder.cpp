@@ -98,14 +98,8 @@ VulkPipelineBuilder &VulkPipelineBuilder::setDepthCompareOp(VkCompareOp compareO
     return *this;
 }
 
-VulkPipelineBuilder &VulkPipelineBuilder::addVertexInputBindingDescription(uint32_t binding, uint32_t stride, VkVertexInputRate inputRate) {
-    bindingDescription.binding = binding;
-    bindingDescription.stride = stride;
-    bindingDescription.inputRate = inputRate;
-    return *this;
-}
-
-VulkPipelineBuilder &VulkPipelineBuilder::addVertexInputField(uint32_t binding, uint32_t location, uint32_t offset, VkFormat format) {
+VulkPipelineBuilder &VulkPipelineBuilder::addVertexInputField(VulkVertInputLocation location, VkFormat format) {
+    VULK_THROW_IF(vertInputs.find(location) != vertInputs.end(), "Vertex input location already exists");
     VkVertexInputAttributeDescription attributeDescription{};
     attributeDescription.binding = binding;
     attributeDescription.location = location;
@@ -121,14 +115,6 @@ VulkPipelineBuilder &VulkPipelineBuilder::addVertexInputFieldVec3(uint32_t bindi
 
 VulkPipelineBuilder &VulkPipelineBuilder::addVertexInputFieldVec2(uint32_t binding, uint32_t location, uint32_t offset) {
     return addVertexInputField(binding, location, offset, VK_FORMAT_R32G32_SFLOAT);
-}
-
-VulkPipelineBuilder &VulkPipelineBuilder::addVulkVertexInput(uint32_t binding) {
-    return addVertexInputBindingDescription(binding, sizeof(Vertex))
-        .addVertexInputFieldVec3(binding, VulkVertBindingLocation_PosBinding, offsetof(Vertex, pos))
-        .addVertexInputFieldVec3(binding, VulkVertBindingLocation_NormalBinding, offsetof(Vertex, normal))
-        .addVertexInputFieldVec3(binding, VulkVertBindingLocation_TangentBinding, offsetof(Vertex, tangent))
-        .addVertexInputFieldVec2(binding, VulkVertBindingLocation_TexCoordBinding, offsetof(Vertex, uv));
 }
 
 // enabling means the existing value in the framebuffer will be blended with the new value output from the shader

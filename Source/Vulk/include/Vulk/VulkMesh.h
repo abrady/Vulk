@@ -11,6 +11,17 @@ struct VulkMeshRef {
     uint32_t indexCount = 0;
 };
 
+struct Vertex {
+    glm::vec3 pos;
+    glm::vec3 normal;
+    glm::vec3 tangent;
+    glm::vec2 uv;
+
+    template <class Archive> void serialize(Archive &archive) {
+        archive(CEREAL_NVP(pos), CEREAL_NVP(normal), CEREAL_NVP(tangent), CEREAL_NVP(uv));
+    }
+};
+
 class VulkMesh {
   public:
     std::string name;

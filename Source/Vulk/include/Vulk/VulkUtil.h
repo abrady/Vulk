@@ -88,17 +88,6 @@ struct SwapChainSupportDetails {
     std::vector<VkPresentModeKHR> presentModes;
 };
 
-struct Vertex {
-    glm::vec3 pos;
-    glm::vec3 normal;
-    glm::vec3 tangent;
-    glm::vec2 uv;
-
-    template <class Archive> void serialize(Archive &archive) {
-        archive(CEREAL_NVP(pos), CEREAL_NVP(normal), CEREAL_NVP(tangent), CEREAL_NVP(uv));
-    }
-};
-
 struct VulkDebugNormalsUBO {
     float length = .1f;    // how long to render the debug normal
     bool useModel = false; // use the model's normals/tangents instead of the shader sampled normals
