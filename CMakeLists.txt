@@ -304,7 +304,7 @@ foreach(FILE ${PIPELINE_SRC_FILES})
 endforeach()
 # Create a custom target that depends on the output of the previous commands
 add_custom_target(
-    RunPipelineBuilder ALL
+    BuildPipelines ALL
     DEPENDS ${PIPELINEBUILDER_ASSETS_OUTPUT_FILES}
 )
 
@@ -313,6 +313,6 @@ foreach(SOURCE_FILE ${PIPELINEBUILDER_ASSETS_OUTPUT_FILES})
     file(APPEND ${ASSETS_OUTPUT_FILE} "${SOURCE_FILE}\n")
 endforeach()
 
-# Make your main target depend on the RunPipelineBuilder target
-message("Adding dependency on RunPipelineBuilder")
-add_dependencies(VulkSamples RunPipelineBuilder)
+# Make your main target depend on the BuildPipelines target
+message("Adding dependency on BuildPipelines")
+add_dependencies(VulkSamples BuildPipelines)
