@@ -59,9 +59,9 @@ Use a physically based BRDF.
   * DONE currently pipelines specify the binding, instead we should have a field specifying what they use
     * why did I think vertexInputBinding was a good idea? remove that
     * read the values from pipeline and set
-  * get the pipeline builder to work properly
-    * we need to include a VkVertexInputBindingDescription and a VkVertexInputAttributeDescription for each type in the vertex
-    * the location in the shader seems like a good approach: LayoutLocation_Position, LayoutLocation_Normal, etc.
+* DONE get the pipeline builder to work properly
+  * x we need to include a VkVertexInputBindingDescription and a VkVertexInputAttributeDescription for each type in the vertex
+  * x the location in the shader seems like a good approach: LayoutLocation_Position, LayoutLocation_Normal, etc.
   * rendering
     * vkCmdBindVertexBuffers can take an array
       * the VkVertexInputBindingDescription specifies which buffer corresponds to which location

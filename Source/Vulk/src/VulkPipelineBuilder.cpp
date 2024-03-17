@@ -98,23 +98,44 @@ VulkPipelineBuilder &VulkPipelineBuilder::setDepthCompareOp(VkCompareOp compareO
     return *this;
 }
 
-VulkPipelineBuilder &VulkPipelineBuilder::addVertexInputField(VulkVertInputLocation location, VkFormat format) {
+VulkPipelineBuilder &VulkPipelineBuilder::addVertexInput(VulkVertInputLocation location) {
     VULK_THROW_IF(vertInputs.find(location) != vertInputs.end(), "Vertex input location already exists");
-    VkVertexInputAttributeDescription attributeDescription{};
-    attributeDescription.binding = binding;
-    attributeDescription.location = location;
-    attributeDescription.format = format;
-    attributeDescription.offset = offset;
-    attributeDescriptions.push_back(attributeDescription);
+    VkFormat format;
+    uint32_t stride;
+
+    switch (location) {
+    case VulkVertInputLocation_Pos:
+    case VulkVertInputLocation_Normal:
+    case VulkVertInputLocation_Tangent:
+        format = VK_FORMAT_R32G32B32A32_SFLOAT;
+        stride = sizeof(glm::vec3);
+        break;
+    case VulkVertInputLocation_TexCoord:
+        format = VK_FORMAT_R32G32_SFLOAT;
+        stride = sizeof(glm::vec2);
+        break;
+    default:
+        VULK_THROW("Unknown vertex input location");
+    };
+
+    VkVertexInputBindingDescription binding = {};
+    binding.binding = location;                      // We'll have a single vertex buffer, so we use binding point 0
+    binding.stride = stride;                         // Size of a single Vertex object
+    binding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX; // Move to the next data entry after each vertex
+
+    VkVertexInputAttributeDescription attribute{};
+    attribute.binding = location;
+    attribute.location = location;
+    attribute.format = format;
+    attribute.offset = 0;
+
+    VertInput input = {
+        .binding = binding,
+        .attribute = attribute,
+    };
+    vertInputs[location] = input;
+
     return *this;
-}
-
-VulkPipelineBuilder &VulkPipelineBuilder::addVertexInputFieldVec3(uint32_t binding, uint32_t location, uint32_t offset) {
-    return addVertexInputField(binding, location, offset, VK_FORMAT_R32G32B32_SFLOAT);
-}
-
-VulkPipelineBuilder &VulkPipelineBuilder::addVertexInputFieldVec2(uint32_t binding, uint32_t location, uint32_t offset) {
-    return addVertexInputField(binding, location, offset, VK_FORMAT_R32G32_SFLOAT);
 }
 
 // enabling means the existing value in the framebuffer will be blended with the new value output from the shader
@@ -136,11 +157,19 @@ VulkPipelineBuilder &VulkPipelineBuilder::setBlending(bool enabled, VkColorCompo
 void VulkPipelineBuilder::build(VkRenderPass renderPass, std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout, VkPipelineLayout *pipelineLayout,
                                 VkPipeline *graphicsPipeline) {
     assert(viewport.maxDepth > 0.f);
+
+    std::vector<VkVertexInputBindingDescription> bindingDescriptions;
+    std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
+    for (auto &input : vertInputs) {
+        bindingDescriptions.push_back(input.second.binding);
+        attributeDescriptions.push_back(input.second.attribute);
+    }
+
     VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertexInputInfo.vertexBindingDescriptionCount = 1;
+    vertexInputInfo.vertexBindingDescriptionCount = static_cast<uint32_t>(bindingDescriptions.size());
     vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
-    vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+    vertexInputInfo.pVertexBindingDescriptions = bindingDescriptions.data();
     vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;

@@ -350,7 +350,7 @@ struct SourcePipelineDef {
     bool depthWriteEnabled;
     VkCompareOp depthCompareOp;
 
-    VulkVertInputLocationMask vertInputs;
+    std::vector<VulkVertInputLocation> vertInputs;
 
     VkCullModeFlags cullMode = VK_CULL_MODE_BACK_BIT;
 
@@ -412,9 +412,8 @@ struct SourcePipelineDef {
         p.depthWriteEnabled = j.value("depthWriteEnabled", true);
         p.depthCompareOp = (VkCompareOp)EnumLookup<VulkCompareOp>::getEnumFromStr(j.value("depthCompareOp", "LESS"));
         std::vector<std::string> vertInputs = j.at("vertInputs").get<std::vector<std::string>>();
-        p.vertInputs = 0;
         for (auto const &value : vertInputs) {
-            p.vertInputs |= EnumLookup<VulkVertInputLocation>::getEnumFromStr(value);
+            p.vertInputs.push_back(EnumLookup<VulkVertInputLocation>::getEnumFromStr(value));
         }
         if (j.contains("blending"))
             p.blending = Blending::fromJSON(j["blending"]);
@@ -474,7 +473,7 @@ struct MeshDef {
     MeshDef() = default;
     MeshDef(string name, ModelMeshDef model) : name(name), type(MeshDefType_Model), model(make_shared<ModelMeshDef>(model)){};
     MeshDef(string name, std::shared_ptr<VulkMesh> mesh) : name(name), type(MeshDefType_Mesh), mesh(mesh){};
-    shared_ptr<ModelMeshDef> getModel() {
+    shared_ptr<ModelMeshDef> getModelMeshDef() {
         assert(type == MeshDefType_Model);
         return model;
     }

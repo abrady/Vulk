@@ -54,14 +54,15 @@ std::shared_ptr<VulkShaderModule> VulkResources::createShaderModule(ShaderType t
     return sm;
 }
 
-shared_ptr<VulkModel> VulkResources::getModel(ModelDef &modelDef) {
-    string name = modelDef.name;
-    if (!models.contains(name)) {
-        shared_ptr<VulkMaterialTextures> textures = getMaterialTextures(modelDef.material->name);
-        auto mr = make_shared<VulkModel>(vk, getMesh(*modelDef.mesh), textures, getMaterial(modelDef.material->name));
-        models[name] = mr;
+std::shared_ptr<VulkModel> VulkResources::getModel(ModelDef const &modelDef, BuiltPipelineDef const &pipelineDef) {
+    string key = modelDef.name + ":" + pipelineDef.name;
+    if (pipelineModels.contains(key)) {
+        return pipelineModels.at(key);
     }
-    return models[name];
+    shared_ptr<VulkMaterialTextures> textures = getMaterialTextures(modelDef.material->name);
+    auto p = make_shared<VulkModel>(vk, getMesh(*modelDef.mesh), textures, getMaterial(modelDef.material->name), pipelineDef.vertInputs);
+    pipelineModels[key] = p;
+    return p;
 }
 
 std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(VkRenderPass renderPass, VkExtent2D extent, std::string const &name) {
@@ -97,7 +98,6 @@ std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(VkRenderPass renderPas
     VulkPipelineBuilder pb(vk);
     pb.addvertShaderStage(getvertShader(def.vertShader->name))
         .addFragmentShaderStage(getFragmentShader(def.fragShader->name))
-        .addVulkVertexInput(def.vertexInputBinding)
         .setDepthTestEnabled(def.depthTestEnabled)
         .setDepthWriteEnabled(def.depthWriteEnabled)
         .setDepthCompareOp(def.depthCompareOp)
@@ -113,6 +113,10 @@ std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(VkRenderPass renderPas
         pb.addGeometryShaderStage(getGeometryShader(def.geomShader->name));
     }
 
+    for (VulkVertInputLocation input : def.vertInputs) {
+        pb.addVertexInput(input);
+    }
+
     auto p = pb.build(renderPass, descriptorSetLayout);
     pipelines[name] = p;
     return p;
@@ -122,7 +126,7 @@ std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const
                                                                   shared_ptr<VulkScene> scene) {
     auto const &dsDef = pipelineDef->descriptorSet;
     VulkDescriptorSetBuilder builder(vk);
-    shared_ptr<VulkModel> model = getModel(*actorDef.model);
+    shared_ptr<VulkModel> model = getModel(*actorDef.model, *pipelineDef);
     shared_ptr<VulkFrameUBOs<glm::mat4>> xformUBOs;
     uint32_t const dsHash = dsDef.hash();
     if (descriptorSetLayoutCache.contains(dsHash)) {
@@ -242,7 +246,7 @@ shared_ptr<VulkMesh> VulkResources::getMesh(MeshDef &meshDef) {
     shared_ptr<VulkMesh> m;
     switch (meshDef.type) {
     case MeshDefType_Model:
-        m = make_shared<VulkMesh>(VulkMesh::loadFromPath(meshDef.getModel()->path, name));
+        m = make_shared<VulkMesh>(VulkMesh::loadFromPath(meshDef.getModelMeshDef()->path, name));
         break;
     case MeshDefType_Mesh: {
         m = meshDef.getMesh();

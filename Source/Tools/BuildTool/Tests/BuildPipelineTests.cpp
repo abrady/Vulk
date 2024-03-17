@@ -23,7 +23,7 @@ static SourcePipelineDef makeTestPipelineDeclDef() {
     def.depthWriteEnabled = true;
     def.depthCompareOp = VulkCompareOp_NOT_EQUAL;
     def.cullMode = VK_CULL_MODE_BACK_BIT;
-    def.vertInputs = VulkVertInputLocationMask_Pos | VulkVertInputLocationMask_Normal | VulkVertInputLocationMask_Tangent;
+    def.vertInputs = {VulkVertInputLocation_PosBinding, VulkVertInputLocation_NormalBinding, VulkVertInputLocation_TangentBinding};
     def.blending = {
         .enabled = true,
         .colorMask = "RB",

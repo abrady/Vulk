@@ -10,6 +10,7 @@ enum VulkVertInputLocation : byte {
 }
 
 enum VulkVertInputLocationMask : uint32 {
+    None = 0,
     Color = 1,
     Pos = 2,
     Normal = 4,

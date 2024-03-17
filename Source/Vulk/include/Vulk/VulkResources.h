@@ -48,7 +48,7 @@ class VulkResources {
     std::shared_ptr<VulkUniformBuffer<VulkMaterialConstants>> getMaterial(std::string const &name);
     std::shared_ptr<VulkMesh> getMesh(MeshDef &meshDef);
     std::shared_ptr<VulkMaterialTextures> getMaterialTextures(std::string const &name);
-    std::shared_ptr<VulkModel> getModel(ModelDef &modelDef);
+    std::shared_ptr<VulkModel> getModel(ModelDef const &modelDef, BuiltPipelineDef const &pipelineDef);
 
     std::unordered_map<uint32_t, std::shared_ptr<VulkDescriptorSetLayout>> descriptorSetLayoutCache;
 
@@ -58,7 +58,7 @@ class VulkResources {
     std::unordered_map<std::string, std::shared_ptr<VulkMesh>> meshes;
     std::unordered_map<std::string, std::shared_ptr<VulkPipeline>> pipelines;
     std::unordered_map<std::string, std::shared_ptr<VulkBuffer>> buffers;
-    std::unordered_map<std::string, std::shared_ptr<VulkModel>> models;
+    std::unordered_map<std::string, std::shared_ptr<VulkModel>> pipelineModels;
     std::unordered_map<std::string, std::shared_ptr<VulkScene>> scenes;
     std::unordered_map<std::string, std::shared_ptr<VulkShaderModule>> vertShaders, geomShaders, fragShaders;
     std::shared_ptr<VulkSampler> textureSampler, shadowMapSampler;

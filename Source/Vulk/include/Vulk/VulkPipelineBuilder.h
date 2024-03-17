@@ -33,7 +33,6 @@ class VulkPipelineBuilder {
 
     VulkPipelineBuilder &addShaderStage(VkShaderStageFlagBits stage, char const *path);
     VulkPipelineBuilder &addShaderStage(VkShaderStageFlagBits stage, std::shared_ptr<VulkShaderModule> shaderModule);
-    VulkPipelineBuilder &addVertexInputField(uint32_t binding, uint32_t location, uint32_t offset, VkFormat format);
 
   public:
     VulkPipelineBuilder(Vulk &vk);
@@ -66,11 +65,7 @@ class VulkPipelineBuilder {
     VulkPipelineBuilder &setFrontStencilReference(uint32_t reference);
     VulkPipelineBuilder &copyFrontStencilToBack();
 
-    // The binding says 'verts are in binding 0', and the stride says 'this is how far apart each vertex is'
-    // then the field describe fields within the vertices: pos, normal, etc.
-    VulkPipelineBuilder &addVertexInputFieldVec3(uint32_t binding, uint32_t location, uint32_t fieldOffset);
-    VulkPipelineBuilder &addVertexInputFieldVec2(uint32_t binding, uint32_t location, uint32_t fieldOffset);
-
+    VulkPipelineBuilder &addVertexInput(VulkVertInputLocation input);
     VulkPipelineBuilder &setBlending(bool enabled, VkColorComponentFlags colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
                                                                                           VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT);
 
