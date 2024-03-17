@@ -14,7 +14,7 @@
 
 #include "Vulk/VulkUtil.h"
 
-#include "../PipelineBuilder.h"
+#include "../BuildPipeline.h"
 // #include "VulkResourceMetadata_generated.h"
 
 // this errors because this is just an int, not a real type

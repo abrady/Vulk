@@ -1,6 +1,6 @@
 #include <catch.hpp>
 
-#include "../PipelineBuilder.h"
+#include "../BuildPipeline.h"
 #include "VulkResourceMetadata_generated.h"
 #include "VulkShaderEnums_generated.h"
 #include "spirv_cross/spirv_glsl.hpp"

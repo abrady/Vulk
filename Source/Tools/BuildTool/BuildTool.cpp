@@ -17,7 +17,7 @@
 
 #include "Vulk/VulkUtil.h"
 
-#include "PipelineBuilder.h"
+#include "BuildPipeline.h"
 
 // Initialize a shared logger instance
 inline std::shared_ptr<spdlog::logger> &GetLogger() {
