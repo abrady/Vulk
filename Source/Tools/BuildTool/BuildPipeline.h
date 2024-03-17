@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "Vulk/VulkResourceMetadata.h"
+#include "VulkShaderEnums_generated.h"
 
 #include <nlohmann/json.hpp>
 
@@ -22,8 +23,8 @@ struct ShaderInfo {
     std::unordered_map<VulkShaderUBOBinding, std::string> uboBindings;
     std::unordered_map<VulkShaderSSBOBinding, std::string> sboBindings;
     std::unordered_map<VulkShaderTextureBinding, std::string> samplerBindings;
-    std::unordered_map<uint32_t, std::string> inputLocations;
-    std::unordered_map<uint32_t, std::string> outputLocations;
+    std::unordered_map<VulkShaderLocation, std::string> inputLocations;
+    std::unordered_map<VulkShaderLocation, std::string> outputLocations;
 };
 
 class PipelineBuilder {
@@ -60,13 +61,16 @@ class PipelineBuilder {
 
         // Inputs
         for (const spirv_cross::Resource &resource : resources.stage_inputs) {
-            unsigned location = glsl.get_decoration(resource.id, spv::DecorationLocation);
+            VulkShaderLocation location = (VulkShaderLocation)glsl.get_decoration(resource.id, spv::DecorationLocation);
+            VULK_THROW_IF(location < VulkShaderLocation_MIN || location > VulkShaderLocation_MAX, "Invalid vertex input location " + std::to_string(location));
+
             parsedShader.inputLocations[location] = resource.name;
         }
 
         // Outputs
         for (const spirv_cross::Resource &resource : resources.stage_outputs) {
-            unsigned location = glsl.get_decoration(resource.id, spv::DecorationLocation);
+            VulkShaderLocation location = (VulkShaderLocation)glsl.get_decoration(resource.id, spv::DecorationLocation);
+            VULK_THROW_IF(location < VulkShaderLocation_MIN || location > VulkShaderLocation_MAX, "Invalid vertex input location " + std::to_string(location));
             parsedShader.outputLocations[location] = resource.name;
         }
 
@@ -118,11 +122,10 @@ class PipelineBuilder {
         BuiltPipelineDef pipelineOut(pipelineIn);
 
         std::vector<ShaderInfo> shaderInfos;
-        if (!pipelineIn.vertShaderName.empty()) {
-            ShaderInfo info = infoFromShader(pipelineIn.vertShaderName, "vert", builtShadersDir);
-            shaderInfos.push_back(info);
-            updateDSDef(info, "vert", pipelineOut.descriptorSet);
-        }
+        ShaderInfo vertShaderInfo = infoFromShader(pipelineIn.vertShaderName, "vert", builtShadersDir);
+        shaderInfos.push_back(vertShaderInfo);
+        updateDSDef(vertShaderInfo, "vert", pipelineOut.descriptorSet);
+
         if (!pipelineIn.geomShaderName.empty()) {
             ShaderInfo info = infoFromShader(pipelineIn.geomShaderName, "geom", builtShadersDir);
             shaderInfos.push_back(info);
@@ -132,6 +135,10 @@ class PipelineBuilder {
             ShaderInfo info = infoFromShader(pipelineIn.fragShaderName, "frag", builtShadersDir);
             shaderInfos.push_back(info);
             updateDSDef(info, "frag", pipelineOut.descriptorSet);
+        }
+
+        for (auto &[location, name] : vertShaderInfo.inputLocations) {
+            pipelineOut.vertInputs.push_back(location);
         }
 
         std::string errMsgOut;

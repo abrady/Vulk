@@ -31,12 +31,12 @@ namespace fs = std::filesystem;
 
 template <typename T> struct EnumNameGetter;
 
-template <> struct EnumNameGetter<VulkVertInputLocation> {
+template <> struct EnumNameGetter<VulkShaderLocation> {
     static const char *const *getNames() {
-        return EnumNamesVulkVertInputLocation();
+        return EnumNamesVulkShaderLocation();
     }
-    static VulkVertInputLocation getMin() {
-        return VulkVertInputLocation_MIN;
+    static VulkShaderLocation getMin() {
+        return VulkShaderLocation_MIN;
     }
 };
 
@@ -349,9 +349,6 @@ struct SourcePipelineDef {
     bool depthTestEnabled;
     bool depthWriteEnabled;
     VkCompareOp depthCompareOp;
-
-    std::vector<VulkVertInputLocation> vertInputs;
-
     VkCullModeFlags cullMode = VK_CULL_MODE_BACK_BIT;
 
     struct Blending {
@@ -392,7 +389,7 @@ struct SourcePipelineDef {
     template <class Archive> void serialize(Archive &ar) {
         ar(CEREAL_NVP(name), cereal::make_nvp("vertShader", vertShaderName), cereal::make_nvp("geomShader", geomShaderName),
            cereal::make_nvp("fragShader", fragShaderName), CEREAL_NVP(primitiveTopology), CEREAL_NVP(depthTestEnabled), CEREAL_NVP(depthWriteEnabled),
-           CEREAL_NVP(depthCompareOp), CEREAL_NVP(vertInputs), CEREAL_NVP(blending), CEREAL_NVP(cullMode));
+           CEREAL_NVP(depthCompareOp), CEREAL_NVP(blending), CEREAL_NVP(cullMode));
     }
 
     void validate() {
@@ -411,10 +408,6 @@ struct SourcePipelineDef {
         p.depthTestEnabled = j.value("depthTestEnabled", true);
         p.depthWriteEnabled = j.value("depthWriteEnabled", true);
         p.depthCompareOp = (VkCompareOp)EnumLookup<VulkCompareOp>::getEnumFromStr(j.value("depthCompareOp", "LESS"));
-        std::vector<std::string> vertInputs = j.at("vertInputs").get<std::vector<std::string>>();
-        for (auto const &value : vertInputs) {
-            p.vertInputs.push_back(EnumLookup<VulkVertInputLocation>::getEnumFromStr(value));
-        }
         if (j.contains("blending"))
             p.blending = Blending::fromJSON(j["blending"]);
         p.cullMode = (VkCullModeFlags)EnumLookup<VulkCullModeFlags>::getEnumFromStr(j.value("cullMode", "BACK"));
@@ -428,9 +421,11 @@ struct BuiltPipelineDef : public SourcePipelineDef {
     shared_ptr<ShaderDef> geomShader;
     shared_ptr<ShaderDef> fragShader;
     DescriptorSetDef descriptorSet;
+    std::vector<VulkShaderLocation> vertInputs;
 
     template <class Archive> void serialize(Archive &ar) {
-        ar(cereal::base_class<SourcePipelineDef>(this), CEREAL_NVP(vertShader), CEREAL_NVP(geomShader), CEREAL_NVP(fragShader), CEREAL_NVP(descriptorSet));
+        ar(cereal::base_class<SourcePipelineDef>(this), CEREAL_NVP(vertShader), CEREAL_NVP(geomShader), CEREAL_NVP(fragShader), CEREAL_NVP(descriptorSet),
+           CEREAL_NVP(vertInputs));
     }
 
     void validate() {

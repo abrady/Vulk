@@ -18,13 +18,13 @@
 namespace fs = std::filesystem;
 
 int sceneBuilder(fs::path sceneFileIn, fs::path sceneOutDir, bool verbose) {
-    LOG("SceneBuilder: Building scene from file: {}", sceneFileIn.string());
+    VULK_LOG("SceneBuilder: Building scene from file: {}", sceneFileIn.string());
     if (!fs::exists(sceneFileIn)) {
-        ERR("Scene file does not exist: {}", sceneFileIn.string());
+        VULK_ERR("Scene file does not exist: {}", sceneFileIn.string());
         return 1;
     }
     if (!fs::exists(sceneOutDir)) {
-        ERR("Scene output directory does not exist: {}", sceneOutDir.string());
+        VULK_ERR("Scene output directory does not exist: {}", sceneOutDir.string());
         return 1;
     }
     // Read from the input file
@@ -48,7 +48,7 @@ int sceneBuilder(fs::path sceneFileIn, fs::path sceneOutDir, bool verbose) {
 }
 
 int pipelineBuilder(fs::path builtShadersDir, fs::path pipelineFileOut, fs::path pipelineFileIn, bool verbose) {
-    LOG("PipelineBuilder: Building pipeline from file: {}", pipelineFileIn.string());
+    VULK_LOG("PipelineBuilder: Building pipeline from file: {}", pipelineFileIn.string());
     if (!fs::exists(builtShadersDir)) {
         std::cerr << "Shaders directory does not exist: " << builtShadersDir << std::endl;
         return 1;

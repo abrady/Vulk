@@ -113,7 +113,7 @@ std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(VkRenderPass renderPas
         pb.addGeometryShaderStage(getGeometryShader(def.geomShader->name));
     }
 
-    for (VulkVertInputLocation input : def.vertInputs) {
+    for (VulkShaderLocation input : def.vertInputs) {
         pb.addVertexInput(input);
     }
 

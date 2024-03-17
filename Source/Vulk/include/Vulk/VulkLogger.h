@@ -33,9 +33,9 @@ class VulkLogger {
     }
 };
 
-#define TRACE(...) VulkLogger::GetLogger()->trace(__VA_ARGS__)
-#define DEBUG(...) VulkLogger::GetLogger()->debug(__VA_ARGS__)
-#define LOG(...) VulkLogger::GetLogger()->info(__VA_ARGS__)
-#define WARN(...) VulkLogger::GetLogger()->warn(__VA_ARGS__)
-#define ERR(...) VulkLogger::GetLogger()->error(__VA_ARGS__)
-#define CRIT(...) VulkLogger::GetLogger()->critical(__VA_ARGS__)
+#define VULK_TRACE(...) VulkLogger::GetLogger()->trace(__VA_ARGS__)
+#define VULK_DEBUG(...) VulkLogger::GetLogger()->debug(__VA_ARGS__)
+#define VULK_LOG(...) VulkLogger::GetLogger()->info(__VA_ARGS__)
+#define VULK_WARN(...) VulkLogger::GetLogger()->warn(__VA_ARGS__)
+#define VULK_ERR(...) VulkLogger::GetLogger()->error(__VA_ARGS__)
+#define VULK_CRIT(...) VulkLogger::GetLogger()->critical(__VA_ARGS__)
