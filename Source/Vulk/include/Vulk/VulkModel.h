@@ -27,8 +27,8 @@ struct VulkModel {
     std::shared_ptr<VulkUniformBuffer<VulkMaterialConstants>> materialUBO;
     uint32_t numIndices, numVertices;
     uint32_t vertInputMask = VulkVertInputLocationMask_None;
-    std::unordered_map<VulkVertInputLocation, VulkBuffer> bufs; // each index is VulkVertInputLocation_Pos, Color, Normal, etc.;
-    VulkBuffer indexBuf;
+    std::unordered_map<VulkVertInputLocation, std::shared_ptr<VulkBuffer>> bufs; // each index is VulkVertInputLocation_Pos, Color, Normal, etc.;
+    std::shared_ptr<VulkBuffer> indexBuf;
 
     VulkModel(Vulk &vk, std::shared_ptr<VulkMesh> meshIn, std::shared_ptr<VulkMaterialTextures> texturesIn,
               std::shared_ptr<VulkUniformBuffer<VulkMaterialConstants>> materialUBO, std::vector<VulkVertInputLocation> const &inputs)
@@ -42,7 +42,8 @@ struct VulkModel {
         for (VulkVertInputLocation i : inputs) {
             vertInputMask |= 1 << i;
             if (i == VulkVertInputLocation_Pos || i == VulkVertInputLocation_Normal || i == VulkVertInputLocation_Tangent) {
-                std::vector<glm::vec3> vec3s(meshIn->vertices.size());
+                std::vector<glm::vec3> vec3s;
+                vec3s.reserve(meshIn->vertices.size());
                 for (auto &v : meshIn->vertices) {
                     switch (i) {
                     case VulkVertInputLocation_Pos:
@@ -58,26 +59,36 @@ struct VulkModel {
                         VULK_THROW("Unhandled VulkVertInputLocation");
                     }
                 }
-                bufs.emplace(i, VulkBufferBuilder(vk)
-                                    .setSize(sizeof(vec3s[0]) * vec3s.size())
-                                    .setMem(vec3s.data())
-                                    .setUsage(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
-                                    .setProperties(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
-                                    .build());
+                bufs[i] = VulkBufferBuilder(vk)
+                              .setSize(sizeof(vec3s[0]) * vec3s.size())
+                              .setMem(vec3s.data())
+                              .setUsage(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
+                              .setProperties(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+                              .build();
             } else if (i == VulkVertInputLocation_TexCoord) {
-                std::vector<glm::vec2> vec2s(meshIn->vertices.size());
+                std::vector<glm::vec2> vec2s;
+                vec2s.reserve(meshIn->vertices.size());
                 for (auto &v : meshIn->vertices) {
                     vec2s.push_back(v.uv);
                 }
-                bufs.emplace(i, VulkBufferBuilder(vk)
-                                    .setSize(sizeof(vec2s[0]) * vec2s.size())
-                                    .setMem(vec2s.data())
-                                    .setUsage(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
-                                    .setProperties(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
-                                    .build());
+                bufs[i] = VulkBufferBuilder(vk)
+                              .setSize(sizeof(vec2s[0]) * vec2s.size())
+                              .setMem(vec2s.data())
+                              .setUsage(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
+                              .setProperties(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+                              .build();
             } else {
                 VULK_THROW("Unhandled VulkVertInputLocation");
             }
         }
+    }
+
+    void bindInputBuffers(VkCommandBuffer cmdBuf) {
+        for (auto &[binding, buf] : this->bufs) {
+            VkDeviceSize offsets[] = {0};
+            vkCmdBindVertexBuffers(cmdBuf, binding, 1, &buf->buf, offsets);
+        }
+
+        vkCmdBindIndexBuffer(cmdBuf, indexBuf->buf, 0, VK_INDEX_TYPE_UINT32);
     }
 };

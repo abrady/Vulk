@@ -48,6 +48,13 @@ Be based on the microfacet surface model.
 Be energy conserving.
 Use a physically based BRDF.
 
+## 3/17/24 todo time part 2
+
+* DONE rendering
+  * vkCmdBindVertexBuffers can take an array
+    * the VkVertexInputBindingDescription specifies which buffer corresponds to which location
+* buildpipelinetool should generate bindings automatically
+
 ## 3/16/24 todo time
 
 * rename PipelineBuilder DONE
@@ -62,9 +69,6 @@ Use a physically based BRDF.
 * DONE get the pipeline builder to work properly
   * x we need to include a VkVertexInputBindingDescription and a VkVertexInputAttributeDescription for each type in the vertex
   * x the location in the shader seems like a good approach: LayoutLocation_Position, LayoutLocation_Normal, etc.
-  * rendering
-    * vkCmdBindVertexBuffers can take an array
-      * the VkVertexInputBindingDescription specifies which buffer corresponds to which location
 
 ### Refresher: VkVertexInputBindingDescription and VkVertexInputAttributeDescription
 

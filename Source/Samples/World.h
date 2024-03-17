@@ -147,9 +147,7 @@ class World {
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipeline);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout, 0, 1,
                                     &actor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet, 0, nullptr);
-            VkDeviceSize offsets[] = {0};
-            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &model->vertBuf.buf, offsets);
-            vkCmdBindIndexBuffer(commandBuffer, model->indexBuf.buf, 0, VK_INDEX_TYPE_UINT32);
+            model->bindInputBuffers(commandBuffer);
             vkCmdDrawIndexed(commandBuffer, model->numIndices, 1, 0, 0, 0);
         }
         vkCmdEndRenderPass(commandBuffer);
@@ -182,9 +180,7 @@ class World {
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipeline);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout, 0, 1,
                                     &actor->dsInfo->descriptorSets[currentFrame]->descriptorSet, 0, nullptr);
-            VkDeviceSize offsets[] = {0};
-            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &model->vertBuf.buf, offsets);
-            vkCmdBindIndexBuffer(commandBuffer, model->indexBuf.buf, 0, VK_INDEX_TYPE_UINT32);
+            model->bindInputBuffers(commandBuffer);
             vkCmdDrawIndexed(commandBuffer, model->numIndices, 1, 0, 0, 0);
         }
 
@@ -197,8 +193,7 @@ class World {
                 vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout, 0, 1,
                                         &actor->dsInfo->descriptorSets[currentFrame]->descriptorSet, 0, nullptr);
 
-                VkDeviceSize offsets[] = {0};
-                vkCmdBindVertexBuffers(commandBuffer, 0, 1, &model->vertBuf.buf, offsets);
+                model->bindInputBuffers(commandBuffer);
                 vkCmdDraw(commandBuffer, model->numVertices, 1, 0, 0);
             }
         }
@@ -212,8 +207,7 @@ class World {
                 vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout, 0, 1,
                                         &actor->dsInfo->descriptorSets[currentFrame]->descriptorSet, 0, nullptr);
 
-                VkDeviceSize offsets[] = {0};
-                vkCmdBindVertexBuffers(commandBuffer, 0, 1, &model->vertBuf.buf, offsets);
+                model->bindInputBuffers(commandBuffer);
                 vkCmdDraw(commandBuffer, model->numVertices, 1, 0, 0);
             }
         }

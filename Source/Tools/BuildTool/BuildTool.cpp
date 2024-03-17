@@ -9,55 +9,22 @@
 
 #include "CLI/CLI.hpp"
 
-#include "spdlog/sinks/basic_file_sink.h"
-#include "spdlog/sinks/stdout_color_sinks.h"
-#include "spdlog/spdlog.h"
-
 #include <filesystem>
 
+#include "BuildPipeline.h"
+#include "Vulk/VulkLogger.h"
 #include "Vulk/VulkUtil.h"
 
-#include "BuildPipeline.h"
-
-// Initialize a shared logger instance
-inline std::shared_ptr<spdlog::logger> &GetLogger() {
-    static std::shared_ptr<spdlog::logger> logger;
-    static std::once_flag flag;
-    std::call_once(flag, []() {
-        // Create a color console sink
-        auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-        // Create a file sink
-        auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>("logfile.log", true);
-
-        // Combine the sinks into a list
-        spdlog::sinks_init_list sink_list = {file_sink, console_sink};
-
-        // Create a logger with both sinks
-        logger = std::make_shared<spdlog::logger>("BuildTool", sink_list.begin(), sink_list.end());
-
-        // Register it as the default logger
-        spdlog::register_logger(logger);
-        spdlog::set_default_logger(logger);
-
-        // Set the logger's level (e.g., info, warning, error)
-        logger->set_level(spdlog::level::info);
-    });
-    return logger;
-}
-
-#define LOG(...) GetLogger()->info(__VA_ARGS__)
-#define WARN(...) GetLogger()->warn(__VA_ARGS__)
-#define ERROR(...) GetLogger()->error(__VA_ARGS__)
 namespace fs = std::filesystem;
 
 int sceneBuilder(fs::path sceneFileIn, fs::path sceneOutDir, bool verbose) {
     LOG("SceneBuilder: Building scene from file: {}", sceneFileIn.string());
     if (!fs::exists(sceneFileIn)) {
-        ERROR("Scene file does not exist: {}", sceneFileIn.string());
+        ERR("Scene file does not exist: {}", sceneFileIn.string());
         return 1;
     }
     if (!fs::exists(sceneOutDir)) {
-        ERROR("Scene output directory does not exist: {}", sceneOutDir.string());
+        ERR("Scene output directory does not exist: {}", sceneOutDir.string());
         return 1;
     }
     // Read from the input file

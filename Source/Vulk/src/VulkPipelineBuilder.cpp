@@ -107,7 +107,7 @@ VulkPipelineBuilder &VulkPipelineBuilder::addVertexInput(VulkVertInputLocation l
     case VulkVertInputLocation_Pos:
     case VulkVertInputLocation_Normal:
     case VulkVertInputLocation_Tangent:
-        format = VK_FORMAT_R32G32B32A32_SFLOAT;
+        format = VK_FORMAT_R32G32B32_SFLOAT;
         stride = sizeof(glm::vec3);
         break;
     case VulkVertInputLocation_TexCoord:

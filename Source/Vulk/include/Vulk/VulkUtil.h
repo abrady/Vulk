@@ -46,6 +46,7 @@
 #include <vulkan/vulkan.h>
 
 #include "VulkException.h"
+#include "VulkLogger.h"
 #include "VulkShaderEnums_generated.h"
 
 #define VK_CALL(func)                                                                                                                                          \
