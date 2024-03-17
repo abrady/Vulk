@@ -37,3 +37,23 @@ enum VulkCompareOp : byte {
     GREATER_OR_EQUAL = 6,
     ALWAYS = 7,
 }
+
+enum VulkCullModeFlags: byte {
+    NONE = 0,
+    FRONT = 1,
+    BACK = 2,
+    FRONT_AND_BACK = 3,
+}
+
+// table VulkPipelineSource {
+//     name: string;
+//     vert_shader_name: string;
+//     geom_shader_name: string;
+//     frag_shader_name: string;
+//     primitive_topology: VulkPrimitiveTopology;
+//     depth_test_enabled: bool;
+//     depth_write_enabled: bool;
+//     depth_compare_op: VulkCompareOp;
+//     vertex_input_binding: uint32;
+//     cull_mode: VulkCullModeFlags = 2; // VulkCullModeFlags.BACK_BIT;
+// }

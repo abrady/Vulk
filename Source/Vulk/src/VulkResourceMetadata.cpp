@@ -226,7 +226,8 @@ void findAndProcessMetadata(const fs::path path, Metadata &metadata) {
     // The metadata is stored in JSON files with the following extensions
     // other extensions need special handling or no handling (e.g. .mtl files are handled by
     // loadMaterialDef, and .obj and .spv files are handled directly)
-    static set<string> jsonExts{".model", ".pipeline", ".scene"};
+    static set<string> jsonExts{".model", ".scene"};
+    static set<string> binExts{".pipeline.bin"};
     struct LoadInfo {
         json j;
         fs::path path;
@@ -236,14 +237,23 @@ void findAndProcessMetadata(const fs::path path, Metadata &metadata) {
     for (const auto &entry : fs::recursive_directory_iterator(path)) {
         if (entry.is_regular_file()) {
             string stem = entry.path().stem().string();
-            string ext = entry.path().extension().string();
-            if (jsonExts.find(ext) != jsonExts.end()) {
+            string ext = entry.path().stem().extension().string() + entry.path().extension().string(); // get 'bar' from foo.bar and 'bar.bin' from foo.bar.bin
+            if (jsonExts.contains(ext)) {
                 ifstream f(entry.path());
                 LoadInfo loadInfo;
                 loadInfo.j = nlohmann::json::parse(f, nullptr, true, true); // allow comments
                 loadInfo.path = entry.path().parent_path();
                 assert(loadInfo.j.at("name") == stem);
                 loadInfos[ext][loadInfo.j.at("name")] = loadInfo;
+            } else if (binExts.contains(ext)) {
+                if (ext == ".pipeline.bin") {
+                    auto pipelineDef = make_shared<BuiltPipelineDef>();
+                    VulkCereal::inst()->fromFile(entry.path(), *pipelineDef);
+                    assert(!metadata.pipelines.contains(pipelineDef->name));
+                    metadata.pipelines[pipelineDef->name] = pipelineDef;
+                } else {
+                    VULK_THROW("Unknown bin extension: " + ext);
+                }
             } else if (ext == ".vertspv") {
                 assert(!metadata.vertShaders.contains(stem));
                 metadata.vertShaders[stem] = make_shared<ShaderDef>(stem, entry.path().string());
@@ -271,11 +281,8 @@ void findAndProcessMetadata(const fs::path path, Metadata &metadata) {
     // The order matters here: models depend on meshes and materials, actors depend on models and pipelines
     // and the scene depends on actors
 
-    for (auto const &[name, loadInfo] : loadInfos[".pipeline"]) {
-        auto pipelineDef =
-            make_shared<BuiltPipelineDef>(BuiltPipelineDef::fromFile(loadInfo.path, metadata.vertShaders, metadata.geometryShaders, metadata.fragmentShaders));
-        assert(!metadata.pipelines.contains(pipelineDef->name));
-        metadata.pipelines[pipelineDef->name] = pipelineDef;
+    for (auto const &[name, pipeline] : metadata.pipelines) {
+        pipeline->fixup(metadata.vertShaders, metadata.geometryShaders, metadata.fragmentShaders);
     }
 
     for (auto const &[name, loadInfo] : loadInfos[".model"]) {

@@ -18,17 +18,39 @@ layout(location = LayoutLocation_PosLightSpace) in vec4 inPosLightSpace;
 
 layout(location = 0) out vec4 outColor;
 
+bool usePCF = false;
+
 void main() {
     vec3 projCoords = inPosLightSpace.xyz / inPosLightSpace.w; // To NDC
     vec2 depthUVs = projCoords.xy * 0.5 + 0.5; // To texture coordinates
-    float closestDepth = texture(shadowSampler, depthUVs).r;
     float currentDepth = clamp(projCoords.z, 0.0, 1.0); // just in case the z is outside the frustum
+    bool inShadow;
+    float bias = 0.001;
+
+
+    if (!usePCF) {
+        float closestDepth = texture(shadowSampler, depthUVs).r;
+        inShadow = currentDepth > closestDepth + bias;
+    } else {
+        // do a PCF to smooth out the shadow
+        float shadow = 0.0;
+        vec2 texelSize = 1.0 / textureSize(shadowSampler, 0);
+        for (int x = -1; x <= 1; ++x) {
+            for (int y = -1; y <= 1; ++y) {
+                float pcfDepth = texture(shadowSampler, depthUVs + vec2(x, y) * texelSize).r;
+                shadow += (currentDepth - bias > pcfDepth) ? 1.0 : 0.0;
+            }
+        }
+        shadow /= 9.0;
+        inShadow = shadow > 0.5;
+    }
+
     // introducing a bias to reduce shadow acne. e.g. if we've sampled the same depth as we've projected
     // we'll get strange behavior so just expect it to be a biased amount further to be in shadow
     vec3 lightColor = lightBuf.light.color;
     vec4 tex = texture(texSampler, inTexCoord);
     vec3 norm = calcTBNNormal(normSampler, inTexCoord, inNormal, inTangent);
-    if (currentDepth > closestDepth + 0.001) {
+    if (inShadow) {
         // In shadow - handwave 
         tex *= 0.5;
         lightColor *= 0.01;

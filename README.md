@@ -30,19 +30,62 @@ My goal for this project is to transition from the hand-coded samples I was doin
   * We take the inverse of the TBN matrix that transforms any vector from world space to tangent space, and use this matrix to transform not the normal, but the other relevant lighting variables to tangent space; the normal is then again in the same space as the other lighting variables. - this is better because we can do this in vertex space and then use the interpolated values.
 * <https://github.com/KHeresy/openxr-simple-example> : integrate with OpenXR
 * probably need schematized json files at some point. flatbuffers looks like the winner based on some quick research
+* * <https://www.reddit.com/r/GraphicsProgramming/comments/1ay0j70/realtime_pbr_catchup_developments_in_recent_years/> - chock full of links
 
 # Log
 
-## what next?
+## 3/16/24 screw it, I'm jumping into PBR
 
-Continuing to read <https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Mapping> I see that I already handled the frustum and border color problems, huzzah! What else does it talk about?
+Physically Based Rendering/Shading or whatever is the current state of the art?
 
-### PCF
+* <https://www.reddit.com/r/GraphicsProgramming/comments/1ay0j70/realtime_pbr_catchup_developments_in_recent_years/> - chock full of links
 
-## 3/14/24 Peter panning
+For a PBR lighting model to be considered physically based, it has to satisfy the following 3 conditions (don't worry, we'll get to them soon enough):
+
+Be based on the microfacet surface model.
+Be energy conserving.
+Use a physically based BRDF.
+
+## 3/16/24 [Parallax Mapping](https://learnopengl.com/Advanced-Lighting/Parallax-Mapping)
+
+The core idea behind parallax mapping is to adjust the texture coordinates based on the viewer's angle relative to the surface, simulating the parallax effect that occurs when viewing objects at different distances. This is achieved by using a height map stored in a texture, which encodes the relative height of each pixel on the surface.
+
+There are several variations of parallax mapping, with the most common being:
+
+* Basic Parallax Mapping: The simplest form, which uses a straightforward shift of texture coordinates but can sometimes result in less convincing depth effects, especially at steep angles.
+* Parallax Occlusion Mapping (POM): An advanced version that improves upon basic parallax mapping by better simulating the occlusion and self-shadowing of the bumps and pits on the surface. POM provides a more realistic sense of depth by tracing rays through the height map to determine the visible surface point, offering significantly improved realism at the cost of higher computational expense.
+
+Apparently this is seldom used in production. not interested, Next!
+
+## 3/16/24 PCF - percentage close filtering
+
+Another (partial) solution to these jagged edges is called PCF, or percentage-closer filtering, which is a term that hosts many different filtering functions that produce softer shadows, making them appear less blocky or hard. The idea is to sample more than once from the depth map, each time with slightly different texture coordinates. For each individual sample we check whether it is in shadow or not. All the sub-results are then combined and averaged and we get a nice soft looking shadow.
+
+I reduced the shadowmap to 256x256 (approximately)
+
+![](Assets/Screenshots/shadowmap_256_nopcf.png)
+
+Let's see what adding some neighbor sampling does
+
+![](Assets/Screenshots/shadowmap_256_pcf.png)
+
+that looks identical. let's double check that we're actually doing anything. hmm, looks fine in renderdoc. I think 256x256 is just too small. let's try 512... nope looks basically the same.
+I'm guessing spheres don't work well with it. Next!
+
+## 3/16/24 Peter panning
 
 One of the downsides of the bias factor is that you can ignore things that should be shadowed, but there's a trick! normally back-facing triangles are culled
 by the graphics pipeline, but in the case of shadows, assuming closed surfaces, you can cull the front faces. let's enable that and see if it fixes some of these issues
+
+Here's the sphere without front face culling:
+
+![](Assets/Screenshots/shadowmap_without_front_face_culling.png)
+
+with front face culling:
+
+![](Assets/Screenshots/shadowmap_cull_front_face.png)
+
+looks a lot better!
 
 ## 3/13/24 yet another dumb refactor
 

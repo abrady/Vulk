@@ -112,7 +112,7 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Tools/BuildTool)
 ##############################################################################
 
 # File to write
-set(ASSETS_OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/built_assets.txt")
+set(ASSETS_OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/assets.txt")
 
 # Ensure the file is empty before we start writing
 file(WRITE ${ASSETS_OUTPUT_FILE} "")
@@ -204,6 +204,7 @@ function(copy_assets DIR_NAME GLOBAL_ASSETS_VAR)
         set(DEST "${DEST_DIR}/${REL_PATH}")
         get_filename_component(DEST_FILE_DIR "${DEST}" DIRECTORY)
         file(MAKE_DIRECTORY "${DEST_FILE_DIR}")
+        message("Copying ${ASSET_FILE} to ${DEST}")
         add_custom_command(
             OUTPUT "${DEST}"
             COMMAND ${CMAKE_COMMAND} -E copy "${ASSET_FILE}" "${DEST}"
@@ -216,17 +217,18 @@ function(copy_assets DIR_NAME GLOBAL_ASSETS_VAR)
 endfunction()
 
 # accumulate the assets to build in this
-set(COPIED_ASSETS "")
+set(ASSETS_TO_COPY "")
 
 # these assets don't need any processing, but we need everything in the build
 # directory to be usable by the executable
-set(STRAIGHT_COPY_DIRECTORIES scenes Models Textures Materials)
+set(STRAIGHT_COPY_DIRECTORIES Scenes Models Textures Materials)
 foreach(DIR ${STRAIGHT_COPY_DIRECTORIES})
-    copy_assets(${DIR} COPIED_ASSETS)
+    copy_assets(${DIR} ASSETS_TO_COPY)
 endforeach()
 
+
 # Append each file name to the file
-foreach(SOURCE_FILE ${COPIED_ASSETS})
+foreach(SOURCE_FILE ${ASSETS_TO_COPY})
     file(APPEND ${ASSETS_OUTPUT_FILE} "${SOURCE_FILE}\n")
 endforeach()
 
@@ -251,30 +253,33 @@ function(build_assets DIR_NAME GLOBAL_ASSETS_VAR)
             OUTPUT "${DEST}"
             COMMAND $<TARGET_FILE:BuildTool> ${DIR_NAME} "${ASSET_FILE}" "${DEST}"
             DEPENDS "${ASSET_FILE}"
-            COMMENT "Copying ${DIR_NAME} ${ASSET_FILE} to ${DEST}"
+            COMMENT "Building ${DIR_NAME} ${ASSET_FILE} to ${DEST}"
         )
         list(APPEND ASSETS_TO_BUILD "${DEST}")
     endforeach()
     set(${GLOBAL_ASSETS_VAR} "${ASSETS_TO_BUILD}" PARENT_SCOPE) # set the list of assets in parent scope (equivalent to return value)
 endfunction()
 
-set(BUILT_ASSETS "")
+set(ASSETS_TO_BUILD "")
 set(BUILDTOOL_RESOURCE_DIRS )
 foreach(DIR ${BUILDTOOL_RESOURCE_DIRS})
-    build_assets(${DIR} BUILT_ASSETS)
+    build_assets(${DIR} ASSETS_TO_BUILD)
 endforeach()
+
+# Append each file name to the file
+foreach(SOURCE_FILE ${ASSETS_TO_BUILD})
+file(APPEND ${ASSETS_OUTPUT_FILE} "${SOURCE_FILE}\n")
+endforeach()
+
 
 add_custom_target(
     BuildAssetsTarget
     ALL    
-    DEPENDS ${GLOBAL_ASSETS_TO_COPY} ${BUILT_ASSETS} CompileShadersTarget
+    DEPENDS ${ASSETS_TO_COPY} ${ASSETS_TO_BUILD} CompileShadersTarget
 )
 
-# Append each file name to the file
-foreach(SOURCE_FILE ${BUILT_ASSETS})
-    file(APPEND ${ASSETS_OUTPUT_FILE} "${SOURCE_FILE}\n")
-endforeach()
- 
+add_dependencies(VulkSamples BuildAssetsTarget)
+
 ##
 # build the pipelines
 ##
@@ -283,7 +288,7 @@ set(PIPELINES_SOURCE_DIR "${CMAKE_SOURCE_DIR}/Assets/Pipelines")
 set(PIPELINES_DEST_DIR "${BUILT_RESOURCES_TARGET_DIR}/Assets/Pipelines") 
 # Create the destination directory if it doesn't exist
 file(MAKE_DIRECTORY ${PIPELINES_DEST_DIR})
-file(GLOB_RECURSE PIPELINE_SRC_FILES CONFIGURE_DEPENDS "${PIPELINES_SOURCE_DIR}/*")
+file(GLOB_RECURSE PIPELINE_SRC_FILES CONFIGURE_DEPENDS "${PIPELINES_SOURCE_DIR}/*.pipeline")
 # Create a custom command for each pipeline file
 
 foreach(FILE ${PIPELINE_SRC_FILES})

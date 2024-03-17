@@ -122,6 +122,15 @@ template <> struct EnumNameGetter<VulkCompareOp> {
     }
 };
 
+template <> struct EnumNameGetter<VulkCullModeFlags> {
+    static const char *const *getNames() {
+        return EnumNamesVulkCullModeFlags();
+    }
+    static VulkCullModeFlags getMin() {
+        return VulkCullModeFlags_MIN;
+    }
+};
+
 // the strings are packed in the array starting from the min value
 template <typename EnumType> struct EnumLookup {
     static EnumType getEnumFromStr(std::string value) {
@@ -158,6 +167,7 @@ namespace cereal {
     FlatBufEnumSaveMinimal(VulkShaderTextureBinding);
     FlatBufEnumSaveMinimal(VulkPrimitiveTopology);
     FlatBufEnumSaveMinimal(VulkCompareOp);
+    FlatBufEnumSaveMinimal(VulkCullModeFlags);
 
     // this doesn't resolve properly :(
     // template <class Archive, typename EnumType> std::string save_minimal(Archive const &archive, EnumType const &type) {
@@ -336,10 +346,10 @@ struct SourcePipelineDef {
     string geomShaderName; // optional
     string fragShaderName;
 
-    VulkPrimitiveTopology primitiveTopology;
+    VkPrimitiveTopology primitiveTopology;
     bool depthTestEnabled;
     bool depthWriteEnabled;
-    VulkCompareOp depthCompareOp;
+    VkCompareOp depthCompareOp;
 
     uint32_t vertexInputBinding;
 
@@ -398,31 +408,16 @@ struct SourcePipelineDef {
         p.vertShaderName = j.at("vertShader").get<string>();
         p.fragShaderName = j.at("fragShader").get<string>();
         p.geomShaderName = j.value("geomShader", "");
-        p.primitiveTopology = EnumLookup<VulkPrimitiveTopology>::getEnumFromStr(j.value("primitiveTopology", "TriangleList"));
+        p.primitiveTopology = (VkPrimitiveTopology)EnumLookup<VulkPrimitiveTopology>::getEnumFromStr(j.value("primitiveTopology", "TriangleList"));
         p.depthTestEnabled = j.value("depthTestEnabled", true);
         p.depthWriteEnabled = j.value("depthWriteEnabled", true);
-        p.depthCompareOp = EnumLookup<VulkCompareOp>::getEnumFromStr(j.value("depthCompareOp", "LESS"));
+        p.depthCompareOp = (VkCompareOp)EnumLookup<VulkCompareOp>::getEnumFromStr(j.value("depthCompareOp", "LESS"));
         p.vertexInputBinding = j.at("vertexInputBinding").get<uint32_t>();
         if (j.contains("blending"))
             p.blending = Blending::fromJSON(j["blending"]);
-        p.cullMode = j.value("cullMode", VK_CULL_MODE_BACK_BIT);
+        p.cullMode = (VkCullModeFlags)EnumLookup<VulkCullModeFlags>::getEnumFromStr(j.value("cullMode", "BACK"));
         p.validate();
         return p;
-    }
-    static nlohmann::json toJSON(const SourcePipelineDef &def) {
-        nlohmann::json j;
-        j["name"] = def.name;
-        j["vertShader"] = def.vertShaderName;
-        j["fragShader"] = def.fragShaderName;
-        j["primitiveTopology"] = EnumLookup<VulkPrimitiveTopology>::getStrFromEnum(def.primitiveTopology);
-        j["depthTestEnabled"] = def.depthTestEnabled;
-        j["depthWriteEnabled"] = def.depthWriteEnabled;
-        j["depthCompareOp"] = EnumLookup<VulkCompareOp>::getStrFromEnum(def.depthCompareOp);
-        j["vertexInputBinding"] = def.vertexInputBinding;
-        if (!def.geomShaderName.empty())
-            j["geomShader"] = def.geomShaderName;
-        j["blending"] = Blending::toJSON(def.blending);
-        return j;
     }
 };
 

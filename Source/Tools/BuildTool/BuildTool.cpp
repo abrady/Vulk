@@ -137,5 +137,7 @@ int main(int argc, char **argv) {
     // scene->add_option("sceneOutDir", sceneOutDir, "Directory where the scenes are built to.");
     // scene->add_flag("-v, --verbose", verbose, "be verbose");
     // scene->callback([&sceneFileIn, &sceneOutDir, &verbose]() { sceneBuilder(sceneFileIn, sceneOutDir, verbose); });
-    // CLI11_PARSE(app, argc, argv);
+
+    // do it
+    CLI11_PARSE(app, argc, argv);
 }

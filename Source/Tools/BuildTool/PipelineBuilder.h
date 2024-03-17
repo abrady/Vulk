@@ -163,9 +163,9 @@ class PipelineBuilder {
         VulkCereal::inst()->toFile(pipelineFileOut, pipelineOut);
     }
 
-    static void buildPipelineFromFile(std::filesystem::path builtShadersDir, std::filesystem::path pipelineFileOut, fs::path pipelineFileIn) {
-        if (!std::filesystem::exists(pipelineFileIn)) {
-            std::cerr << "Pipeline file does not exist: " << pipelineFileIn << std::endl;
+    static void buildPipelineFromFile(std::filesystem::path builtShadersDir, std::filesystem::path pipelineFileOut, fs::path pipelineFileSrc) {
+        if (!std::filesystem::exists(pipelineFileSrc)) {
+            std::cerr << "Pipeline file does not exist: " << pipelineFileSrc << std::endl;
             VULK_THROW("PipelineBuilder: Pipeline file does not exist");
         }
         if (!std::filesystem::exists(builtShadersDir)) {
@@ -178,7 +178,7 @@ class PipelineBuilder {
         }
 
         nlohmann::json pipelineInJSON;
-        std::ifstream inFile(pipelineFileIn);
+        std::ifstream inFile(pipelineFileSrc);
         inFile >> pipelineInJSON;
         inFile.close();
         SourcePipelineDef def = SourcePipelineDef::fromJSON(pipelineInJSON);
