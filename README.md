@@ -46,6 +46,12 @@ Be based on the microfacet surface model.
 Be energy conserving.
 Use a physically based BRDF.
 
+## 3/16/24 todo time
+
+* rename PipelineBuilder DONE
+* I've wanted to get the vertex struct broken up for a while. let's do that... the right way to do this is probably at the GPU buffer level, no need to break it up beforehand I think?
+  * this happens in VulkMesh?
+
 ## 3/16/24 [Parallax Mapping](https://learnopengl.com/Advanced-Lighting/Parallax-Mapping)
 
 The core idea behind parallax mapping is to adjust the texture coordinates based on the viewer's angle relative to the surface, simulating the parallax effect that occurs when viewing objects at different distances. This is achieved by using a height map stored in a texture, which encodes the relative height of each pixel on the surface.

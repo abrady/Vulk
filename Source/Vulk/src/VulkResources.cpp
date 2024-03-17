@@ -27,17 +27,17 @@ std::shared_ptr<VulkShaderModule> VulkResources::createShaderModule(ShaderType t
     char const *suffix;
     std::unordered_map<std::string, std::shared_ptr<VulkShaderModule>> *shaders_map;
     switch (type) {
-    case Vertex:
+    case Vert:
         subdir = "Vert";
         suffix = ".vertspv";
         shaders_map = &vertShaders;
         break;
-    case Geometry:
+    case Geom:
         subdir = "Geom";
         suffix = ".geomspv";
         shaders_map = &geomShaders;
         break;
-    case Fragment:
+    case Frag:
         subdir = "Frag";
         suffix = ".fragspv";
         shaders_map = &fragShaders;

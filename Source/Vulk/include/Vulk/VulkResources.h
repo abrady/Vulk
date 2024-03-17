@@ -38,9 +38,9 @@ class VulkResources {
 
   private:
     enum ShaderType {
-        Vertex,
-        Geometry,
-        Fragment
+        Vert,
+        Geom,
+        Frag
     };
 
     std::shared_ptr<VulkShaderModule> createShaderModule(ShaderType type, std::string const &name);
@@ -69,17 +69,17 @@ class VulkResources {
 
     std::shared_ptr<VulkShaderModule> getvertShader(std::string const &name) {
         if (!vertShaders.contains(name))
-            vertShaders[name] = createShaderModule(Vertex, name);
+            vertShaders[name] = createShaderModule(Vert, name);
         return vertShaders.at(name);
     }
     std::shared_ptr<VulkShaderModule> getGeometryShader(std::string const &name) {
         if (!geomShaders.contains(name))
-            geomShaders[name] = createShaderModule(Geometry, name);
+            geomShaders[name] = createShaderModule(Geom, name);
         return geomShaders.at(name);
     }
     std::shared_ptr<VulkShaderModule> getFragmentShader(std::string const &name) {
         if (!fragShaders.contains(name))
-            fragShaders[name] = createShaderModule(Fragment, name);
+            fragShaders[name] = createShaderModule(Frag, name);
         return fragShaders.at(name);
     }
 
