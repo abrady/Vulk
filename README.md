@@ -23,14 +23,10 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # TODOs
 
-* x rename PipelineBUILDER.h to PipelineCOMPILER.h or something similar: builders are what I call the foo.bar.baz.build() paradigm
-* clean up our vertex input buffers so we can handle passing only parameters we use.
-  * fix up debugtangents/normals too
 * invert the TBN matrix: So now that we have a TBN matrix, how are we going to use it? There are two ways we can use a TBN matrix for normal mapping, and we'll demonstrate both of them:
   * We take the TBN matrix that transforms any vector from tangent to world space, give it to the fragment shader, and transform the sampled normal from tangent space to world space using the TBN matrix; the normal is then in the same space as the other lighting variables.
   * We take the inverse of the TBN matrix that transforms any vector from world space to tangent space, and use this matrix to transform not the normal, but the other relevant lighting variables to tangent space; the normal is then again in the same space as the other lighting variables. - this is better because we can do this in vertex space and then use the interpolated values.
 * <https://github.com/KHeresy/openxr-simple-example> : integrate with OpenXR
-* probably need schematized json files at some point. flatbuffers looks like the winner based on some quick research
 * <https://www.reddit.com/r/GraphicsProgramming/comments/1ay0j70/realtime_pbr_catchup_developments_in_recent_years/> - chock full of links
 * now that I'm using flatc for enum metadata I could generate common.glsl in the build tools...
 
@@ -804,3 +800,7 @@ the cardinality of these things with respect to the model is:
 # Done Todos
 
 * DONE VulkResources should only need to live during the loading phase
+* x rename PipelineBUILDER.h to PipelineCOMPILER.h or something similar: builders are what I call the foo.bar.baz.build() paradigm
+* x clean up our vertex input buffers so we can handle passing only parameters we use.
+  * x fix up debugtangents/normals too
+* x probably need schematized json files at some point. flatbuffers looks like the winner based on some quick research
