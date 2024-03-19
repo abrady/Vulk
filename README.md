@@ -32,6 +32,11 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
+* PBR Notes
+  * Filament is a google/android PBR renderer
+    * <https://google.github.io/filament/>
+  * <https://blog.selfshadow.com/publications/> - a bunch of theory and practice links
+
 ## 3/16/24 screw it, I'm jumping into PBR
 
 Physically Based Rendering/Shading or whatever is the current state of the art?
