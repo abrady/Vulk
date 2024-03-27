@@ -10,16 +10,14 @@ struct VulkSceneUBOs;
 class VulkDescriptorSetInfo;
 
 class VulkActor {
-    Vulk &vk;
-
   public:
     std::string name;
     std::shared_ptr<VulkModel> model;
     std::shared_ptr<VulkFrameUBOs<glm::mat4>> xformUBOs;
     std::shared_ptr<VulkDescriptorSetInfo> dsInfo;
     std::shared_ptr<VulkPipeline> pipeline;
-    VulkActor(Vulk &vk, std::shared_ptr<VulkModel> model, std::shared_ptr<VulkFrameUBOs<glm::mat4>> xformUBOs, std::shared_ptr<VulkDescriptorSetInfo> dsInfo,
+    VulkActor(Vulk &, std::shared_ptr<VulkModel> model, std::shared_ptr<VulkFrameUBOs<glm::mat4>> xformUBOs, std::shared_ptr<VulkDescriptorSetInfo> dsInfo,
               std::shared_ptr<VulkPipeline> pipeline)
-        : vk(vk), model(model), xformUBOs(xformUBOs), dsInfo(dsInfo), pipeline(pipeline) {
+        : model(model), xformUBOs(xformUBOs), dsInfo(dsInfo), pipeline(pipeline) {
     }
 };

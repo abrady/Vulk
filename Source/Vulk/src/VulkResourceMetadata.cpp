@@ -1,3 +1,4 @@
+#include "Vulk/VulkEnumMetadata.h"
 #include "Vulk/VulkResourceMetadata.h"
 
 using json = nlohmann::json;
@@ -140,12 +141,12 @@ ModelDef ModelDef::fromJSON(const nlohmann::json &j, unordered_map<string, share
             makeAxes(length, *mesh);
         } break;
         default:
-            VULK_THROW("Unknown GeoMesh type: " + type);
+            VULK_THROW_FMT("Unknown GeoMesh type: {}", type);
         }
         return ModelDef(name, make_shared<MeshDef>(name, mesh), material);
     }
     default:
-        VULK_THROW("Unknown MeshDef type: " + meshDefType);
+        VULK_THROW_FMT("Unknown MeshDef type: {}", meshDefType);
     };
 }
 

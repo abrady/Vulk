@@ -17,7 +17,7 @@
 
 namespace fs = std::filesystem;
 
-int sceneBuilder(fs::path sceneFileIn, fs::path sceneOutDir, bool verbose) {
+int sceneBuilder(fs::path sceneFileIn, fs::path sceneOutDir) {
     VULK_LOG("SceneBuilder: Building scene from file: {}", sceneFileIn.string());
     if (!fs::exists(sceneFileIn)) {
         VULK_ERR("Scene file does not exist: {}", sceneFileIn.string());

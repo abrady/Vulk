@@ -10,12 +10,15 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 * <https://learnopengl.com/Advanced-Lighting/Normal-Mapping> - good tangent space intro
 
-# Building
+# Setup
 
 * Install [Vulkan SDK](https://vulkan.lunarg.com/sdk/home)
 * make sure your VULKAN_SDK environment variable is set
 * Clone the repo
 * mkdir build
+* make sure you have git lfs installed. you may need to do a git lfs pull.
+
+# Building
 * cd build
 * cmake ..
 * cmake --build .

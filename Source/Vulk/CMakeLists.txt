@@ -17,6 +17,7 @@ find_package(flatbuffers CONFIG REQUIRED)
 # find_package(Protobuf REQUIRED)
 find_package(cereal CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
+find_package(fmt CONFIG REQUIRED)
 
 
 # Add all the source files to a library
@@ -36,6 +37,7 @@ target_link_libraries(Vulk PRIVATE flatbuffers::flatbuffers)
 #target_link_libraries(Vulk PRIVATE protobuf::libprotoc protobuf::libprotobuf protobuf::libprotobuf-lite)
 target_link_libraries(Vulk PRIVATE cereal::cereal)
 target_link_libraries(Vulk PRIVATE spdlog::spdlog)
+target_link_libraries(Vulk PRIVATE fmt::fmt)
 
 if(MSVC)
   file(GLOB MY_PROJECT_NATVIS_FILES "${CMAKE_SOURCE_DIR}/Source/Tools/MSVC/Natvis/*.natvis")

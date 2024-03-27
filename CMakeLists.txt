@@ -13,11 +13,18 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 
-set(CMAKE_GENERATOR_PLATFORM x64)
-set(CMAKE_CXX_STANDARD 23)
+if(WIN32)
+    set(CMAKE_GENERATOR_PLATFORM x64)
+    set(CMAKE_CXX_STANDARD 23)
+    add_compile_options(-W3)
+else()
+    set(CMAKE_CXX_STANDARD 23)
+    set(CMAKE_OSX_ARCHITECTURES arm64)
+    add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+    add_compile_definitions(LIBCXX_ENABLE_INCOMPLETE_FEATURES)
+endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-add_compile_options(-W3)
 
 
 # Check if vcpkg is bootstrapped
@@ -48,7 +55,7 @@ find_package(nlohmann_json CONFIG REQUIRED)
 find_package(Vulkan REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(Stb REQUIRED)
-find_package(glm CONFIG REQUIRED)
+find_package(glm CONFIG REQUIRED) 
 
 
 ######
@@ -58,8 +65,6 @@ find_package(glm CONFIG REQUIRED)
 include_directories("${CMAKE_SOURCE_DIR}/Source")
 include_directories("${CMAKE_SOURCE_DIR}/Source/ThirdParty/include")
 include_directories("$ENV{VK_SDK_PATH}/include")
-
-add_compile_options(-W3)
 
 ######
 ## global defines

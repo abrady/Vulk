@@ -24,8 +24,6 @@ struct VulkSceneUBOs {
 };
 
 class VulkScene {
-    Vulk &vk;
-
   public:
     VulkSceneUBOs sceneUBOs;
     VulkCamera camera;
@@ -37,6 +35,6 @@ class VulkScene {
     std::shared_ptr<VulkUniformBuffer<VulkDebugNormalsUBO>> debugNormalsUBO;
     std::shared_ptr<VulkUniformBuffer<VulkDebugTangentsUBO>> debugTangentsUBO;
 
-    VulkScene(Vulk &vk) : vk(vk), sceneUBOs(vk) {
+    VulkScene(Vulk &vk) : sceneUBOs(vk) {
     }
 };

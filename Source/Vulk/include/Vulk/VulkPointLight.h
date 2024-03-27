@@ -14,6 +14,9 @@ class VulkPointLight {
     glm::vec3 color;
     float falloffEnd = 0.0f;
 
+    VulkPointLight(const glm::vec3& pos, float falloffStart, const glm::vec3& color, float falloffEnd)
+        : pos(pos), falloffStart(falloffStart), color(color), falloffEnd(falloffEnd) {}
+
     template <class Archive> void serialize(Archive &archive) {
         archive(CEREAL_NVP(pos), CEREAL_NVP(falloffStart), CEREAL_NVP(color), CEREAL_NVP(falloffEnd));
     }

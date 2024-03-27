@@ -1,6 +1,8 @@
 #pragma once
 
+#ifdef _MSC_VER  // Check if we're using MSVC
 #pragma warning(push, 0) // assume these headers know what they're doing
+#endif
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -23,7 +25,9 @@
 #include <stb_image.h>
 #include <tiny_obj_loader.h>
 
-#pragma warning(pop)
+#ifdef _MSC_VER 
+#pragma warning(pop)  // Restore original warning settings from before 'push'
+#endif 
 
 #include <algorithm>
 #include <array>
@@ -54,7 +58,7 @@
         VkResult vkcall_macro_result = (func);                                                                                                                 \
         if (vkcall_macro_result != VK_SUCCESS) {                                                                                                               \
             std::cerr << "Vulkan error: " << (vkcall_macro_result) << " at " << __FILE__ << ":" << __LINE__ << std::endl;                                      \
-            VULK_THROW(std::string("Vulkan error: ") + std::to_string(vkcall_macro_result) + " at " + __FILE__ + ":" + std::to_string(__LINE__));              \
+            VULK_THROW_FMT("Vulkan error: {}", std::to_string(vkcall_macro_result));              \
         }                                                                                                                                                      \
     } while (0)
 
