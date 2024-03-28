@@ -96,8 +96,7 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
                 fs::remove_all(builtPipelinesDir, ec);
                 CHECK(!ec);
             }
-            fs::create_directory(builtPipelinesDir.parent_path());
-            CHECK(fs::create_directory(builtPipelinesDir));
+            CHECK(fs::create_directories(builtPipelinesDir));
             SourcePipelineDef def = makeTestPipelineDeclDef();
             fs::path builtPipeline = VulkCereal::inst()->addFileExtension(builtPipelinesDir / "TestPipeline");
             PipelineBuilder::buildPipelineFile(def, builtShadersDir, builtPipeline);
