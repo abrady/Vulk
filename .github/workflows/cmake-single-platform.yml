@@ -52,4 +52,10 @@ jobs:
 
     - name: Test
       working-directory: ${{github.workspace}}\build
-      run: ctest -C ${{env.BUILD_TYPE}}
+      run: ctest -C ${{env.BUILD_TYPE}} -V
+
+    - name: Upload LastTest.log
+      uses: actions/upload-artifact@v2
+      with:
+        name: LastTest-log
+        path: build/Testing/Temporary/LastTest.log
