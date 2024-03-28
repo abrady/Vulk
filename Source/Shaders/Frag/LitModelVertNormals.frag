@@ -9,10 +9,10 @@ layout(binding = VulkShaderBinding_NormalSampler) uniform sampler2D normSampler;
 EYEPOS_UBO(eyePosUBO);
 LIGHTS_UBO(lightBuf);
 
-layout(location = LayoutLocation_Position) in vec3 fragPos;  
-layout(location = LayoutLocation_TexCoord) in vec2 fragTexCoord;
-layout(location = LayoutLocation_Normal) in vec3 fragNormal;
-layout(location = LayoutLocation_Tangent) in vec3 fragTangent; // not used, but part of standard params.
+layout(location = VulkShaderLocation_Pos) in vec3 fragPos;  
+layout(location = VulkShaderLocation_TexCoord) in vec2 fragTexCoord;
+layout(location = VulkShaderLocation_Normal) in vec3 fragNormal;
+layout(location = VulkShaderLocation_Tangent) in vec3 fragTangent; // not used, but part of standard params.
 
 layout(location = 0) out vec4 outColor;
 

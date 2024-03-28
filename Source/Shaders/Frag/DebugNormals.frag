@@ -7,8 +7,8 @@ layout(binding = VulkShaderBinding_EyePos) uniform EyePos {
 } eyePosUBO;
 
 
-layout(location = LayoutLocation_Position) in vec3 inPos;
-layout(location = LayoutLocation_Normal) in vec3 inNorm;
+layout(location = VulkShaderLocation_Pos) in vec3 inPos;
+layout(location = VulkShaderLocation_Normal) in vec3 inNorm;
 layout(location = 0) out vec4 outColor;
 void main()
 {

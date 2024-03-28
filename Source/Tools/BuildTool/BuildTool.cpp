@@ -14,6 +14,7 @@
 #include "BuildPipeline.h"
 #include "Vulk/VulkLogger.h"
 #include "Vulk/VulkUtil.h"
+#include "VulkShaderEnums_generated.h"
 
 namespace fs = std::filesystem;
 
@@ -44,6 +45,43 @@ int sceneBuilder(fs::path sceneFileIn, fs::path sceneOutDir) {
     cereal::JSONOutputArchive output(sceneFileOut);
     output(data); // Serialize data to the file
     sceneFileOut.close();
+    return 0;
+}
+
+int glslShaderEnumsGenerator(fs::path outFile) {
+    VULK_LOG("GLSLIncludesGenerator: Generating GLSL includes");
+    auto parent_dir = outFile.parent_path();
+    if (!fs::exists(parent_dir)) {
+        VULK_ERR("Output directory does not exist: {}", parent_dir.string());
+        return 1;
+    }
+
+    std::ofstream out(outFile);
+    out << R"(
+// Generated header file for enum values coming from our headers
+// e.g. UBO bindings, or layout locations
+)";
+
+    // Write the UBO bindings
+    out << "\n// UBO Bindings\n";
+    const VulkShaderBinding *bindings = EnumValuesVulkShaderBinding();
+    const char *const *ns = EnumNamesVulkShaderBinding();
+    for (int i = 0; ns[i] != nullptr; i++) {
+        out << "const int VulkShaderBinding_" << ns[i] << " = " << (int)bindings[i] << ";\n";
+    }
+
+    // Write the layout locations
+    out << "\n// Shader Input Locations\n";
+    const VulkShaderLocation *locs = EnumValuesVulkShaderLocation();
+    ns = EnumNamesVulkShaderLocation();
+    for (int i = 0; ns[i] != nullptr; i++) {
+        out << "const int VulkShaderLocation_" << ns[i] << " = " << (int)locs[i] << ";\n";
+    }
+
+    out << "\n";
+
+    out.close();
+
     return 0;
 }
 
@@ -96,6 +134,14 @@ int main(int argc, char **argv) {
     pipeline->add_flag("-v, --verbose", verbose, "be verbose");
     pipeline->callback(
         [&builtShadersDir, &pipelineFileOut, &pipelineFileIn, &verbose]() { pipelineBuilder(builtShadersDir, pipelineFileOut, pipelineFileIn, verbose); });
+
+    CLI::App *glsl = app.add_subcommand("GenVulkShaderEnums", "generate GLSL includes");
+    fs::path outFile;
+    glsl->add_option("outFile", outFile, "Directory where the GLSL includes are generated to.");
+    glsl->callback([&outFile]() {
+        outFile.make_preferred();
+        glslShaderEnumsGenerator(outFile);
+    });
 
     // CLI::App *scene = app.add_subcommand("scene", "build the scene file");
     // fs::path sceneFileIn;

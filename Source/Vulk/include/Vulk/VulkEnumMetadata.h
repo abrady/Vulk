@@ -1,9 +1,9 @@
 #pragma once
 
-#include "VulkShaderEnums_generated.h"
 #include "VulkResourceMetadata_generated.h"
+#include "VulkShaderEnums_generated.h"
+#include <mutex>         // for std::once_flag
 #include <unordered_map> // for std::unordered_map
-#include <mutex> // for std::once_flag
 
 template <typename T> struct EnumNameGetter;
 
@@ -16,12 +16,12 @@ template <> struct EnumNameGetter<VulkShaderLocation> {
     }
 };
 
-template <> struct EnumNameGetter<VulkShaderBindings> {
+template <> struct EnumNameGetter<VulkShaderBinding> {
     static const char *const *getNames() {
-        return EnumNamesVulkShaderBindings();
+        return EnumNamesVulkShaderBinding();
     }
-    static VulkShaderBindings getMin() {
-        return VulkShaderBindings_MIN;
+    static VulkShaderBinding getMin() {
+        return VulkShaderBinding_MIN;
     }
 };
 

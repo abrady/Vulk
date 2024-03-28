@@ -35,6 +35,20 @@
             "preLaunchTask": "CMake: build buildtool"
         },
         {
+            "name": "PipelineBuilder - GenVulkShaderEnums",
+            "program": "${workspaceFolder}/build/Source/Tools/BuildTool/Debug/BuildTool.exe",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "cwd": "${workspaceRoot}/Build",
+            "args": [
+                "GenVulkShaderEnums",
+                "${workspaceFolder}/build/generated/Shaders/VulkShaderEnums_generated.glsl",
+            ],
+            "stopAtEntry": false,
+            "environment": [],
+            "preLaunchTask": "CMake: build buildtool"
+        },
+        {
             "name": "(gdb) Attach",
             "type": "cppvsdbg",
             "request": "attach",

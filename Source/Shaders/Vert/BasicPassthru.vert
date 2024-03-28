@@ -7,10 +7,10 @@ MODELXFORM_UBO(modelUBO);
 
 VERTEX_IN(inPosition, inNormal, inTangent, inTexCoord);
 
-layout(location = LayoutLocation_Position) out vec3 outPos; 
-layout(location = LayoutLocation_Normal) out vec3 outNorm;
-layout(location = LayoutLocation_Tangent) out vec3 outTangent;
-layout(location = LayoutLocation_TexCoord) out vec2 outTexCoord;
+layout(location = VulkShaderLocation_Pos) out vec3 outPos; 
+layout(location = VulkShaderLocation_Normal) out vec3 outNorm;
+layout(location = VulkShaderLocation_Tangent) out vec3 outTangent;
+layout(location = VulkShaderLocation_TexCoord) out vec2 outTexCoord;
 
 
 void main() {
