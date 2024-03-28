@@ -119,8 +119,7 @@ class PipelineBuilder {
             VULK_THROW("PipelineBuilder: Shaders directory does not exist");
         }
 
-        BuiltPipelineDef pipelineOut;
-        ((SourcePipelineDef)pipelineOut) = pipelineIn;
+        BuiltPipelineDef pipelineOut(pipelineIn);
 
         std::vector<ShaderInfo> shaderInfos;
         ShaderInfo vertShaderInfo = infoFromShader(pipelineIn.vertShaderName, "vert", builtShadersDir);

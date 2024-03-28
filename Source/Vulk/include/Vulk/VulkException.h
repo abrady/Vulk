@@ -2,21 +2,19 @@
 
 #include <iostream>
 
-#include <stdexcept>
 #include "VulkEnumMetadata.h"
+#include <stdexcept>
 
 #include <fmt/core.h>
 #include <fmt/format.h>
 
 // C++20 concept to check if a type is an enum
-template<typename T>
+template <typename T>
 concept EnumType = std::is_enum_v<T>;
 
 // Specialize fmt::formatter for any enum type
-template<EnumType T>
-struct fmt::formatter<T> : fmt::formatter<std::string> {
-    template <typename FormatContext>
-    auto format(T enumValue, FormatContext& ctx) {
+template <EnumType T> struct fmt::formatter<T> : fmt::formatter<std::string> {
+    template <typename FormatContext> auto format(T enumValue, FormatContext &ctx) {
         // Use EnumLookup to get the string representation of the enum value
         auto str = EnumLookup<T>::getStrFromEnum(enumValue);
         // Delegate the actual formatting to the base class
@@ -66,11 +64,10 @@ class VulkException : public std::runtime_error {
     }
 };
 #define VULKEXCEPTION(msg) VulkException(__FILE__, __LINE__, msg)
-#endif 
-
+#endif
 
 #define VULK_THROW(msg) throw VULKEXCEPTION(msg)
-#define VULK_THROW_FMT(format_str, ...) VULKEXCEPTION(fmt::format(format_str, __VA_ARGS__))
+#define VULK_THROW_FMT(format_str, ...) throw VULKEXCEPTION(fmt::format(format_str, __VA_ARGS__))
 #define VULK_THROW_IF(cond, msg)                                                                                                                               \
     do {                                                                                                                                                       \
         if (cond) {                                                                                                                                            \
