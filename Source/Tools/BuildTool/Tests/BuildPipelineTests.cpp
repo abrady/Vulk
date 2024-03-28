@@ -95,8 +95,6 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
                 std::error_code ec;
                 fs::remove_all(builtPipelinesDir, ec);
                 CHECK(!ec);
-            } else {
-                fs::create_directories(builtPipelinesDir);
             }
             CHECK(fs::create_directory(builtPipelinesDir));
             SourcePipelineDef def = makeTestPipelineDeclDef();
