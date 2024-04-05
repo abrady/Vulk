@@ -35,10 +35,40 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
+## 4/4/24 More PBR
+
+Read some books:
+
+* "Physically Based Rendering from Theory to Practice" - people call this the bible of PBR, but I have to admit I didn't find it useful at all
+* Real-Time Rendering 4th Edition:
+  * CIE colorspaces are very interesting
+  * BRDFs: integral over the hemisphere of all incoming light reflected by a surface - neato
+  * Local Illumination: i.e. a single model with a single light and no fancy indirect light
+  * Global Illumination: i.e. fancy indirect light
+
 * PBR Notes
   * Filament is a google/android PBR renderer
     * <https://google.github.io/filament/>
   * <https://blog.selfshadow.com/publications/> - a bunch of theory and practice links
+    * <https://blog.selfshadow.com/publications/s2020-shading-course/>
+  * <https://www.youtube.com/watch?v=j-A0mwsJRmk> - physics and math of shading
+
+Misc:
+
+* <https://blog.selfshadow.com/publications/s2013-shading-course/karis/s2013_pbs_epic_notes_v2.pdf> - Epic's PBR
+* <https://blog.selfshadow.com/publications/s2013-shading-course/hoffman/s2013_pbs_physics_math_notes.pdf>
+
+### <http://blog.wolfire.com/2015/10/Physically-based-rendering>
+
+PBR consists of:
+
+* specular and diffuse reflection
+  * metals don't have diffuse
+
+<https://www.shadertoy.com/view/4sSfzK> - PBR in a shader
+
+* Metallic/Dialectric: metals only reflect from the surface while dialectrics have subsurface effects. basically if metal, diffuse (or albedo) is zero
+* Roughness: how much the light rays scatter
 
 ## 3/16/24 screw it, I'm jumping into PBR
 
