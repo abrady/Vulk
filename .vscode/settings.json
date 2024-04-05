@@ -109,5 +109,8 @@
         "complex": "cpp",
         "source_location": "cpp"
     },
-    "files.eol": "\n"
+    "files.eol": "\n",
+    "cmake.configureArgs": [
+        "-DCMAKE_TOOLCHAIN_FILE=${workspaceFolder}/vcpkg/scripts/buildsystems/vcpkg.cmake"
+    ]
 }

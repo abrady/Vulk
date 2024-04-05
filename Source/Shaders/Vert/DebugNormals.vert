@@ -16,9 +16,9 @@ layout(binding = VulkShaderBinding_NormalSampler) uniform sampler2D normSampler;
 
 VERTEX_IN(inPosition, inNormal, inTangent, inTexCoord);
 
-layout(location = LayoutLocation_Position) out vec3 outWorldPos;
-layout(location = LayoutLocation_Normal) out vec3 outWorldNorm;
-layout(location = LayoutLocation_Position2) out vec4 outProjPos; // the offset for the normal
+layout(location = VulkShaderLocation_Pos) out vec3 outWorldPos;
+layout(location = VulkShaderLocation_Normal) out vec3 outWorldNorm;
+layout(location = VulkShaderLocation_Pos2) out vec4 outProjPos; // the offset for the normal
 
 void main() {
     mat4 worldXform = xformUBO.world * modelUBO.xform;    

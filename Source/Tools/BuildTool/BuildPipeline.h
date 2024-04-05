@@ -40,21 +40,21 @@ class PipelineBuilder {
 
         // For UBOs
         for (const spirv_cross::Resource &resource : resources.uniform_buffers) {
-            unsigned set = glsl.get_decoration(resource.id, spv::DecorationDescriptorSet);
+            // unsigned set = glsl.get_decoration(resource.id, spv::DecorationDescriptorSet);
             unsigned binding = glsl.get_decoration(resource.id, spv::DecorationBinding);
             parsedShader.uboBindings[(VulkShaderUBOBinding)binding] = resource.name;
         }
 
         // For SBOs
         for (const spirv_cross::Resource &resource : resources.storage_buffers) {
-            unsigned set = glsl.get_decoration(resource.id, spv::DecorationDescriptorSet);
+            // unsigned set = glsl.get_decoration(resource.id, spv::DecorationDescriptorSet);
             unsigned binding = glsl.get_decoration(resource.id, spv::DecorationBinding);
             parsedShader.sboBindings[(VulkShaderSSBOBinding)binding] = resource.name;
         }
 
         // For Samplers
         for (const spirv_cross::Resource &resource : resources.sampled_images) {
-            unsigned set = glsl.get_decoration(resource.id, spv::DecorationDescriptorSet);
+            // unsigned set = glsl.get_decoration(resource.id, spv::DecorationDescriptorSet);
             unsigned binding = glsl.get_decoration(resource.id, spv::DecorationBinding);
             parsedShader.samplerBindings[(VulkShaderTextureBinding)binding] = resource.name;
         }
@@ -142,7 +142,7 @@ class PipelineBuilder {
         }
 
         std::string errMsgOut;
-        for (int i = 0; i < shaderInfos.size() - 1; i++) {
+        for (size_t i = 0; i < shaderInfos.size() - 1; i++) {
             std::string errMsg;
             if (!checkConnections(shaderInfos[i], shaderInfos[i + 1], errMsg)) {
                 errMsgOut += "\n";

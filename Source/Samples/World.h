@@ -50,7 +50,7 @@ class World {
 
         shadowMapPipeline = resources.loadPipeline(shadowMapRenderpass->renderPass, shadowMapRenderpass->extent, "ShadowMap");
         auto shadowMapPipelineDef = resources.metadata.pipelines.at("ShadowMap");
-        for (int i = 0; i < scene->actors.size(); ++i) {
+        for (size_t i = 0; i < scene->actors.size(); ++i) {
             auto actor = scene->actors[i];
             auto actorDef = sceneDef.actors[i];
             std::shared_ptr<VulkActor> shadowMapActor = resources.createActorFromPipeline(*actorDef, shadowMapPipelineDef, scene);
@@ -67,7 +67,7 @@ class World {
         auto debugTangentsPipelineDef = resources.metadata.pipelines.at("DebugTangents");
 
         // could probably defer this until we actually want to render the debug normals, eh.
-        for (int i = 0; i < scene->actors.size(); ++i) {
+        for (size_t i = 0; i < scene->actors.size(); ++i) {
             auto actor = scene->actors[i];
             auto actorDef = sceneDef.actors[i];
             std::shared_ptr<VulkActor> debugNormalsActor = resources.createActorFromPipeline(*actorDef, debugNormalsPipelineDef, scene);
@@ -97,7 +97,6 @@ class World {
         float nearClip = scene->camera.nearClip;
         float farClip = scene->camera.farClip;
 
-        glm::vec3 const fwd = scene->camera.getForwardVec();
         glm::vec3 lookAt = scene->camera.lookAt;
         glm::vec3 up = scene->camera.getUpVec();
         *scene->sceneUBOs.eyePos.ptrs[vk.currentFrame] = scene->camera.eye;
@@ -123,15 +122,18 @@ class World {
         std::shared_ptr<VulkTextureView> depthView = shadowMapRenderpass->depthViews[vk.currentFrame]->depthView;
 
         VK_CALL(vkBeginCommandBuffer(commandBuffer, &beginInfo));
-        renderShadowMapImageForLight(commandBuffer, *scene->sceneUBOs.pointLight.mappedUBO);
+        renderShadowMapImageForLight(commandBuffer);
         vk.transitionImageLayout(commandBuffer, depthView->image, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-        drawMainStuff(commandBuffer, viewport, frameBuffer);
+        drawMainStuff(commandBuffer, frameBuffer);
         vk.transitionImageLayout(commandBuffer, depthView->image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
         VK_CALL(vkEndCommandBuffer(commandBuffer));
     }
 
-    void renderShadowMapImageForLight(VkCommandBuffer commandBuffer, VulkPointLight &light) {
-        VkClearValue clearColor = {1.0f, 0.0f, 0.0f, 0.0f}; // Use 1.0f for depth clearing
+    void renderShadowMapImageForLight(VkCommandBuffer commandBuffer) {
+        VkClearValue clearValue;
+        clearValue.depthStencil.depth = 1.0f;
+        clearValue.depthStencil.stencil = 0;
+
         VkRenderPassBeginInfo renderPassBeginInfo = {};
         renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
         renderPassBeginInfo.renderPass = shadowMapRenderpass->renderPass;
@@ -139,7 +141,7 @@ class World {
         renderPassBeginInfo.renderArea.offset = {0, 0};
         renderPassBeginInfo.renderArea.extent = shadowMapRenderpass->extent;
         renderPassBeginInfo.clearValueCount = 1;
-        renderPassBeginInfo.pClearValues = &clearColor;
+        renderPassBeginInfo.pClearValues = &clearValue;
 
         vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
         for (auto &actor : shadowMapActors) {
@@ -153,7 +155,7 @@ class World {
         vkCmdEndRenderPass(commandBuffer);
     }
 
-    void drawMainStuff(VkCommandBuffer commandBuffer, VkViewport const &viewport, VkFramebuffer frameBuffer) {
+    void drawMainStuff(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer) {
         VkRenderPassBeginInfo renderPassInfo{};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
         renderPassInfo.renderPass = vk.renderPass;

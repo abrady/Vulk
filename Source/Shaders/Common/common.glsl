@@ -1,31 +1,6 @@
+#include "VulkShaderEnums_generated.glsl"
+
 const float PI = 3.1415926535897932384626433832795;
-
-const int VulkShaderBinding_XformsUBO = 0;
-const int VulkShaderBinding_TextureSampler = 1;
-const int VulkShaderBinding_Lights = 2;
-const int VulkShaderBinding_EyePos = 3;
-const int VulkShaderBinding_TextureSampler2 = 4;
-const int VulkShaderBinding_TextureSampler3 = 5;
-const int VulkShaderBinding_WavesXform = 6;
-const int VulkShaderBinding_NormalSampler = 7;
-const int VulkShaderBinding_ModelXform = 8;
-const int VulkShaderBinding_MirrorPlaneUBO = 9;
-const int VulkShaderBinding_MaterialUBO = 10;
-const int VulkShaderBinding_DebugNormalsUBO = 11;
-const int VulkShaderBinding_DebugTangentsUBO = 12;
-const int VulkShaderBinding_LightViewProjUBO = 13;
-const int VulkShaderBinding_ShadowSampler = 14;
-
-const int LayoutLocation_Color = 0;
-const int LayoutLocation_Position = 1;
-const int LayoutLocation_Normal = 2;
-const int LayoutLocation_Tangent = 3;
-const int LayoutLocation_TexCoord = 4;
-const int LayoutLocation_Height = 5;
-const int LayoutLocation_Position2 = 6;
-const int LayoutLocation_PosLightSpace = 7;
-
-
 
 struct Material
 {
@@ -93,7 +68,7 @@ layout(binding = VulkShaderBinding_MaterialUBO) uniform MaterialBuf { \
 
 
 #define VERTEX_IN(inPosition, inNormal, inTangent, inTexCoord)  \
-layout(location = LayoutLocation_Position) in vec3 inPosition; \
-layout(location = LayoutLocation_Normal) in vec3 inNormal; \
-layout(location = LayoutLocation_Tangent) in vec3 inTangent; \
-layout(location = LayoutLocation_TexCoord) in vec2 inTexCoord
+layout(location = VulkShaderLocation_Pos) in vec3 inPosition; \
+layout(location = VulkShaderLocation_Normal) in vec3 inNormal; \
+layout(location = VulkShaderLocation_Tangent) in vec3 inTangent; \
+layout(location = VulkShaderLocation_TexCoord) in vec2 inTexCoord

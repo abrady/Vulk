@@ -68,11 +68,11 @@ template <typename T> class SampleRunner : public Vulk {
         }
     }
 
-    virtual void cleanup() {
+    virtual void cleanup() override {
         world.reset();
     }
 
-    void keyCallback(int key, int scancode, int action, int mods) {
+    void keyCallback(int key, int scancode, int action, int mods) override {
         if (!world->keyCallback(key, scancode, action, mods))
             Vulk::keyCallback(key, scancode, action, mods);
     }

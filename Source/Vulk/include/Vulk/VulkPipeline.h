@@ -15,7 +15,7 @@ class VulkPipeline : public ClassNonCopyableNonMovable {
 
     VulkPipeline(Vulk &vk, VkPipeline pipeline, VkPipelineLayout pipelineLayout, std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout,
                  std::vector<std::shared_ptr<VulkShaderModule>> shaderModules)
-        : vk(vk), pipeline(pipeline), pipelineLayout(pipelineLayout), descriptorSetLayout(descriptorSetLayout), shaderModules(shaderModules) {
+        : vk(vk), shaderModules(shaderModules), pipeline(pipeline), pipelineLayout(pipelineLayout), descriptorSetLayout(descriptorSetLayout) {
     }
     ~VulkPipeline() {
         vkDestroyPipeline(vk.device, pipeline, nullptr);

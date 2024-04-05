@@ -24,7 +24,7 @@ enum VulkShaderLocationMask : uint32 {
 
 // keep in sync with Source\Shaders\Common\common.glsl
 // every binding needs to be globally unique across all shaders in a given pipeline
-enum VulkShaderBindings : byte {
+enum VulkShaderBinding : byte {
     XformsUBO = 0,
     TextureSampler = 1,
     Lights = 2,

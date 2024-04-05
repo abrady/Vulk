@@ -13,11 +13,18 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 
-set(CMAKE_GENERATOR_PLATFORM x64)
-set(CMAKE_CXX_STANDARD 23)
+if(WIN32)
+    set(CMAKE_GENERATOR_PLATFORM x64)
+    set(CMAKE_CXX_STANDARD 23)
+    add_compile_options(-W3)
+else()
+    set(CMAKE_CXX_STANDARD 23)
+    set(CMAKE_OSX_ARCHITECTURES arm64)
+    add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+    add_compile_definitions(LIBCXX_ENABLE_INCOMPLETE_FEATURES)
+endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-add_compile_options(-W3)
 
 
 # Check if vcpkg is bootstrapped
@@ -48,7 +55,7 @@ find_package(nlohmann_json CONFIG REQUIRED)
 find_package(Vulkan REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(Stb REQUIRED)
-find_package(glm CONFIG REQUIRED)
+find_package(glm CONFIG REQUIRED) 
 
 
 ######
@@ -59,8 +66,6 @@ include_directories("${CMAKE_SOURCE_DIR}/Source")
 include_directories("${CMAKE_SOURCE_DIR}/Source/ThirdParty/include")
 include_directories("$ENV{VK_SDK_PATH}/include")
 
-add_compile_options(-W3)
-
 ######
 ## global defines
 ######
@@ -68,10 +73,11 @@ add_compile_options(-W3)
 # TODO: configure so it will work for release builds too
 
 message("CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
-set(GLSLC_FLAGS "-g" "--target-env=vulkan1.3" "-I${CMAKE_SOURCE_DIR}/Source/Shaders/Common") # build debug symbols and turn off optimizations
 set(BUILT_RESOURCES_TARGET_DIR "${CMAKE_BINARY_DIR}/Resources") 
+set(GENERATED_RESOURCES_TARGET_DIR "${CMAKE_BINARY_DIR}/generated") 
+
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    list(APPEND GLSLC_FLAGS "-O0")
+    # set(BUILT_RESOURCES_TARGET_DIR "${CMAKE_BINARY_DIR}/Debug")
 elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
     # set(BUILT_RESOURCES_TARGET_DIR "${CMAKE_BINARY_DIR}/Release") 
 else()
@@ -117,9 +123,33 @@ set(ASSETS_OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/assets.txt")
 # Ensure the file is empty before we start writing
 file(WRITE ${ASSETS_OUTPUT_FILE} "")
 
+###############################################
+## Shader Related
+###############################################
+
+######
+## Generate Shader Headers
+######
+
+# we do this first so the most up to date includes are available to the shader compilation
+set(SHADER_GENERATED_HEADER_DIR "${GENERATED_RESOURCES_TARGET_DIR}/Shaders")
+set(SHADER_GENERATED_HEADER_FILE "${SHADER_GENERATED_HEADER_DIR}/VulkShaderEnums_generated.glsl")
+file(MAKE_DIRECTORY ${SHADER_GENERATED_HEADER_DIR})
+add_custom_command(
+    OUTPUT ${SHADER_GENERATED_HEADER_FILE}
+    COMMAND $<TARGET_FILE:BuildTool> GenVulkShaderEnums ${SHADER_GENERATED_HEADER_FILE}
+    DEPENDS BuildTool
+    COMMENT "Generating shader includes header"
+)
+
 ######
 ## Shaders
 ######
+
+set(GLSLC_FLAGS "-g" "--target-env=vulkan1.3" "-I${SHADER_GENERATED_HEADER_DIR}" "-I${CMAKE_SOURCE_DIR}/Source/Shaders/Common") # build debug symbols and turn off optimizations
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    list(APPEND GLSLC_FLAGS "-O0")
+endif()
 
 # TODO: glslc has a -M option that will print a makefile dependency, so we could use that instead of globbing
 file(GLOB SHADER_COMMON_FILES "${CMAKE_SOURCE_DIR}/Source/Shaders/Common/*")
@@ -140,7 +170,7 @@ foreach(SHADER ${VERTEX_SHADERS})
     add_custom_command(
         OUTPUT "${SHADER_OUTPUT}"
         COMMAND glslc ${GLSLC_FLAGS} "${SHADER}" -o "${SHADER_OUTPUT}"
-        DEPENDS ${SHADER} ${SHADER_COMMON_FILES}
+        DEPENDS ${SHADER} ${SHADER_COMMON_FILES} ${SHADER_GENERATED_HEADER_FILE}
         COMMENT "building vertex shader ${SHADER_OUTPUT} from ${SHADER} flags ${GLSLC_FLAGS}"
     )
     list(APPEND COMPILED_SHADERS "${SHADER_OUTPUT}")
@@ -252,7 +282,7 @@ function(build_assets DIR_NAME GLOBAL_ASSETS_VAR)
         add_custom_command(
             OUTPUT "${DEST}"
             COMMAND $<TARGET_FILE:BuildTool> ${DIR_NAME} "${ASSET_FILE}" "${DEST}"
-            DEPENDS "${ASSET_FILE}"
+            DEPENDS BuildTool "${ASSET_FILE}"
             COMMENT "Building ${DIR_NAME} ${ASSET_FILE} to ${DEST}"
         )
         list(APPEND ASSETS_TO_BUILD "${DEST}")

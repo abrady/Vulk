@@ -7,6 +7,7 @@
         "cereal",
         "cli11",
         "flatbuffers",
+        "fmt",
         "glfw3",
         "glm",
         "nlohmann-json",

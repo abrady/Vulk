@@ -10,16 +10,20 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 * <https://learnopengl.com/Advanced-Lighting/Normal-Mapping> - good tangent space intro
 
-# Building
+# Setup
 
 * Install [Vulkan SDK](https://vulkan.lunarg.com/sdk/home)
 * make sure your VULKAN_SDK environment variable is set
 * Clone the repo
 * mkdir build
+* make sure you have git lfs installed. you may need to do a git lfs pull.
+
+# Building
+
 * cd build
 * cmake ..
 * cmake --build .
-* (optional - run tests) ctest -C Debug (or however you built it)
+* (optional - run tests) ctest -C Debug (or however you built it) in the build directory
 
 # TODOs
 
@@ -28,7 +32,6 @@ My goal for this project is to transition from the hand-coded samples I was doin
   * We take the inverse of the TBN matrix that transforms any vector from world space to tangent space, and use this matrix to transform not the normal, but the other relevant lighting variables to tangent space; the normal is then again in the same space as the other lighting variables. - this is better because we can do this in vertex space and then use the interpolated values.
 * <https://github.com/KHeresy/openxr-simple-example> : integrate with OpenXR
 * <https://www.reddit.com/r/GraphicsProgramming/comments/1ay0j70/realtime_pbr_catchup_developments_in_recent_years/> - chock full of links
-* now that I'm using flatc for enum metadata I could generate common.glsl in the build tools...
 
 # Log
 
@@ -132,12 +135,12 @@ looks a lot better!
 
 What I learned:
 
-1. trying to write a custom serializer for anything that could be a fundamental type or a single param ctor type that wasn't marked explicit will screw you
+1) trying to write a custom serializer for anything that could be a fundamental type or a single param ctor type that wasn't marked explicit will screw you
 
 * fs::path : tried this, started getting duplicate definition of string errors
 * Any of the Vk* types that I wanted to store in nice strings was a no-go, they're all VkFlags and you'd get duplicate def errors
 
-2. I mixed source assets and built assets.
+2) I mixed source assets and built assets.
 
 * Why this was a problem:
   * I'd hacked this a bit in the 'pipelinedecldef'/'pipelinedef' structs but that was a hack
@@ -809,3 +812,4 @@ the cardinality of these things with respect to the model is:
 * x clean up our vertex input buffers so we can handle passing only parameters we use.
   * x fix up debugtangents/normals too
 * x probably need schematized json files at some point. flatbuffers looks like the winner based on some quick research
+* DONE now that I'm using flatc for enum metadata I could generate common.glsl in the build tools...

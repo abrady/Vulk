@@ -29,8 +29,6 @@ class VulkPipelineBuilder {
     VkRect2D scissor{};
     VkViewport viewport{};
 
-    VkPrimitiveTopology primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-
     VulkPipelineBuilder &addShaderStage(VkShaderStageFlagBits stage, char const *path);
     VulkPipelineBuilder &addShaderStage(VkShaderStageFlagBits stage, std::shared_ptr<VulkShaderModule> shaderModule);
 
