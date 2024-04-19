@@ -7,6 +7,7 @@ enum VulkShaderLocation : byte {
     Height = 5,
     Pos2 = 6,
     PosLightSpace = 7,
+    Bitangent = 8,
 }
 
 enum VulkShaderLocationMask : uint32 {
@@ -40,6 +41,12 @@ enum VulkShaderBinding : byte {
     DebugTangentsUBO = 12,
     LightViewProjUBO = 13,
     ShadowMapSampler = 14,
+    // PBR 
+    // we'll use TextureSampler for albedo and NormalSampler for normal map
+    AmbientOcclusionSampler = 16,
+    DisplacementSampler = 17,
+    MetallicSampler = 18,
+    RoughnessSampler = 19,
 }
 
 enum VulkShaderUBOBinding : byte {
@@ -68,4 +75,8 @@ enum VulkShaderTextureBinding : byte {
     TextureSampler3 = 5,
     NormalSampler = 7,
     ShadowMapSampler = 14,
+}
+
+enum VulkLights: byte {
+    NumLights = 4,
 }

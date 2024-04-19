@@ -3,3 +3,4 @@ vcpkg_installed/
 Source/Tools/PipelineBuilder/Tests/pipelines
 # Visual Studio files
 .vs/
+*.log

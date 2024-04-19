@@ -16,7 +16,7 @@ endif()
 if(WIN32)
     set(CMAKE_GENERATOR_PLATFORM x64)
     set(CMAKE_CXX_STANDARD 23)
-    add_compile_options(-W3)
+    add_compile_options(/W3 /MP)
 else()
     set(CMAKE_CXX_STANDARD 23)
     set(CMAKE_OSX_ARCHITECTURES arm64)
@@ -138,8 +138,8 @@ file(MAKE_DIRECTORY ${SHADER_GENERATED_HEADER_DIR})
 add_custom_command(
     OUTPUT ${SHADER_GENERATED_HEADER_FILE}
     COMMAND $<TARGET_FILE:BuildTool> GenVulkShaderEnums ${SHADER_GENERATED_HEADER_FILE}
-    DEPENDS BuildTool
-    COMMENT "Generating shader includes header"
+    DEPENDS BuildTool "${CMAKE_SOURCE_DIR}/Source/Schemas/Flatbuf/VulkShaderEnums.fbs"
+    COMMENT "Generating shader includes header from ${SHADER_GENERATED_HEADER_FILE}"
 )
 
 ######
@@ -184,7 +184,7 @@ foreach(SHADER ${FRAGMENT_SHADERS})
     add_custom_command(
         OUTPUT "${SHADER_OUTPUT}"
         COMMAND glslc ${GLSLC_FLAGS} "${SHADER}" -o "${SHADER_OUTPUT}"
-        DEPENDS ${SHADER} ${SHADER_COMMON_FILES}
+        DEPENDS ${SHADER} ${SHADER_COMMON_FILES} ${SHADER_GENERATED_HEADER_FILE}
         COMMENT "building fragment shader ${SHADER_OUTPUT} from ${SHADER} flags ${GLSLC_FLAGS}"
     )
     list(APPEND COMPILED_SHADERS "${SHADER_OUTPUT}")
@@ -199,7 +199,7 @@ foreach(SHADER ${GEOMETRY_SHADERS})
     add_custom_command(
         OUTPUT "${SHADER_OUTPUT}"
         COMMAND glslc ${GLSLC_FLAGS} "${SHADER}" -o "${SHADER_OUTPUT}"
-        DEPENDS ${SHADER} ${SHADER_COMMON_FILES}
+        DEPENDS ${SHADER} ${SHADER_COMMON_FILES} ${SHADER_GENERATED_HEADER_FILE}
         COMMENT "building geometry shader ${SHADER} from ${SHADER} flags ${GLSLC_FLAGS}"
     )
     list(APPEND COMPILED_SHADERS "${SHADER_OUTPUT}")

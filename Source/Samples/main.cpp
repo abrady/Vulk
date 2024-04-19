@@ -16,6 +16,6 @@ int main() {
         std::cout << "Failed to get Vulkan version" << std::endl;
     }
 
-    SampleRunner<World>("ShadowMap").run();
+    SampleRunner<World>("PBR").run();
     return 0;
 }
