@@ -12,11 +12,11 @@
         "glm",
         "imgui",
         "nlohmann-json",
-        "qt5",
         "spdlog",
         "spirv-cross",
         "spirv-headers",
         "stb",
+        "thrift",
         "tinyobjloader",
         "vulkan"
     ]

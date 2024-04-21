@@ -1,6 +1,10 @@
 # The only prerequisite here is that cmake is installed and in your path to run this
 # it also uses vcpkg to manage dependencies, but tries to bootstrap this from within the repo
 cmake_minimum_required (VERSION 3.13)
+
+#set(VCPKG_TARGET_TRIPLET x64-windows-static)
+set(VCPKG_INSTALL_OPTIONS --no-print-usage) 
+
 project ("VulkanRoot" CXX)
 
 ######
@@ -25,7 +29,6 @@ else()
 endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-
 
 # Check if vcpkg is bootstrapped
 # find_program(VCPKG_EXECUTABLE NAMES vcpkg PATHS "${CMAKE_SOURCE_DIR}/vcpkg" NO_DEFAULT_PATH)
@@ -109,9 +112,12 @@ function(vulk_add_and_remember_test target)
   add_dependencies(build_tests ${target})
 endfunction()
 
+add_subdirectory("${CMAKE_SOURCE_DIR}/Source/Schemas")
 add_subdirectory("${CMAKE_SOURCE_DIR}/Source/Vulk")
 add_subdirectory("${CMAKE_SOURCE_DIR}/Source/Samples")
 add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Tools/BuildTool)
+add_dependencies(Vulk GenSchemaFiles)
+add_dependencies(BuildTool GenSchemaFiles)
 
 ##############################################################################
 ## Assets
@@ -234,7 +240,7 @@ function(copy_assets DIR_NAME GLOBAL_ASSETS_VAR)
         set(DEST "${DEST_DIR}/${REL_PATH}")
         get_filename_component(DEST_FILE_DIR "${DEST}" DIRECTORY)
         file(MAKE_DIRECTORY "${DEST_FILE_DIR}")
-        message("Copying ${ASSET_FILE} to ${DEST}")
+        # message("Copying ${ASSET_FILE} to ${DEST}")
         add_custom_command(
             OUTPUT "${DEST}"
             COMMAND ${CMAKE_COMMAND} -E copy "${ASSET_FILE}" "${DEST}"
@@ -328,7 +334,7 @@ foreach(FILE ${PIPELINE_SRC_FILES})
         OUTPUT ${ASSETS_OUTPUT_FILE}
         COMMAND $<TARGET_FILE:BuildTool> pipeline ${SHADER_DEST_DIR} ${ASSETS_OUTPUT_FILE} ${FILE}
         DEPENDS BuildTool ${FILE}
-        # COMMENT "building ${ASSETS_OUTPUT_FILE} from ${FILE}"
+        COMMENT "building ${ASSETS_OUTPUT_FILE} from ${FILE}"
     )
     list(APPEND PIPELINEBUILDER_ASSETS_OUTPUT_FILES ${ASSETS_OUTPUT_FILE})
 endforeach()
