@@ -35,6 +35,16 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
+## 4/16/24 let's start building
+
+* <https://freepbr.com/> - grabbed the herringbone-flooring-bl from here
+
+next:
+
+* let's load these materials up
+* we need to make sure we can reference them in the shader
+* write the shader itself
+
 ## 4/4/24 More PBR
 
 Read some books:

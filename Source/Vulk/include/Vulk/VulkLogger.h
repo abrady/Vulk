@@ -6,21 +6,21 @@
 
 class VulkLogger {
   public:
+    static std::shared_ptr<spdlog::logger> CreateLogger(std::string name) {
+        auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+        auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(name + "_logfile.log", true);
+        spdlog::sinks_init_list sink_list = {file_sink, console_sink};
+        auto p = std::make_shared<spdlog::logger>(name, sink_list.begin(), sink_list.end());
+        auto level = spdlog::get_level();
+        p->set_level(level);
+        return p;
+    }
     // Initialize a shared logger instance
     static std::shared_ptr<spdlog::logger> &GetLogger() {
         static std::shared_ptr<spdlog::logger> logger;
         static std::once_flag flag;
         std::call_once(flag, []() {
-            // Create a color console sink
-            auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-            // Create a file sink
-            auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>("logfile.log", true);
-
-            // Combine the sinks into a list
-            spdlog::sinks_init_list sink_list = {file_sink, console_sink};
-
-            // Create a logger with both sinks
-            logger = std::make_shared<spdlog::logger>("BuildTool", sink_list.begin(), sink_list.end());
+            logger = CreateLogger("Vulk");
 
             // Register it as the default logger
             spdlog::register_logger(logger);
@@ -32,6 +32,14 @@ class VulkLogger {
         return logger;
     }
 };
+
+#define VULK_SET_LOG_LEVEL(level) VulkLogger::GetLogger()->set_level(level)
+#define VULK_SET_TRACE_LOG_LEVEL() VULK_SET_LOG_LEVEL(spdlog::level::trace)
+#define VULK_SET_DEBUG_LOG_LEVEL() VULK_SET_LOG_LEVEL(spdlog::level::debug)
+#define VULK_SET_INFO_LOG_LEVEL() VULK_SET_LOG_LEVEL(spdlog::level::info)
+#define VULK_SET_WARN_LOG_LEVEL() VULK_SET_LOG_LEVEL(spdlog::level::warn)
+#define VULK_SET_ERROR_LOG_LEVEL() VULK_SET_LOG_LEVEL(spdlog::level::err)
+#define VULK_SET_CRITICAL_LOG_LEVEL() VULK_SET_LOG_LEVEL(spdlog::level::critical)
 
 #define VULK_TRACE(...) VulkLogger::GetLogger()->trace(__VA_ARGS__)
 #define VULK_DEBUG(...) VulkLogger::GetLogger()->debug(__VA_ARGS__)

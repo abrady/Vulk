@@ -19,13 +19,14 @@
 namespace fs = std::filesystem;
 
 int sceneBuilder(fs::path sceneFileIn, fs::path sceneOutDir) {
-    VULK_LOG("SceneBuilder: Building scene from file: {}", sceneFileIn.string());
+    std::shared_ptr<spdlog::logger> logger = VulkLogger::CreateLogger("buildtool:SceneBuilder");
+    logger->info("Building scene from file: {}", sceneFileIn.string());
     if (!fs::exists(sceneFileIn)) {
-        VULK_ERR("Scene file does not exist: {}", sceneFileIn.string());
+        logger->error("Scene file does not exist: {}", sceneFileIn.string());
         return 1;
     }
     if (!fs::exists(sceneOutDir)) {
-        VULK_ERR("Scene output directory does not exist: {}", sceneOutDir.string());
+        logger->error("Scene output directory does not exist: {}", sceneOutDir.string());
         return 1;
     }
     // Read from the input file
@@ -49,10 +50,11 @@ int sceneBuilder(fs::path sceneFileIn, fs::path sceneOutDir) {
 }
 
 int glslShaderEnumsGenerator(fs::path outFile) {
-    VULK_LOG("GLSLIncludesGenerator: Generating GLSL includes");
+    auto logger = VulkLogger::CreateLogger("Buildtool:ShaderEnumsGenerator");
+    logger->info("GLSLIncludesGenerator: Generating GLSL includes for enum values to: {}", outFile.string());
     auto parent_dir = outFile.parent_path();
     if (!fs::exists(parent_dir)) {
-        VULK_ERR("Output directory does not exist: {}", parent_dir.string());
+        logger->error("Output directory does not exist: {}", parent_dir.string());
         return 1;
     }
 
@@ -64,10 +66,13 @@ int glslShaderEnumsGenerator(fs::path outFile) {
 
     // Write the UBO bindings
     out << "\n// UBO Bindings\n";
+    logger->trace("// UBO Bindings");
+
     const VulkShaderBinding *bindings = EnumValuesVulkShaderBinding();
     const char *const *ns = EnumNamesVulkShaderBinding();
     for (int i = 0; ns[i] != nullptr; i++) {
         out << "const int VulkShaderBinding_" << ns[i] << " = " << (int)bindings[i] << ";\n";
+        logger->trace("const int VulkShaderBinding_{} = {};", ns[i], (int)bindings[i]);
     }
 
     // Write the layout locations
@@ -76,6 +81,17 @@ int glslShaderEnumsGenerator(fs::path outFile) {
     ns = EnumNamesVulkShaderLocation();
     for (int i = 0; ns[i] != nullptr; i++) {
         out << "const int VulkShaderLocation_" << ns[i] << " = " << (int)locs[i] << ";\n";
+        logger->trace("const int VulkShaderLocation_{} = {};", ns[i], (int)locs[i]);
+    }
+
+    // Write the light constants
+    // Write the layout locations
+    out << "\n// Shader Input Locations\n";
+    auto *lights = EnumValuesVulkLights();
+    ns = EnumNamesVulkLights();
+    for (int i = 0; ns[i] != nullptr; i++) {
+        out << "const int VulkLights_" << ns[i] << " = " << (int)lights[i] << ";\n";
+        logger->trace("const int VulkLights_{} = {};", ns[i], (int)lights[i]);
     }
 
     out << "\n";
@@ -86,42 +102,60 @@ int glslShaderEnumsGenerator(fs::path outFile) {
 }
 
 int pipelineBuilder(fs::path builtShadersDir, fs::path pipelineFileOut, fs::path pipelineFileIn, bool verbose) {
-    VULK_LOG("PipelineBuilder: Building pipeline from file: {}", pipelineFileIn.string());
+    auto logger = VulkLogger::CreateLogger("PipelineBuilder");
+    if (verbose) {
+        logger->set_level(spdlog::level::trace);
+    }
+
+    logger->info("PipelineBuilder: Building pipeline from file: {}", pipelineFileIn.string());
     if (!fs::exists(builtShadersDir)) {
-        std::cerr << "Shaders directory does not exist: " << builtShadersDir << std::endl;
+        logger->error("Shaders directory does not exist: {}", builtShadersDir.string());
         return 1;
     }
     if (!fs::exists(pipelineFileOut.parent_path())) {
-        std::cerr << "Pipeline output directory does not exist: " << pipelineFileOut.parent_path() << std::endl;
+        logger->error("Pipeline output directory does not exist: {}", pipelineFileOut.parent_path().string());
         return 1;
     }
     if (!fs::exists(pipelineFileIn)) {
-        std::cerr << "Pipeline file does not exist: " << pipelineFileIn << std::endl;
+        logger->error("Pipeline file does not exist: {}", pipelineFileIn.string());
         return 1;
     }
 
-    if (verbose) {
-        std::cout << "Shaders Dir: " << builtShadersDir << std::endl;
-        std::cout << "Pipeline Out Dir: " << pipelineFileOut << std::endl;
-        std::cout << "Processing pipeline: " << pipelineFileIn << std::endl;
-    }
+    logger->trace("Shaders Dir: {}, Pipeline Out Dir: {}, Processing pipeline: {}", builtShadersDir.string(), pipelineFileOut.string(),
+                  pipelineFileIn.string());
+
     try {
         PipelineBuilder::buildPipelineFromFile(builtShadersDir, pipelineFileOut, pipelineFileIn);
     } catch (std::exception &e) {
-        std::cerr << "PipelineBuilder: Error: " << e.what() << std::endl;
+        logger->error("PipelineBuilder: Error: {}", e.what());
         return 1;
     }
     PipelineBuilder::buildPipelineFromFile(builtShadersDir, pipelineFileOut, pipelineFileIn);
 
-    if (verbose) {
-        std::cout << "PipelineBuilder: Done!\n";
-    }
-
+    logger->trace("PipelineBuilder: Done!");
     return 0;
 }
 
 int main(int argc, char **argv) {
+    std::shared_ptr<spdlog::logger> logger = VulkLogger::CreateLogger("BuildTool");
+    string args = "Args: ";
+    bool verbose = false;
+    for (int i = 0; i < argc; i++) {
+        args += argv[i];
+        args += " ";
+        if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--verbose") == 0) {
+            verbose = true;
+        }
+    }
+    if (verbose) {
+        spdlog::set_level(spdlog::level::trace);
+        VULK_SET_TRACE_LOG_LEVEL();
+        logger->info("Verbose mode enabled");
+    }
+    logger->info("Starting BuildTool {}", args);
+
     CLI::App app{"BuildTool for compiling vulk resources like shaders/pipelines etc."};
+    app.add_flag("-v, --verbose", verbose, "be verbose");
 
     CLI::App *pipeline = app.add_subcommand("pipeline", "build the pipeline file");
     fs::path builtShadersDir;
@@ -130,8 +164,6 @@ int main(int argc, char **argv) {
     pipeline->add_option("pipelineFileOut", pipelineFileOut, "Directory where the pipelines are built to."); // Corrected here
     fs::path pipelineFileIn;
     pipeline->add_option("pipelineFileIn", pipelineFileIn, "Pipeline file to build."); // Corrected here
-    bool verbose = false;
-    pipeline->add_flag("-v, --verbose", verbose, "be verbose");
     pipeline->callback(
         [&builtShadersDir, &pipelineFileOut, &pipelineFileIn, &verbose]() { pipelineBuilder(builtShadersDir, pipelineFileOut, pipelineFileIn, verbose); });
 
