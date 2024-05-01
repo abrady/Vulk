@@ -333,8 +333,9 @@ foreach(FILE ${PIPELINE_SRC_FILES})
     add_custom_command(
         OUTPUT ${ASSETS_OUTPUT_FILE}
         COMMAND $<TARGET_FILE:BuildTool> pipeline ${SHADER_DEST_DIR} ${ASSETS_OUTPUT_FILE} ${FILE}
-        DEPENDS BuildTool ${FILE}
-        COMMENT "building ${ASSETS_OUTPUT_FILE} from ${FILE}"
+        DEPENDS BuildTool ${COMPILED_SHADERS}
+        MAIN_DEPENDENCY ${FILE}
+        COMMENT "building pipeline ${ASSETS_OUTPUT_FILE} from ${FILE}"
     )
     list(APPEND PIPELINEBUILDER_ASSETS_OUTPUT_FILES ${ASSETS_OUTPUT_FILE})
 endforeach()

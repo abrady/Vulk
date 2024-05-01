@@ -130,7 +130,6 @@ int pipelineBuilder(fs::path builtShadersDir, fs::path pipelineFileOut, fs::path
         logger->error("PipelineBuilder: Error: {}", e.what());
         return 1;
     }
-    PipelineBuilder::buildPipelineFromFile(builtShadersDir, pipelineFileOut, pipelineFileIn);
 
     logger->trace("PipelineBuilder: Done!");
     return 0;
