@@ -276,6 +276,12 @@ shared_ptr<VulkMaterialTextures> VulkResources::getMaterialTextures(string const
         materialTextures[name] = make_shared<VulkMaterialTextures>();
         materialTextures[name]->diffuseView = !def.mapKd.empty() ? make_unique<VulkTextureView>(vk, def.mapKd, false) : nullptr;
         materialTextures[name]->normalView = !def.mapNormal.empty() ? make_unique<VulkTextureView>(vk, def.mapNormal, true) : nullptr;
+        materialTextures[name]->ambientOcclusionView = !def.mapKa.empty() ? make_unique<VulkTextureView>(vk, def.mapKa, true) : nullptr;
+        materialTextures[name]->displacementView = !def.disp.empty() ? make_unique<VulkTextureView>(vk, def.disp, true) : nullptr;
+        materialTextures[name]->metallicView = !def.mapPm.empty() ? make_unique<VulkTextureView>(vk, def.mapPm, true) : nullptr;
+        materialTextures[name]->roughnessView = !def.mapPr.empty() ? make_unique<VulkTextureView>(vk, def.mapPr, true) : nullptr;
+        static_assert(VulkShaderTextureBinding_MAX == VulkShaderTextureBinding_RoughnessSampler);
     }
+
     return materialTextures[name];
 }

@@ -67,10 +67,22 @@ MaterialDef loadMaterialDef(const fs::path &file) {
             std::string relativePath;
             lineStream >> relativePath;
             material.mapKs = processPath(relativePath);
-        } else if (prefix == "map_Bump") {
+        } else if (prefix == "map_Bump" || prefix == "norm") {
             std::string relativePath;
             lineStream >> relativePath;
             material.mapNormal = processPath(relativePath);
+        } else if (prefix == "map_Pm") {
+            std::string relativePath;
+            lineStream >> relativePath;
+            material.mapPm = processPath(relativePath);
+        } else if (prefix == "map_Pr") {
+            std::string relativePath;
+            lineStream >> relativePath;
+            material.mapPr = processPath(relativePath);
+        } else if (prefix == "disp") {
+            std::string relativePath;
+            lineStream >> relativePath;
+            material.disp = processPath(relativePath);
         } else if (prefix == "Ns") {
             lineStream >> material.Ns;
         } else if (prefix == "Ni") {
@@ -94,7 +106,8 @@ ModelDef ModelDef::fromJSON(const nlohmann::json &j, unordered_map<string, share
                             unordered_map<string, shared_ptr<MaterialDef>> materials) {
     assert(j.at("version").get<uint32_t>() == MODEL_JSON_VERSION);
     auto name = j.at("name").get<string>();
-    auto material = materials.at(j.at("material").get<string>());
+    string mn = j.at("material").get<string>();
+    auto material = materials.at(mn);
     MeshDefType meshDefType = EnumLookup<MeshDefType>::getEnumFromStr(j.value("type", "Model"));
     switch (meshDefType) {
     case MeshDefType_Model:
