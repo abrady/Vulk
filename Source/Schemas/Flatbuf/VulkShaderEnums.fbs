@@ -7,6 +7,7 @@ enum VulkShaderLocation : byte {
     Height = 5,
     Pos2 = 6,
     PosLightSpace = 7,
+    Bitangent = 8,
 }
 
 enum VulkShaderLocationMask : uint32 {
@@ -22,8 +23,8 @@ enum VulkShaderLocationMask : uint32 {
 }
 
 
-// keep in sync with Source\Shaders\Common\common.glsl
-// every binding needs to be globally unique across all shaders in a given pipeline
+// keep in sync with derived enums below (VulkShaderUBOBinding, VulkShaderTextureBinding, VulkShaderSSBOBinding)
+// unfortunately, we can't use the enum values directly in the shader, so we have to keep them in sync manually
 enum VulkShaderBinding : byte {
     XformsUBO = 0,
     TextureSampler = 1,
@@ -40,6 +41,12 @@ enum VulkShaderBinding : byte {
     DebugTangentsUBO = 12,
     LightViewProjUBO = 13,
     ShadowMapSampler = 14,
+    // PBR 
+    // we'll use TextureSampler for albedo and NormalSampler for normal map
+    AmbientOcclusionSampler = 15,
+    DisplacementSampler = 16,
+    MetallicSampler = 17,
+    RoughnessSampler = 18,
 }
 
 enum VulkShaderUBOBinding : byte {
@@ -68,4 +75,12 @@ enum VulkShaderTextureBinding : byte {
     TextureSampler3 = 5,
     NormalSampler = 7,
     ShadowMapSampler = 14,
+    AmbientOcclusionSampler = 15,
+    DisplacementSampler = 16,
+    MetallicSampler = 17,
+    RoughnessSampler = 18,
+}
+
+enum VulkLights: byte {
+    NumLights = 4,
 }

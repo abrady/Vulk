@@ -17,12 +17,13 @@
 
 #include "VulkCamera.h"
 #include "VulkCereal.h"
+#include "VulkEnumMetadata.h"
 #include "VulkGeo.h"
 #include "VulkPointLight.h"
 #include "VulkResourceMetadata_generated.h"
+#include "VulkResourceMetadata_types.h"
 #include "VulkScene.h"
 #include "VulkShaderModule.h"
-#include "VulkEnumMetadata.h"
 
 using namespace std;
 namespace fs = std::filesystem;
@@ -56,17 +57,11 @@ namespace cereal {
     // }
 } // namespace cereal
 
-struct ShaderDef {
-    string name;
-    string path;
-
-    ShaderDef() = default;
-    ShaderDef(string name, string path) : name(name), path(path) {}
-
-    template <class Archive> void serialize(Archive &ar) {
-        ar(CEREAL_NVP(name), CEREAL_NVP(path));
+namespace cereal {
+    template <class Archive> void serialize(Archive &ar, vulk::ShaderDef &d) {
+        ar(CEREAL_NVP(d.name), CEREAL_NVP(d.path));
     }
-};
+} // namespace cereal
 
 struct MaterialDef {
     string name;
@@ -74,6 +69,9 @@ struct MaterialDef {
     std::string mapKd;     // Diffuse texture map
     std::string mapKs;     // Specular texture map
     std::string mapNormal; // Normal map (specified as 'bump' in the file)
+    std::string mapPm;     // Metallic map
+    std::string mapPr;     // Roughness map
+    std::string disp;      // Displacement map
     float Ns;              // Specular exponent (shininess)
     float Ni;              // Optical density (index of refraction)
     float d;               // Transparency (dissolve)
@@ -299,9 +297,9 @@ struct SourcePipelineDef {
 };
 
 struct BuiltPipelineDef : public SourcePipelineDef {
-    shared_ptr<ShaderDef> vertShader;
-    shared_ptr<ShaderDef> geomShader;
-    shared_ptr<ShaderDef> fragShader;
+    shared_ptr<vulk::ShaderDef> vertShader;
+    shared_ptr<vulk::ShaderDef> geomShader;
+    shared_ptr<vulk::ShaderDef> fragShader;
     DescriptorSetDef descriptorSet;
     std::vector<VulkShaderLocation> vertInputs;
 
@@ -316,8 +314,8 @@ struct BuiltPipelineDef : public SourcePipelineDef {
         assert(fragShader);
     }
 
-    void fixup(unordered_map<string, shared_ptr<ShaderDef>> const &vertShaders, unordered_map<string, shared_ptr<ShaderDef>> const &geometryShaders,
-               unordered_map<string, shared_ptr<ShaderDef>> const &fragmentShaders) {
+    void fixup(unordered_map<string, shared_ptr<vulk::ShaderDef>> const &vertShaders, unordered_map<string, shared_ptr<vulk::ShaderDef>> const &geometryShaders,
+               unordered_map<string, shared_ptr<vulk::ShaderDef>> const &fragmentShaders) {
         vertShader = vertShaders.at(vertShaderName);
         fragShader = fragmentShaders.at(fragShaderName);
         if (!geomShaderName.empty()) {
@@ -326,9 +324,9 @@ struct BuiltPipelineDef : public SourcePipelineDef {
         validate();
     }
 
-    static BuiltPipelineDef fromFile(const fs::path &path, unordered_map<string, shared_ptr<ShaderDef>> const &vertShaders,
-                                     unordered_map<string, shared_ptr<ShaderDef>> const &geometryShaders,
-                                     unordered_map<string, shared_ptr<ShaderDef>> const &fragmentShaders) {
+    static BuiltPipelineDef fromFile(const fs::path &path, unordered_map<string, shared_ptr<vulk::ShaderDef>> const &vertShaders,
+                                     unordered_map<string, shared_ptr<vulk::ShaderDef>> const &geometryShaders,
+                                     unordered_map<string, shared_ptr<vulk::ShaderDef>> const &fragmentShaders) {
 
         BuiltPipelineDef def;
         VulkCereal::inst()->fromFile(path, def);
@@ -440,9 +438,9 @@ struct SceneDef {
 // not contain the resources themselves. The resources are loaded on demand.
 struct Metadata {
     unordered_map<string, shared_ptr<MeshDef>> meshes;
-    unordered_map<string, shared_ptr<ShaderDef>> vertShaders;
-    unordered_map<string, shared_ptr<ShaderDef>> geometryShaders;
-    unordered_map<string, shared_ptr<ShaderDef>> fragmentShaders;
+    unordered_map<string, shared_ptr<vulk::ShaderDef>> vertShaders;
+    unordered_map<string, shared_ptr<vulk::ShaderDef>> geometryShaders;
+    unordered_map<string, shared_ptr<vulk::ShaderDef>> fragmentShaders;
     unordered_map<string, shared_ptr<MaterialDef>> materials;
     unordered_map<string, shared_ptr<ModelDef>> models;
     unordered_map<string, shared_ptr<BuiltPipelineDef>> pipelines;

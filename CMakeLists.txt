@@ -1,6 +1,10 @@
 # The only prerequisite here is that cmake is installed and in your path to run this
 # it also uses vcpkg to manage dependencies, but tries to bootstrap this from within the repo
 cmake_minimum_required (VERSION 3.13)
+
+#set(VCPKG_TARGET_TRIPLET x64-windows-static)
+set(VCPKG_INSTALL_OPTIONS --no-print-usage) 
+
 project ("VulkanRoot" CXX)
 
 ######
@@ -16,7 +20,8 @@ endif()
 if(WIN32)
     set(CMAKE_GENERATOR_PLATFORM x64)
     set(CMAKE_CXX_STANDARD 23)
-    add_compile_options(-W3)
+    add_compile_options(/W3 /MP)
+    add_compile_options(/EHa) # enable exception handling - this will allow SEH to be caught by catch(...) blocks
 else()
     set(CMAKE_CXX_STANDARD 23)
     set(CMAKE_OSX_ARCHITECTURES arm64)
@@ -25,7 +30,6 @@ else()
 endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-
 
 # Check if vcpkg is bootstrapped
 # find_program(VCPKG_EXECUTABLE NAMES vcpkg PATHS "${CMAKE_SOURCE_DIR}/vcpkg" NO_DEFAULT_PATH)
@@ -109,9 +113,12 @@ function(vulk_add_and_remember_test target)
   add_dependencies(build_tests ${target})
 endfunction()
 
+add_subdirectory("${CMAKE_SOURCE_DIR}/Source/Schemas")
 add_subdirectory("${CMAKE_SOURCE_DIR}/Source/Vulk")
 add_subdirectory("${CMAKE_SOURCE_DIR}/Source/Samples")
 add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Tools/BuildTool)
+add_dependencies(Vulk GenSchemaFiles)
+add_dependencies(BuildTool GenSchemaFiles)
 add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Editor)
 
 ##############################################################################
@@ -139,8 +146,8 @@ file(MAKE_DIRECTORY ${SHADER_GENERATED_HEADER_DIR})
 add_custom_command(
     OUTPUT ${SHADER_GENERATED_HEADER_FILE}
     COMMAND $<TARGET_FILE:BuildTool> GenVulkShaderEnums ${SHADER_GENERATED_HEADER_FILE}
-    DEPENDS BuildTool
-    COMMENT "Generating shader includes header"
+    DEPENDS BuildTool "${CMAKE_SOURCE_DIR}/Source/Schemas/Flatbuf/VulkShaderEnums.fbs"
+    COMMENT "Generating shader includes header from ${SHADER_GENERATED_HEADER_FILE}"
 )
 
 ######
@@ -329,8 +336,9 @@ foreach(FILE ${PIPELINE_SRC_FILES})
     add_custom_command(
         OUTPUT ${ASSETS_OUTPUT_FILE}
         COMMAND $<TARGET_FILE:BuildTool> pipeline ${SHADER_DEST_DIR} ${ASSETS_OUTPUT_FILE} ${FILE}
-        DEPENDS BuildTool ${FILE} ${SHADER_GENERATED_HEADER_FILE} CompileShadersTarget
-        COMMENT "building ${ASSETS_OUTPUT_FILE} from ${FILE}"
+        DEPENDS BuildTool ${COMPILED_SHADERS}
+        MAIN_DEPENDENCY ${FILE}
+        COMMENT "building pipeline ${ASSETS_OUTPUT_FILE} from ${FILE}"
     )
     list(APPEND PIPELINEBUILDER_ASSETS_OUTPUT_FILES ${ASSETS_OUTPUT_FILE})
 endforeach()

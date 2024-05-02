@@ -1,8 +1,10 @@
-#include "Vulk/VulkEnumMetadata.h"
 #include "Vulk/VulkResourceMetadata.h"
+#include "Vulk/VulkEnumMetadata.h"
 
 using json = nlohmann::json;
 using namespace std;
+using namespace vulk;
+
 namespace fs = std::filesystem;
 
 namespace nlohmann {
@@ -65,10 +67,22 @@ MaterialDef loadMaterialDef(const fs::path &file) {
             std::string relativePath;
             lineStream >> relativePath;
             material.mapKs = processPath(relativePath);
-        } else if (prefix == "map_Bump") {
+        } else if (prefix == "map_Bump" || prefix == "norm") {
             std::string relativePath;
             lineStream >> relativePath;
             material.mapNormal = processPath(relativePath);
+        } else if (prefix == "map_Pm") {
+            std::string relativePath;
+            lineStream >> relativePath;
+            material.mapPm = processPath(relativePath);
+        } else if (prefix == "map_Pr") {
+            std::string relativePath;
+            lineStream >> relativePath;
+            material.mapPr = processPath(relativePath);
+        } else if (prefix == "disp") {
+            std::string relativePath;
+            lineStream >> relativePath;
+            material.disp = processPath(relativePath);
         } else if (prefix == "Ns") {
             lineStream >> material.Ns;
         } else if (prefix == "Ni") {
@@ -92,7 +106,8 @@ ModelDef ModelDef::fromJSON(const nlohmann::json &j, unordered_map<string, share
                             unordered_map<string, shared_ptr<MaterialDef>> materials) {
     assert(j.at("version").get<uint32_t>() == MODEL_JSON_VERSION);
     auto name = j.at("name").get<string>();
-    auto material = materials.at(j.at("material").get<string>());
+    string mn = j.at("material").get<string>();
+    auto material = materials.at(mn);
     MeshDefType meshDefType = EnumLookup<MeshDefType>::getEnumFromStr(j.value("type", "Model"));
     switch (meshDefType) {
     case MeshDefType_Model:
@@ -257,13 +272,22 @@ void findAndProcessMetadata(const fs::path path, Metadata &metadata) {
                 }
             } else if (ext == ".vertspv") {
                 assert(!metadata.vertShaders.contains(stem));
-                metadata.vertShaders[stem] = make_shared<ShaderDef>(stem, entry.path().string());
+                metadata.vertShaders[stem] = make_shared<ShaderDef>();
+                metadata.vertShaders[stem]->name = stem;
+                metadata.vertShaders[stem]->path = entry.path().string();
+
             } else if (ext == ".geomspv") {
                 assert(!metadata.geometryShaders.contains(stem));
-                metadata.geometryShaders[stem] = make_shared<ShaderDef>(stem, entry.path().string());
+                metadata.geometryShaders[stem] = make_shared<ShaderDef>();
+                metadata.geometryShaders[stem]->name = stem;
+                metadata.geometryShaders[stem]->path = entry.path().string();
+
             } else if (ext == ".fragspv") {
                 assert(!metadata.fragmentShaders.contains(stem));
-                metadata.fragmentShaders[stem] = make_shared<ShaderDef>(stem, entry.path().string());
+                metadata.fragmentShaders[stem] = make_shared<ShaderDef>();
+                metadata.fragmentShaders[stem]->name = stem;
+                metadata.fragmentShaders[stem]->path = entry.path().string();
+
             } else if (ext == ".mtl") {
                 assert(!metadata.materials.contains(stem));
                 auto material = make_shared<MaterialDef>(loadMaterialDef(entry.path().string()));

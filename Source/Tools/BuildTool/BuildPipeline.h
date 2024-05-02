@@ -41,36 +41,39 @@ class PipelineBuilder {
         // For UBOs
         for (const spirv_cross::Resource &resource : resources.uniform_buffers) {
             // unsigned set = glsl.get_decoration(resource.id, spv::DecorationDescriptorSet);
-            unsigned binding = glsl.get_decoration(resource.id, spv::DecorationBinding);
-            parsedShader.uboBindings[(VulkShaderUBOBinding)binding] = resource.name;
+            VulkShaderUBOBinding binding = (VulkShaderUBOBinding)glsl.get_decoration(resource.id, spv::DecorationBinding);
+            VULK_ASSERT(*EnumNameVulkShaderUBOBinding(binding), "Invalid UBO binding " + std::to_string(binding) + " in shader " + parsedShader.name);
+            parsedShader.uboBindings[binding] = resource.name;
         }
 
         // For SBOs
         for (const spirv_cross::Resource &resource : resources.storage_buffers) {
             // unsigned set = glsl.get_decoration(resource.id, spv::DecorationDescriptorSet);
-            unsigned binding = glsl.get_decoration(resource.id, spv::DecorationBinding);
-            parsedShader.sboBindings[(VulkShaderSSBOBinding)binding] = resource.name;
+            VulkShaderSSBOBinding binding = (VulkShaderSSBOBinding)glsl.get_decoration(resource.id, spv::DecorationBinding);
+            VULK_ASSERT(*EnumNameVulkShaderSSBOBinding(binding), "Invalid SBO binding " + std::to_string(binding) + " in shader " + parsedShader.name);
+            parsedShader.sboBindings[binding] = resource.name;
         }
 
         // For Samplers
         for (const spirv_cross::Resource &resource : resources.sampled_images) {
             // unsigned set = glsl.get_decoration(resource.id, spv::DecorationDescriptorSet);
-            unsigned binding = glsl.get_decoration(resource.id, spv::DecorationBinding);
-            parsedShader.samplerBindings[(VulkShaderTextureBinding)binding] = resource.name;
+            VulkShaderTextureBinding binding = (VulkShaderTextureBinding)glsl.get_decoration(resource.id, spv::DecorationBinding);
+            auto foo = EnumNameVulkShaderTextureBinding(binding);
+            VULK_ASSERT(*foo, "Invalid sampler binding " + std::to_string(binding) + " in shader " + parsedShader.name);
+            parsedShader.samplerBindings[binding] = resource.name;
         }
 
         // Inputs
         for (const spirv_cross::Resource &resource : resources.stage_inputs) {
             VulkShaderLocation location = (VulkShaderLocation)glsl.get_decoration(resource.id, spv::DecorationLocation);
-            VULK_THROW_IF(location < VulkShaderLocation_MIN || location > VulkShaderLocation_MAX, "Invalid vertex input location " + std::to_string(location));
-
+            VULK_ASSERT(*EnumNameVulkShaderLocation(location), "Invalid vertex input location " + std::to_string(location));
             parsedShader.inputLocations[location] = resource.name;
         }
 
         // Outputs
         for (const spirv_cross::Resource &resource : resources.stage_outputs) {
             VulkShaderLocation location = (VulkShaderLocation)glsl.get_decoration(resource.id, spv::DecorationLocation);
-            VULK_THROW_IF(location < VulkShaderLocation_MIN || location > VulkShaderLocation_MAX, "Invalid vertex input location " + std::to_string(location));
+            VULK_ASSERT(*EnumNameVulkShaderLocation(location), "Invalid vertex input location " + std::to_string(location));
             parsedShader.outputLocations[location] = resource.name;
         }
 

@@ -18,8 +18,9 @@
         },
         // `Source/Tools/PipelineBuilder/Debug/PipelineBuilder`.exe C:/open/Github/Vulk/build/Resources/Source/Shaders C:/open/Github/Vulk/build/Resources/Assets/Pipelines C:/open/Github/Vulk/Assets/Pipelines/DebugNormals.pipeline
         // building C:/open/Github/Vulk/build/Resources/Assets/Pipelines/LitShadowMappedModel.pipeline from C:/open/Github/Vulk/Assets/Pipelines/LitShadowMappedModel.pipeline
+        // [BuildTool.exe pipeline C:/open/Github/Vulk/build/Resources/Source/Shaders C:/open/Github/Vulk/build/Resources/Assets/Pipelines/PBR.pipeline.bin C:/open/Github/Vulk/Assets/Pipelines/PBR.pipeline 
         {
-            "name": "PipelineBuilder - Debug",
+            "name": "PipelineBuilder - Debug Pipeline",
             "program": "${workspaceFolder}/build/Source/Tools/BuildTool/Debug/BuildTool.exe",
             "type": "cppvsdbg",
             "request": "launch",
@@ -27,8 +28,8 @@
             "args": [
                 "pipeline",
                 "${workspaceFolder}/build/Resources/Source/Shaders",
-                "${workspaceFolder}/build/Resources/Assets/Pipelines",
-                "${workspaceFolder}/Assets/Pipelines/ShadowMap.pipeline"
+                "${workspaceFolder}/build/Resources/Assets/Pipelines/PBR.pipeline.bin",
+                "${workspaceFolder}/Assets/Pipelines/PBR.pipeline"
             ],
             "stopAtEntry": false,
             "environment": [],

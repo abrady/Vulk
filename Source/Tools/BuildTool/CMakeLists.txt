@@ -14,8 +14,12 @@ find_package(spdlog CONFIG REQUIRED)
 
 # Add an executable
 file(GLOB SOURCES "*.cpp")
-add_executable(BuildTool ${SOURCES})
+add_executable(BuildTool 
+    ${SOURCES}
+)
 # add_dependencies(BuildTool CompileShadersTarget)
+
+target_include_directories(BuildTool PRIVATE ${GENSCHEMAFILES_INCLUDE_DIRS})
 
 target_link_libraries(BuildTool PRIVATE Vulk)
 target_link_libraries(BuildTool PRIVATE nlohmann_json::nlohmann_json)

@@ -15,6 +15,7 @@
         "spirv-cross",
         "spirv-headers",
         "stb",
+        "thrift",
         "tinyobjloader",
         "vulkan"
     ]
