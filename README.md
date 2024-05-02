@@ -9,6 +9,8 @@ My goal for this project is to transition from the hand-coded samples I was doin
 # Resources
 
 * <https://learnopengl.com/Advanced-Lighting/Normal-Mapping> - good tangent space intro
+* <https://blog.selfshadow.com/> - blog on graphics
+* <https://iquilezles.org/>
 
 # Setup
 
@@ -32,6 +34,8 @@ My goal for this project is to transition from the hand-coded samples I was doin
   * We take the inverse of the TBN matrix that transforms any vector from world space to tangent space, and use this matrix to transform not the normal, but the other relevant lighting variables to tangent space; the normal is then again in the same space as the other lighting variables. - this is better because we can do this in vertex space and then use the interpolated values.
 * <https://github.com/KHeresy/openxr-simple-example> : integrate with OpenXR
 * <https://www.reddit.com/r/GraphicsProgramming/comments/1ay0j70/realtime_pbr_catchup_developments_in_recent_years/> - chock full of links
+* check out siggraph courses
+  * <https://blog.selfshadow.com/publications/s2014-shading-course/>
 
 # Log
 
