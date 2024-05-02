@@ -21,6 +21,7 @@ if(WIN32)
     set(CMAKE_GENERATOR_PLATFORM x64)
     set(CMAKE_CXX_STANDARD 23)
     add_compile_options(/W3 /MP)
+    add_compile_options(/EHa) # enable exception handling - this will allow SEH to be caught by catch(...) blocks
 else()
     set(CMAKE_CXX_STANDARD 23)
     set(CMAKE_OSX_ARCHITECTURES arm64)

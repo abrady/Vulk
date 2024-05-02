@@ -68,6 +68,12 @@ class VulkException : public std::runtime_error {
 
 #define VULK_THROW(msg) throw VULKEXCEPTION(msg)
 #define VULK_THROW_FMT(format_str, ...) throw VULKEXCEPTION(fmt::format(format_str, __VA_ARGS__))
+#define VULK_ASSERT(cond, msg)                                                                                                                                 \
+    do {                                                                                                                                                       \
+        if (!(cond)) {                                                                                                                                         \
+            VULK_THROW(msg);                                                                                                                                   \
+        }                                                                                                                                                      \
+    } while (0)
 #define VULK_THROW_IF(cond, msg)                                                                                                                               \
     do {                                                                                                                                                       \
         if (cond) {                                                                                                                                            \

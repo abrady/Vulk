@@ -201,6 +201,18 @@ std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const
                     builder.addFrameImageSampler(i, stage, binding, scene->shadowMapViews[i]->depthView, shadowMapSampler);
                 }
                 break;
+            case VulkShaderTextureBinding_AmbientOcclusionSampler:
+                builder.addBothFramesImageSampler(stage, binding, model->textures->ambientOcclusionView, textureSampler);
+                break;
+            case VulkShaderTextureBinding_DisplacementSampler:
+                builder.addBothFramesImageSampler(stage, binding, model->textures->displacementView, textureSampler);
+                break;
+            case VulkShaderTextureBinding_MetallicSampler:
+                builder.addBothFramesImageSampler(stage, binding, model->textures->metallicView, textureSampler);
+                break;
+            case VulkShaderTextureBinding_RoughnessSampler:
+                builder.addBothFramesImageSampler(stage, binding, model->textures->roughnessView, textureSampler);
+                break;
             default:
                 VULK_THROW("Invalid texture binding");
             }
@@ -209,7 +221,7 @@ std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const
     std::shared_ptr<VulkDescriptorSetInfo> info = builder.build();
     descriptorSetLayoutCache[dsHash] = info->descriptorSetLayout;
     return make_shared<VulkActor>(vk, model, xformUBOs, info, getPipeline(pipelineDef->name));
-    static_assert(VulkShaderTextureBinding_MAX == VulkShaderTextureBinding_ShadowMapSampler);
+    static_assert(VulkShaderTextureBinding_MAX == VulkShaderTextureBinding_RoughnessSampler);
 }
 
 std::shared_ptr<VulkScene> VulkResources::loadScene(VkRenderPass renderPass, std::string name,
