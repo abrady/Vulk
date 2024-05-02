@@ -336,7 +336,7 @@ foreach(FILE ${PIPELINE_SRC_FILES})
     add_custom_command(
         OUTPUT ${ASSETS_OUTPUT_FILE}
         COMMAND $<TARGET_FILE:BuildTool> pipeline ${SHADER_DEST_DIR} ${ASSETS_OUTPUT_FILE} ${FILE}
-        DEPENDS BuildTool ${COMPILED_SHADERS}
+        DEPENDS BuildTool ${COMPILED_SHADERS} ${SHADER_GENERATED_HEADER_FILE} CompileShadersTarget
         MAIN_DEPENDENCY ${FILE}
         COMMENT "building pipeline ${ASSETS_OUTPUT_FILE} from ${FILE}"
     )
