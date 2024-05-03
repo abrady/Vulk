@@ -1,2 +1,7 @@
 Assets/** filter=lfs diff=lfs merge=lfs -text
+# exclude the following files from LFS
+Assets/**/*.scene !filter !diff !merge
+Assets/**/*.mtl !filter !diff !merge
+Assets/**/*.pipeline !filter !diff !merge
+
 Source/ThirdParty/** filter=lfs diff=lfs merge=lfs -text

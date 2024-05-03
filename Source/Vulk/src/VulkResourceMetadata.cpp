@@ -209,6 +209,10 @@ SceneDef SceneDef::fromJSON(const nlohmann::json &j, unordered_map<string, share
         s.camera.eye = jcam.at("eye").get<glm::vec3>();
     if (jcam.contains("lookAt"))
         s.camera.setLookAt(s.camera.eye, jcam.at("lookAt").get<glm::vec3>());
+    if (jcam.contains("nearClip"))
+        s.camera.nearClip = jcam.at("nearClip").get<float>();
+    if (jcam.contains("farClip"))
+        s.camera.farClip = jcam.at("farClip").get<float>();
 
     // load the lights
     for (auto const &light : j.at("lights").get<vector<json>>()) {
