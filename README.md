@@ -39,6 +39,22 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
+## 5/2
+
+getting a purple screen.
+
+verts look okay:
+![](Assets/Screenshots/mesh_sphere.png)
+
+must be something after that. let's see what the output verts look like:
+
+* worldxform looks fine: identity
+* no idea on the proj/view matrices, but the output verts look like ass so that's probably it
+  * the gl_position's out look suspicious:
+    * vert 0: 1, -.5, 1664, 1648: so near the back of the frustum and basically 0 for x and y
+    * vert
+  * okay, the camera was 1600z while the radius of the sphere was 1
+
 ## 4/30/24 picking up the pieces
 
 where the hell was I?
