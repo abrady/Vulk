@@ -55,6 +55,11 @@ must be something after that. let's see what the output verts look like:
     * vert
   * okay, the camera was 1600z while the radius of the sphere was 1
 
+Rendered:
+![](Assets/Screenshots/pbr_sphere_1.png)
+
+hmm... looks pretty flat. let's see what's missing next time
+
 ## 4/30/24 picking up the pieces
 
 where the hell was I?
