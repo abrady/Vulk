@@ -21,6 +21,7 @@ if(WIN32)
     set(CMAKE_GENERATOR_PLATFORM x64)
     set(CMAKE_CXX_STANDARD 23)
     add_compile_options(/W3 /MP)
+    add_compile_options(/EHa) # enable exception handling - this will allow SEH to be caught by catch(...) blocks
 else()
     set(CMAKE_CXX_STANDARD 23)
     set(CMAKE_OSX_ARCHITECTURES arm64)
@@ -118,6 +119,7 @@ add_subdirectory("${CMAKE_SOURCE_DIR}/Source/Samples")
 add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Tools/BuildTool)
 add_dependencies(Vulk GenSchemaFiles)
 add_dependencies(BuildTool GenSchemaFiles)
+add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Editor)
 
 ##############################################################################
 ## Assets
@@ -216,6 +218,7 @@ add_custom_target(
     CompileShadersTarget 
     DEPENDS ${COMPILED_SHADERS}
 )
+#message("shaders ${COMPILED_SHADERS}")
 
 # Append each file name to the file
 foreach(SOURCE_FILE ${COMPILED_SHADERS})
@@ -240,7 +243,7 @@ function(copy_assets DIR_NAME GLOBAL_ASSETS_VAR)
         set(DEST "${DEST_DIR}/${REL_PATH}")
         get_filename_component(DEST_FILE_DIR "${DEST}" DIRECTORY)
         file(MAKE_DIRECTORY "${DEST_FILE_DIR}")
-        # message("Copying ${ASSET_FILE} to ${DEST}")
+        #message("adding a copy of ${ASSET_FILE} to ${DEST}")
         add_custom_command(
             OUTPUT "${DEST}"
             COMMAND ${CMAKE_COMMAND} -E copy "${ASSET_FILE}" "${DEST}"
@@ -288,7 +291,7 @@ function(build_assets DIR_NAME GLOBAL_ASSETS_VAR)
         add_custom_command(
             OUTPUT "${DEST}"
             COMMAND $<TARGET_FILE:BuildTool> ${DIR_NAME} "${ASSET_FILE}" "${DEST}"
-            DEPENDS BuildTool "${ASSET_FILE}"
+            DEPENDS BuildTool "${ASSET_FILE}" 
             COMMENT "Building ${DIR_NAME} ${ASSET_FILE} to ${DEST}"
         )
         list(APPEND ASSETS_TO_BUILD "${DEST}")
@@ -333,8 +336,9 @@ foreach(FILE ${PIPELINE_SRC_FILES})
     add_custom_command(
         OUTPUT ${ASSETS_OUTPUT_FILE}
         COMMAND $<TARGET_FILE:BuildTool> pipeline ${SHADER_DEST_DIR} ${ASSETS_OUTPUT_FILE} ${FILE}
-        DEPENDS BuildTool ${FILE}
-        COMMENT "building ${ASSETS_OUTPUT_FILE} from ${FILE}"
+        DEPENDS BuildTool ${COMPILED_SHADERS} ${SHADER_GENERATED_HEADER_FILE} CompileShadersTarget
+        MAIN_DEPENDENCY ${FILE}
+        COMMENT "building pipeline ${ASSETS_OUTPUT_FILE} from ${FILE}"
     )
     list(APPEND PIPELINEBUILDER_ASSETS_OUTPUT_FILES ${ASSETS_OUTPUT_FILE})
 endforeach()

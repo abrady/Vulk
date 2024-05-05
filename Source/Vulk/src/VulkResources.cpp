@@ -201,6 +201,18 @@ std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const
                     builder.addFrameImageSampler(i, stage, binding, scene->shadowMapViews[i]->depthView, shadowMapSampler);
                 }
                 break;
+            case VulkShaderTextureBinding_AmbientOcclusionSampler:
+                builder.addBothFramesImageSampler(stage, binding, model->textures->ambientOcclusionView, textureSampler);
+                break;
+            case VulkShaderTextureBinding_DisplacementSampler:
+                builder.addBothFramesImageSampler(stage, binding, model->textures->displacementView, textureSampler);
+                break;
+            case VulkShaderTextureBinding_MetallicSampler:
+                builder.addBothFramesImageSampler(stage, binding, model->textures->metallicView, textureSampler);
+                break;
+            case VulkShaderTextureBinding_RoughnessSampler:
+                builder.addBothFramesImageSampler(stage, binding, model->textures->roughnessView, textureSampler);
+                break;
             default:
                 VULK_THROW("Invalid texture binding");
             }
@@ -209,7 +221,7 @@ std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const
     std::shared_ptr<VulkDescriptorSetInfo> info = builder.build();
     descriptorSetLayoutCache[dsHash] = info->descriptorSetLayout;
     return make_shared<VulkActor>(vk, model, xformUBOs, info, getPipeline(pipelineDef->name));
-    static_assert(VulkShaderTextureBinding_MAX == VulkShaderTextureBinding_ShadowMapSampler);
+    static_assert(VulkShaderTextureBinding_MAX == VulkShaderTextureBinding_RoughnessSampler);
 }
 
 std::shared_ptr<VulkScene> VulkResources::loadScene(VkRenderPass renderPass, std::string name,
@@ -264,6 +276,12 @@ shared_ptr<VulkMaterialTextures> VulkResources::getMaterialTextures(string const
         materialTextures[name] = make_shared<VulkMaterialTextures>();
         materialTextures[name]->diffuseView = !def.mapKd.empty() ? make_unique<VulkTextureView>(vk, def.mapKd, false) : nullptr;
         materialTextures[name]->normalView = !def.mapNormal.empty() ? make_unique<VulkTextureView>(vk, def.mapNormal, true) : nullptr;
+        materialTextures[name]->ambientOcclusionView = !def.mapKa.empty() ? make_unique<VulkTextureView>(vk, def.mapKa, true) : nullptr;
+        materialTextures[name]->displacementView = !def.disp.empty() ? make_unique<VulkTextureView>(vk, def.disp, true) : nullptr;
+        materialTextures[name]->metallicView = !def.mapPm.empty() ? make_unique<VulkTextureView>(vk, def.mapPm, true) : nullptr;
+        materialTextures[name]->roughnessView = !def.mapPr.empty() ? make_unique<VulkTextureView>(vk, def.mapPr, true) : nullptr;
+        static_assert(VulkShaderTextureBinding_MAX == VulkShaderTextureBinding_RoughnessSampler);
     }
+
     return materialTextures[name];
 }

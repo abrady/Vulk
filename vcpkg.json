@@ -10,7 +10,6 @@
         "fmt",
         "glfw3",
         "glm",
-        "imgui",
         "nlohmann-json",
         "spdlog",
         "spirv-cross",

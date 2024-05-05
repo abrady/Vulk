@@ -4,10 +4,10 @@
 #include "lighting.frag"
 
 layout(binding = VulkShaderBinding_TextureSampler) uniform sampler2D albedoMap;
-layout(binding = VulkShaderBinding_NormalSampler) uniform sampler2D normalMap;
-layout(binding = VulkShaderBinding_AmbientOcclusionSampler) uniform sampler2D aoMap;
 layout(binding = VulkShaderBinding_DisplacementSampler) uniform sampler2D displacementMap;
 layout(binding = VulkShaderBinding_RoughnessSampler) uniform sampler2D roughnessMap;
+layout(binding = VulkShaderBinding_AmbientOcclusionSampler) uniform sampler2D aoMap;
+layout(binding = VulkShaderBinding_NormalSampler) uniform sampler2D normalMap;
 layout(binding = VulkShaderBinding_MetallicSampler) uniform sampler2D metallicMap;
 
 EYEPOS_UBO(eyePosUBO);

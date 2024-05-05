@@ -9,6 +9,8 @@ My goal for this project is to transition from the hand-coded samples I was doin
 # Resources
 
 * <https://learnopengl.com/Advanced-Lighting/Normal-Mapping> - good tangent space intro
+* <https://blog.selfshadow.com/> - blog on graphics
+* <https://iquilezles.org/>
 
 # Setup
 
@@ -32,8 +34,54 @@ My goal for this project is to transition from the hand-coded samples I was doin
   * We take the inverse of the TBN matrix that transforms any vector from world space to tangent space, and use this matrix to transform not the normal, but the other relevant lighting variables to tangent space; the normal is then again in the same space as the other lighting variables. - this is better because we can do this in vertex space and then use the interpolated values.
 * <https://github.com/KHeresy/openxr-simple-example> : integrate with OpenXR
 * <https://www.reddit.com/r/GraphicsProgramming/comments/1ay0j70/realtime_pbr_catchup_developments_in_recent_years/> - chock full of links
+* check out siggraph courses
+  * <https://blog.selfshadow.com/publications/s2014-shading-course/>
 
 # Log
+
+## 5/2
+
+getting a purple screen.
+
+verts look okay:
+![](Assets/Screenshots/mesh_sphere.png)
+
+must be something after that. let's see what the output verts look like:
+
+* worldxform looks fine: identity
+* no idea on the proj/view matrices, but the output verts look like ass so that's probably it
+  * the gl_position's out look suspicious:
+    * vert 0: 1, -.5, 1664, 1648: so near the back of the frustum and basically 0 for x and y
+    * vert
+  * okay, the camera was 1600z while the radius of the sphere was 1
+
+Rendered:
+![](Assets/Screenshots/pbr_sphere_1.png)
+
+hmm... looks pretty flat. let's see what's missing next time
+
+## 4/30/24 picking up the pieces
+
+where the hell was I?
+
+* fix some build dependencies
+* getting a PBR pipeline build error
+
+### PBR Pipeline Error
+
+* EnumLookup<VulkShaderTextureBinding>::getStrFromEnum(17) is failing
+* looks like VulkShaderTextureBinding doesn't have 17
+* 17 maps to VulkShaderBinding_AmbientOcclusionSampler - just need to add these
+
+Now I'm getting 0 in the imageSamplers for the fragment shader in the descriptor set def.
+
+* texture, displacement, roughness, 0, normal, metallic.
+* why that 0? and where are these coming from? these are the inferred image samplers from PBR.frag
+* VulkShaderBinding_AmbientOcclusionSampler must be the 0 by elimination.
+  * const int VulkShaderBinding_AmbientOcclusionSampler = 17; in the shader
+  * const int VulkShaderBinding_= 16; // what is this in VulkShaderEnums_generated.glsl? it doesn't exist in the .h
+  
+Okay, more flatbuf funniness: if you have gaps in the numbering it can get messed up.
 
 ## 4/16/24 let's start building
 

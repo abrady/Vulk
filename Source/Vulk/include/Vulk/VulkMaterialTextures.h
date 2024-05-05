@@ -6,5 +6,8 @@
 struct VulkMaterialTextures {
     std::shared_ptr<VulkTextureView> diffuseView;
     std::shared_ptr<VulkTextureView> normalView;
-    // could also have ambient and specular but not using them for now
+    std::shared_ptr<VulkTextureView> ambientOcclusionView;
+    std::shared_ptr<VulkTextureView> displacementView;
+    std::shared_ptr<VulkTextureView> metallicView;
+    std::shared_ptr<VulkTextureView> roughnessView;
 };

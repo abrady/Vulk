@@ -18,6 +18,46 @@
 
 namespace fs = std::filesystem;
 
+// #include <DbgHelp.h>
+// #include <dbghelp.h>
+// #include <windows.h>
+// #pragma comment(lib, "DbgHelp.lib")
+
+// void printStackTrace(CONTEXT *context) {
+//     STACKFRAME64 stackframe = {};
+//     stackframe.AddrPC.Offset = context->Rip;
+//     stackframe.AddrPC.Mode = AddrModeFlat;
+//     stackframe.AddrFrame.Offset = context->Rbp;
+//     stackframe.AddrFrame.Mode = AddrModeFlat;
+//     stackframe.AddrStack.Offset = context->Rsp;
+//     stackframe.AddrStack.Mode = AddrModeFlat;
+
+//     HANDLE process = GetCurrentProcess();
+//     HANDLE thread = GetCurrentThread();
+
+//     SymInitialize(process, NULL, TRUE);
+
+//     while (StackWalk64(IMAGE_FILE_MACHINE_I386, process, thread, &stackframe, context, NULL, SymFunctionTableAccess64, SymGetModuleBase64, NULL)) {
+//         DWORD64 displacement = 0;
+//         char buffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR)];
+//         PSYMBOL_INFO symbol = (PSYMBOL_INFO)buffer;
+//         symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+//         symbol->MaxNameLen = MAX_SYM_NAME;
+
+//         if (SymFromAddr(process, stackframe.AddrPC.Offset, &displacement, symbol)) {
+//             std::cout << symbol->Name << std::endl;
+//         }
+//     }
+
+//     SymCleanup(process);
+// }
+
+// LONG WINAPI exceptionFilter(struct _EXCEPTION_POINTERS *exceptionPointers) {
+//     std::cout << "Access violation at address: " << exceptionPointers->ExceptionRecord->ExceptionAddress << std::endl;
+//     printStackTrace(exceptionPointers->ContextRecord);
+//     return EXCEPTION_EXECUTE_HANDLER;
+// }
+
 int sceneBuilder(fs::path sceneFileIn, fs::path sceneOutDir) {
     std::shared_ptr<spdlog::logger> logger = VulkLogger::CreateLogger("buildtool:SceneBuilder");
     logger->info("Building scene from file: {}", sceneFileIn.string());
@@ -49,7 +89,7 @@ int sceneBuilder(fs::path sceneFileIn, fs::path sceneOutDir) {
     return 0;
 }
 
-int glslShaderEnumsGenerator(fs::path outFile) {
+int glslShaderEnumsGenerator(fs::path outFile, bool verbose) {
     auto logger = VulkLogger::CreateLogger("Buildtool:ShaderEnumsGenerator");
     logger->info("GLSLIncludesGenerator: Generating GLSL includes for enum values to: {}", outFile.string());
     auto parent_dir = outFile.parent_path();
@@ -57,6 +97,11 @@ int glslShaderEnumsGenerator(fs::path outFile) {
         logger->error("Output directory does not exist: {}", parent_dir.string());
         return 1;
     }
+
+    if (verbose) {
+        logger->set_level(spdlog::level::trace);
+    }
+    // logger->set_level(spdlog::level::trace);
 
     std::ofstream out(outFile);
     out << R"(
@@ -114,11 +159,11 @@ int pipelineBuilder(fs::path builtShadersDir, fs::path pipelineFileOut, fs::path
     }
     if (!fs::exists(pipelineFileOut.parent_path())) {
         logger->error("Pipeline output directory does not exist: {}", pipelineFileOut.parent_path().string());
-        return 1;
+        return 2;
     }
     if (!fs::exists(pipelineFileIn)) {
         logger->error("Pipeline file does not exist: {}", pipelineFileIn.string());
-        return 1;
+        return 3;
     }
 
     logger->trace("Shaders Dir: {}, Pipeline Out Dir: {}, Processing pipeline: {}", builtShadersDir.string(), pipelineFileOut.string(),
@@ -128,15 +173,19 @@ int pipelineBuilder(fs::path builtShadersDir, fs::path pipelineFileOut, fs::path
         PipelineBuilder::buildPipelineFromFile(builtShadersDir, pipelineFileOut, pipelineFileIn);
     } catch (std::exception &e) {
         logger->error("PipelineBuilder: Error: {}", e.what());
-        return 1;
+        return 4;
+    } catch (...) {
+        VulkException e("Unknown error while processing " + pipelineFileIn.string());
+        logger->error("PipelineBuilder: Unknown error while processing {}", e.what());
+        return 5;
     }
-    PipelineBuilder::buildPipelineFromFile(builtShadersDir, pipelineFileOut, pipelineFileIn);
 
     logger->trace("PipelineBuilder: Done!");
     return 0;
 }
 
 int main(int argc, char **argv) {
+    // SetUnhandledExceptionFilter(exceptionFilter);
     std::shared_ptr<spdlog::logger> logger = VulkLogger::CreateLogger("BuildTool");
     string args = "Args: ";
     bool verbose = false;
@@ -170,9 +219,9 @@ int main(int argc, char **argv) {
     CLI::App *glsl = app.add_subcommand("GenVulkShaderEnums", "generate GLSL includes");
     fs::path outFile;
     glsl->add_option("outFile", outFile, "Directory where the GLSL includes are generated to.");
-    glsl->callback([&outFile]() {
+    glsl->callback([&outFile, verbose]() {
         outFile.make_preferred();
-        glslShaderEnumsGenerator(outFile);
+        glslShaderEnumsGenerator(outFile, verbose);
     });
 
     // CLI::App *scene = app.add_subcommand("scene", "build the scene file");

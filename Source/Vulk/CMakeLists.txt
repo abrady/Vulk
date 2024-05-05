@@ -44,9 +44,9 @@ target_link_libraries(Vulk PRIVATE fmt::fmt)
 target_link_libraries(Vulk PUBLIC GenSchemaFiles)
 
 if(MSVC)
-  file(GLOB MY_PROJECT_NATVIS_FILES "${CMAKE_SOURCE_DIR}/Source/Tools/MSVC/Natvis/*.natvis")
-  message("adding natvis files to project ${MY_PROJECT_NATVIS_FILES}")
-  target_sources(Vulk PRIVATE ${MY_PROJECT_NATVIS_FILES})
+  #file(GLOB MY_PROJECT_NATVIS_FILES "${CMAKE_SOURCE_DIR}/Source/Tools/MSVC/Natvis/*.natvis")
+  #message("adding natvis files to project ${MY_PROJECT_NATVIS_FILES}")
+  #target_sources(Vulk PRIVATE ${MY_PROJECT_NATVIS_FILES})
   # /analyze - /analyze:warninglevel 4
   # /fsanitize=address /fsanitize=fuzzer
   # /sdl - Enables recommended Security Development Lifecycle (SDL) checks

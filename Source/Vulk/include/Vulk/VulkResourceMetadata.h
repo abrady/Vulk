@@ -69,6 +69,9 @@ struct MaterialDef {
     std::string mapKd;     // Diffuse texture map
     std::string mapKs;     // Specular texture map
     std::string mapNormal; // Normal map (specified as 'bump' in the file)
+    std::string mapPm;     // Metallic map
+    std::string mapPr;     // Roughness map
+    std::string disp;      // Displacement map
     float Ns;              // Specular exponent (shininess)
     float Ni;              // Optical density (index of refraction)
     float d;               // Transparency (dissolve)
