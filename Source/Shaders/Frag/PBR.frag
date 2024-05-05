@@ -26,7 +26,7 @@ layout(location = VulkShaderLocation_TexCoord) in vec2 inTexCoord;
 layout(location = 0) out vec4 outColor;
 
 // Function prototypes
-vec3 GetDirectIllumination(int i, vec3 N, vec3 V, vec3 L, float roughness, float metalness, vec3 F0, float ao);
+vec3 GetDirectIllumination(vec3 albedo, int i, vec3 N, vec3 V, vec3 L, float roughness, float metalness, vec3 F0, float ao);
 vec3 FresnelSchlick(float cosTheta, vec3 F0);
 float DistributionGGX(vec3 N, vec3 H, float roughness);
 float GeometrySchlickGGX(float NdotV, float roughness);
@@ -64,7 +64,7 @@ void main() {
     vec3 Lo = vec3(0.0);
     for(int i = 0; i < VulkLights_NumLights; i++) {
         vec3 L = normalize(lightsBuf.lights[i].pos - inPos);
-        Lo += GetDirectIllumination(i, N, V, L, roughness, metallic, F0, ao) * lightsBuf.lights[i].color;
+        Lo += GetDirectIllumination(albedo, i, N, V, L, roughness, metallic, F0, ao) * lightsBuf.lights[i].color;
     }
 
     // Output final color
@@ -73,7 +73,7 @@ void main() {
 }
 
 // Lighting calculation functions
-vec3 GetDirectIllumination(int i, vec3 N, vec3 V, vec3 L, float roughness, float metalness, vec3 F0, float ao) {
+vec3 GetDirectIllumination(vec3 albedo, int i, vec3 N, vec3 V, vec3 L, float roughness, float metalness, vec3 F0, float ao) {
     vec3 H = normalize(V + L);
     float distance = length(lightsBuf.lights[i].pos - inPos);
     float attenuation = 1.0 / (distance * distance);
