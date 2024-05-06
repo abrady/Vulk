@@ -39,6 +39,23 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
+## 5/3 better PBR
+
+ngl, this doesn't look very good, at least compared to the preview render that came with the materials. what am I doing wrong?
+
+1. I can see I'm not using the displacement map at all. that's probably something to fix
+2. metallic looks like it is always zero, which is fine
+
+What could be going wrong?
+
+* Fresnel reflectance: F(n,l): see section 9.8
+  * Schlick approximation: F_0 + (1 - F_0)(1 - (n.l)+)^5 (see FresnelSchlick in PBR.frag)
+  * F0 comes from the material properties (see comments in PBR.frag) and the material it is in (e.g. air)
+* Microfacet:
+  * the microfacet model imagines lots of small facets on a surface that are larger than the wavelength of light and which have their own set of normals across the surface, and can self occlude
+
+here's what I'm thinking: let me make a shader that can take params for the sampled textures and see if it clears this up
+
 ## 5/2
 
 getting a purple screen.
@@ -69,7 +86,7 @@ where the hell was I?
 
 ### PBR Pipeline Error
 
-* EnumLookup<VulkShaderTextureBinding>::getStrFromEnum(17) is failing
+* EnumLookup\<VulkShaderTextureBinding\>::getStrFromEnum(17) is failing
 * looks like VulkShaderTextureBinding doesn't have 17
 * 17 maps to VulkShaderBinding_AmbientOcclusionSampler - just need to add these
 
@@ -228,7 +245,7 @@ What I learned:
 * fs::path : tried this, started getting duplicate definition of string errors
 * Any of the Vk* types that I wanted to store in nice strings was a no-go, they're all VkFlags and you'd get duplicate def errors
 
-2) I mixed source assets and built assets.
+1) I mixed source assets and built assets.
 
 * Why this was a problem:
   * I'd hacked this a bit in the 'pipelinedecldef'/'pipelinedef' structs but that was a hack

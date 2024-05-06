@@ -1,3 +1,19 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:242e096fb77f1558754e6d9d21eda044726051bec745f63037dcecdf6fd00244
-size 508
+# https://freepbr.com/materials/herringbone-flooring-pbr/ 
+newmtl herringbone-flooring-bl
+	Ns 26.000000
+	Ni 1.500000
+	d 1.000000
+	Tr 1.000000
+	Tf 1.000000 1.000000 1.000000 
+	illum 2
+	Ka 0.000000 0.000000 0.000000
+	Kd 0.588000 0.588000 0.588000
+	Ks 0.207000 0.207000 0.207000
+	Ke 0.000000 0.000000 0.000000
+	map_Ka herringbone-flooring_ao.png
+	map_Kd herringbone-flooring_albedo.png
+	disp herringbone-flooring_height.png
+	norm herringbone-flooring_normal-ogl.png
+	map_Pm herringbone-flooring_metallic.png
+	map_Pr herringbone-flooring_roughness.png
+

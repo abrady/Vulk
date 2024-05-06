@@ -3,7 +3,7 @@
 cmake_minimum_required (VERSION 3.13)
 
 #set(VCPKG_TARGET_TRIPLET x64-windows-static)
-set(VCPKG_INSTALL_OPTIONS --no-print-usage) 
+#set(VCPKG_INSTALL_OPTIONS --no-print-usage) 
 
 project ("VulkanRoot" CXX)
 

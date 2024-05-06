@@ -48,7 +48,9 @@ MaterialDef loadMaterialDef(const fs::path &file) {
             return absPath.string();
         };
 
-        if (prefix == "newmtl") {
+        if (prefix == "#" || prefix == "") {
+            continue;
+        } else if (prefix == "newmtl") {
             assert(!startedNewMtl);
             startedNewMtl = true; // just handle 1 material for now
             string mtlName;
@@ -95,6 +97,8 @@ MaterialDef loadMaterialDef(const fs::path &file) {
             lineStream >> material.Kd[0] >> material.Kd[1] >> material.Kd[2];
         } else if (prefix == "Ks") {
             lineStream >> material.Ks[0] >> material.Ks[1] >> material.Ks[2];
+        } else {
+            VULK_THROW_FMT("Unknown material property: {}", prefix);
         }
         // Add handling for other properties as needed
     }
