@@ -193,7 +193,7 @@ foreach(SHADER ${FRAGMENT_SHADERS})
         OUTPUT "${SHADER_OUTPUT}"
         COMMAND glslc ${GLSLC_FLAGS} "${SHADER}" -o "${SHADER_OUTPUT}"
         DEPENDS ${SHADER} ${SHADER_COMMON_FILES} ${SHADER_GENERATED_HEADER_FILE}
-        COMMENT "building fragment shader ${SHADER_OUTPUT} from ${SHADER} flags ${GLSLC_FLAGS}"
+        COMMENT "building fragment shader glslc ${GLSLC_FLAGS} ${SHADER} -o ${SHADER_OUTPUT}"
     )
     list(APPEND COMPILED_SHADERS "${SHADER_OUTPUT}")
 endforeach()
