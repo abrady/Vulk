@@ -119,7 +119,7 @@ add_subdirectory("${CMAKE_SOURCE_DIR}/Source/Samples")
 add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Tools/BuildTool)
 add_dependencies(Vulk GenSchemaFiles)
 add_dependencies(BuildTool GenSchemaFiles)
-add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Editor)
+#add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Editor)
 
 ##############################################################################
 ## Assets
