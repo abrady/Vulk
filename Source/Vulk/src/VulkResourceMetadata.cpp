@@ -31,6 +31,36 @@ MaterialDef loadMaterialDef(const fs::path &file) {
         VULK_THROW("Failed to open material file: " + file.string());
     }
 
+    // Ka: Ambient reflectivity
+    // Kd: Diffuse reflectivity
+    // Ks: Specular reflectivity
+    // Ke: Emissive intensity
+    // Ns: Specular exponent (controls the size and sharpness of specular highlights)
+    // illum: Illumination model (number representing how many light sources are reflected/refracted)
+    // map_Kd: Diffuse texture map
+    // map_Ka: Ambient texture map
+    // map_Ks: Specular texture map
+    // map_Ns: Specular exponent texture map
+    // map_d: Bump mapping texture
+    // map_bump: Normal mapping texture
+    // disp: Displacement texture
+    // decal: Decal texture
+    // refl: Reflection texture
+    // trans: Transparency texture
+    // alpha: Opacity value (1.0 being fully opaque, 0.0 fully transparent)
+    // ambient: Ambient color
+    // diffuse: Diffuse color
+    // specular: Specular color
+    // emission: Emissive color
+    // transmission: Transmission filter color
+    // backfacing: Controls whether the material is double-sided or not (on or off)
+    // shadow: Controls whether the material casts shadows (on or off)
+    // reflect: Controls whether the material reflects other objects (on or off)
+    // refract: Controls whether the material refracts other objects (on or off)
+    // ior: Index of refraction (for refraction calculations)
+    // ior_threshold: Threshold for refraction (used when ior is non-zero)
+    // ior_tint: Tint color for refracted objects (when ior is non-zero)
+
     MaterialDef material;
     std::string line;
     fs::path basePath = file.parent_path();
@@ -60,43 +90,43 @@ MaterialDef loadMaterialDef(const fs::path &file) {
         } else if (prefix == "map_Ka") {
             std::string relativePath;
             lineStream >> relativePath;
-            material.mapKa = processPath(relativePath);
+            material.mapKa = processPath(relativePath); // ambient texture
         } else if (prefix == "map_Kd") {
             std::string relativePath;
             lineStream >> relativePath;
-            material.mapKd = processPath(relativePath);
+            material.mapKd = processPath(relativePath); // diffuse texture
         } else if (prefix == "map_Ks") {
             std::string relativePath;
             lineStream >> relativePath;
-            material.mapKs = processPath(relativePath);
+            material.mapKs = processPath(relativePath); // specular texture
         } else if (prefix == "map_Bump" || prefix == "norm") {
             std::string relativePath;
             lineStream >> relativePath;
-            material.mapNormal = processPath(relativePath);
+            material.mapNormal = processPath(relativePath); // normal map texture
         } else if (prefix == "map_Pm") {
             std::string relativePath;
             lineStream >> relativePath;
-            material.mapPm = processPath(relativePath);
+            material.mapPm = processPath(relativePath); // metalness map texture
         } else if (prefix == "map_Pr") {
             std::string relativePath;
             lineStream >> relativePath;
-            material.mapPr = processPath(relativePath);
+            material.mapPr = processPath(relativePath); // roughness map texture
         } else if (prefix == "disp") {
             std::string relativePath;
             lineStream >> relativePath;
-            material.disp = processPath(relativePath);
+            material.disp = processPath(relativePath); // displacement map texture
         } else if (prefix == "Ns") {
-            lineStream >> material.Ns;
+            lineStream >> material.Ns; // specular exponent
         } else if (prefix == "Ni") {
-            lineStream >> material.Ni;
-        } else if (prefix == "d") {
-            lineStream >> material.d;
+            lineStream >> material.Ni; // index of refraction
+        } else if (prefix == "d" || prefix == "Tr") {
+            lineStream >> material.d; // dissolve (transparency)
         } else if (prefix == "Ka") {
-            lineStream >> material.Ka[0] >> material.Ka[1] >> material.Ka[2];
+            lineStream >> material.Ka[0] >> material.Ka[1] >> material.Ka[2]; // ambient color
         } else if (prefix == "Kd") {
-            lineStream >> material.Kd[0] >> material.Kd[1] >> material.Kd[2];
+            lineStream >> material.Kd[0] >> material.Kd[1] >> material.Kd[2]; // diffuse color
         } else if (prefix == "Ks") {
-            lineStream >> material.Ks[0] >> material.Ks[1] >> material.Ks[2];
+            lineStream >> material.Ks[0] >> material.Ks[1] >> material.Ks[2]; // specular color
         } else {
             VULK_THROW_FMT("Unknown material property: {}", prefix);
         }
