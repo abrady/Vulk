@@ -1,3 +1,12 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:2c6fe664a45953c7683358a3519fc70f78f4a69f403c70f05c0ff66d045a968d
-size 198
+{
+    "version": 1,
+    "name": "PBR",
+    "vertShader": "PBR",
+    "vertInputs": [
+        "Pos",
+        "Normal",
+        "Tangent",
+        "TexCoord"
+    ],
+    "fragShader": "PBR"
+}
