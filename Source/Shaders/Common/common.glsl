@@ -1,3 +1,5 @@
+#ifndef COMMON_GLSL_H
+#define COMMON_GLSL_H
 #include "VulkShaderEnums_generated.glsl"
 
 const float PI = 3.1415926535897932384626433832795;
@@ -72,3 +74,5 @@ layout(location = VulkShaderLocation_Pos) in vec3 inPosition; \
 layout(location = VulkShaderLocation_Normal) in vec3 inNormal; \
 layout(location = VulkShaderLocation_Tangent) in vec3 inTangent; \
 layout(location = VulkShaderLocation_TexCoord) in vec2 inTexCoord
+
+#endif // COMMON_GLSL_H

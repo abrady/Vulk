@@ -1,3 +1,5 @@
+#include "common.glsl"
+
 // note that the order matters here: it allows this to be packed into 2 vec4s
 struct PointLight {
     vec3 pos;           // point light only
@@ -72,11 +74,12 @@ vec3 FresnelSchlick(float cosTheta, vec3 F0) {
     return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
-vec3 PBRDirectIllumination(vec3 albedo, int i, vec3 N, vec3 V, vec3 L, float roughness, float metalness, vec3 F0, float ao) {
+vec3 PBRDirectIllumination(vec3 posToLightVec, vec3 lightColor, vec3 albedo, vec3 N, vec3 V, float roughness, float metalness, vec3 F0, float ao) {
+    vec3 L = normalize(posToLightVec);
     vec3 H = normalize(V + L);
-    float distance = length(lightsBuf.lights[i].pos - inPos);
+    float distance = length(posToLightVec);
     float attenuation = 1.0 / (distance * distance);
-    vec3 radiance = lightsBuf.lights[i].color * attenuation;
+    vec3 radiance = lightColor * attenuation;
 
     // Cook-Torrance BRDF
     float NDF = DistributionGGX(N, H, roughness);
@@ -99,7 +102,7 @@ vec3 PBRDirectIllumination(vec3 albedo, int i, vec3 N, vec3 V, vec3 L, float rou
 
 
 // Note: assumes all params incoming have had no transformations applied
-vec3 PBR(PointLight lights[VulkLights_NumLights], vec3 inPos, vec3 inNormal, vec3 inTangent, vec3 inBitangent, vec3 mapN, vec3 albedo, float metallic, float roughness, float ao) {
+vec3 PBR(PointLight lights[VulkLights_NumLights], vec3 eyePos, vec3 inPos, vec3 inNormal, vec3 inTangent, vec3 inBitangent, vec3 mapN, vec3 albedo, float metallic, float roughness, float ao) {
     vec3 N = normalize(inNormal);
     mapN = mapN * 2.0 - 1.0;
     vec3 T = normalize(inTangent);
@@ -142,10 +145,10 @@ vec3 PBR(PointLight lights[VulkLights_NumLights], vec3 inPos, vec3 inNormal, vec
     F0 = mix(F0, albedo, metallic);
 
     // Calculate lighting
-    vec3 V = normalize(eyePosUBO.eyePos - inPos);
+    vec3 V = normalize(eyePos - inPos);
     vec3 Lo = vec3(0.0);
     for(int i = 0; i < VulkLights_NumLights; i++) {
-        vec3 L = normalize(lightsBuf.lights[i].pos - inPos);
-        Lo += PBRDirectIllumination(albedo, i, N, V, L, roughness, metallic, F0, ao) * lightsBuf.lights[i].color;
+        Lo += PBRDirectIllumination(lights[i].pos - inPos, lights[i].color, albedo, N, V, roughness, metallic, F0, ao) * lights[i].color;
     }
+    return Lo;
 }

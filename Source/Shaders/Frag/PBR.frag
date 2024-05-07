@@ -41,7 +41,7 @@ void main() {
     float ao = texture(aoMap, inTexCoord).r;
     vec3 mapN = texture(normalMap, inTexCoord).rgb;
 
-    vec3 Lo = PBR(lightsBuf.lights, inPos, inNormal, inTangent, inBitangent, eyePosUBO.eyePos, mapN, albedo, metallic, roughness, ao);
+    vec3 Lo = PBR(lightsBuf.lights, eyePosUBO.eyePos, inPos, inNormal, inTangent, inBitangent, mapN, albedo, metallic, roughness, ao);
     // Output final color
     vec4 color = vec4(Lo, 1.0);
     outColor = color;

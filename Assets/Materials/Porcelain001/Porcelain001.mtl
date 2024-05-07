@@ -1,3 +1,12 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:3ff5ad3529b78c4441f28461bf98c1410228fa982e19563fb13357691f95b56c
-size 413
+newmtl Porcelain001
+	Ns 26.000000
+	Ni 1.500000
+	d 1.000000
+	Tr 1.000000
+	Ka 0.000000 0.000000 0.000000
+	Kd 0.588000 0.588000 0.588000
+	Ks 0.207000 0.207000 0.207000
+	map_Ka Porcelain001_1K-JPG_Color.jpg
+	map_Kd Porcelain001_1K-JPG_Color.jpg
+	map_Ks Porcelain001_1K-JPG_Roughness.jpg
+	map_Bump Porcelain001_1K-JPG_NormalGL.jpg
