@@ -67,9 +67,65 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_report(VkDebugReportFlagsEXT flags, 
 }
 #endif // APP_USE_VULKAN_DEBUG_REPORT
 
-// Data
-class VulkImGUI : public Vulk {
+class Renderable {
   public:
+    virtual void drawFrame(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer) = 0;
+};
+
+class RenderWorld : public Renderable {
+  public:
+    void drawFrame(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer) {
+        // set up the global ubos
+        // - the xforms which is just to say the world, view, and proj matrices
+        // - the actor local transforms (if necessary, not doing this currently)
+        // - the eyePos
+        // - the lightViewProj : both for shadow map and for sampling during the main render
+
+        // VkViewport viewport{};
+        // viewport.x = 0.0f;
+        // viewport.y = 0.0f;
+        // viewport.width = (float)vk.swapChainExtent.width;
+        // viewport.height = (float)vk.swapChainExtent.height;
+        // viewport.minDepth = 0.0f;
+        // viewport.maxDepth = 1.0f;
+
+        // float rotationTime = rotateWorldTimer.getElapsedTime(); // make sure this stays the same for the entire frame
+        // float nearClip = scene->camera.nearClip;
+        // float farClip = scene->camera.farClip;
+
+        // glm::vec3 lookAt = scene->camera.lookAt;
+        // glm::vec3 up = scene->camera.getUpVec();
+        // *scene->sceneUBOs.eyePos.ptrs[vk.currentFrame] = scene->camera.eye;
+
+        // VulkSceneUBOs::XformsUBO &ubo = *scene->sceneUBOs.xforms.ptrs[vk.currentFrame];
+        // ubo.world = glm::rotate(glm::mat4(1.0f), rotationTime * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        // ubo.view = glm::lookAt(scene->camera.eye, lookAt, up);
+        // ubo.proj = glm::perspective(glm::radians(45.0f), viewport.width / (float)viewport.height, nearClip, farClip);
+
+        // set up the light view proj
+        // VulkPointLight &light = *scene->sceneUBOs.pointLight.mappedUBO;
+        // glm::vec3 lightLookAt = scene->camera.lookAt;
+        // up = glm::vec3(0.0f, 1.0f, 0.0f);
+        // glm::mat4 lightView = glm::lookAt(light.pos, lightLookAt, up);
+        // glm::mat4 lightProj = glm::perspective(glm::radians(45.0f), viewport.width / (float)viewport.height, nearClip, farClip);
+        // glm::mat4 viewProj = lightProj * lightView;
+        // scene->lightViewProjUBO->mappedUBO->viewProj = viewProj;
+
+        // now render
+        // VkCommandBufferBeginInfo beginInfo{};
+        // beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+        // std::shared_ptr<VulkTextureView> depthView = shadowMapRenderpass->depthViews[vk.currentFrame]->depthView;
+
+        // VK_CALL(vkBeginCommandBuffer(commandBuffer, &beginInfo));
+        // VK_CALL(vkEndCommandBuffer(commandBuffer));
+    }
+};
+
+// Data
+class VulkImGUI {
+  public:
+    std::vector<std::shared_ptr<Renderable>> renderables;
     VkAllocationCallbacks *allocator = nullptr;
     VkInstance inst = VK_NULL_HANDLE;
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
@@ -343,6 +399,11 @@ class VulkImGUI : public Vulk {
 
         // Submit command buffer
         vkCmdEndRenderPass(fd->CommandBuffer);
+
+        for (std::shared_ptr<Renderable> renderable : renderables) {
+            renderable->drawFrame(fd->CommandBuffer, fd->Framebuffer);
+        }
+
         {
             VkPipelineStageFlags wait_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
             VkSubmitInfo info = {};
@@ -561,16 +622,10 @@ class VulkImGUI : public Vulk {
 
         return 0;
     }
-
-    virtual void init() {
-    }
-    virtual void drawFrame(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer) {
-    }
-    virtual void cleanup() {
-    }
 };
 
 int main(int, char **) {
     VulkImGUI app;
+    app.renderables.push_back(std::make_shared<RenderWorld>());
     return app.Main();
 }
