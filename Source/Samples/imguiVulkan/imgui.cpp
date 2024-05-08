@@ -13,6 +13,8 @@
 //   the backend itself (imgui_impl_vulkan.cpp), but should PROBABLY NOT be used by your own engine/app code.
 // Read comments in imgui_impl_vulkan.h.
 
+#include <Vulk/Vulk.h>
+
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_vulkan.h"
@@ -66,7 +68,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_report(VkDebugReportFlagsEXT flags, 
 #endif // APP_USE_VULKAN_DEBUG_REPORT
 
 // Data
-class VulkImGUI {
+class VulkImGUI : public Vulk {
   public:
     VkAllocationCallbacks *allocator = nullptr;
     VkInstance inst = VK_NULL_HANDLE;
@@ -558,6 +560,13 @@ class VulkImGUI {
         glfwTerminate();
 
         return 0;
+    }
+
+    virtual void init() {
+    }
+    virtual void drawFrame(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer) {
+    }
+    virtual void cleanup() {
     }
 };
 
