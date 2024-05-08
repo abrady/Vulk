@@ -26,10 +26,6 @@ using namespace std::chrono_literals;
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
-static const std::vector<const char *> validationLayers = {"VK_LAYER_KHRONOS_validation"};
-
-static const std::vector<const char *> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-
 enum VulkTextureType {
     VulkTextureType_Diffuse,
     VulkTextureType_Normal,

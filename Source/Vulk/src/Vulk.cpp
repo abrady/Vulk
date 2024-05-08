@@ -1,5 +1,12 @@
 #include "Vulk/Vulk.h"
 
+static const std::vector<const char *> validationLayers = {"VK_LAYER_KHRONOS_validation"};
+
+static const std::vector<const char *> deviceExtensions = {
+    VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+    VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME, // for imgui
+};
+
 void Vulk::run() {
     initWindow();
     initVulkan();
@@ -73,8 +80,8 @@ void Vulk::initWindow() {
     glfwInit();
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    const uint32_t WIDTH = 800;
-    const uint32_t HEIGHT = 600;
+    const uint32_t WIDTH = 1600;
+    const uint32_t HEIGHT = 1200;
 
     window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
     glfwSetWindowUserPointer(window, this);
