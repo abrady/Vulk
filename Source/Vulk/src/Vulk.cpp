@@ -4,7 +4,7 @@ static const std::vector<const char *> validationLayers = {"VK_LAYER_KHRONOS_val
 
 static const std::vector<const char *> deviceExtensions = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-    VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME, // for imgui
+    // VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME, // for imgui
 };
 
 void Vulk::run() {
@@ -80,10 +80,8 @@ void Vulk::initWindow() {
     glfwInit();
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    const uint32_t WIDTH = 1600;
-    const uint32_t HEIGHT = 1200;
 
-    window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
+    window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Vulkan", nullptr, nullptr);
     glfwSetWindowUserPointer(window, this);
     glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
     glfwSetKeyCallback(window, dispatchKeyCallback);
@@ -364,7 +362,7 @@ void Vulk::createSurface() {
 }
 
 bool Vulk::isDeviceSuitable(VkPhysicalDevice physDevice) {
-    QueueFamilyIndices indices = findQueueFamilies(physDevice, surface);
+    QueueFamilyIndices inds = findQueueFamilies(physDevice, surface);
 
     bool extensionsSupported = checkDeviceExtensionSupport(physDevice);
 
@@ -377,7 +375,7 @@ bool Vulk::isDeviceSuitable(VkPhysicalDevice physDevice) {
     VkPhysicalDeviceFeatures supportedFeatures;
     vkGetPhysicalDeviceFeatures(physDevice, &supportedFeatures);
 
-    return indices.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
+    return inds.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
 }
 
 bool Vulk::checkDeviceExtensionSupport(VkPhysicalDevice physDevice) {
@@ -420,7 +418,7 @@ void Vulk::pickPhysicalDevice() {
 }
 
 void Vulk::createLogicalDevice() {
-    QueueFamilyIndices indices = findQueueFamilies(physicalDevice, surface);
+    indices = findQueueFamilies(physicalDevice, surface);
 
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
     std::set<uint32_t> uniqueQueueFamilies = {indices.graphicsFamily.value(), indices.presentFamily.value()};
@@ -466,8 +464,8 @@ void Vulk::createLogicalDevice() {
 void Vulk::createSwapChain() {
     SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice, surface);
 
-    VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
-    VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
+    surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
+    presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
     VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
 
     uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
@@ -486,10 +484,10 @@ void Vulk::createSwapChain() {
     createInfo.imageArrayLayers = 1;
     createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-    QueueFamilyIndices indices = findQueueFamilies(physicalDevice, surface);
-    uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(), indices.presentFamily.value()};
+    QueueFamilyIndices inds = findQueueFamilies(physicalDevice, surface);
+    uint32_t queueFamilyIndices[] = {inds.graphicsFamily.value(), inds.presentFamily.value()};
 
-    if (indices.graphicsFamily != indices.presentFamily) {
+    if (inds.graphicsFamily != inds.presentFamily) {
         createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
         createInfo.queueFamilyIndexCount = 2;
         createInfo.pQueueFamilyIndices = queueFamilyIndices;

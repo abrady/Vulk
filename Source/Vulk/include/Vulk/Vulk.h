@@ -24,7 +24,10 @@
 
 using namespace std::chrono_literals;
 
+// TODO: constexpr?
 const int MAX_FRAMES_IN_FLIGHT = 2;
+const uint32_t WINDOW_WIDTH = 800;
+const uint32_t WINDOW_HEIGHT = 600;
 
 enum VulkTextureType {
     VulkTextureType_Diffuse,
@@ -48,6 +51,7 @@ class Vulk {
     VkDevice device;
     VkRenderPass renderPass;
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+    VkPresentModeKHR presentMode; // for ImGUI
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory);
     void copyFromMemToBuffer(void const *srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
     void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
@@ -96,9 +100,12 @@ class Vulk {
     }
     virtual void keyCallback(int key, int /*scancode*/, int action, int /*mods*/);
 
-  private:
+  protected:
     bool enableValidationLayers = true;
     GLFWwindow *window;
+
+    QueueFamilyIndices indices;
+    VkSurfaceFormatKHR surfaceFormat;
 
     VkDebugUtilsMessengerEXT debugMessenger;
     VkSurfaceKHR surface;
