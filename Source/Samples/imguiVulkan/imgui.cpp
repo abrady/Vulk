@@ -68,19 +68,19 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_report(VkDebugReportFlagsEXT flags, 
 // Data
 class VulkImGUI {
   public:
-    VkAllocationCallbacks *g_Allocator = nullptr;
-    VkInstance g_Instance = VK_NULL_HANDLE;
-    VkPhysicalDevice g_PhysicalDevice = VK_NULL_HANDLE;
-    VkDevice g_Device = VK_NULL_HANDLE;
-    uint32_t g_QueueFamily = (uint32_t)-1;
-    VkQueue g_Queue = VK_NULL_HANDLE;
-    VkDebugReportCallbackEXT g_DebugReport = VK_NULL_HANDLE;
-    VkPipelineCache g_PipelineCache = VK_NULL_HANDLE;
-    VkDescriptorPool g_DescriptorPool = VK_NULL_HANDLE;
+    VkAllocationCallbacks *allocator = nullptr;
+    VkInstance inst = VK_NULL_HANDLE;
+    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+    VkDevice device = VK_NULL_HANDLE;
+    uint32_t queueFamily = (uint32_t)-1;
+    VkQueue queue = VK_NULL_HANDLE;
+    VkDebugReportCallbackEXT debugReport = VK_NULL_HANDLE;
+    VkPipelineCache pipelineCache = VK_NULL_HANDLE;
+    VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
 
-    ImGui_ImplVulkanH_Window g_MainWindowData;
-    int g_MinImageCount = 2;
-    bool g_SwapChainRebuild = false;
+    ImGui_ImplVulkanH_Window mainWindowData;
+    int minImageCount = 2;
+    bool swapChainRebuild = false;
 
     bool IsExtensionAvailable(const ImVector<VkExtensionProperties> &properties, const char *extension) {
         for (const VkExtensionProperties &p : properties)
@@ -91,13 +91,13 @@ class VulkImGUI {
 
     VkPhysicalDevice SetupVulkan_SelectPhysicalDevice() {
         uint32_t gpu_count;
-        VkResult err = vkEnumeratePhysicalDevices(g_Instance, &gpu_count, nullptr);
+        VkResult err = vkEnumeratePhysicalDevices(inst, &gpu_count, nullptr);
         check_vk_result(err);
         IM_ASSERT(gpu_count > 0);
 
         ImVector<VkPhysicalDevice> gpus;
         gpus.resize(gpu_count);
-        err = vkEnumeratePhysicalDevices(g_Instance, &gpu_count, gpus.Data);
+        err = vkEnumeratePhysicalDevices(inst, &gpu_count, gpus.Data);
         check_vk_result(err);
 
         // If a number >1 of GPUs got reported, find discrete GPU if present, or use first one available. This covers
@@ -156,42 +156,42 @@ class VulkImGUI {
             // Create Vulkan Instance
             create_info.enabledExtensionCount = (uint32_t)instance_extensions.Size;
             create_info.ppEnabledExtensionNames = instance_extensions.Data;
-            err = vkCreateInstance(&create_info, g_Allocator, &g_Instance);
+            err = vkCreateInstance(&create_info, allocator, &inst);
             check_vk_result(err);
 #ifdef IMGUI_IMPL_VULKAN_USE_VOLK
-            volkLoadInstance(g_Instance);
+            volkLoadInstance(inst);
 #endif
 
             // Setup the debug report callback
 #ifdef APP_USE_VULKAN_DEBUG_REPORT
-            auto f_vkCreateDebugReportCallbackEXT = (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(g_Instance, "vkCreateDebugReportCallbackEXT");
+            auto f_vkCreateDebugReportCallbackEXT = (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(inst, "vkCreateDebugReportCallbackEXT");
             IM_ASSERT(f_vkCreateDebugReportCallbackEXT != nullptr);
             VkDebugReportCallbackCreateInfoEXT debug_report_ci = {};
             debug_report_ci.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
             debug_report_ci.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
             debug_report_ci.pfnCallback = debug_report;
             debug_report_ci.pUserData = nullptr;
-            err = f_vkCreateDebugReportCallbackEXT(g_Instance, &debug_report_ci, g_Allocator, &g_DebugReport);
+            err = f_vkCreateDebugReportCallbackEXT(inst, &debug_report_ci, allocator, &debugReport);
             check_vk_result(err);
 #endif
         }
 
         // Select Physical Device (GPU)
-        g_PhysicalDevice = SetupVulkan_SelectPhysicalDevice();
+        physicalDevice = SetupVulkan_SelectPhysicalDevice();
 
         // Select graphics queue family
         {
             uint32_t count;
-            vkGetPhysicalDeviceQueueFamilyProperties(g_PhysicalDevice, &count, nullptr);
+            vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &count, nullptr);
             VkQueueFamilyProperties *queues = (VkQueueFamilyProperties *)malloc(sizeof(VkQueueFamilyProperties) * count);
-            vkGetPhysicalDeviceQueueFamilyProperties(g_PhysicalDevice, &count, queues);
+            vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &count, queues);
             for (uint32_t i = 0; i < count; i++)
                 if (queues[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-                    g_QueueFamily = i;
+                    queueFamily = i;
                     break;
                 }
             free(queues);
-            IM_ASSERT(g_QueueFamily != (uint32_t)-1);
+            IM_ASSERT(queueFamily != (uint32_t)-1);
         }
 
         // Create Logical Device (with 1 queue)
@@ -202,9 +202,9 @@ class VulkImGUI {
             // Enumerate physical device extension
             uint32_t properties_count;
             ImVector<VkExtensionProperties> properties;
-            vkEnumerateDeviceExtensionProperties(g_PhysicalDevice, nullptr, &properties_count, nullptr);
+            vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &properties_count, nullptr);
             properties.resize(properties_count);
-            vkEnumerateDeviceExtensionProperties(g_PhysicalDevice, nullptr, &properties_count, properties.Data);
+            vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &properties_count, properties.Data);
 #ifdef VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME
             if (IsExtensionAvailable(properties, VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME))
                 device_extensions.push_back(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
@@ -213,7 +213,7 @@ class VulkImGUI {
             const float queue_priority[] = {1.0f};
             VkDeviceQueueCreateInfo queue_info[1] = {};
             queue_info[0].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-            queue_info[0].queueFamilyIndex = g_QueueFamily;
+            queue_info[0].queueFamilyIndex = queueFamily;
             queue_info[0].queueCount = 1;
             queue_info[0].pQueuePriorities = queue_priority;
             VkDeviceCreateInfo create_info = {};
@@ -222,9 +222,9 @@ class VulkImGUI {
             create_info.pQueueCreateInfos = queue_info;
             create_info.enabledExtensionCount = (uint32_t)device_extensions.Size;
             create_info.ppEnabledExtensionNames = device_extensions.Data;
-            err = vkCreateDevice(g_PhysicalDevice, &create_info, g_Allocator, &g_Device);
+            err = vkCreateDevice(physicalDevice, &create_info, allocator, &device);
             check_vk_result(err);
-            vkGetDeviceQueue(g_Device, g_QueueFamily, 0, &g_Queue);
+            vkGetDeviceQueue(device, queueFamily, 0, &queue);
         }
 
         // Create Descriptor Pool
@@ -240,7 +240,7 @@ class VulkImGUI {
             pool_info.maxSets = 1;
             pool_info.poolSizeCount = (uint32_t)IM_ARRAYSIZE(pool_sizes);
             pool_info.pPoolSizes = pool_sizes;
-            err = vkCreateDescriptorPool(g_Device, &pool_info, g_Allocator, &g_DescriptorPool);
+            err = vkCreateDescriptorPool(device, &pool_info, allocator, &descriptorPool);
             check_vk_result(err);
         }
     }
@@ -252,7 +252,7 @@ class VulkImGUI {
 
         // Check for WSI support
         VkBool32 res;
-        vkGetPhysicalDeviceSurfaceSupportKHR(g_PhysicalDevice, g_QueueFamily, wd->Surface, &res);
+        vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, queueFamily, wd->Surface, &res);
         if (res != VK_TRUE) {
             fprintf(stderr, "Error no WSI support on physical device 0\n");
             exit(-1);
@@ -261,7 +261,7 @@ class VulkImGUI {
         // Select Surface Format
         const VkFormat requestSurfaceImageFormat[] = {VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_B8G8R8_UNORM, VK_FORMAT_R8G8B8_UNORM};
         const VkColorSpaceKHR requestSurfaceColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
-        wd->SurfaceFormat = ImGui_ImplVulkanH_SelectSurfaceFormat(g_PhysicalDevice, wd->Surface, requestSurfaceImageFormat,
+        wd->SurfaceFormat = ImGui_ImplVulkanH_SelectSurfaceFormat(physicalDevice, wd->Surface, requestSurfaceImageFormat,
                                                                   (size_t)IM_ARRAYSIZE(requestSurfaceImageFormat), requestSurfaceColorSpace);
 
         // Select Present Mode
@@ -270,29 +270,29 @@ class VulkImGUI {
 #else
         VkPresentModeKHR present_modes[] = {VK_PRESENT_MODE_FIFO_KHR};
 #endif
-        wd->PresentMode = ImGui_ImplVulkanH_SelectPresentMode(g_PhysicalDevice, wd->Surface, &present_modes[0], IM_ARRAYSIZE(present_modes));
+        wd->PresentMode = ImGui_ImplVulkanH_SelectPresentMode(physicalDevice, wd->Surface, &present_modes[0], IM_ARRAYSIZE(present_modes));
         // printf("[vulkan] Selected PresentMode = %d\n", wd->PresentMode);
 
         // Create SwapChain, RenderPass, Framebuffer, etc.
-        IM_ASSERT(g_MinImageCount >= 2);
-        ImGui_ImplVulkanH_CreateOrResizeWindow(g_Instance, g_PhysicalDevice, g_Device, wd, g_QueueFamily, g_Allocator, width, height, g_MinImageCount);
+        IM_ASSERT(minImageCount >= 2);
+        ImGui_ImplVulkanH_CreateOrResizeWindow(inst, physicalDevice, device, wd, queueFamily, allocator, width, height, minImageCount);
     }
 
     void CleanupVulkan() {
-        vkDestroyDescriptorPool(g_Device, g_DescriptorPool, g_Allocator);
+        vkDestroyDescriptorPool(device, descriptorPool, allocator);
 
 #ifdef APP_USE_VULKAN_DEBUG_REPORT
         // Remove the debug report callback
-        auto f_vkDestroyDebugReportCallbackEXT = (PFN_vkDestroyDebugReportCallbackEXT)vkGetInstanceProcAddr(g_Instance, "vkDestroyDebugReportCallbackEXT");
-        f_vkDestroyDebugReportCallbackEXT(g_Instance, g_DebugReport, g_Allocator);
+        auto f_vkDestroyDebugReportCallbackEXT = (PFN_vkDestroyDebugReportCallbackEXT)vkGetInstanceProcAddr(inst, "vkDestroyDebugReportCallbackEXT");
+        f_vkDestroyDebugReportCallbackEXT(inst, debugReport, allocator);
 #endif // APP_USE_VULKAN_DEBUG_REPORT
 
-        vkDestroyDevice(g_Device, g_Allocator);
-        vkDestroyInstance(g_Instance, g_Allocator);
+        vkDestroyDevice(device, allocator);
+        vkDestroyInstance(inst, allocator);
     }
 
     void CleanupVulkanWindow() {
-        ImGui_ImplVulkanH_DestroyWindow(g_Instance, g_Device, &g_MainWindowData, g_Allocator);
+        ImGui_ImplVulkanH_DestroyWindow(inst, device, &mainWindowData, allocator);
     }
 
     void FrameRender(ImGui_ImplVulkanH_Window *wd, ImDrawData *draw_data) {
@@ -300,23 +300,23 @@ class VulkImGUI {
 
         VkSemaphore image_acquired_semaphore = wd->FrameSemaphores[wd->SemaphoreIndex].ImageAcquiredSemaphore;
         VkSemaphore render_complete_semaphore = wd->FrameSemaphores[wd->SemaphoreIndex].RenderCompleteSemaphore;
-        err = vkAcquireNextImageKHR(g_Device, wd->Swapchain, UINT64_MAX, image_acquired_semaphore, VK_NULL_HANDLE, &wd->FrameIndex);
+        err = vkAcquireNextImageKHR(device, wd->Swapchain, UINT64_MAX, image_acquired_semaphore, VK_NULL_HANDLE, &wd->FrameIndex);
         if (err == VK_ERROR_OUT_OF_DATE_KHR || err == VK_SUBOPTIMAL_KHR) {
-            g_SwapChainRebuild = true;
+            swapChainRebuild = true;
             return;
         }
         check_vk_result(err);
 
         ImGui_ImplVulkanH_Frame *fd = &wd->Frames[wd->FrameIndex];
         {
-            err = vkWaitForFences(g_Device, 1, &fd->Fence, VK_TRUE, UINT64_MAX); // wait indefinitely instead of periodically checking
+            err = vkWaitForFences(device, 1, &fd->Fence, VK_TRUE, UINT64_MAX); // wait indefinitely instead of periodically checking
             check_vk_result(err);
 
-            err = vkResetFences(g_Device, 1, &fd->Fence);
+            err = vkResetFences(device, 1, &fd->Fence);
             check_vk_result(err);
         }
         {
-            err = vkResetCommandPool(g_Device, fd->CommandPool, 0);
+            err = vkResetCommandPool(device, fd->CommandPool, 0);
             check_vk_result(err);
             VkCommandBufferBeginInfo info = {};
             info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -355,13 +355,13 @@ class VulkImGUI {
 
             err = vkEndCommandBuffer(fd->CommandBuffer);
             check_vk_result(err);
-            err = vkQueueSubmit(g_Queue, 1, &info, fd->Fence);
+            err = vkQueueSubmit(queue, 1, &info, fd->Fence);
             check_vk_result(err);
         }
     }
 
     void FramePresent(ImGui_ImplVulkanH_Window *wd) {
-        if (g_SwapChainRebuild)
+        if (swapChainRebuild)
             return;
         VkSemaphore render_complete_semaphore = wd->FrameSemaphores[wd->SemaphoreIndex].RenderCompleteSemaphore;
         VkPresentInfoKHR info = {};
@@ -371,9 +371,9 @@ class VulkImGUI {
         info.swapchainCount = 1;
         info.pSwapchains = &wd->Swapchain;
         info.pImageIndices = &wd->FrameIndex;
-        VkResult err = vkQueuePresentKHR(g_Queue, &info);
+        VkResult err = vkQueuePresentKHR(queue, &info);
         if (err == VK_ERROR_OUT_OF_DATE_KHR || err == VK_SUBOPTIMAL_KHR) {
-            g_SwapChainRebuild = true;
+            swapChainRebuild = true;
             return;
         }
         check_vk_result(err);
@@ -403,13 +403,13 @@ class VulkImGUI {
 
         // Create Window Surface
         VkSurfaceKHR surface;
-        VkResult err = glfwCreateWindowSurface(g_Instance, window, g_Allocator, &surface);
+        VkResult err = glfwCreateWindowSurface(inst, window, allocator, &surface);
         check_vk_result(err);
 
         // Create Framebuffers
         int w, h;
         glfwGetFramebufferSize(window, &w, &h);
-        ImGui_ImplVulkanH_Window *wd = &g_MainWindowData;
+        ImGui_ImplVulkanH_Window *wd = &mainWindowData;
         SetupVulkanWindow(wd, surface, w, h);
 
         // Setup Dear ImGui context
@@ -427,19 +427,19 @@ class VulkImGUI {
         // Setup Platform/Renderer backends
         ImGui_ImplGlfw_InitForVulkan(window, true);
         ImGui_ImplVulkan_InitInfo init_info = {};
-        init_info.Instance = g_Instance;
-        init_info.PhysicalDevice = g_PhysicalDevice;
-        init_info.Device = g_Device;
-        init_info.QueueFamily = g_QueueFamily;
-        init_info.Queue = g_Queue;
-        init_info.PipelineCache = g_PipelineCache;
-        init_info.DescriptorPool = g_DescriptorPool;
+        init_info.Instance = inst;
+        init_info.PhysicalDevice = physicalDevice;
+        init_info.Device = device;
+        init_info.QueueFamily = queueFamily;
+        init_info.Queue = queue;
+        init_info.PipelineCache = pipelineCache;
+        init_info.DescriptorPool = descriptorPool;
         // init_info.RenderPass = wd->RenderPass; hmmm
         init_info.Subpass = 0;
-        init_info.MinImageCount = g_MinImageCount;
+        init_info.MinImageCount = minImageCount;
         init_info.ImageCount = wd->ImageCount;
         init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-        init_info.Allocator = g_Allocator;
+        init_info.Allocator = allocator;
         init_info.CheckVkResultFn = check_vk_result;
         ImGui_ImplVulkan_Init(&init_info, wd->RenderPass);
 
@@ -476,15 +476,14 @@ class VulkImGUI {
             glfwPollEvents();
 
             // Resize swap chain?
-            if (g_SwapChainRebuild) {
+            if (swapChainRebuild) {
                 int width, height;
                 glfwGetFramebufferSize(window, &width, &height);
                 if (width > 0 && height > 0) {
-                    ImGui_ImplVulkan_SetMinImageCount(g_MinImageCount);
-                    ImGui_ImplVulkanH_CreateOrResizeWindow(g_Instance, g_PhysicalDevice, g_Device, &g_MainWindowData, g_QueueFamily, g_Allocator, width, height,
-                                                           g_MinImageCount);
-                    g_MainWindowData.FrameIndex = 0;
-                    g_SwapChainRebuild = false;
+                    ImGui_ImplVulkan_SetMinImageCount(minImageCount);
+                    ImGui_ImplVulkanH_CreateOrResizeWindow(inst, physicalDevice, device, &mainWindowData, queueFamily, allocator, width, height, minImageCount);
+                    mainWindowData.FrameIndex = 0;
+                    swapChainRebuild = false;
                 }
             }
 
@@ -546,7 +545,7 @@ class VulkImGUI {
         }
 
         // Cleanup
-        err = vkDeviceWaitIdle(g_Device);
+        err = vkDeviceWaitIdle(device);
         check_vk_result(err);
         ImGui_ImplVulkan_Shutdown();
         ImGui_ImplGlfw_Shutdown();
