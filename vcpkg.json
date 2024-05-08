@@ -10,6 +10,13 @@
         "fmt",
         "glfw3",
         "glm",
+        {
+            "name": "imgui",
+            "features": [
+                "glfw-binding",
+                "vulkan-binding"
+            ]
+        },
         "nlohmann-json",
         "spdlog",
         "spirv-cross",

@@ -39,6 +39,14 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
+## 5/7
+
+Getting ImGUI working
+
+* basic window working
+
+![](Assets/Screenshots/imgui_first.png)
+
 ## 5/3 better PBR
 
 ngl, this doesn't look very good, at least compared to the preview render that came with the materials. what am I doing wrong?
