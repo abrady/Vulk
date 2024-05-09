@@ -39,6 +39,11 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
+## 5/8
+
+* vkBeginCommandBuffer > vkCmdBeginRenderPass
+  * bind descriptor sets, pipelines, draw
+
 ## 5/7
 
 Getting ImGUI working
