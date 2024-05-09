@@ -255,52 +255,57 @@ class VulkImGUI {
         physicalDevice = vk.physicalDevice;
 
         // Select graphics queue family
-        {
-            uint32_t count;
-            vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &count, nullptr);
-            VkQueueFamilyProperties *queues = (VkQueueFamilyProperties *)malloc(sizeof(VkQueueFamilyProperties) * count);
-            vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &count, queues);
-            for (uint32_t i = 0; i < count; i++)
-                if (queues[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-                    queueFamily = i;
-                    break;
-                }
-            free(queues);
-            IM_ASSERT(queueFamily != (uint32_t)-1);
-        }
+        //         {
+        //             uint32_t count;
+        //             vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &count, nullptr);
+        //             VkQueueFamilyProperties *queues = (VkQueueFamilyProperties *)malloc(sizeof(VkQueueFamilyProperties) * count);
+        //             vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &count, queues);
+        //             for (uint32_t i = 0; i < count; i++)
+        //                 if (queues[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+        //                     queueFamily = i;
+        //                     break;
+        //                 }
+        //             free(queues);
+        //             IM_ASSERT(queueFamily != (uint32_t)-1);
+        //         }
 
-        // Create Logical Device (with 1 queue)
-        {
-            ImVector<const char *> device_extensions;
-            device_extensions.push_back("VK_KHR_swapchain");
+        //         // Create Logical Device (with 1 queue)
+        //         {
+        //             ImVector<const char *> device_extensions;
+        //             device_extensions.push_back("VK_KHR_swapchain");
 
-            // Enumerate physical device extension
-            uint32_t properties_count;
-            ImVector<VkExtensionProperties> properties;
-            vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &properties_count, nullptr);
-            properties.resize(properties_count);
-            vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &properties_count, properties.Data);
-#ifdef VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME
-            if (IsExtensionAvailable(properties, VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME))
-                device_extensions.push_back(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
-#endif
+        //             // Enumerate physical device extension
+        //             uint32_t properties_count;
+        //             ImVector<VkExtensionProperties> properties;
+        //             vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &properties_count, nullptr);
+        //             properties.resize(properties_count);
+        //             vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &properties_count, properties.Data);
+        // #ifdef VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME
+        //             if (IsExtensionAvailable(properties, VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME))
+        //                 device_extensions.push_back(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
+        // #endif
 
-            const float queue_priority[] = {1.0f};
-            VkDeviceQueueCreateInfo queue_info[1] = {};
-            queue_info[0].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-            queue_info[0].queueFamilyIndex = queueFamily;
-            queue_info[0].queueCount = 1;
-            queue_info[0].pQueuePriorities = queue_priority;
-            VkDeviceCreateInfo create_info = {};
-            create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-            create_info.queueCreateInfoCount = sizeof(queue_info) / sizeof(queue_info[0]);
-            create_info.pQueueCreateInfos = queue_info;
-            create_info.enabledExtensionCount = (uint32_t)device_extensions.Size;
-            create_info.ppEnabledExtensionNames = device_extensions.Data;
-            err = vkCreateDevice(physicalDevice, &create_info, allocator, &device);
-            check_vk_result(err);
-            vkGetDeviceQueue(device, queueFamily, 0, &queue);
-        }
+        //             const float queue_priority[] = {1.0f};
+        //             VkDeviceQueueCreateInfo queue_info[1] = {};
+        //             queue_info[0].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        //             queue_info[0].queueFamilyIndex = queueFamily;
+        //             queue_info[0].queueCount = 1;
+        //             queue_info[0].pQueuePriorities = queue_priority;
+        //             VkDeviceCreateInfo create_info = {};
+        //             create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+        //             create_info.queueCreateInfoCount = sizeof(queue_info) / sizeof(queue_info[0]);
+        //             create_info.pQueueCreateInfos = queue_info;
+        //             create_info.enabledExtensionCount = (uint32_t)device_extensions.Size;
+        //             create_info.ppEnabledExtensionNames = device_extensions.Data;
+        //             err = vkCreateDevice(physicalDevice, &create_info, allocator, &device);
+        //             check_vk_result(err);
+        //             vkGetDeviceQueue(device, queueFamily, 0, &queue);
+        //         }
+
+        vk.createLogicalDevice();
+        device = vk.device;
+        queueFamily = vk.indices.graphicsFamily.value();
+        queue = vk.graphicsQueue;
 
         // Create Descriptor Pool
         // The example only requires a single combined image sampler descriptor for the font image and only uses one descriptor set (for that)
@@ -363,7 +368,7 @@ class VulkImGUI {
 #endif // APP_USE_VULKAN_DEBUG_REPORT
 
         // vkDestroyDevice(device, allocator);
-        vkDestroyInstance(inst, allocator);
+        // vkDestroyInstance(inst, allocator);
     }
 
     void CleanupVulkanWindow() {
