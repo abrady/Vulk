@@ -248,9 +248,6 @@ VulkPipelineBuilder &VulkPipelineBuilder::copyFrontStencilToBack() {
     return *this;
 }
 
-VulkPipelineBuilder &setScissor(VkExtent2D extent);
-VulkPipelineBuilder &setViewport(VkExtent2D extent);
-
 VulkPipelineBuilder &VulkPipelineBuilder::setScissor(VkExtent2D extent) {
     assert(viewportState.pScissors == nullptr);
     scissor.offset = {0, 0};

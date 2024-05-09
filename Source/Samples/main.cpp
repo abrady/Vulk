@@ -17,7 +17,7 @@ int main() {
 
     VulkImGui app;
     app.uiRenderer = std::make_shared<ExampleUI>(*app.io);
-    // app.renderable = std::make_shared<World>(app, "test");
+    app.renderable = std::make_shared<World>(app, "PBR");
     app.run();
     return 0;
 }
