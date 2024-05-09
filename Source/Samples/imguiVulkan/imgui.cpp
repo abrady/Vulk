@@ -345,11 +345,11 @@ class VulkImGUI {
                                                                   (size_t)IM_ARRAYSIZE(requestSurfaceImageFormat), requestSurfaceColorSpace);
 
         // Select Present Mode
-#ifdef APP_USE_UNLIMITED_FRAME_RATE
+        // #ifdef APP_USE_UNLIMITED_FRAME_RATE
         VkPresentModeKHR present_modes[] = {VK_PRESENT_MODE_MAILBOX_KHR, VK_PRESENT_MODE_IMMEDIATE_KHR, VK_PRESENT_MODE_FIFO_KHR};
-#else
-        VkPresentModeKHR present_modes[] = {VK_PRESENT_MODE_FIFO_KHR};
-#endif
+        // #else
+        //         VkPresentModeKHR present_modes[] = {VK_PRESENT_MODE_FIFO_KHR};
+        // #endif
         wd->PresentMode = ImGui_ImplVulkanH_SelectPresentMode(physicalDevice, wd->Surface, &present_modes[0], IM_ARRAYSIZE(present_modes));
         // printf("[vulkan] Selected PresentMode = %d\n", wd->PresentMode);
 
@@ -361,11 +361,11 @@ class VulkImGUI {
     void CleanupVulkan() {
         vkDestroyDescriptorPool(device, descriptorPool, allocator);
 
-#ifdef APP_USE_VULKAN_DEBUG_REPORT
-        // Remove the debug report callback
-        auto f_vkDestroyDebugReportCallbackEXT = (PFN_vkDestroyDebugReportCallbackEXT)vkGetInstanceProcAddr(inst, "vkDestroyDebugReportCallbackEXT");
-        f_vkDestroyDebugReportCallbackEXT(inst, debugReport, allocator);
-#endif // APP_USE_VULKAN_DEBUG_REPORT
+        // #ifdef APP_USE_VULKAN_DEBUG_REPORT
+        //         // Remove the debug report callback
+        //         auto f_vkDestroyDebugReportCallbackEXT = (PFN_vkDestroyDebugReportCallbackEXT)vkGetInstanceProcAddr(inst, "vkDestroyDebugReportCallbackEXT");
+        //         f_vkDestroyDebugReportCallbackEXT(inst, debugReport, allocator);
+        // #endif // APP_USE_VULKAN_DEBUG_REPORT
 
         // vkDestroyDevice(device, allocator);
         // vkDestroyInstance(inst, allocator);
