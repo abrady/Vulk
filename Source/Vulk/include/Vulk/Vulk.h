@@ -45,7 +45,7 @@ class Vulk {
     std::chrono::time_point<std::chrono::steady_clock> lastFrameTime;
     std::chrono::milliseconds msPerFrame = 16ms; // 60 fps
   public:
-    void run();
+    virtual void run();
 
   public:
     VkDevice device;

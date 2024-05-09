@@ -321,7 +321,7 @@ class VulkImGUI : public Vulk {
     }
 
     // Main code
-    int Main() {
+    void run() override {
         glfwSetErrorCallback(glfw_error_callback);
         initWindow();
 
@@ -486,8 +486,6 @@ class VulkImGUI : public Vulk {
 
         glfwDestroyWindow(window);
         glfwTerminate();
-
-        return 0;
     }
 
     virtual void init() {
@@ -501,5 +499,5 @@ class VulkImGUI : public Vulk {
 int main(int, char **) {
     VulkImGUI app;
     app.renderables.push_back(std::make_shared<RenderWorld>());
-    return app.Main();
+    return app.run();
 }
