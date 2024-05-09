@@ -56,50 +56,6 @@ class Renderable {
 class RenderWorld : public Renderable {
   public:
     void drawFrame(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer) {
-        // set up the global ubos
-        // - the xforms which is just to say the world, view, and proj matrices
-        // - the actor local transforms (if necessary, not doing this currently)
-        // - the eyePos
-        // - the lightViewProj : both for shadow map and for sampling during the main render
-
-        // VkViewport viewport{};
-        // viewport.x = 0.0f;
-        // viewport.y = 0.0f;
-        // viewport.width = (float)vk.swapChainExtent.width;
-        // viewport.height = (float)vk.swapChainExtent.height;
-        // viewport.minDepth = 0.0f;
-        // viewport.maxDepth = 1.0f;
-
-        // float rotationTime = rotateWorldTimer.getElapsedTime(); // make sure this stays the same for the entire frame
-        // float nearClip = scene->camera.nearClip;
-        // float farClip = scene->camera.farClip;
-
-        // glm::vec3 lookAt = scene->camera.lookAt;
-        // glm::vec3 up = scene->camera.getUpVec();
-        // *scene->sceneUBOs.eyePos.ptrs[vk.currentFrame] = scene->camera.eye;
-
-        // VulkSceneUBOs::XformsUBO &ubo = *scene->sceneUBOs.xforms.ptrs[vk.currentFrame];
-        // ubo.world = glm::rotate(glm::mat4(1.0f), rotationTime * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        // ubo.view = glm::lookAt(scene->camera.eye, lookAt, up);
-        // ubo.proj = glm::perspective(glm::radians(45.0f), viewport.width / (float)viewport.height, nearClip, farClip);
-
-        // set up the light view proj
-        // VulkPointLight &light = *scene->sceneUBOs.pointLight.mappedUBO;
-        // glm::vec3 lightLookAt = scene->camera.lookAt;
-        // up = glm::vec3(0.0f, 1.0f, 0.0f);
-        // glm::mat4 lightView = glm::lookAt(light.pos, lightLookAt, up);
-        // glm::mat4 lightProj = glm::perspective(glm::radians(45.0f), viewport.width / (float)viewport.height, nearClip, farClip);
-        // glm::mat4 viewProj = lightProj * lightView;
-        // scene->lightViewProjUBO->mappedUBO->viewProj = viewProj;
-
-        // now render
-        // VkCommandBufferBeginInfo beginInfo{};
-        // beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-
-        // std::shared_ptr<VulkTextureView> depthView = shadowMapRenderpass->depthViews[vk.currentFrame]->depthView;
-
-        // VK_CALL(vkBeginCommandBuffer(commandBuffer, &beginInfo));
-        // VK_CALL(vkEndCommandBuffer(commandBuffer));
     }
 };
 
@@ -116,52 +72,13 @@ class VulkImGUI : public Vulk {
     int minImageCount = 2;
     bool swapChainRebuild = false;
 
-    bool IsExtensionAvailable(const ImVector<VkExtensionProperties> &properties, const char *extension) {
-        for (const VkExtensionProperties &p : properties)
-            if (strcmp(p.extensionName, extension) == 0)
-                return true;
-        return false;
-    }
-
-    VkPhysicalDevice SetupVulkan_SelectPhysicalDevice() {
-        uint32_t gpu_count;
-        VkResult err = vkEnumeratePhysicalDevices(instance, &gpu_count, nullptr);
-        check_vk_result(err);
-        IM_ASSERT(gpu_count > 0);
-
-        ImVector<VkPhysicalDevice> gpus;
-        gpus.resize(gpu_count);
-        err = vkEnumeratePhysicalDevices(instance, &gpu_count, gpus.Data);
-        check_vk_result(err);
-
-        // If a number >1 of GPUs got reported, find discrete GPU if present, or use first one available. This covers
-        // most common cases (multi-gpu/integrated+dedicated graphics). Handling more complicated setups (multiple
-        // dedicated GPUs) is out of scope of this sample.
-        for (VkPhysicalDevice &device : gpus) {
-            VkPhysicalDeviceProperties properties;
-            vkGetPhysicalDeviceProperties(device, &properties);
-            if (properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
-                return device;
-        }
-
-        // Use first GPU (Integrated) is a Discrete one is not available.
-        if (gpu_count > 0)
-            return gpus[0];
-        return VK_NULL_HANDLE;
-    }
-
     void SetupVulkan(ImVector<const char *> instance_extensions) {
         VkResult err;
-#ifdef IMGUI_IMPL_VULKAN_USE_VOLK
-        volkInitialize();
-#endif
 
         createInstance();
         setupDebugMessenger();
         instance = instance;
 
-        // Select Physical Device (GPU)
-        // physicalDevice = SetupVulkan_SelectPhysicalDevice();
         createSurface();
         pickPhysicalDevice();
 
@@ -221,9 +138,6 @@ class VulkImGUI : public Vulk {
 
     void CleanupVulkan() {
         vkDestroyDescriptorPool(device, descriptorPool, allocator);
-
-        // vkDestroyDevice(device, allocator);
-        // vkDestroyInstance(instance, allocator);
     }
 
     void CleanupVulkanWindow() {
