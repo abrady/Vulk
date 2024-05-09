@@ -108,6 +108,7 @@ class VulkImGui : public Vulk {
 
         glfwSetErrorCallback(glfw_error_callback);
         initWindow();
+        // initVulkan();
 
         ImVector<const char *> extensions;
         uint32_t extensions_count = 0;
@@ -115,12 +116,22 @@ class VulkImGui : public Vulk {
         for (uint32_t i = 0; i < extensions_count; i++)
             extensions.push_back(glfw_extensions[i]);
         SetupVulkan(extensions);
+        createCommandPool();
+        createCommandBuffers();
 
         // Create Framebuffers
         int w, h;
         glfwGetFramebufferSize(window, &w, &h);
         ImGui_ImplVulkanH_Window *wd = &mainWindowData;
         SetupVulkanWindow(wd, surface, w, h);
+
+        renderPass = wd->RenderPass;
+        swapChain = wd->Swapchain;
+        surface = wd->Surface;
+        surfaceFormat = wd->SurfaceFormat;
+        presentMode = wd->PresentMode;
+        renderPass = wd->RenderPass;
+        swapChainExtent = {static_cast<uint32_t>(w), static_cast<uint32_t>(h)};
 
         // Setup Dear ImGui style
         ImGui::StyleColorsDark();
@@ -267,8 +278,12 @@ class VulkImGui : public Vulk {
         // Submit command buffer
         vkCmdEndRenderPass(fd->CommandBuffer);
 
+        err = vkEndCommandBuffer(fd->CommandBuffer);
+        check_vk_result(err);
+
         if (renderable) {
-            renderable->drawFrame(fd->CommandBuffer, fd->Framebuffer);
+            VK_CALL(vkResetCommandBuffer(commandBuffers[currentFrame], /*VkCommandBufferResetFlagBits*/ 0));
+            renderable->drawFrame(commandBuffers[currentFrame], fd->Framebuffer);
         }
 
         {
@@ -283,8 +298,6 @@ class VulkImGui : public Vulk {
             info.signalSemaphoreCount = 1;
             info.pSignalSemaphores = &render_complete_semaphore;
 
-            err = vkEndCommandBuffer(fd->CommandBuffer);
-            check_vk_result(err);
             err = vkQueueSubmit(graphicsQueue, 1, &info, fd->Fence);
             check_vk_result(err);
         }
@@ -355,6 +368,7 @@ class VulkImGui : public Vulk {
                 wd->ClearValue.color.float32[1] = clear_color.y * clear_color.w;
                 wd->ClearValue.color.float32[2] = clear_color.z * clear_color.w;
                 wd->ClearValue.color.float32[3] = clear_color.w;
+                currentFrame = wd->FrameIndex;
                 FrameRender(wd, draw_data);
                 FramePresent(wd);
             }
