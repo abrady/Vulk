@@ -2,7 +2,6 @@
 #include <string>
 #include <vector>
 
-#include "Samples/SampleRunner.h"
 #include "Samples/World.h"
 
 int main() {
@@ -16,9 +15,9 @@ int main() {
         std::cout << "Failed to get Vulkan version" << std::endl;
     }
 
-    // SampleRunner<World>("PBR").run();
     VulkImGui app;
     app.uiRenderer = std::make_shared<ExampleUI>(*app.io);
+    // app.renderable = std::make_shared<World>(app, "test");
     app.run();
     return 0;
 }

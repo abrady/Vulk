@@ -11,6 +11,7 @@ concept HasDrawFrame = requires(T a, VkCommandBuffer cmdBuffer, VkFramebuffer fr
     { a.drawFrame(cmdBuffer, frameBuffer) } -> std::same_as<void>;
 };
 
+// TODO: delete this
 template <typename T> class SampleRunner : public Vulk {
   public:
     SampleRunner(std::string scene) : scene(scene) {

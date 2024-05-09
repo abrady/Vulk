@@ -95,7 +95,7 @@ class VulkImGui : public Vulk {
 
   public:
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-    std::vector<std::shared_ptr<VulkRenderable>> renderables;
+    std::shared_ptr<VulkRenderable> renderable;
     std::shared_ptr<VulkImGuiRenderer> uiRenderer;
     ImGuiIO *io;
 
@@ -228,7 +228,7 @@ class VulkImGui : public Vulk {
         // Submit command buffer
         vkCmdEndRenderPass(fd->CommandBuffer);
 
-        for (std::shared_ptr<VulkRenderable> renderable : renderables) {
+        if (renderable) {
             renderable->drawFrame(fd->CommandBuffer, fd->Framebuffer);
         }
 
@@ -344,6 +344,9 @@ class VulkImGui : public Vulk {
 
             if (uiRenderer)
                 uiRenderer->drawUI();
+
+            if (renderable)
+                renderable->tick();
 
             // Rendering
             ImGui::Render();

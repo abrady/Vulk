@@ -12,13 +12,13 @@
 #include "Vulk/VulkDescriptorSetUpdater.h"
 #include "Vulk/VulkFence.h"
 #include "Vulk/VulkGeo.h"
+#include "Vulk/VulkImGui.h"
 #include "Vulk/VulkPipeline.h"
 #include "Vulk/VulkResourceMetadata.h"
 #include "Vulk/VulkResources.h"
 #include "Vulk/VulkScene.h"
 #include "Vulk/VulkStorageBuffer.h"
 #include "Vulk/VulkUniformBuffer.h"
-#include "Vulk/VulkImGui.h"
 
 class World : public VulkRenderable {
   public:
@@ -174,6 +174,9 @@ class World : public VulkRenderable {
         vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
         render(commandBuffer, vk.currentFrame);
         vkCmdEndRenderPass(commandBuffer);
+    }
+
+    void tick() {
     }
 
     void render(VkCommandBuffer commandBuffer, uint32_t currentFrame) {
