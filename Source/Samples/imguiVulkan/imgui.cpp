@@ -122,9 +122,20 @@ class RenderWorld : public Renderable {
     }
 };
 
+class VkImGUI : public Vulk {
+  public:
+    virtual void init() {
+    }
+    virtual void drawFrame(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer) {
+    }
+    virtual void cleanup() {
+    }
+};
+
 // Data
 class VulkImGUI {
   public:
+    VkImGUI vk;
     std::vector<std::shared_ptr<Renderable>> renderables;
     VkAllocationCallbacks *allocator = nullptr;
     VkInstance inst = VK_NULL_HANDLE;
@@ -446,16 +457,18 @@ class VulkImGUI {
     // Main code
     int Main() {
         glfwSetErrorCallback(glfw_error_callback);
-        if (!glfwInit())
-            return 1;
+        vk.initWindow();
+        // if (!glfwInit())
+        //     return 1;
 
-        // Create window with Vulkan context
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        GLFWwindow *window = glfwCreateWindow(1280, 720, "Dear ImGui GLFW+Vulkan example", nullptr, nullptr);
-        if (!glfwVulkanSupported()) {
-            printf("GLFW: Vulkan Not Supported\n");
-            return 1;
-        }
+        // // Create window with Vulkan context
+        // glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+        // GLFWwindow *window = glfwCreateWindow(1280, 720, "Dear ImGui GLFW+Vulkan example", nullptr, nullptr);
+        // if (!glfwVulkanSupported()) {
+        //     printf("GLFW: Vulkan Not Supported\n");
+        //     return 1;
+        // }
+        GLFWwindow *window = vk.window;
 
         ImVector<const char *> extensions;
         uint32_t extensions_count = 0;

@@ -26,8 +26,8 @@ using namespace std::chrono_literals;
 
 // TODO: constexpr?
 const int MAX_FRAMES_IN_FLIGHT = 2;
-const uint32_t WINDOW_WIDTH = 800;
-const uint32_t WINDOW_HEIGHT = 600;
+const uint32_t WINDOW_WIDTH = 1600;
+const uint32_t WINDOW_HEIGHT = 1200;
 
 enum VulkTextureType {
     VulkTextureType_Diffuse,
@@ -89,7 +89,7 @@ class Vulk {
     std::function<void(GLFWwindow *, int, int, int)> onMouseButton;
     std::function<void(GLFWwindow *, double, double)> onCursorMove;
 
-  protected:
+  public:
     virtual void init() = 0;
     virtual void drawFrame(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer) = 0;
     virtual void cleanup() = 0;
@@ -100,7 +100,7 @@ class Vulk {
     }
     virtual void keyCallback(int key, int /*scancode*/, int action, int /*mods*/);
 
-  protected:
+  public:
     bool enableValidationLayers = true;
     GLFWwindow *window;
 
