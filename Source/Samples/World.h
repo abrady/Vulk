@@ -18,8 +18,9 @@
 #include "Vulk/VulkScene.h"
 #include "Vulk/VulkStorageBuffer.h"
 #include "Vulk/VulkUniformBuffer.h"
+#include "Vulk/VulkImGui.h"
 
-class World {
+class World : public VulkRenderable {
   public:
     Vulk &vk;
     std::shared_ptr<VulkScene> scene;

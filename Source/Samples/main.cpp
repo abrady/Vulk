@@ -16,6 +16,9 @@ int main() {
         std::cout << "Failed to get Vulkan version" << std::endl;
     }
 
-    SampleRunner<World>("PBR").run();
+    // SampleRunner<World>("PBR").run();
+    VulkImGui app;
+    app.uiRenderer = std::make_shared<ExampleUI>(*app.io);
+    app.run();
     return 0;
 }

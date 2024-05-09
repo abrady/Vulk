@@ -22,18 +22,10 @@ static void check_vk_result(VkResult err) {
         abort();
 }
 
-class Renderable {
+class VulkRenderable {
   public:
     virtual void tick() = 0;
     virtual void drawFrame(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer) = 0;
-};
-
-class RenderWorld : public Renderable {
-  public:
-    void tick() override {
-    }
-    void drawFrame(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer) override {
-    }
 };
 
 class VulkImGuiRenderer {
@@ -89,9 +81,6 @@ class ExampleUI : public VulkImGuiRenderer {
             ImGui::End();
         }
     }
-
-    void drawFrame(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer) {
-    }
 };
 
 class VulkImGui : public Vulk {
@@ -106,7 +95,7 @@ class VulkImGui : public Vulk {
 
   public:
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-    std::vector<std::shared_ptr<Renderable>> renderables;
+    std::vector<std::shared_ptr<VulkRenderable>> renderables;
     std::shared_ptr<VulkImGuiRenderer> uiRenderer;
     ImGuiIO *io;
 
@@ -239,7 +228,7 @@ class VulkImGui : public Vulk {
         // Submit command buffer
         vkCmdEndRenderPass(fd->CommandBuffer);
 
-        for (std::shared_ptr<Renderable> renderable : renderables) {
+        for (std::shared_ptr<VulkRenderable> renderable : renderables) {
             renderable->drawFrame(fd->CommandBuffer, fd->Framebuffer);
         }
 
