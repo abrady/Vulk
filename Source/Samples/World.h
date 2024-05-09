@@ -122,12 +122,12 @@ class World : public VulkRenderable {
 
         std::shared_ptr<VulkTextureView> depthView = shadowMapRenderpass->depthViews[vk.currentFrame]->depthView;
 
-        VK_CALL(vkBeginCommandBuffer(commandBuffer, &beginInfo));
+        // VK_CALL(vkBeginCommandBuffer(commandBuffer, &beginInfo));
         renderShadowMapImageForLight(commandBuffer);
         vk.transitionImageLayout(commandBuffer, depthView->image, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         drawMainStuff(commandBuffer, frameBuffer);
         vk.transitionImageLayout(commandBuffer, depthView->image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-        VK_CALL(vkEndCommandBuffer(commandBuffer));
+        // VK_CALL(vkEndCommandBuffer(commandBuffer));
     }
 
     void renderShadowMapImageForLight(VkCommandBuffer commandBuffer) {

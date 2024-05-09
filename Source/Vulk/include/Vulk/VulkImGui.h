@@ -94,7 +94,7 @@ class VulkImGui : public Vulk {
     bool swapChainRebuild = false;
 
   public:
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.0f);
     std::shared_ptr<VulkRenderable> renderable;
     std::shared_ptr<VulkImGuiRenderer> uiRenderer;
     ImGuiIO *io;
@@ -260,6 +260,12 @@ class VulkImGui : public Vulk {
         }
 
         // the inner draw loop
+
+        if (renderable) {
+            renderable->drawFrame(fd->CommandBuffer, fd->Framebuffer);
+        }
+
+        // draw the ImGui UI
         {
             VkRenderPassBeginInfo info = {};
             info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -280,11 +286,6 @@ class VulkImGui : public Vulk {
 
         err = vkEndCommandBuffer(fd->CommandBuffer);
         check_vk_result(err);
-
-        if (renderable) {
-            VK_CALL(vkResetCommandBuffer(commandBuffers[currentFrame], /*VkCommandBufferResetFlagBits*/ 0));
-            renderable->drawFrame(commandBuffers[currentFrame], fd->Framebuffer);
-        }
 
         {
             VkPipelineStageFlags wait_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
