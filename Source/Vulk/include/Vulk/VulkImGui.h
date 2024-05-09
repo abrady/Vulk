@@ -105,6 +105,45 @@ class VulkImGui : public Vulk {
         io = &ImGui::GetIO();
         io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
         io->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
+
+        glfwSetErrorCallback(glfw_error_callback);
+        initWindow();
+
+        ImVector<const char *> extensions;
+        uint32_t extensions_count = 0;
+        const char **glfw_extensions = glfwGetRequiredInstanceExtensions(&extensions_count);
+        for (uint32_t i = 0; i < extensions_count; i++)
+            extensions.push_back(glfw_extensions[i]);
+        SetupVulkan(extensions);
+
+        // Create Framebuffers
+        int w, h;
+        glfwGetFramebufferSize(window, &w, &h);
+        ImGui_ImplVulkanH_Window *wd = &mainWindowData;
+        SetupVulkanWindow(wd, surface, w, h);
+
+        // Setup Dear ImGui style
+        ImGui::StyleColorsDark();
+        // ImGui::StyleColorsLight();
+
+        // Setup Platform/Renderer backends
+        ImGui_ImplGlfw_InitForVulkan(window, true);
+        ImGui_ImplVulkan_InitInfo init_info = {};
+        init_info.Instance = instance;
+        init_info.PhysicalDevice = physicalDevice;
+        init_info.Device = device;
+        init_info.QueueFamily = queueFamily;
+        init_info.Queue = graphicsQueue;
+        init_info.PipelineCache = pipelineCache;
+        init_info.DescriptorPool = descriptorPool;
+        // init_info.RenderPass = wd->RenderPass; hmmm
+        init_info.Subpass = 0;
+        init_info.MinImageCount = minImageCount;
+        init_info.ImageCount = wd->ImageCount;
+        init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+        init_info.Allocator = allocator;
+        init_info.CheckVkResultFn = check_vk_result;
+        ImGui_ImplVulkan_Init(&init_info, wd->RenderPass);
     }
 
     void SetupVulkan(ImVector<const char *> instance_extensions) {
@@ -273,48 +312,6 @@ class VulkImGui : public Vulk {
 
     // Main code
     void run() override {
-        glfwSetErrorCallback(glfw_error_callback);
-        initWindow();
-
-        ImVector<const char *> extensions;
-        uint32_t extensions_count = 0;
-        const char **glfw_extensions = glfwGetRequiredInstanceExtensions(&extensions_count);
-        for (uint32_t i = 0; i < extensions_count; i++)
-            extensions.push_back(glfw_extensions[i]);
-        SetupVulkan(extensions);
-
-        // Create Window Surface
-        VkResult err;
-
-        // Create Framebuffers
-        int w, h;
-        glfwGetFramebufferSize(window, &w, &h);
-        ImGui_ImplVulkanH_Window *wd = &mainWindowData;
-        SetupVulkanWindow(wd, surface, w, h);
-
-        // Setup Dear ImGui style
-        ImGui::StyleColorsDark();
-        // ImGui::StyleColorsLight();
-
-        // Setup Platform/Renderer backends
-        ImGui_ImplGlfw_InitForVulkan(window, true);
-        ImGui_ImplVulkan_InitInfo init_info = {};
-        init_info.Instance = instance;
-        init_info.PhysicalDevice = physicalDevice;
-        init_info.Device = device;
-        init_info.QueueFamily = queueFamily;
-        init_info.Queue = graphicsQueue;
-        init_info.PipelineCache = pipelineCache;
-        init_info.DescriptorPool = descriptorPool;
-        // init_info.RenderPass = wd->RenderPass; hmmm
-        init_info.Subpass = 0;
-        init_info.MinImageCount = minImageCount;
-        init_info.ImageCount = wd->ImageCount;
-        init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-        init_info.Allocator = allocator;
-        init_info.CheckVkResultFn = check_vk_result;
-        ImGui_ImplVulkan_Init(&init_info, wd->RenderPass);
-
         // Main loop
         while (!glfwWindowShouldClose(window)) {
             // Poll and handle events (inputs, window resize, etc.)
@@ -353,6 +350,7 @@ class VulkImGui : public Vulk {
             ImDrawData *draw_data = ImGui::GetDrawData();
             const bool is_minimized = (draw_data->DisplaySize.x <= 0.0f || draw_data->DisplaySize.y <= 0.0f);
             if (!is_minimized) {
+                ImGui_ImplVulkanH_Window *wd = &mainWindowData;
                 wd->ClearValue.color.float32[0] = clear_color.x * clear_color.w;
                 wd->ClearValue.color.float32[1] = clear_color.y * clear_color.w;
                 wd->ClearValue.color.float32[2] = clear_color.z * clear_color.w;
@@ -363,7 +361,7 @@ class VulkImGui : public Vulk {
         }
 
         // Cleanup
-        err = vkDeviceWaitIdle(device);
+        VkResult err = vkDeviceWaitIdle(device);
         check_vk_result(err);
         ImGui_ImplVulkan_Shutdown();
         ImGui_ImplGlfw_Shutdown();
