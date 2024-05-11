@@ -22,6 +22,10 @@
 #include <unordered_map>
 #include <vector>
 
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_vulkan.h"
+
 using namespace std::chrono_literals;
 
 // TODO: constexpr?
@@ -41,11 +45,30 @@ enum VulkTextureType {
     VulkTextureType_MaxTextureTypes
 };
 
+class VulkRenderable {
+  public:
+    virtual void tick() = 0;
+    virtual void renderFrame(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer) = 0;
+};
+
+class VulkImGuiRenderer {
+  public:
+    // make your ImGui:: type calls here
+    virtual void drawUI() = 0;
+};
+
 class Vulk {
     std::chrono::time_point<std::chrono::steady_clock> lastFrameTime;
     std::chrono::milliseconds msPerFrame = 16ms; // 60 fps
   public:
-    virtual void run();
+    // TODO: this is just a mess
+    std::shared_ptr<VulkRenderable> renderable;
+    std::shared_ptr<VulkImGuiRenderer> uiRenderer;
+    ImGuiIO *io;
+
+    Vulk();
+
+    void run();
 
   public:
     VkDevice device;
@@ -90,10 +113,6 @@ class Vulk {
     std::function<void(GLFWwindow *, double, double)> onCursorMove;
 
   public:
-    virtual void init() = 0;
-    virtual void drawFrame(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer) = 0;
-    virtual void cleanup() = 0;
-
     VkInstance instance;
     virtual void handleEvents() {
         // override this to call things like glfwGetKey and glfwGetMouseButton
@@ -131,6 +150,7 @@ class Vulk {
 
     static void framebufferResizeCallback(GLFWwindow *window, int /*width*/, int /*height*/);
 
+  private:
     void initWindow();
     void initVulkan();
     void cleanupSwapChain();

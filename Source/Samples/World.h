@@ -12,7 +12,6 @@
 #include "Vulk/VulkDescriptorSetUpdater.h"
 #include "Vulk/VulkFence.h"
 #include "Vulk/VulkGeo.h"
-#include "Vulk/VulkImGui.h"
 #include "Vulk/VulkPipeline.h"
 #include "Vulk/VulkResourceMetadata.h"
 #include "Vulk/VulkResources.h"

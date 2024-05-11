@@ -7,11 +7,12 @@ static const std::vector<const char *> deviceExtensions = {
     // VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME, // for imgui
 };
 
-void Vulk::run() {
+Vulk::Vulk() {
     initWindow();
     initVulkan();
-    init();
+}
 
+void Vulk::run() {
     lastFrameTime = std::chrono::steady_clock::now();
     while (!glfwWindowShouldClose(window)) {
         handleEvents();
@@ -77,6 +78,13 @@ void Vulk::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
 }
 
 void Vulk::initWindow() {
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    io = &ImGui::GetIO();
+    io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+    io->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
+
     glfwInit();
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -832,7 +840,10 @@ void Vulk::render() {
     VK_CALL(vkResetCommandBuffer(commandBuffers[currentFrame], /*VkCommandBufferResetFlagBits*/ 0));
 
     // call our overridden function
-    drawFrame(commandBuffers[currentFrame], swapChainFramebuffers[imageIndex]);
+    // drawFrame(commandBuffers[currentFrame], swapChainFramebuffers[imageIndex]);
+    if (renderable) {
+        renderable->renderFrame(commandBuffers[currentFrame], swapChainFramebuffers[imageIndex]);
+    }
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
