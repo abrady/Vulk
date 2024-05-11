@@ -39,6 +39,27 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
+## 5/11 integrating ImGui with Vulk
+
+Now that I understand how you're supposed to integrate ImGui with your own renderer do that:
+
+* setup - done
+* render frame - coded
+
+Error: In vkCmdBeginRenderPass the VkRenderPassBeginInfo struct has a clearValueCount of 0 but there must be at least 2 entries in pClearValues array to account for the highest index attachment in VkRenderPass 0xcfef35000000000a[] that uses VK_ATTACHMENT_LOAD_OP_CLEAR is 2. Note that the pClearValues array is indexed by attachment number so even if some pClearValues entries between 0 and 1 correspond to attachments that aren't cleared they will be ignored. The Vulkan spec states: clearValueCount must be greater than the largest attachment index in renderPass specifying a loadOp
+
+okay: seems like we should probably make a UI renderpass with no depth attachment that loads the frame. how does this work again?
+
+* VkAttachmentDescription colorAttachment
+  * colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD; // Load existing contents
+* VkAttachmentReference colorAttachmentRef{};
+  * colorAttachmentRef.attachment = 0; // this is the index in the renderpass pAttachments array
+* VkSubpassDescription subpass{};
+  * subpass.pColorAttachments = &colorAttachmentRef
+* VkSubpassDependency dependency{}
+  * dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+*
+
 ## 5/10
 
 ImGui or my scene can render because ImGUI is clearing the buffer. let's fix:

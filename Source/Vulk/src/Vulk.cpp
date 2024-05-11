@@ -1,18 +1,11 @@
 #include "Vulk/Vulk.h"
+#include "VulkImGui.h"
 
 static const std::vector<const char *> validationLayers = {"VK_LAYER_KHRONOS_validation"};
 
 static const std::vector<const char *> deviceExtensions = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-    // VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME, // for imgui
 };
-
-static void imguiCheckResult(VkResult err) {
-    if (err == 0)
-        return;
-    int e = (int)err;
-    VULK_THROW_FMT("[vulkan] Error: VkResult = {}", e);
-}
 
 Vulk::Vulk() {
     initWindow();
@@ -25,11 +18,19 @@ void Vulk::run() {
         handleEvents();
         glfwPollEvents();
 
-        ImGui_ImplVulkan_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-        ImGui::Render();
-        render(ImGui::GetDrawData());
+        if (uiRenderer) {
+            uiRenderer->beginFrame();
+        }
+
+        if (renderable) {
+            renderable->tick();
+        }
+
+        if (uiRenderer) {
+            uiRenderer->endFrame();
+        }
+
+        render();
 
         auto now = std::chrono::steady_clock::now();
         auto elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastFrameTime);
@@ -90,9 +91,7 @@ void Vulk::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
 }
 
 void Vulk::initWindow() {
-    // Setup Dear ImGui context
     glfwInit();
-
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
     window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Vulkan", nullptr, nullptr);
@@ -121,46 +120,7 @@ void Vulk::initVulkan() {
     createFramebuffers();
     createSyncObjects();
 
-    // Create Descriptor Pool
-    // The example only requires a single combined image sampler descriptor for the font image and only uses one descriptor set (for that)
-    // If you wish to load e.g. additional textures you may need to alter pools sizes.
-    {
-        VkDescriptorPoolSize pool_sizes[] = {
-            {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1},
-        };
-        VkDescriptorPoolCreateInfo pool_info = {};
-        pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-        pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-        pool_info.maxSets = 1;
-        pool_info.poolSizeCount = (uint32_t)IM_ARRAYSIZE(pool_sizes);
-        pool_info.pPoolSizes = pool_sizes;
-        VK_CALL(vkCreateDescriptorPool(device, &pool_info, nullptr, &imguiDescriptorPool));
-    }
-
-    // must happen after making the window
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGui_ImplGlfw_InitForVulkan(window, true);
-    ImGui_ImplVulkan_InitInfo init_info = {};
-    init_info.Instance = instance;
-    init_info.PhysicalDevice = physicalDevice;
-    init_info.Device = device;
-    init_info.QueueFamily = indices.graphicsFamily.value();
-    init_info.Queue = graphicsQueue;
-    init_info.PipelineCache = nullptr;
-    init_info.DescriptorPool = imguiDescriptorPool;
-    // init_info.RenderPass = wd->RenderPass; hmmm
-    init_info.Subpass = 0;
-    init_info.MinImageCount = 2;
-    init_info.ImageCount = (uint32_t)swapChainImages.size();
-    init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-    init_info.Allocator = nullptr;
-    init_info.CheckVkResultFn = imguiCheckResult;
-    ImGui_ImplVulkan_Init(&init_info, renderPass);
-
-    io = &ImGui::GetIO();
-    io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
-    io->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
+    uiRenderer = std::make_shared<VulkImGui>(*this, window);
 }
 
 void Vulk::cleanupSwapChain() {
@@ -192,12 +152,6 @@ void Vulk::cleanupVulkan() {
         vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
         vkDestroyFence(device, inFlightFences[i], nullptr);
     }
-
-    ImGui_ImplVulkan_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
-
-    vkDestroyDescriptorPool(device, imguiDescriptorPool, nullptr);
 
     vkDestroyCommandPool(device, commandPool, nullptr);
     vkDestroyRenderPass(device, renderPass, nullptr);
@@ -345,10 +299,9 @@ VkImageView Vulk::createImageView(VkImage image, VkFormat format, VkImageAspectF
 }
 
 void Vulk::recreateSwapChain() {
-    int width = 0, height = 0;
-    glfwGetFramebufferSize(window, &width, &height);
-    while (width == 0 || height == 0) {
-        glfwGetFramebufferSize(window, &width, &height);
+    glfwGetFramebufferSize(window, &windowDims.width, &windowDims.height);
+    while (windowDims.width == 0 || windowDims.height == 0) {
+        glfwGetFramebufferSize(window, &windowDims.width, &windowDims.height);
         glfwWaitEvents();
     }
 
@@ -873,7 +826,7 @@ void Vulk::createSyncObjects() {
     }
 }
 
-void Vulk::render(ImDrawData *imguiDrawData) {
+void Vulk::render() {
     VK_CALL(vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX));
 
     uint32_t imageIndex;
@@ -904,8 +857,9 @@ void Vulk::render(ImDrawData *imguiDrawData) {
         renderable->renderFrame(commandBuffer, swapChainFramebuffers[imageIndex]);
     }
 
-    // render the UI
-    ImGui_ImplVulkan_RenderDrawData(imguiDrawData, commandBuffer);
+    if (uiRenderer) {
+        uiRenderer->renderFrame(commandBuffer, imageIndex);
+    }
 
     VK_CALL(vkEndCommandBuffer(commandBuffer));
 
@@ -975,10 +929,8 @@ VkExtent2D Vulk::chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities) 
     if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
         return capabilities.currentExtent;
     } else {
-        int width, height;
-        glfwGetFramebufferSize(window, &width, &height);
-
-        VkExtent2D actualExtent = {static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
+        glfwGetFramebufferSize(window, &windowDims.width, &windowDims.height);
+        VkExtent2D actualExtent = {static_cast<uint32_t>(windowDims.width), static_cast<uint32_t>(windowDims.height)};
 
         actualExtent.width = std::clamp(actualExtent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
         actualExtent.height = std::clamp(actualExtent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);

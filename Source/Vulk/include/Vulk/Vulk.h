@@ -22,10 +22,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_vulkan.h"
-
 using namespace std::chrono_literals;
 
 // TODO: constexpr?
@@ -51,11 +47,7 @@ class VulkRenderable {
     virtual void renderFrame(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer) = 0;
 };
 
-class VulkImGuiRenderer {
-  public:
-    // make your ImGui:: type calls here
-    virtual void drawUI() = 0;
-};
+class VulkImGui;
 
 class Vulk {
     std::chrono::time_point<std::chrono::steady_clock> lastFrameTime;
@@ -63,9 +55,7 @@ class Vulk {
   public:
     // TODO: this is just a mess
     std::shared_ptr<VulkRenderable> renderable;
-    std::shared_ptr<VulkImGuiRenderer> uiRenderer;
-    ImGuiIO *io;
-    VkDescriptorPool imguiDescriptorPool;
+    std::shared_ptr<VulkImGui> uiRenderer;
 
     Vulk();
 
@@ -123,6 +113,9 @@ class Vulk {
   public:
     bool enableValidationLayers = true;
     GLFWwindow *window;
+    struct WindowDims {
+        int width = 0, height = 0;
+    } windowDims;
 
     QueueFamilyIndices indices;
     VkSurfaceFormatKHR surfaceFormat;
@@ -177,7 +170,7 @@ class Vulk {
     VkCommandBuffer beginSingleTimeCommands();
     void endSingleTimeCommands(VkCommandBuffer commandBuffer);
     void createSyncObjects();
-    void render(ImDrawData *imguiDrawData);
+    void render();
     VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats);
     VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes);
     VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities);

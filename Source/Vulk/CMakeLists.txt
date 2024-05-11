@@ -26,6 +26,8 @@ add_library(Vulk
 )
 target_include_directories(Vulk PUBLIC include) # Make the include directory public
 
+target_include_directories(Vulk PRIVATE private)
+
 # Specify the include directories
 target_include_directories(Vulk PRIVATE ${Stb_INCLUDE_DIR})
 

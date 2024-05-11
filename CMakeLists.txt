@@ -331,13 +331,14 @@ file(MAKE_DIRECTORY ${PIPELINES_DEST_DIR})
 file(GLOB_RECURSE PIPELINE_SRC_FILES CONFIGURE_DEPENDS "${PIPELINES_SOURCE_DIR}/*.pipeline")
 # Create a custom command for each pipeline file
 
+# removed BuildTool dependency
 foreach(FILE ${PIPELINE_SRC_FILES})
     get_filename_component(FILE_NAME ${FILE} NAME)
     set(ASSETS_OUTPUT_FILE "${PIPELINES_DEST_DIR}/${FILE_NAME}.bin")
     add_custom_command(
         OUTPUT ${ASSETS_OUTPUT_FILE}
         COMMAND $<TARGET_FILE:BuildTool> pipeline ${SHADER_DEST_DIR} ${ASSETS_OUTPUT_FILE} ${FILE}
-        DEPENDS BuildTool ${COMPILED_SHADERS} ${SHADER_GENERATED_HEADER_FILE} CompileShadersTarget
+        DEPENDS ${COMPILED_SHADERS} ${SHADER_GENERATED_HEADER_FILE} CompileShadersTarget
         MAIN_DEPENDENCY ${FILE}
         COMMENT "building pipeline ${ASSETS_OUTPUT_FILE} from ${FILE}"
     )

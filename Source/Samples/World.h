@@ -2,6 +2,8 @@
 
 #include <memory>
 
+#include "imgui.h"
+
 #include "Vulk/Vulk.h"
 #include "Vulk/VulkActor.h"
 #include "Vulk/VulkBufferBuilder.h"
@@ -78,6 +80,8 @@ class World : public VulkRenderable {
     }
 
     void tick() override {
+        bool show_demo_window = true;
+        ImGui::ShowDemoWindow(&show_demo_window);
     }
 
     VulkPauseableTimer rotateWorldTimer;
