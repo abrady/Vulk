@@ -182,6 +182,9 @@ void Vulk::cleanupSwapChain() {
 void Vulk::cleanupVulkan() {
     VK_CALL(vkDeviceWaitIdle(device));
 
+    renderable.reset();
+    uiRenderer.reset();
+
     cleanupSwapChain();
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
