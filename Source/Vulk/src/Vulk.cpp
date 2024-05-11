@@ -180,6 +180,8 @@ void Vulk::cleanupSwapChain() {
 }
 
 void Vulk::cleanupVulkan() {
+    VK_CALL(vkDeviceWaitIdle(device));
+
     cleanupSwapChain();
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
@@ -187,6 +189,12 @@ void Vulk::cleanupVulkan() {
         vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
         vkDestroyFence(device, inFlightFences[i], nullptr);
     }
+
+    ImGui_ImplVulkan_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+
+    vkDestroyDescriptorPool(device, imguiDescriptorPool, nullptr);
 
     vkDestroyCommandPool(device, commandPool, nullptr);
     vkDestroyRenderPass(device, renderPass, nullptr);
