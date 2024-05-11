@@ -39,6 +39,34 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
+## 5/10
+
+ImGui or my scene can render because ImGUI is clearing the buffer. let's fix:
+
+* in ImGui_ImplVulkanH_CreateWindowSwapChain a renderpass is made with 'clear'
+  * attachment.loadOp = wd->ClearEnable ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+
+however, the renderpass is only made if (wd->UseDynamicRendering == false) what is this?
+
+* Vulkan: Added optional support for VK_KHR_dynamic_rendering. User needs to set init_info->UseDynamicRendering = true and init_info->ColorAttachmentFormat
+
+chatgpt says:
+  VK_KHR_dynamic_rendering is a Vulkan extension that introduces a more flexible and straightforward way to create render passes. It allows you to bypass the creation of VkRenderPass objects and VkFramebuffer objects, simplifying the rendering process and potentially improving performance.
+  In traditional Vulkan rendering, you need to create a VkRenderPass object that describes the entire rendering process, including all the attachments and how they are used. You also need to create a VkFramebuffer object for each set of attachments you want to render to.
+  With VK_KHR_dynamic_rendering, you can instead provide this information directly at draw time. This is done by using the vkCmdBeginRenderingKHR command instead of vkCmdBeginRenderPass. The information about the attachments and how they are used is provided in a VkRenderingInfoKHR structure.
+  This can make your code simpler and more flexible, as you don't need to create and manage VkRenderPass and VkFramebuffer objects. It can also potentially improve performance, as it allows the driver to make optimizations based on the exact usage of the attachments.
+
+Okay, it looks like this is the way people are doing it. I see
+
+* <https://github.com/vblanco20-1/vulkan-guide/blob/28f6e17243d29de2bd7edf6781c693067c3eb5eb/docs/new_chapter_2/vulkan_imgui_setup.md?plain=1#L271>
+* and <https://github.com/vblanco20-1/vulkan-guide/blob/all-chapters-2/chapter-2/vk_engine.cpp#L161>
+
+Doing it this way. how do we enable this?
+
+hold on, ImGui_ImplVulkan_RenderDrawData is all that matters, the docs even say "you probably don't want to use these structs.
+
+Let's roll back and see if we can't get this working just using Vulk
+
 ## 5/8
 
 * vkBeginCommandBuffer > vkCmdBeginRenderPass

@@ -147,6 +147,8 @@ class VulkImGui : public Vulk {
         init_info.Queue = graphicsQueue;
         init_info.PipelineCache = pipelineCache;
         init_info.DescriptorPool = descriptorPool;
+        // TODO: try dynamic rendering
+        // init_info.UseDynamicRendering = true; // this allows us to render the UI on top of the 3D scene because we can disable clearing the color buffer
         // init_info.RenderPass = wd->RenderPass; hmmm
         init_info.Subpass = 0;
         init_info.MinImageCount = minImageCount;
@@ -266,6 +268,20 @@ class VulkImGui : public Vulk {
         }
 
         // draw the ImGui UI
+
+        // TODO: try the dynamic rendering
+        // VkRenderingAttachmentInfoKHR colorAttachment = {};
+        // colorAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
+        // colorAttachment.imageView = imageView; // The VkImageView to render to
+        // colorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        // colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;    // Load the previous data in the buffer
+        // colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE; // Store the rendered data
+
+        // vkCmdBeginRendering(cmd, &renderInfo);
+
+        // ImGui_ImplVulkan_RenderDrawData(draw_data, cmd);
+
+        // vkCmdEndRendering(cmd);
         {
             VkRenderPassBeginInfo info = {};
             info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
