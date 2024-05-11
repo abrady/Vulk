@@ -65,6 +65,7 @@ class Vulk {
     std::shared_ptr<VulkRenderable> renderable;
     std::shared_ptr<VulkImGuiRenderer> uiRenderer;
     ImGuiIO *io;
+    VkDescriptorPool imguiDescriptorPool;
 
     Vulk();
 
@@ -176,7 +177,7 @@ class Vulk {
     VkCommandBuffer beginSingleTimeCommands();
     void endSingleTimeCommands(VkCommandBuffer commandBuffer);
     void createSyncObjects();
-    void render();
+    void render(ImDrawData *imguiDrawData);
     VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats);
     VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes);
     VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities);

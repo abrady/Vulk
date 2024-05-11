@@ -7,6 +7,13 @@ static const std::vector<const char *> deviceExtensions = {
     // VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME, // for imgui
 };
 
+static void imguiCheckResult(VkResult err) {
+    if (err == 0)
+        return;
+    int e = (int)err;
+    VULK_THROW_FMT("[vulkan] Error: VkResult = {}", e);
+}
+
 Vulk::Vulk() {
     initWindow();
     initVulkan();
@@ -17,7 +24,12 @@ void Vulk::run() {
     while (!glfwWindowShouldClose(window)) {
         handleEvents();
         glfwPollEvents();
-        render();
+
+        ImGui_ImplVulkan_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+        ImGui::Render();
+        render(ImGui::GetDrawData());
 
         auto now = std::chrono::steady_clock::now();
         auto elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastFrameTime);
@@ -79,12 +91,6 @@ void Vulk::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
 
 void Vulk::initWindow() {
     // Setup Dear ImGui context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    io = &ImGui::GetIO();
-    io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
-    io->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
-
     glfwInit();
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -114,6 +120,47 @@ void Vulk::initVulkan() {
     createDepthResources();
     createFramebuffers();
     createSyncObjects();
+
+    // Create Descriptor Pool
+    // The example only requires a single combined image sampler descriptor for the font image and only uses one descriptor set (for that)
+    // If you wish to load e.g. additional textures you may need to alter pools sizes.
+    {
+        VkDescriptorPoolSize pool_sizes[] = {
+            {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1},
+        };
+        VkDescriptorPoolCreateInfo pool_info = {};
+        pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+        pool_info.maxSets = 1;
+        pool_info.poolSizeCount = (uint32_t)IM_ARRAYSIZE(pool_sizes);
+        pool_info.pPoolSizes = pool_sizes;
+        VK_CALL(vkCreateDescriptorPool(device, &pool_info, nullptr, &imguiDescriptorPool));
+    }
+
+    // must happen after making the window
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGui_ImplGlfw_InitForVulkan(window, true);
+    ImGui_ImplVulkan_InitInfo init_info = {};
+    init_info.Instance = instance;
+    init_info.PhysicalDevice = physicalDevice;
+    init_info.Device = device;
+    init_info.QueueFamily = indices.graphicsFamily.value();
+    init_info.Queue = graphicsQueue;
+    init_info.PipelineCache = nullptr;
+    init_info.DescriptorPool = imguiDescriptorPool;
+    // init_info.RenderPass = wd->RenderPass; hmmm
+    init_info.Subpass = 0;
+    init_info.MinImageCount = 2;
+    init_info.ImageCount = (uint32_t)swapChainImages.size();
+    init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+    init_info.Allocator = nullptr;
+    init_info.CheckVkResultFn = imguiCheckResult;
+    ImGui_ImplVulkan_Init(&init_info, renderPass);
+
+    io = &ImGui::GetIO();
+    io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+    io->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
 }
 
 void Vulk::cleanupSwapChain() {
@@ -142,11 +189,7 @@ void Vulk::cleanupVulkan() {
     }
 
     vkDestroyCommandPool(device, commandPool, nullptr);
-
-    cleanup();
-
     vkDestroyRenderPass(device, renderPass, nullptr);
-
     vkDestroyDevice(device, nullptr);
 
     if (enableValidationLayers) {
@@ -819,7 +862,7 @@ void Vulk::createSyncObjects() {
     }
 }
 
-void Vulk::render() {
+void Vulk::render(ImDrawData *imguiDrawData) {
     VK_CALL(vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX));
 
     uint32_t imageIndex;
@@ -837,13 +880,23 @@ void Vulk::render() {
 
     VK_CALL(vkResetFences(device, 1, &inFlightFences[currentFrame]));
 
-    VK_CALL(vkResetCommandBuffer(commandBuffers[currentFrame], /*VkCommandBufferResetFlagBits*/ 0));
+    VkCommandBuffer commandBuffer = commandBuffers[currentFrame];
+    VK_CALL(vkResetCommandBuffer(commandBuffer, /*VkCommandBufferResetFlagBits*/ 0));
+
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    VK_CALL(vkBeginCommandBuffer(commandBuffer, &beginInfo));
 
     // call our overridden function
-    // drawFrame(commandBuffers[currentFrame], swapChainFramebuffers[imageIndex]);
+    // drawFrame(commandBuffer, swapChainFramebuffers[imageIndex]);
     if (renderable) {
-        renderable->renderFrame(commandBuffers[currentFrame], swapChainFramebuffers[imageIndex]);
+        renderable->renderFrame(commandBuffer, swapChainFramebuffers[imageIndex]);
     }
+
+    // render the UI
+    ImGui_ImplVulkan_RenderDrawData(imguiDrawData, commandBuffer);
+
+    VK_CALL(vkEndCommandBuffer(commandBuffer));
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -855,7 +908,7 @@ void Vulk::render() {
     submitInfo.pWaitDstStageMask = waitStages;
 
     submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &commandBuffers[currentFrame];
+    submitInfo.pCommandBuffers = &commandBuffer;
 
     VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[currentFrame]};
     submitInfo.signalSemaphoreCount = 1;

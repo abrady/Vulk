@@ -77,8 +77,11 @@ class World : public VulkRenderable {
         }
     }
 
+    void tick() override {
+    }
+
     VulkPauseableTimer rotateWorldTimer;
-    void drawFrame(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer) {
+    void renderFrame(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer) override {
         // set up the global ubos
         // - the xforms which is just to say the world, view, and proj matrices
         // - the actor local transforms (if necessary, not doing this currently)
@@ -115,18 +118,12 @@ class World : public VulkRenderable {
         glm::mat4 viewProj = lightProj * lightView;
         scene->lightViewProjUBO->mappedUBO->viewProj = viewProj;
 
-        // now render
-        VkCommandBufferBeginInfo beginInfo{};
-        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-
         std::shared_ptr<VulkTextureView> depthView = shadowMapRenderpass->depthViews[vk.currentFrame]->depthView;
 
-        // VK_CALL(vkBeginCommandBuffer(commandBuffer, &beginInfo));
         renderShadowMapImageForLight(commandBuffer);
         vk.transitionImageLayout(commandBuffer, depthView->image, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         drawMainStuff(commandBuffer, frameBuffer);
         vk.transitionImageLayout(commandBuffer, depthView->image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-        // VK_CALL(vkEndCommandBuffer(commandBuffer));
     }
 
     void renderShadowMapImageForLight(VkCommandBuffer commandBuffer) {
@@ -173,9 +170,6 @@ class World : public VulkRenderable {
         vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
         render(commandBuffer, vk.currentFrame);
         vkCmdEndRenderPass(commandBuffer);
-    }
-
-    void tick() {
     }
 
     void render(VkCommandBuffer commandBuffer, uint32_t currentFrame) {
