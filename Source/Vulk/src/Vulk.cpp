@@ -851,9 +851,9 @@ void Vulk::render() {
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     VK_CALL(vkBeginCommandBuffer(commandBuffer, &beginInfo));
 
-    // if (renderable) {
-    //     renderable->renderFrame(commandBuffer, swapChainFramebuffers[imageIndex]);
-    // }
+    if (renderable) {
+        renderable->renderFrame(commandBuffer, swapChainFramebuffers[imageIndex]);
+    }
 
     if (uiRenderer) {
         uiRenderer->renderFrame(commandBuffer, imageIndex);

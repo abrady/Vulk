@@ -62,14 +62,31 @@ okay: seems like we should probably make a UI renderpass with no depth attachmen
 
 boo, not working. why? what can we bisect?
 
-1. does it render if I just use the swapChainImages from the main renderer?
+does it render if I just use the swapChainImages from the main renderer?
 
-1. I have my 'swapchain images': std::vector<VkImage> swapChainImages;
+Yes
 
-* vkGetSwapchainImagesKHR(...) initializes it
+So the next question is: how do we make sure we render to the swapchain image?
 
-1. swapChainImageViews[i] = createImageView(swapChainImages[i],...);
-1.
+How does the current framebuffer render to the swapchain?
+
+* vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data());
+* swapChainImageViews[i] = createImageView(swapChainImages[i], swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
+  * VkImageViewCreateInfo viewInfo{};
+  * viewInfo.image = image;
+* VK_CALL(vkCreateFramebuffer(device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]));
+* which gets passed to renderable->renderFrame(commandBuffer, swapChainFramebuffers[imageIndex]);
+
+In summary:
+
+* use vk's swapChain images - that's what we're rendering to?
+* create ui swapChainImageViews
+* create ui framebuffers
+* pass those to imgui render
+
+Works! huzzah!
+
+![](Assets/Screenshots/working_imgui.png)
 
 ## 5/10
 

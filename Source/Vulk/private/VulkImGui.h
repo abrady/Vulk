@@ -13,43 +13,29 @@ static void imguiCheckResult(VkResult err) {
 }
 
 class VulkImGui {
-    std::vector<VkFramebuffer> swapChainFramebuffers;
     VkRenderPass renderPass;
+    std::vector<VkImageView> swapChainImageViews;
+    std::vector<VkFramebuffer> swapChainFramebuffers;
     VkDescriptorPool imguiDescriptorPool;
     Vulk &vk;
     GLFWwindow *window = nullptr;
     ImDrawData *drawData = nullptr;
     ImGuiIO *io = nullptr;
-    bool debugRenderSolo = true;
     VkClearValue clearColor = {0.45f, 0.55f, 0.60f, 1.00f};
 
   public:
     VulkImGui(Vulk &vk, GLFWwindow *window) : vk(vk), window(window) {
-        renderPass = vk.renderPass; // TODO: fix this
-
-#if 0
         // renderPass
         {
             VkAttachmentDescription colorAttachment{};
-            if (debugRenderSolo) {
-                colorAttachment.format = vk.swapChainImageFormat;
-                colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-                colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-                colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-                colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-                colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-                colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-                colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-            } else {
-                colorAttachment.format = vk.swapChainImageFormat;
-                colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-                colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-                colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-                colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-                colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-                colorAttachment.initialLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR; // Start with the correct layout for swapchain images
-                colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-            }
+            colorAttachment.format = vk.swapChainImageFormat;
+            colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+            colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+            colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+            colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+            colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+            colorAttachment.initialLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR; // Start with the correct layout for swapchain images
+            colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
             VkAttachmentReference colorAttachmentRef{};
             colorAttachmentRef.attachment = 0;
@@ -82,26 +68,28 @@ class VulkImGui {
             VK_CALL(vkCreateRenderPass(vk.device, &renderPassInfo, nullptr, &renderPass));
         }
 
-        // frameBuffers
-        {
-            swapChainFramebuffers.resize(vk.swapChainImageViews.size());
-
-            for (size_t i = 0; i < vk.swapChainImageViews.size(); i++) {
-                std::array<VkImageView, 1> fbAttachments = {vk.swapChainImageViews[i]};
-
-                VkFramebufferCreateInfo framebufferInfo{};
-                framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-                framebufferInfo.renderPass = renderPass;
-                framebufferInfo.attachmentCount = static_cast<uint32_t>(fbAttachments.size());
-                framebufferInfo.pAttachments = fbAttachments.data();
-                framebufferInfo.width = vk.swapChainExtent.width;
-                framebufferInfo.height = vk.swapChainExtent.height;
-                framebufferInfo.layers = 1;
-
-                VK_CALL(vkCreateFramebuffer(vk.device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]));
-            }
+        // image views
+        swapChainImageViews.resize(vk.swapChainImages.size());
+        for (uint32_t i = 0; i < vk.swapChainImages.size(); i++) {
+            swapChainImageViews[i] = vk.createImageView(vk.swapChainImages[i], vk.swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
         }
-#endif
+
+        // frameBuffers
+        swapChainFramebuffers.resize(swapChainImageViews.size());
+        for (size_t i = 0; i < swapChainImageViews.size(); i++) {
+            std::array<VkImageView, 1> fbAttachments = {swapChainImageViews[i]};
+
+            VkFramebufferCreateInfo framebufferInfo{};
+            framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+            framebufferInfo.renderPass = renderPass;
+            framebufferInfo.attachmentCount = static_cast<uint32_t>(fbAttachments.size());
+            framebufferInfo.pAttachments = fbAttachments.data();
+            framebufferInfo.width = vk.swapChainExtent.width;
+            framebufferInfo.height = vk.swapChainExtent.height;
+            framebufferInfo.layers = 1;
+
+            VK_CALL(vkCreateFramebuffer(vk.device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]));
+        }
 
         // Create Descriptor Pool
         // The example only requires a single combined image sampler descriptor for the font image and only uses one descriptor set (for that)
@@ -166,22 +154,10 @@ class VulkImGui {
         // render the UI
         VkRenderPassBeginInfo info = {};
         info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        info.renderPass = vk.renderPass; // renderPass
-        info.framebuffer = vk.swapChainFramebuffers[imageIndex];
-        // info.renderArea.extent.width = vk.windowDims.width;
-        // info.renderArea.extent.height = vk.windowDims.height;
+        info.renderPass = renderPass;
+        info.framebuffer = swapChainFramebuffers[imageIndex];
         info.renderArea.extent = vk.swapChainExtent;
-        std::array<VkClearValue, 2> clearValues{};
-        clearValues[0].color = {{0.1f, 0.0f, 0.1f, 1.0f}};
-        clearValues[1].depthStencil = {1.0f, 0};
 
-        info.clearValueCount = static_cast<uint32_t>(clearValues.size());
-        info.pClearValues = clearValues.data();
-
-        // if (debugRenderSolo) {
-        //     info.clearValueCount = 1;
-        //     info.pClearValues = &clearColor;
-        // }
         vkCmdBeginRenderPass(commandBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
         ImGui_ImplVulkan_RenderDrawData(drawData, commandBuffer);
         vkCmdEndRenderPass(commandBuffer);
@@ -196,6 +172,9 @@ class VulkImGui {
         vkDestroyRenderPass(vk.device, renderPass, nullptr);
         for (auto framebuffer : swapChainFramebuffers) {
             vkDestroyFramebuffer(vk.device, framebuffer, nullptr);
+        }
+        for (auto imageView : swapChainImageViews) {
+            vkDestroyImageView(vk.device, imageView, nullptr);
         }
     }
 };
