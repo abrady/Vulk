@@ -79,9 +79,33 @@ class World : public VulkRenderable {
         }
     }
 
+    struct Menu {
+        ImGuiWindowFlags windowFlags = 0;
+        bool show = true;
+        bool isOpen = false;
+    } menu;
+
     void tick() override {
-        bool show_demo_window = true;
-        ImGui::ShowDemoWindow(&show_demo_window);
+        // a useful demo of a variety of features
+        ImGui::ShowDemoWindow(nullptr);
+
+        const ImGuiViewport *viewport = ImGui::GetMainViewport();
+        ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x, viewport->WorkPos.y), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(550, 680), ImGuiCond_FirstUseEver);
+        if (!ImGui::Begin("VulkUI Menu", &menu.isOpen, menu.windowFlags)) {
+            // Early out if the window is collapsed, as an optimization.
+            ImGui::End();
+            return;
+        }
+        // Most "big" widgets share a common width settings by default. See 'Demo->Layout->Widgets Width' for details.
+        // e.g. Use 2/3 of the space for widgets and 1/3 for labels (right align)
+        // e.g. Leave a fixed amount of width for labels (by passing a negative value), the rest goes to widgets.
+        ImGui::PushItemWidth(ImGui::GetFontSize() * -12);
+        if (ImGui::CollapsingHeader("Debug")) {
+            ImGui::Checkbox("Render Normals", &debug.renderNormals);
+            ImGui::Checkbox("Render Tangents", &debug.renderTangents);
+        }
+        ImGui::End();
     }
 
     VulkPauseableTimer rotateWorldTimer;

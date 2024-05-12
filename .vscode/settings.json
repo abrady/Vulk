@@ -107,7 +107,15 @@
         "stacktrace": "cpp",
         "bitset": "cpp",
         "complex": "cpp",
-        "source_location": "cpp"
+        "source_location": "cpp",
+        "csignal": "cpp",
+        "cwctype": "cpp",
+        "execution": "cpp",
+        "numbers": "cpp",
+        "shared_mutex": "cpp",
+        "strstream": "cpp",
+        "*.tcc": "cpp",
+        "string_view": "cpp"
     },
     "files.eol": "\n",
     "cmake.configureArgs": [
