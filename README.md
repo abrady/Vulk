@@ -60,6 +60,17 @@ okay: seems like we should probably make a UI renderpass with no depth attachmen
   * dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
 *
 
+boo, not working. why? what can we bisect?
+
+1. does it render if I just use the swapChainImages from the main renderer?
+
+1. I have my 'swapchain images': std::vector<VkImage> swapChainImages;
+
+* vkGetSwapchainImagesKHR(...) initializes it
+
+1. swapChainImageViews[i] = createImageView(swapChainImages[i],...);
+1.
+
 ## 5/10
 
 ImGui or my scene can render because ImGUI is clearing the buffer. let's fix:

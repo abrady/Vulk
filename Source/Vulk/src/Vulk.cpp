@@ -483,7 +483,7 @@ void Vulk::createSwapChain() {
     presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
     VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
 
-    uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
+    uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1; // why +1?
     if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
         imageCount = swapChainSupport.capabilities.maxImageCount;
     }
@@ -851,11 +851,9 @@ void Vulk::render() {
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     VK_CALL(vkBeginCommandBuffer(commandBuffer, &beginInfo));
 
-    // call our overridden function
-    // drawFrame(commandBuffer, swapChainFramebuffers[imageIndex]);
-    if (renderable) {
-        renderable->renderFrame(commandBuffer, swapChainFramebuffers[imageIndex]);
-    }
+    // if (renderable) {
+    //     renderable->renderFrame(commandBuffer, swapChainFramebuffers[imageIndex]);
+    // }
 
     if (uiRenderer) {
         uiRenderer->renderFrame(commandBuffer, imageIndex);
