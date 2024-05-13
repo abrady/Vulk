@@ -13,5 +13,7 @@ target_link_libraries(VulkSamples PRIVATE Vulk)
 target_link_libraries(VulkSamples PRIVATE glfw)
 target_link_libraries(VulkSamples PRIVATE imgui::imgui)
 
+# Make your main target depend on the BuildPipelines target
+add_dependencies(VulkSamples BuildPipelines)
 
 vulk_add_config_json("${CMAKE_BINARY_DIR}/Source/Samples")

@@ -16,6 +16,12 @@ layout(binding = VulkShaderBinding_Lights) uniform LightBuf {
     PointLight lights[VulkLights_NumLights]; 
 } lightsBuf;
 
+layout (std140, binding = VulkShaderBinding_PBRDebugUBO) uniform PBRDebug {
+    uint isMetallic;      // 4 bytes
+    float roughness;      // 4 bytes, follows directly because it's also 4-byte aligned
+    bool diffuse;         // 4 bytes in GLSL
+    bool specular;        // 4 bytes in GLSL
+};
 
 layout(location = VulkShaderLocation_Pos) in vec3 inPos;
 layout(location = VulkShaderLocation_Normal) in vec3 inNormal;

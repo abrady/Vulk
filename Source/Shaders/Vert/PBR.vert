@@ -14,6 +14,7 @@ layout(location = VulkShaderLocation_Bitangent) out vec3 outBitangent;
 layout(location = VulkShaderLocation_TexCoord) out vec2 outTexCoord;
 
 
+
 void main() {
     mat4 worldXform = xform.world * modelUBO.xform;
     gl_Position = xform.proj * xform.view * worldXform * vec4(inPosition, 1.0);

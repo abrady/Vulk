@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef _MSC_VER  // Check if we're using MSVC
+#ifdef _MSC_VER          // Check if we're using MSVC
 #pragma warning(push, 0) // assume these headers know what they're doing
 #endif
 
@@ -25,9 +25,9 @@
 #include <stb_image.h>
 #include <tiny_obj_loader.h>
 
-#ifdef _MSC_VER 
-#pragma warning(pop)  // Restore original warning settings from before 'push'
-#endif 
+#ifdef _MSC_VER
+#pragma warning(pop) // Restore original warning settings from before 'push'
+#endif
 
 #include <algorithm>
 #include <array>
@@ -58,7 +58,7 @@
         VkResult vkcall_macro_result = (func);                                                                                                                 \
         if (vkcall_macro_result != VK_SUCCESS) {                                                                                                               \
             std::cerr << "Vulkan error: " << (vkcall_macro_result) << " at " << __FILE__ << ":" << __LINE__ << std::endl;                                      \
-            VULK_THROW_FMT("Vulkan error: {}", std::to_string(vkcall_macro_result));              \
+            VULK_THROW_FMT("Vulkan error: {}", std::to_string(vkcall_macro_result));                                                                           \
         }                                                                                                                                                      \
     } while (0)
 
@@ -91,19 +91,6 @@ struct SwapChainSupportDetails {
     VkSurfaceCapabilitiesKHR capabilities;
     std::vector<VkSurfaceFormatKHR> formats;
     std::vector<VkPresentModeKHR> presentModes;
-};
-
-struct VulkDebugNormalsUBO {
-    float length = .1f;    // how long to render the debug normal
-    bool useModel = false; // use the model's normals/tangents instead of the shader sampled normals
-};
-
-struct VulkDebugTangentsUBO {
-    float length = .1f; // how long to render the debug tangent
-};
-
-struct VulkLightViewProjUBO {
-    glm::mat4 viewProj;
 };
 
 class VulkMesh;

@@ -93,10 +93,6 @@ class World : public VulkRenderable {
         ImGuiWindowFlags windowFlags = 0;
         bool show = true;
         bool isOpen = false;
-        int isMetallic = 0;
-        float roughness = 0.5f;
-        bool diffuse = true;
-        bool specular = true;
     } menu;
 
     void tick() override {
@@ -120,16 +116,17 @@ class World : public VulkRenderable {
             ImGui::Checkbox("Render Tangents", &debug.renderTangents);
         }
 
+        VulkPBRDebugUBO &pbrDebugUBO = *scene->pbrDebugUBO->mappedUBO;
         ImGui::Text("Material");
-        ImGui::RadioButton("Dielectric", &menu.isMetallic, 0);
+        ImGui::RadioButton("Dielectric", &pbrDebugUBO.isMetallic, 0);
         ImGui::SameLine();
-        ImGui::RadioButton("Metallic", &menu.isMetallic, 1);
+        ImGui::RadioButton("Metallic", &pbrDebugUBO.isMetallic, 1);
 
-        ImGui::SliderFloat("Roughness", &menu.roughness, 0.0f, 1.0f);
+        ImGui::SliderFloat("Roughness", &pbrDebugUBO.roughness, 0.0f, 1.0f);
 
         ImGui::Text("Lighting");
-        ImGui::Checkbox("Diffuse", &menu.diffuse);
-        ImGui::Checkbox("Specular", &menu.specular);
+        ImGui::Checkbox("Diffuse", (bool *)&pbrDebugUBO.diffuse);
+        ImGui::Checkbox("Specular", (bool *)&pbrDebugUBO.specular);
 
         // ImGui::SliderInt("slider int", &i1, -1, 3);
         // ImGui::SameLine();

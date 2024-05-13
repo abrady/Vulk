@@ -355,7 +355,3 @@ add_custom_target(
 foreach(SOURCE_FILE ${PIPELINEBUILDER_ASSETS_OUTPUT_FILES})
     file(APPEND ${ASSETS_OUTPUT_FILE} "${SOURCE_FILE}\n")
 endforeach()
-
-# Make your main target depend on the BuildPipelines target
-message("Adding dependency on BuildPipelines")
-add_dependencies(VulkSamples BuildPipelines)

@@ -4,6 +4,7 @@
 #include "VulkCamera.h"
 #include "VulkFrameUBOs.h"
 #include "VulkPointLight.h"
+#include "VulkUBO.h"
 #include "VulkUniformBuffer.h"
 #include "VulkUtil.h"
 
@@ -34,6 +35,7 @@ class VulkScene {
     // debug
     std::shared_ptr<VulkUniformBuffer<VulkDebugNormalsUBO>> debugNormalsUBO;
     std::shared_ptr<VulkUniformBuffer<VulkDebugTangentsUBO>> debugTangentsUBO;
+    std::shared_ptr<VulkUniformBuffer<VulkPBRDebugUBO>> pbrDebugUBO;
 
     VulkScene(Vulk &vk) : sceneUBOs(vk) {
     }

@@ -13,6 +13,7 @@
 #include "Vulk/VulkPipelineBuilder.h"
 #include "Vulk/VulkPointLight.h"
 #include "Vulk/VulkResourceMetadata.h"
+#include "Vulk/VulkUBO.h"
 
 using namespace std;
 namespace fs = filesystem;
@@ -168,10 +169,13 @@ std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const
                     scene->lightViewProjUBO = make_shared<VulkUniformBuffer<VulkLightViewProjUBO>>(vk);
                 builder.addUniformBuffer(*scene->lightViewProjUBO, stage, binding);
                 break;
+            case VulkShaderUBOBinding_PBRDebugUBO:
+                scene->pbrDebugUBO = make_shared<VulkUniformBuffer<VulkPBRDebugUBO>>(vk);
+                break;
             default:
                 VULK_THROW("Invalid UBO binding");
             }
-            static_assert(VulkShaderUBOBinding_MAX == VulkShaderUBOBinding_LightViewProjUBO);
+            static_assert(VulkShaderUBOBinding_MAX == VulkShaderUBOBinding_PBRDebugUBO);
         }
     }
     // for (auto &[stage, ssbos] : dsDef.storageBuffers)

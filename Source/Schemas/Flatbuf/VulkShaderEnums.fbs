@@ -10,19 +10,6 @@ enum VulkShaderLocation : byte {
     Bitangent = 8,
 }
 
-enum VulkShaderLocationMask : uint32 {
-    None = 0,
-    Color = 1,
-    Pos = 2,
-    Normal = 4,
-    Tangent = 8,
-    TexCoord = 16,
-    Height = 32,
-    Pos2 = 64,
-    PosLightSpace = 128,
-}
-
-
 // keep in sync with derived enums below (VulkShaderUBOBinding, VulkShaderTextureBinding, VulkShaderSSBOBinding)
 // unfortunately, we can't use the enum values directly in the shader, so we have to keep them in sync manually
 enum VulkShaderBinding : byte {
@@ -47,6 +34,7 @@ enum VulkShaderBinding : byte {
     DisplacementSampler = 16,
     MetallicSampler = 17,
     RoughnessSampler = 18,
+    PBRDebugUBO = 19, // for debug purposes
 }
 
 enum VulkShaderUBOBinding : byte {
@@ -58,11 +46,13 @@ enum VulkShaderUBOBinding : byte {
     DebugNormals = 11,
     DebugTangents = 12,
     LightViewProjUBO = 13,
+    PBRDebugUBO = 19, // for debug purposes
 }
 
 enum VulkShaderDebugUBO : byte {
     DebugNormals = 11,
     DebugTangents = 12,
+    PBRDebugUBO = 19, 
 }
 
 enum VulkShaderSSBOBinding : byte {
