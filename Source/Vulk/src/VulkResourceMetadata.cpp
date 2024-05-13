@@ -371,8 +371,14 @@ std::filesystem::path getResourcesDir() {
     static once_flag flag;
     call_once(flag, [&]() {
         std::filesystem::path config_path = fs::current_path();
+        for (int i = 0; i < 5; i++) {
+            if (fs::exists(config_path / "config.json")) {
+                break;
+            }
+            config_path = config_path.parent_path();
+        }
         cout << "loading config for config_path " << config_path << endl;
-        ifstream config_ifstream(config_path / ".." / "config.json");
+        ifstream config_ifstream(config_path / "config.json");
         assert(config_ifstream.is_open() && "Failed to open config.json");
         auto config = nlohmann::json::parse(config_ifstream, nullptr, true, true); // allow comments
         path = config.at("ResourcesDir").get<string>();

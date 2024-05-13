@@ -20,8 +20,8 @@ class VulkImGui {
     Vulk &vk;
     GLFWwindow *window = nullptr;
     ImDrawData *drawData = nullptr;
-    ImGuiIO *io = nullptr;
     VkClearValue clearColor = {0.45f, 0.55f, 0.60f, 1.00f};
+    ImGuiIO *io = nullptr;
 
   public:
     VulkImGui(Vulk &vk, GLFWwindow *window) : vk(vk), window(window) {
@@ -131,6 +131,9 @@ class VulkImGui {
         io = &ImGui::GetIO();
         io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
         io->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
+
+        // arbitrarily scale the font up
+        io->FontGlobalScale = 2.f;
     }
 
   public:

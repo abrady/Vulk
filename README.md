@@ -11,6 +11,7 @@ My goal for this project is to transition from the hand-coded samples I was doin
 * <https://learnopengl.com/Advanced-Lighting/Normal-Mapping> - good tangent space intro
 * <https://blog.selfshadow.com/> - blog on graphics
 * <https://iquilezles.org/>
+* <https://www.shadertoy.com/view/4sSfzK> - pbr shadertoy
 
 # Setup
 
@@ -38,6 +39,21 @@ My goal for this project is to transition from the hand-coded samples I was doin
   * <https://blog.selfshadow.com/publications/s2014-shading-course/>
 
 # Log
+
+## 5/12 PBR with UI
+
+I want to copy <https://www.shadertoy.com/view/4sSfzK> as an exercise in learning PBR a little better, also it looks really good.
+
+1. build the UI:
+
+* Surface
+  * metal/dialectric
+  * roughness slider
+  * base color?
+* Lighting : pick various component
+  * Diffuse
+  * Fresnel
+  * Geometry
 
 ## 5/11 integrating ImGui with Vulk
 

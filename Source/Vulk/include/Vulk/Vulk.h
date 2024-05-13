@@ -26,8 +26,8 @@ using namespace std::chrono_literals;
 
 // TODO: constexpr?
 const int MAX_FRAMES_IN_FLIGHT = 2;
-const uint32_t WINDOW_WIDTH = 1600;
-const uint32_t WINDOW_HEIGHT = 1200;
+const uint32_t WINDOW_WIDTH = 2880;
+const uint32_t WINDOW_HEIGHT = 1800;
 
 enum VulkTextureType {
     VulkTextureType_Diffuse,
