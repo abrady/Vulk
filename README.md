@@ -42,7 +42,10 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
-## 5/13 PBR with UI part 2
+## 5/14 PBR with UI part 2
+
+Coded up <https://www.shadertoy.com/view/4sSfzK> and got it compiling. next I'll
+see how it actually looks.
 
 ## 5/12 PBR with UI
 
