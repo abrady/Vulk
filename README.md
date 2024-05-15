@@ -37,8 +37,12 @@ My goal for this project is to transition from the hand-coded samples I was doin
 * <https://www.reddit.com/r/GraphicsProgramming/comments/1ay0j70/realtime_pbr_catchup_developments_in_recent_years/> - chock full of links
 * check out siggraph courses
   * <https://blog.selfshadow.com/publications/s2014-shading-course/>
+* <https://www.unrealengine.com/en-US/blog/physically-based-shading-on-mobile>
+* <https://blog.selfshadow.com/publications/s2013-shading-course/>
 
 # Log
+
+## 5/13 PBR with UI part 2
 
 ## 5/12 PBR with UI
 
@@ -54,6 +58,8 @@ I want to copy <https://www.shadertoy.com/view/4sSfzK> as an exercise in learnin
   * Diffuse
   * Fresnel
   * Geometry
+
+![](Assets/Screenshots/PBR_ui.png)
 
 ## 5/11 integrating ImGui with Vulk
 

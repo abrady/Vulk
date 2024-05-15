@@ -19,3 +19,8 @@ struct VulkPBRDebugUBO {
 struct VulkLightViewProjUBO {
     glm::mat4 viewProj;
 };
+
+struct VulkGlobalConstantsUBO {
+    float viewportWidth;
+    float viewportHeight;
+};

@@ -31,6 +31,7 @@ class VulkScene {
     std::vector<std::shared_ptr<VulkActor>> actors;
     std::shared_ptr<VulkUniformBuffer<VulkLightViewProjUBO>> lightViewProjUBO;
     std::array<std::shared_ptr<VulkDepthView>, MAX_FRAMES_IN_FLIGHT> shadowMapViews;
+    std::shared_ptr<VulkUniformBuffer<VulkGlobalConstantsUBO>> globalConstantsUBO;
 
     // debug
     std::shared_ptr<VulkUniformBuffer<VulkDebugNormalsUBO>> debugNormalsUBO;

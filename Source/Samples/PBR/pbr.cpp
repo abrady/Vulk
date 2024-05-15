@@ -154,6 +154,9 @@ class World : public VulkRenderable {
         viewport.minDepth = 0.0f;
         viewport.maxDepth = 1.0f;
 
+        scene->globalConstantsUBO->mappedUBO->viewportWidth = viewport.width;
+        scene->globalConstantsUBO->mappedUBO->viewportHeight = viewport.height;
+
         float rotationTime = rotateWorldTimer.getElapsedTime(); // make sure this stays the same for the entire frame
         float nearClip = scene->camera.nearClip;
         float farClip = scene->camera.farClip;

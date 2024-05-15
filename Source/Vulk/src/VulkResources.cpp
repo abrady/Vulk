@@ -170,12 +170,19 @@ std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const
                 builder.addUniformBuffer(*scene->lightViewProjUBO, stage, binding);
                 break;
             case VulkShaderUBOBinding_PBRDebugUBO:
-                scene->pbrDebugUBO = make_shared<VulkUniformBuffer<VulkPBRDebugUBO>>(vk);
+                if (scene->pbrDebugUBO == nullptr)
+                    scene->pbrDebugUBO = make_shared<VulkUniformBuffer<VulkPBRDebugUBO>>(vk);
+                builder.addUniformBuffer(*scene->pbrDebugUBO, stage, binding);
+                break;
+            case VulkShaderUBOBinding_GlobalConstantsUBO:
+                if (scene->globalConstantsUBO == nullptr)
+                    scene->globalConstantsUBO = make_shared<VulkUniformBuffer<VulkGlobalConstantsUBO>>(vk);
+                builder.addUniformBuffer(*scene->globalConstantsUBO, stage, binding);
                 break;
             default:
                 VULK_THROW("Invalid UBO binding");
             }
-            static_assert(VulkShaderUBOBinding_MAX == VulkShaderUBOBinding_PBRDebugUBO);
+            static_assert(VulkShaderUBOBinding_MAX == VulkShaderUBOBinding_GlobalConstantsUBO);
         }
     }
     // for (auto &[stage, ssbos] : dsDef.storageBuffers)
