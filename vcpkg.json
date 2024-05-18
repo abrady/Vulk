@@ -23,7 +23,6 @@
         "spirv-headers",
         "stb",
         "thrift",
-        "tinyobjloader",
         "vulkan"
     ]
 }

@@ -5,8 +5,11 @@
 #include "VulkEnumMetadata.h"
 #include <stdexcept>
 
+#pragma warning(push)
+#pragma warning(disable : 6285) // non-zero constant
 #include <fmt/core.h>
 #include <fmt/format.h>
+#pragma warning(pop) // Restore original warning settings from before 'push'
 
 // C++20 concept to check if a type is an enum
 template <typename T>

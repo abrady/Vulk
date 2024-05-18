@@ -12,9 +12,7 @@ find_package(spirv_cross_msl CONFIG REQUIRED)
 find_package(spirv_cross_cpp CONFIG REQUIRED)
 find_package(spirv_cross_c CONFIG REQUIRED)
 
-
 find_package(Catch2 CONFIG REQUIRED)
-find_package(nlohmann_json CONFIG REQUIRED)
 find_package(CLI11 CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 
@@ -36,8 +34,6 @@ target_link_libraries(BuildTool PRIVATE spdlog::spdlog)
 target_link_libraries(BuildTool PRIVATE spirv-cross-c)
 target_link_libraries(BuildTool PRIVATE spirv-cross-core)
 target_link_libraries(BuildTool PRIVATE spirv-cross-cpp)
-# target_link_libraries(BuildTool PRIVATE spirv-cross-hlsl)
-# target_link_libraries(BuildTool PRIVATE spirv-cross-msl)
 target_link_libraries(BuildTool PRIVATE spirv-cross-reflect)
 target_link_libraries(BuildTool PRIVATE spirv-cross-util)
 target_link_libraries(BuildTool PRIVATE spirv-cross-glsl)

@@ -23,7 +23,6 @@
 #include <cereal/types/vector.hpp>
 
 #include <stb_image.h>
-#include <tiny_obj_loader.h>
 
 #ifdef _MSC_VER
 #pragma warning(pop) // Restore original warning settings from before 'push'
