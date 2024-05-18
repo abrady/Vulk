@@ -21,15 +21,15 @@
 #include "Vulk/VulkStorageBuffer.h"
 #include "Vulk/VulkUniformBuffer.h"
 
-static void HelpMarker(const char *desc) {
-    ImGui::TextDisabled("(?)");
-    if (ImGui::BeginItemTooltip()) {
-        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
-        ImGui::TextUnformatted(desc);
-        ImGui::PopTextWrapPos();
-        ImGui::EndTooltip();
-    }
-}
+// static void HelpMarker(const char *desc) {
+//     ImGui::TextDisabled("(?)");
+//     if (ImGui::BeginItemTooltip()) {
+//         ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+//         ImGui::TextUnformatted(desc);
+//         ImGui::PopTextWrapPos();
+//         ImGui::EndTooltip();
+//     }
+// }
 
 class World : public VulkRenderable {
   public:
@@ -329,7 +329,7 @@ class World : public VulkRenderable {
 
 int main() {
     Vulk app;
-    app.renderable = std::make_shared<World>(app, "PBR");
+    app.renderable = std::make_shared<World>(app, "PBR2");
     app.run();
     return 0;
 }

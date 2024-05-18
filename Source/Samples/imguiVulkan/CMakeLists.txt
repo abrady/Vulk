@@ -13,6 +13,3 @@ add_executable(ImGUIVulkan ${SOURCES})
 target_link_libraries(ImGUIVulkan PRIVATE Vulk)
 target_link_libraries(ImGUIVulkan PRIVATE glfw)
 target_link_libraries(ImGUIVulkan PRIVATE imgui::imgui)
-
-
-# vulk_add_config_json("${CMAKE_BINARY_DIR}/Source/Samples")

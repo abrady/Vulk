@@ -204,7 +204,8 @@ ActorDef ActorDef::fromJSON(const nlohmann::json &j, unordered_map<string, share
                             unordered_map<string, shared_ptr<MaterialDef>> materials) {
     ActorDef a;
     a.name = j.at("name").get<string>();
-    a.pipeline = pipelines.at(j.at("pipeline").get<string>());
+    string pipelineName = j.at("pipeline").get<string>();
+    a.pipeline = pipelines.at(pipelineName);
 
     if (j.contains("model")) {
         assert(!j.contains("inlineModel"));

@@ -175,7 +175,7 @@ class PipelineBuilder {
 
     static void buildPipelineFromFile(std::filesystem::path builtShadersDir, std::filesystem::path pipelineFileOut, fs::path pipelineFileSrc) {
         if (!std::filesystem::exists(pipelineFileSrc)) {
-            std::cerr << "Pipeline file does not exist: " << pipelineFileSrc << std::endl;
+            std::cerr << "Pipeline file does not exist: '" << pipelineFileSrc << "'" << std::endl;
             VULK_THROW("PipelineBuilder: Pipeline file does not exist");
         }
         if (!std::filesystem::exists(builtShadersDir)) {

@@ -14,5 +14,3 @@ target_link_libraries(PBRSample PRIVATE glfw)
 target_link_libraries(PBRSample PRIVATE imgui::imgui)
 
 add_dependencies(VulkSamples BuildPipelines)
-
-vulk_add_config_json("${CMAKE_BINARY_DIR}/Source/Samples")
