@@ -1,7 +1,7 @@
 #pragma once
 #include <vulkan/vulkan.h>
 
-#include "Common/ClassNonCopyableNonMovable.h"
+#include "ClassNonCopyableNonMovable.h"
 #include "VulkDepthView.h"
 
 class Vulk;

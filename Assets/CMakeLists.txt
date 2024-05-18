@@ -51,6 +51,9 @@ endforeach()
 # build buildable assets
 ##
 
+# note this does some voodoo with using the directory name as the first argument
+# to the build tool, so that the build tool can know what kind of asset it is
+# not my favorite approach but fine for now.
 function(build_assets DIR_NAME GLOBAL_ASSETS_VAR)
     set(ASSETS_TO_BUILD ${${GLOBAL_ASSETS_VAR}}) # get the list of assets from parent scope
     set(SOURCE_DIR "${CMAKE_SOURCE_DIR}/Assets/${DIR_NAME}")
@@ -86,19 +89,10 @@ file(APPEND ${ASSETS_OUTPUT_FILE} "${SOURCE_FILE}\n")
 endforeach()
 
 add_custom_target(
-    BuildAssetsTarget
+    RunBuildToolTarget
     ALL    
     DEPENDS ${ASSETS_TO_COPY} ${ASSETS_TO_BUILD} CompileShadersTarget
 )
-
-# add_custom_command(
-#     OUTPUT ${ASSETS_OUTPUT_FILE}                                        # just marks that this finished
-#     DEPENDS BuildAssetsTarget
-#     COMMENT "Building assets"
-# )
-
-# TODO add this to VulkSamples
-add_dependencies(VulkSamples BuildAssetsTarget)
 
 ##
 # build the pipelines
@@ -134,3 +128,16 @@ add_custom_target(
 foreach(SOURCE_FILE ${PIPELINEBUILDER_ASSETS_OUTPUT_FILES})
     file(APPEND ${ASSETS_OUTPUT_FILE} "${SOURCE_FILE}\n")
 endforeach()
+
+
+add_custom_command(
+    OUTPUT ${ASSETS_OUTPUT_FILE}                                        # just marks that this finished
+    DEPENDS RunBuildToolTarget
+    COMMENT "Building assets"
+)
+
+# make a target for all assets
+add_custom_target(
+    BuildAssetsTarget
+    DEPENDS RunBuildToolTarget BuildPipelines ${ASSETS_OUTPUT_FILE}
+)

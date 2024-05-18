@@ -35,7 +35,7 @@
  */
 #pragma once
 
-#include "Common/ClassNonCopyableNonMovable.h"
+#include "ClassNonCopyableNonMovable.h"
 #include "Vulk.h"
 #include <vulkan/vulkan.h>
 

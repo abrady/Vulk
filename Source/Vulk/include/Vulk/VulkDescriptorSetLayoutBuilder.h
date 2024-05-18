@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Common/ClassNonCopyableNonMovable.h"
+#include "ClassNonCopyableNonMovable.h"
 #include "VulkDescriptorSetLayout.h"
 #include "VulkUtil.h"
 

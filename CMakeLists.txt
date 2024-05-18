@@ -2,9 +2,6 @@
 # it also uses vcpkg to manage dependencies, but tries to bootstrap this from within the repo
 cmake_minimum_required (VERSION 3.13)
 
-#set(VCPKG_TARGET_TRIPLET x64-windows-static)
-#set(VCPKG_INSTALL_OPTIONS --no-print-usage) 
-
 project ("VulkanRoot" CXX)
 
 ######
@@ -15,7 +12,6 @@ if(NOT CMAKE_BUILD_TYPE)
     message("CMAKE_BUILD_TYPE not set, defaulting to Debug")
     set(CMAKE_BUILD_TYPE Debug)
 endif()
-
 
 if(WIN32)
     set(CMAKE_GENERATOR_PLATFORM x64)
@@ -31,33 +27,7 @@ endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Check if vcpkg is bootstrapped
-# find_program(VCPKG_EXECUTABLE NAMES vcpkg PATHS "${CMAKE_SOURCE_DIR}/vcpkg" NO_DEFAULT_PATH)
-# if(NOT VCPKG_EXECUTABLE)
-#   message(STATUS "Bootstrapping vcpkg...")
-#   execute_process(COMMAND git submodule update --init --recursive
-#                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-#   execute_process(COMMAND ${CMAKE_SOURCE_DIR}/vcpkg/bootstrap-vcpkg.bat
-#                   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/vcpkg)
-#   # Find vcpkg executable again after bootstrapping
-#   find_program(VCPKG_EXECUTABLE NAMES vcpkg PATHS "${CMAKE_SOURCE_DIR}/vcpkg" NO_DEFAULT_PATH)
-# endif()
-# if(VCPKG_EXECUTABLE)
-#   execute_process(COMMAND ${VCPKG_EXECUTABLE} integrate install
-#                   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/vcpkg)
-# else()
-#   message(FATAL_ERROR "Could not find vcpkg executable")
-# endif()
-
-# Set the toolchain file
-# set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
 message(STATUS "Using vcpkg toolchain file: ${CMAKE_TOOLCHAIN_FILE}")
-
-# File to write - mostly for debug. this is used in multiple child CMakeLists.txt files
-set(ASSETS_OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/assets.txt")
-
-# Ensure the file is empty before we start writing
-file(WRITE ${ASSETS_OUTPUT_FILE} "")
 
 find_package(glfw3 CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
@@ -71,9 +41,9 @@ find_package(glm CONFIG REQUIRED)
 ## global includes
 ######
 
-include_directories("${CMAKE_SOURCE_DIR}/Source")
-include_directories("${CMAKE_SOURCE_DIR}/Source/ThirdParty/include")
-include_directories("$ENV{VK_SDK_PATH}/include")
+#include_directories("${CMAKE_SOURCE_DIR}/Source")
+#include_directories("${CMAKE_SOURCE_DIR}/Source/ThirdParty/include")
+#include_directories("$ENV{VK_SDK_PATH}/include")
 
 ######
 ## global defines
@@ -109,7 +79,12 @@ function(vulk_add_config_json target_dir)
     configure_file(${CMAKE_SOURCE_DIR}/config.json.in ${target_dir}/config.json)
 endfunction()
 vulk_add_config_json("${CMAKE_BINARY_DIR}/Source/Samples")
-# configure_file(${CMAKE_SOURCE_DIR}/config.json.in ${CMAKE_BINARY_DIR}/Source/Samples/config.json)
+
+# File to write - mostly for debug. this is used in Assets/ and Source/Shaders atm
+set(ASSETS_OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/assets.txt")
+
+# Ensure the file is empty before we start writing
+file(WRITE ${ASSETS_OUTPUT_FILE} "")
 
 ######
 ## testing
