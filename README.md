@@ -42,6 +42,10 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
+## PBR 5/18/24
+
+![](Assets/Screenshots/diffuse_pbr.png)
+
 ## 5/13 PBR with UI part 2
 
 ## 5/12 PBR with UI

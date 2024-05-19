@@ -72,6 +72,12 @@ class World : public VulkRenderable {
         // ========================================================================================================
         // Debug stuff
 
+        VulkPBRDebugUBO &pbrDebugUBO = *scene->pbrDebugUBO->mappedUBO;
+        pbrDebugUBO.isMetallic = 0;
+        pbrDebugUBO.roughness = 0.5f;
+        pbrDebugUBO.diffuse = 1;
+        pbrDebugUBO.specular = 1;
+
         // always create the debug actors/pipeline so we can render them on command.
         debugNormalsPipeline = resources.loadPipeline(vk.renderPass, vk.swapChainExtent, "DebugNormals");
         resources.loadPipeline(vk.renderPass, vk.swapChainExtent, "DebugTangents"); // TODO: does this even need to be a separate pipeline?

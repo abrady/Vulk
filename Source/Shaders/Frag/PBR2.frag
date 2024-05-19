@@ -56,6 +56,14 @@ vec3 EnvRemap(vec3 c)
 
 // Main fragment shader function
 void main() {
+	// TODO: integrate these
+	// Sample textures
+    // vec3 albedo = texture(albedoMap, inTexCoord).rgb;
+    // float metallic = texture(metallicMap, inTexCoord).r;
+    // float roughness = texture(roughnessMap, inTexCoord).r;
+    float ao = texture(aoMap, inTexCoord).r;
+	vec3 N = sampleNormalMap(normalMap, inTexCoord, inNormal, inTangent, inBitangent);
+
 	vec2 iResolution = globalConstants.iResolution;
 	vec2 uv = inTexCoord.xy / iResolution.xy;
 	vec2 q = inTexCoord.xy / iResolution.xy;
@@ -99,15 +107,8 @@ void main() {
 	// }
 
 	//vec3 pos = rayOrigin + t * rayDir;
-    // Sample textures
-    vec3 albedo = texture(albedoMap, inTexCoord).rgb;
-    float metallic = texture(metallicMap, inTexCoord).r;
-    float roughness = texture(roughnessMap, inTexCoord).r;
-    float ao = texture(aoMap, inTexCoord).r;
-    vec3 mapN = texture(normalMap, inTexCoord).rgb;
-
 	// vec3 normal = SceneNormal(inPos, localToWorld);
-	vec3 normal = inNormal;
+	vec3 normal = N;
 	vec3 viewDir = -rayDir;
 	vec3 refl = reflect(rayDir, normal);
 
@@ -124,7 +125,7 @@ void main() {
 	// see https://www.unrealengine.com/en-US/blog/physically-based-shading-on-mobile
 	const vec4 c0 = vec4(-1, -0.0275, -0.572, 0.022);
 	const vec4 c1 = vec4(1, 0.0425, 1.04, -0.04);
-	vec4 r = roughness * c0 + c1;
+	vec4 r = roughnessE * c0 + c1;
 	float a004 = min(r.x * r.x, exp2(-9.28 * ndotv)) * r.x + r.y;
 	vec2 AB = vec2(-1.04, 1.04) * a004 + r.zw;
 	vec3 envSpecularColor =  specularColor * AB.x + AB.y;
@@ -137,7 +138,7 @@ void main() {
 	// env = mix(env, env3, saturate((roughnessE - 0.25) / 0.75));
 	// diffuse += diffuseColor * EnvRemap(SHIrradiance(normal));
 	// specular += envSpecularColor * env;
-
+	specular += envSpecularColor;
 	diffuse += diffuseColor * lightColor * saturate(dot(normal, lightDir));
 
 	float r2 = roughnessL * roughnessL;

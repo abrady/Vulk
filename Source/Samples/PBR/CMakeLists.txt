@@ -12,4 +12,4 @@ target_link_libraries(PBRSample PRIVATE Vulk)
 target_link_libraries(PBRSample PRIVATE glfw)
 target_link_libraries(PBRSample PRIVATE imgui::imgui)
 
-add_dependencies(VulkSamples BuildAssetsTarget)
+add_dependencies(PBRSample BuildAssetsTarget)
