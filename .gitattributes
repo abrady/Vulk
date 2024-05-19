@@ -1,8 +1,10 @@
 Assets/Materials/**/*.png filter=lfs diff=lfs merge=lfs -text
 Assets/Materials/**/*.jpg filter=lfs diff=lfs merge=lfs -text
 Assets/Materials/**/*.mat filter=lfs diff=lfs merge=lfs -text
-Assets/Materials/**/*.usdc filter=lfs diff=lfs merge=lfs -text # Pixar compact scene descriptor
-Assets/Materials/**/*.obj filter=lfs diff=lfs merge=lfs -text  # Wavefront OBJ file (3D model)
+# Pixar compact scene descriptor
+Assets/Materials/**/*.usdc filter=lfs diff=lfs merge=lfs -text 
+# Wavefront OBJ file (3D model)
+Assets/Materials/**/*.obj filter=lfs diff=lfs merge=lfs -text  
 
 Source/ThirdParty/** filter=lfs diff=lfs merge=lfs -text
 
