@@ -14,6 +14,11 @@ struct Material
     float d;  // Transparency (dissolve)
 };
 
+// duplicate HLSL's saturate
+float saturate(float x) {
+	return clamp(x, 0.0, 1.0);
+}
+
 // get the normal from the normal map and transform it into world space 
 // (or whatever space the passed in tangent and normal are in)
 // https://learnopengl.com/Advanced-Lighting/Normal-Mapping
@@ -74,5 +79,7 @@ layout(location = VulkShaderLocation_Pos) in vec3 inPosition; \
 layout(location = VulkShaderLocation_Normal) in vec3 inNormal; \
 layout(location = VulkShaderLocation_Tangent) in vec3 inTangent; \
 layout(location = VulkShaderLocation_TexCoord) in vec2 inTexCoord
+
+
 
 #endif // COMMON_GLSL_H

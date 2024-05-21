@@ -42,9 +42,50 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
+## PBR 5/20/24
+
+Feeling like I'm finally getting PBR:
+
+1. PBR is a way of modelling illumination where energy is conserved.
+2. the BRDF or "bidirectional reflectance distribution function" F(l,v) determines the light coming from l that reaches the viewer's eye v.
+3. the distribution of the BRDF is a hemisphere above the surface of the material the function is for. the integral of this hemisphere over the solid angle should be <= 1 (and hence conserve energy)
+4. The integral of a constant 1 over the solid angle is pi, so dividing by pi creates a valid BRDF
+5. The lambertian has a constant rho <= 1, so the lambertial BRDF is rho/pi. This is often used for the diffuse component of PBR.
+6. The Cook-Torrence BRDF is more complicated and is composed of functions: D(h)G(h)F(v,h)/4(n.l)(n.v) where:
+    * D is the distribution function for the percent of microfacts that have the half-angle h so that l reflects to v (see NDF below)
+    * G is the geometry function for describing how roughness on the surface might self-shadow and prevent reflection
+    * F is the fresnel equation which just accounts for how things get more reflective at oblique angles.
+7. The NDF is the normal distribution function (not strictly a gaussian btw). The microfacet model treats a surface as being made up of tiny flat surfaces large enough to reflect the incoming light with a
+  distribution of directions they face. if the normal of a microfacet lines up with the half-angle of v and l, then it will reflect v to l.
+
+Note: I'm eliding specific NDFs or D/G functions for simplicity.
+
+So pulling it all together. Given a light, a viewer, and an arbitrary point on a surface we have
+
+* L - the RGB intensity of the light
+* l - the light ray towards the point
+* n - the normal of the surface
+* v - the ray from the viewer towards the point
+* 𝜌 - the albedo of the surface as an RGB (aka the diffuse reflection of the surface)
+*
+
+PBR(L,l,v,𝜌) = 𝜌/pi . L . (n . l) + D(h)G(h)F(v,h)/4(n.l)(n.v)
+
+note that since you're adding two different functions you want to make sure to conserve energy. One common
+method for doing this is to use F0 the reflectance of the surface at normal incidence and set 𝜌' = 𝜌(1 - F0)
+which effectively makes this a blend operation.
+  
+## PBR 5/19/24
+
+What is PBR?
+
+<https://graphicscompendium.com/gamedev/15-pbr>
+
 ## PBR 5/18/24
 
 ![](Assets/Screenshots/diffuse_pbr.png)
+
+the debug channels are working. this is just a white material but you can see the normal map working, very cool.
 
 ## 5/13 PBR with UI part 2
 
