@@ -92,13 +92,14 @@ void main() {
     float ao = texture(aoMap, inTexCoord).r;
 	vec3 N = sampleNormalMap(normalMap, inTexCoord, inNormal, inTangent, inBitangent);
 
+	vec3 color = vec3(0.0);
 	for (int i = 0; i < VulkLights_NumLights; i++) {
-		outColor += vec4(PBRForLight(lightsBuf.lights[i], inPos, albedo, metallic, roughness, N), 1.0);
+		color += PBRForLight(lightsBuf.lights[i], inPos, albedo, metallic, roughness, N);
 	}
 
 	vec3 ambientLightColor = vec3(0.1); // TODO: get this from somewhere
 	vec3 ambient = ao * albedo * ambientLightColor;
-	outColor += vec4(ambient, 1.0);
+	outColor = vec4(color + ambient, 1.0);
 }
 
 /*

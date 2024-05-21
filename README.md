@@ -74,6 +74,11 @@ PBR(L,l,v,𝜌) = 𝜌/pi . L . (n . l) + D(h)G(h)F(v,h)/4(n.l)(n.v)
 note that since you're adding two different functions you want to make sure to conserve energy. One common
 method for doing this is to use F0 the reflectance of the surface at normal incidence and set 𝜌' = 𝜌(1 - F0)
 which effectively makes this a blend operation.
+
+Here's my first rendering:
+![](Assets/Screenshots/my_pbr_render1.png)
+
+not bad!
   
 ## PBR 5/19/24
 
