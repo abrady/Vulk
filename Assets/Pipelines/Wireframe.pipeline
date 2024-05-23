@@ -1,0 +1,16 @@
+{
+    "version": 1,
+    "name": "Wireframe",
+    "vertShader": "Wireframe",
+    "geomShader": "Wireframe",
+    "fragShader": "Wireframe",
+    "geomInput": "Triangles",
+    "polygonMode": "LINE",
+    "vertInputs": [
+        "Pos",
+        "Normal",
+        "Tangent",
+        "TexCoord"
+    ],
+    "depthWriteEnabled": false
+}

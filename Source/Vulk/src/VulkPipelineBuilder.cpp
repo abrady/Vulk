@@ -71,6 +71,11 @@ VulkPipelineBuilder &VulkPipelineBuilder::setPrimitiveTopology(VkPrimitiveTopolo
     return *this;
 }
 
+VulkPipelineBuilder &VulkPipelineBuilder::setPolygonMode(VkPolygonMode polygonMode) {
+    rasterizer.polygonMode = polygonMode;
+    return *this;
+}
+
 VulkPipelineBuilder &VulkPipelineBuilder::setLineWidth(float lineWidth) {
     VkPhysicalDeviceProperties deviceProperties;
     vkGetPhysicalDeviceProperties(vk.physicalDevice, &deviceProperties);

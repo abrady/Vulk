@@ -7,102 +7,139 @@
 
 template <typename T> struct EnumNameGetter;
 
+template <typename T, std::size_t N> constexpr std::size_t flatbufArraySize(const T (&)[N]) noexcept {
+    return N;
+}
+
 template <> struct EnumNameGetter<VulkShaderLocation> {
-    static const char *const *getNames() {
-        return EnumNamesVulkShaderLocation();
+    static const char *const getName(VulkShaderLocation e) {
+        return EnumNameVulkShaderLocation(e);
     }
-    static VulkShaderLocation getMin() {
-        return VulkShaderLocation_MIN;
+    static std::vector<VulkShaderLocation> getValues() {
+        const auto &vals = EnumValuesVulkShaderLocation();
+        int n = sizeof(vals) / sizeof(vals[0]);
+        return std::vector<VulkShaderLocation>(vals, vals + n);
     }
 };
 
 template <> struct EnumNameGetter<VulkShaderBinding> {
-    static const char *const *getNames() {
-        return EnumNamesVulkShaderBinding();
+    static const char *const getName(VulkShaderBinding e) {
+        return EnumNameVulkShaderBinding(e);
     }
-    static VulkShaderBinding getMin() {
-        return VulkShaderBinding_MIN;
+    static std::vector<VulkShaderBinding> getValues() {
+        const auto &vals = EnumValuesVulkShaderBinding();
+        int n = sizeof(vals) / sizeof(vals[0]);
+        return std::vector<VulkShaderBinding>(vals, vals + n);
     }
 };
 
 template <> struct EnumNameGetter<VulkShaderUBOBinding> {
-    static const char *const *getNames() {
-        return EnumNamesVulkShaderUBOBinding();
+    static const char *const getName(VulkShaderUBOBinding e) {
+        return EnumNameVulkShaderUBOBinding(e);
     }
-    static VulkShaderUBOBinding getMin() {
-        return VulkShaderUBOBinding_MIN;
+    static std::vector<VulkShaderUBOBinding> getValues() {
+        const auto &vals = EnumValuesVulkShaderUBOBinding();
+        int n = sizeof(vals) / sizeof(vals[0]);
+        return std::vector<VulkShaderUBOBinding>(vals, vals + n);
     }
 };
 
 template <> struct EnumNameGetter<VulkShaderDebugUBO> {
-    static const char *const *getNames() {
-        return EnumNamesVulkShaderDebugUBO();
+    static const char *const getName(VulkShaderDebugUBO e) {
+        return EnumNameVulkShaderDebugUBO(e);
     }
-    static VulkShaderDebugUBO getMin() {
-        return VulkShaderDebugUBO_MIN;
+    static std::vector<VulkShaderDebugUBO> getValues() {
+        const auto &vals = EnumValuesVulkShaderDebugUBO();
+        int n = sizeof(vals) / sizeof(vals[0]);
+        return std::vector<VulkShaderDebugUBO>(vals, vals + n);
     }
 };
 
 template <> struct EnumNameGetter<VulkShaderSSBOBinding> {
-    static const char *const *getNames() {
-        return EnumNamesVulkShaderSSBOBinding();
+    static const char *const getName(VulkShaderSSBOBinding e) {
+        return EnumNameVulkShaderSSBOBinding(e);
     }
-    static VulkShaderSSBOBinding getMin() {
-        return VulkShaderSSBOBinding_MIN;
+    static std::vector<VulkShaderSSBOBinding> getValues() {
+        const auto &vals = EnumValuesVulkShaderSSBOBinding();
+        int n = sizeof(vals) / sizeof(vals[0]);
+        return std::vector<VulkShaderSSBOBinding>(vals, vals + n);
     }
 };
 
 template <> struct EnumNameGetter<VulkShaderTextureBinding> {
-    static const char *const *getNames() {
-        return EnumNamesVulkShaderTextureBinding();
+    static const char *const getName(VulkShaderTextureBinding e) {
+        return EnumNameVulkShaderTextureBinding(e);
     }
-    static VulkShaderTextureBinding getMin() {
-        return VulkShaderTextureBinding_MIN;
+    static std::vector<VulkShaderTextureBinding> getValues() {
+        const auto &vals = EnumValuesVulkShaderTextureBinding();
+        int n = sizeof(vals) / sizeof(vals[0]);
+        return std::vector<VulkShaderTextureBinding>(vals, vals + n);
     }
 };
 
 template <> struct EnumNameGetter<VulkPrimitiveTopology> {
-    static const char *const *getNames() {
-        return EnumNamesVulkPrimitiveTopology();
+    static const char *const getName(VulkPrimitiveTopology e) {
+        return EnumNameVulkPrimitiveTopology(e);
     }
-    static VulkPrimitiveTopology getMin() {
-        return VulkPrimitiveTopology_MIN;
+    static std::vector<VulkPrimitiveTopology> getValues() {
+        const auto &vals = EnumValuesVulkPrimitiveTopology();
+        int n = sizeof(vals) / sizeof(vals[0]);
+        return std::vector<VulkPrimitiveTopology>(vals, vals + n);
+    }
+};
+
+template <> struct EnumNameGetter<VulkPolygonMode> {
+    static const char *const getName(VulkPolygonMode e) {
+        return EnumNameVulkPolygonMode(e);
+    }
+    static std::vector<VulkPolygonMode> getValues() {
+        const auto &vals = EnumValuesVulkPolygonMode();
+        int n = sizeof(vals) / sizeof(vals[0]);
+        return std::vector<VulkPolygonMode>(vals, vals + n);
     }
 };
 
 template <> struct EnumNameGetter<MeshDefType> {
-    static const char *const *getNames() {
-        return EnumNamesMeshDefType();
+    static const char *const getName(MeshDefType e) {
+        return EnumNameMeshDefType(e);
     }
-    static MeshDefType getMin() {
-        return MeshDefType_MIN;
+    static std::vector<MeshDefType> getValues() {
+        const auto &vals = EnumValuesMeshDefType();
+        int n = sizeof(vals) / sizeof(vals[0]);
+        return std::vector<MeshDefType>(vals, vals + n);
     }
 };
 
 template <> struct EnumNameGetter<GeoMeshDefType> {
-    static const char *const *getNames() {
-        return EnumNamesGeoMeshDefType();
+    static const char *const getName(GeoMeshDefType e) {
+        return EnumNameGeoMeshDefType(e);
     }
-    static GeoMeshDefType getMin() {
-        return GeoMeshDefType_MIN;
+    static std::vector<GeoMeshDefType> getValues() {
+        const auto &vals = EnumValuesGeoMeshDefType();
+        int n = sizeof(vals) / sizeof(vals[0]);
+        return std::vector<GeoMeshDefType>(vals, vals + n);
     }
 };
 
 template <> struct EnumNameGetter<VulkCompareOp> {
-    static const char *const *getNames() {
-        return EnumNamesVulkCompareOp();
+    static const char *const getName(VulkCompareOp e) {
+        return EnumNameVulkCompareOp(e);
     }
-    static VulkCompareOp getMin() {
-        return VulkCompareOp_MIN;
+    static std::vector<VulkCompareOp> getValues() {
+        const auto &vals = EnumValuesVulkCompareOp();
+        int n = sizeof(vals) / sizeof(vals[0]);
+        return std::vector<VulkCompareOp>(vals, vals + n);
     }
 };
 
 template <> struct EnumNameGetter<VulkCullModeFlags> {
-    static const char *const *getNames() {
-        return EnumNamesVulkCullModeFlags();
+    static const char *const getName(VulkCullModeFlags e) {
+        return EnumNameVulkCullModeFlags(e);
     }
-    static VulkCullModeFlags getMin() {
-        return VulkCullModeFlags_MIN;
+    static std::vector<VulkCullModeFlags> getValues() {
+        const auto &vals = EnumValuesVulkCullModeFlags();
+        int n = sizeof(vals) / sizeof(vals[0]);
+        return std::vector<VulkCullModeFlags>(vals, vals + n);
     }
 };
 
@@ -112,17 +149,15 @@ template <typename EnumType> struct EnumLookup {
         static std::unordered_map<std::string, EnumType> enumMap;
         static std::once_flag flag;
         std::call_once(flag, [&]() {
-            const char *const *vals = EnumNameGetter<EnumType>::getNames();
-            EnumType min = EnumNameGetter<EnumType>::getMin();
-            for (int i = 0; vals[i]; i++) {
-                EnumType enumValue = static_cast<EnumType>(min + i);
-                if (*vals[i])
-                    enumMap[vals[i]] = enumValue;
+            const auto &vals = EnumNameGetter<EnumType>::getValues();
+            for (auto val : vals) {
+                std::string name = EnumNameGetter<EnumType>::getName(val);
+                enumMap[name] = val;
             }
         });
         return enumMap.at(value);
     }
     static std::string getStrFromEnum(EnumType type) {
-        return EnumNameGetter<EnumType>::getNames()[static_cast<int>(type) - EnumNameGetter<EnumType>::getMin()];
+        return EnumNameGetter<EnumType>::getName(type);
     }
 };

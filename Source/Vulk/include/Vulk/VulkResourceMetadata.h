@@ -45,6 +45,7 @@ namespace cereal {
     FlatBufEnumSaveMinimal(VulkShaderSSBOBinding);
     FlatBufEnumSaveMinimal(VulkShaderTextureBinding);
     FlatBufEnumSaveMinimal(VulkPrimitiveTopology);
+    FlatBufEnumSaveMinimal(VulkPolygonMode);
     FlatBufEnumSaveMinimal(VulkCompareOp);
     FlatBufEnumSaveMinimal(VulkCullModeFlags);
 
@@ -226,6 +227,7 @@ struct SourcePipelineDef {
     string fragShaderName;
 
     VkPrimitiveTopology primitiveTopology;
+    VkPolygonMode polygonMode;
     bool depthTestEnabled;
     bool depthWriteEnabled;
     VkCompareOp depthCompareOp;
@@ -268,8 +270,8 @@ struct SourcePipelineDef {
 
     template <class Archive> void serialize(Archive &ar) {
         ar(CEREAL_NVP(name), cereal::make_nvp("vertShader", vertShaderName), cereal::make_nvp("geomShader", geomShaderName),
-           cereal::make_nvp("fragShader", fragShaderName), CEREAL_NVP(primitiveTopology), CEREAL_NVP(depthTestEnabled), CEREAL_NVP(depthWriteEnabled),
-           CEREAL_NVP(depthCompareOp), CEREAL_NVP(blending), CEREAL_NVP(cullMode));
+           cereal::make_nvp("fragShader", fragShaderName), CEREAL_NVP(primitiveTopology), CEREAL_NVP(polygonMode), CEREAL_NVP(depthTestEnabled),
+           CEREAL_NVP(depthWriteEnabled), CEREAL_NVP(depthCompareOp), CEREAL_NVP(blending), CEREAL_NVP(cullMode));
     }
 
     void validate() {
@@ -285,6 +287,7 @@ struct SourcePipelineDef {
         p.fragShaderName = j.at("fragShader").get<string>();
         p.geomShaderName = j.value("geomShader", "");
         p.primitiveTopology = (VkPrimitiveTopology)EnumLookup<VulkPrimitiveTopology>::getEnumFromStr(j.value("primitiveTopology", "TriangleList"));
+        p.polygonMode = (VkPolygonMode)EnumLookup<VulkPolygonMode>::getEnumFromStr(j.value("polygonMode", "FILL"));
         p.depthTestEnabled = j.value("depthTestEnabled", true);
         p.depthWriteEnabled = j.value("depthWriteEnabled", true);
         p.depthCompareOp = (VkCompareOp)EnumLookup<VulkCompareOp>::getEnumFromStr(j.value("depthCompareOp", "LESS"));
