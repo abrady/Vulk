@@ -42,6 +42,17 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
+## PR 5/21/24
+
+Getting close, but the sphere is a little dark. some things I'd like to do:
+
+1. debug into the shininess. it feels like our specular isn't working the way I'd expect it.
+2. get scene nav working: zoom in/out, rotate world with mouse grab, etc.
+3. wire up the debug overrides in the menu: metallic, roughness (scale?)
+4. another model? maybe a metallic/diffuse side by side.
+5. add support for multiple lights
+6. visualize the lights maybe?
+
 ## PBR 5/20/24
 
 Feeling like I'm finally getting PBR:
