@@ -1,9 +1,147 @@
-BasedOnStyle: LLVM
-IndentWidth: 4
-AllowShortEnumsOnASingleLine: false
-AllowShortFunctionsOnASingleLine: false
-AllowShortIfStatementsOnASingleLine: false
+---
+ # (c) Meta, Inc. and its affiliates. Confidential and proprietary.
+---
+# arc clang-format --dump-config
+# the above dumps the config being applied to the directory you call it from
+
+Language: Cpp
+# No extra indent outside of access modifiers
+AccessModifierOffset: -2
+AlignAfterOpenBracket: AlwaysBreak
+AlignConsecutiveAssignments: false
+AlignConsecutiveBitFields: false
+AlignConsecutiveDeclarations: false
+AlignConsecutiveMacros: false
+AlignEscapedNewlines: true
+AlignOperands: true
+AlignTrailingComments: true
+AllowAllArgumentsOnNextLine: false
+AllowAllConstructorInitializersOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortBlocksOnASingleLine: Never
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortEnumsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLambdasOnASingleLine: None
 AllowShortLoopsOnASingleLine: false
-AllowShortBlocksOnASingleLine: false
-NamespaceIndentation: All
-ColumnLimit: 160
+AlwaysBreakAfterReturnType: None
+AlwaysBreakBeforeMultilineStrings: true
+AlwaysBreakTemplateDeclarations: Yes
+BinPackArguments: false
+BinPackParameters: false
+BreakBeforeBinaryOperators: None
+BreakBeforeBraces: Attach
+BreakBeforeTernaryOperators: true
+BreakConstructorInitializers: BeforeComma
+BreakInheritanceList: BeforeComma
+BreakStringLiterals: false
+ColumnLimit: 120
+CompactNamespaces: false
+ConstructorInitializerAllOnOneLineOrOnePerLine: false
+ConstructorInitializerIndentWidth: 2
+ContinuationIndentWidth: 4
+Cpp11BracedListStyle: true
+DeriveLineEnding: true
+DerivePointerAlignment: false
+DisableFormat: false
+FixNamespaceComments: true
+IncludeBlocks: Regroup
+# IncludeIsMainRegex prioritizes the header matching the cpp as priority 0
+# in our version of clang however it only matches against #include "foo"
+# later versions support
+# MainIncludeChar: AngleBracket
+# if we want to lift 'main' includes in our include order we will need to upgrade to Clang19
+# see https://www.internalfb.com/code/fbsource/[694158c7f9fc]/third-party/llvm-project/toolchain-dev/llvm-project/clang/docs/ClangFormatStyleOptions.rst?lines=4449
+IncludeIsMainRegex: '(Test)?$'
+IncludeIsMainSourceRegex: ''
+SortIncludes: true
+IncludeCategories:
+  # gtest & gmock both have to be first
+  - Regex:           '^((<|")(gtest|gmock)/)'
+    Priority:        -10
+  # Core.h contains our base types/assert/traits/pp defs etc and should be first.
+  - Regex:           ^((<|")(core)/Core.h)
+    Priority:        3
+    SortPriority:    1
+  # the rest is arbitrary but opinionated
+  # sort Core libs before others - in the same block as Core.h
+  - Regex:           '^<(core)/.*\.h(pp)?>'
+    Priority:        3
+    SortPriority:    2
+  # sort HSR libraries & modules next
+  - Regex:           '^<(asset|ingestion|tool_core|common|config|framework|modules|client|server)/.*\.h(pp)?>'
+    Priority:        5
+  # move folly into its own group
+  - Regex:           ^((<|")(folly)/)
+    Priority:        19
+  # third party known libs next
+  - Regex:           ^((<|")(flecs|v8|glm|rocksdb|rapidjson|http_tigon)/)
+    Priority:        20
+  # STD libraries & other includes
+  - Regex:           '^<.*\.h(pp)?>'
+    Priority:        30
+  - Regex:           '^<.*'
+    Priority:        40
+    SortPriority:    40
+  - Regex:           '.*'
+    Priority:        40
+    SortPriority:    41
+
+IndentCaseBlocks: false
+IndentCaseLabels: true
+IndentExternBlock: AfterExternBlock
+IndentGotoLabels: false
+IndentPPDirectives: None
+IndentWidth: 2
+IndentWrappedFunctionNames: false
+InsertTrailingCommas: None
+KeepEmptyLinesAtTheStartOfBlocks: false
+MaxEmptyLinesToKeep: 1
+NamespaceIndentation: None
+PenaltyBreakBeforeFirstCallParameter: 1
+PenaltyReturnTypeOnItsOwnLine: 200000
+PenaltyBreakScopeResolution: 2000
+PointerAlignment: Left
+ReflowComments: true
+SortUsingDeclarations: true
+SpaceAfterCStyleCast: false
+SpaceAfterLogicalNot: false
+SpaceAfterTemplateKeyword: true
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCpp11BracedList: false
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon: true
+SpaceBeforeParens: ControlStatements
+SpaceBeforeRangeBasedForLoopColon: true
+SpaceBeforeSquareBrackets: false
+SpaceInEmptyBlock: false
+SpaceInEmptyParentheses: false
+SpacesBeforeTrailingComments: 1
+SpacesInAngles: false
+SpacesInCStyleCastParentheses: false
+SpacesInConditionalStatement: false
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+Standard: Latest
+TabWidth: 2
+UseCRLF: false
+UseTab: Never
+StatementMacros:
+    - EVENT_PROPERTY_DECL
+    - REFLECT_ENUM
+    - REFLECT_EVENT_PROPERTY
+    - REFLECT_EVENT_PROPERTY_NAMED
+    - REFLECT_PROPERTY
+    - REFLECT_PROPERTY_NAMED
+    - REFLECT_METHOD
+    - REFLECT_METHOD_NAMED
+    - PARENT_CLASS
+    - IGNORE_RETURN
+MacroBlockBegin: "REFLECT_.*_BEGIN|EVENT_PROPERTY_DECL_BEGIN"
+MacroBlockEnd: "REFLECT_.*_END|EVENT_PROPERTY_DECL_END"
+
+# This method does a string replace before format - in v18.2 however this sometimes(~40%) results in extraneous spaces and alignment
+# problems before & after its usage, sometimes these persist for the scope they manifest in.
+# Macros:
+#- IGNORE_RETURN = (void)
