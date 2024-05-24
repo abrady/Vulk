@@ -183,20 +183,20 @@ public:
     float nearClip = scene->camera.nearClip;
     float farClip = scene->camera.farClip;
 
-    glm::vec3 lookAt = scene->camera.lookAt;
-    glm::vec3 up = scene->camera.getUpVec();
+    // glm::vec3 lookAt = scene->camera.lookAt;
+    // glm::vec3 up = scene->camera.getUpVec();
     *scene->sceneUBOs.eyePos.ptrs[vk.currentFrame] = scene->camera.eye;
 
     VulkSceneUBOs::XformsUBO& ubo = *scene->sceneUBOs.xforms.ptrs[vk.currentFrame];
     ubo.world = glm::rotate(glm::mat4(1.0f), rotationTime * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    ubo.view = glm::lookAt(scene->camera.eye, lookAt, up);
+    // ubo.view = glm::lookAt(scene->camera.eye, lookAt, up);
+    ubo.view = glm::mat4(scene->camera.getRotMat());
     ubo.proj = glm::perspective(glm::radians(45.0f), viewport.width / (float)viewport.height, nearClip, farClip);
 
     // set up the light view proj
     VulkPointLight& light = *scene->sceneUBOs.pointLight.mappedUBO;
     glm::vec3 lightLookAt = scene->camera.lookAt;
-    up = glm::vec3(0.0f, 1.0f, 0.0f);
-    glm::mat4 lightView = glm::lookAt(light.pos, lightLookAt, up);
+    glm::mat4 lightView = glm::lookAt(light.pos, lightLookAt, glm::vec3(0.0f, 1.0f, 0.0f));
     glm::mat4 lightProj =
         glm::perspective(glm::radians(45.0f), viewport.width / (float)viewport.height, nearClip, farClip);
     glm::mat4 viewProj = lightProj * lightView;
@@ -400,11 +400,14 @@ public:
     return false;
   }
 
-  void onDrag(double xpos, double ypos, MouseEventContext const& ctxt) override {
-    float dx = xpos - ctxt.dragStartX;
-    float dy = ypos - ctxt.dragStartY;
+  void onDrag(double /*xpos*/, double /*ypos*/, MouseDragContext const& drag, MouseEventContext const& /*ctxt*/)
+      override {
+    float dx = (float)drag.dxdt * 10.0f;
+    float dy = (float)drag.dydt * 10.0f;
     scene->camera.yaw += dx;
     scene->camera.pitch += dy;
+    std::cout << "yaw: " << scene->camera.yaw << " pitch: " << scene->camera.pitch << " dx: " << dx << " dy: " << dy
+              << std::endl;
   }
 
   ~World() {}

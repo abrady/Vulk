@@ -21,13 +21,22 @@
 #include <vector>
 #include "VulkUtil.h"
 
+struct MouseDragContext {
+  double dt = 0.0;
+  double dxdt = 0.0;
+  double dydt = 0.0;
+  double dragStartX = 0.0;
+  double dragStartY = 0.0;
+};
+
 struct MouseEventContext {
-  double lastClickTime;
-  bool isDragging;
-  double dragStartX, dragStartY;
-  bool shift;
-  bool control;
-  bool alt;
+  bool isDragging = false;
+  double lastClickTime = 0.0;
+  double lastCursorPosTime = 0.0;
+  double lastX = 0.0, lastY = 0.0;
+  bool shift = false;
+  bool control = false;
+  bool alt = false;
 };
 
 #pragma warning(push)
@@ -39,7 +48,7 @@ public:
   virtual void onMouseDown(double xpos, double ypos, MouseEventContext const& ctxt) {}
   virtual void onMouseMove(double xpos, double ypos, MouseEventContext const& ctxt) {}
   virtual void onMouseUp(double xpos, double ypos, MouseEventContext const& ctxt) {}
-  virtual void onDrag(double xpos, double ypos, MouseEventContext const& ctxt) {}
+  virtual void onDrag(double xpos, double ypos, MouseDragContext const& drag, MouseEventContext const& ctxt) {}
   virtual void onDragStart(double xpos, double ypos, MouseEventContext const& ctxt) {}
   virtual void onDragEnd(double xpos, double ypos, MouseEventContext const& ctxt) {}
 };

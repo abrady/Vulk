@@ -32,10 +32,10 @@ public:
               << " Control: " << ctxt.control << " Alt: " << ctxt.alt << std::endl;
   }
 
-  void onDrag(double xpos, double ypos, MouseEventContext const& ctxt) override {
+  void onDrag(double xpos, double ypos, MouseDragContext const& drag, MouseEventContext const& ctxt) override {
     std::cout << "Dragging at: (" << xpos << ", " << ypos << ")" << " Shift: " << ctxt.shift
               << "is dragging: " << ctxt.isDragging << " Control: " << ctxt.control << " Alt: " << ctxt.alt
-              << " Drag start: (" << ctxt.dragStartX << ", " << ctxt.dragStartY << ")" << std::endl;
+              << " Drag start: (" << drag.dragStartX << ", " << drag.dragStartY << ")" << std::endl;
   }
 
   void onDragStart(double xpos, double ypos, MouseEventContext const& ctxt) override {
@@ -50,22 +50,30 @@ public:
 };
 
 static MouseEventHandler* eventHandler = nullptr;
+static std::shared_ptr<MouseEventContext> mouseEventctxt;
+static std::shared_ptr<MouseDragContext> dragContext;
 
 void setMouseEventHandler(MouseEventHandler* handler) {
+  if (!handler) {
+    clearMouseEventHandler();
+    return;
+  }
   eventHandler = handler;
+  mouseEventctxt = std::make_shared<MouseEventContext>();
+  dragContext = std::make_shared<MouseDragContext>();
 }
 
 void clearMouseEventHandler() {
   eventHandler = nullptr;
+  mouseEventctxt.reset();
+  dragContext.reset();
 }
-
-static MouseEventContext mouseEventctxt;
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
   if (!eventHandler) {
     return;
   }
-  MouseEventContext& ctxt = mouseEventctxt;
+  MouseEventContext& ctxt = *mouseEventctxt;
   double xpos, ypos;
   glfwGetCursorPos(window, &xpos, &ypos);
   ctxt.shift = mods & GLFW_MOD_SHIFT;
@@ -83,9 +91,10 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
       ctxt.lastClickTime = currentTime;
 
       // Start dragging
+      dragContext = std::make_shared<MouseDragContext>();
       ctxt.isDragging = true;
-      ctxt.dragStartX = xpos;
-      ctxt.dragStartY = ypos;
+      dragContext->dragStartX = xpos;
+      dragContext->dragStartY = ypos;
       eventHandler->onDragStart(xpos, ypos, ctxt);
     } else if (action == GLFW_RELEASE) {
       eventHandler->onMouseUp(xpos, ypos, ctxt);
@@ -93,6 +102,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
       if (ctxt.isDragging) {
         ctxt.isDragging = false;
         eventHandler->onDragEnd(xpos, ypos, ctxt);
+        dragContext.reset();
       } else {
         eventHandler->onClick(xpos, ypos, ctxt);
       }
@@ -104,7 +114,26 @@ void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
   if (!eventHandler) {
     return;
   }
-  MouseEventContext& ctxt = mouseEventctxt;
+
+  // Get the window size and framebuffer size
+  int windowWidth, windowHeight;
+  glfwGetWindowSize(window, &windowWidth, &windowHeight);
+
+  // Calculate the scaling factor
+  double xscale = 1.0 / (double)windowWidth;
+  double yscale = 1.0 / (double)windowHeight;
+
+  MouseEventContext& ctxt = *mouseEventctxt;
+  double currentTime = glfwGetTime();
+  if (dragContext) { // calculate dxdt and dydt (velocity of mouse movement
+    double dt = currentTime - ctxt.lastCursorPosTime;
+    double dxdt = (xpos - ctxt.lastX) / dt * xscale;
+    double dydt = (ypos - ctxt.lastY) / dt * yscale;
+    // blend dxdt and dydt with previous values
+    dragContext->dxdt = 0.8 * dragContext->dxdt + 0.2 * dxdt;
+    dragContext->dydt = 0.8 * dragContext->dydt + 0.2 * dydt;
+  }
+
   ctxt.shift =
       glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
   ctxt.control = glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS ||
@@ -114,8 +143,12 @@ void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
 
   eventHandler->onMouseMove(xpos, ypos, ctxt);
   if (ctxt.isDragging) {
-    eventHandler->onDrag(xpos, ypos, ctxt);
+    eventHandler->onDrag(xpos, ypos, *dragContext, ctxt);
   }
+
+  ctxt.lastCursorPosTime = currentTime;
+  ctxt.lastX = xpos;
+  ctxt.lastY = ypos;
 }
 
 static const std::vector<const char*> validationLayers = {"VK_LAYER_KHRONOS_validation"};
