@@ -131,7 +131,7 @@ class World : public VulkRenderable {
         // e.g. Use 2/3 of the space for widgets and 1/3 for labels (right align)
         // e.g. Leave a fixed amount of width for labels (by passing a negative value), the rest goes to widgets.
         ImGui::PushItemWidth(ImGui::GetFontSize() * -12);
-        if (ImGui::CollapsingHeader("Debug")) {
+        if (ImGui::CollapsingHeader("Debug", ImGuiTreeNodeFlags_DefaultOpen)) {
             ImGui::Checkbox("Render Normals", &debug.renderNormals);
             ImGui::Checkbox("Render Tangents", &debug.renderTangents);
             ImGui::Checkbox("Render Wireframe", &debug.renderWireframe);
