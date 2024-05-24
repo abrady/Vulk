@@ -45,9 +45,13 @@ class World : public VulkRenderable {
     std::vector<std::shared_ptr<VulkActor>> debugTangentsActors;
     std::vector<std::shared_ptr<VulkActor>> debugNormalsActors;
 
+    std::shared_ptr<VulkPipeline> wireframePipeline;
+    std::vector<std::shared_ptr<VulkActor>> debugWireframeActors;
+
     struct Debug {
         bool renderNormals = false;
         bool renderTangents = false;
+        bool renderWireframe = false;
     } debug;
 
   public:
@@ -77,6 +81,16 @@ class World : public VulkRenderable {
         pbrDebugUBO.roughness = 0.5f;
         pbrDebugUBO.diffuse = 1;
         pbrDebugUBO.specular = 1;
+
+        wireframePipeline = resources.loadPipeline(vk.renderPass, vk.swapChainExtent, "Wireframe");
+        auto wireframePipelineDef = resources.metadata.pipelines.at("Wireframe");
+        for (size_t i = 0; i < scene->actors.size(); ++i) {
+            auto actor = scene->actors[i];
+            auto actorDef = sceneDef.actors[i];
+            std::shared_ptr<VulkActor> wireframeActor = resources.createActorFromPipeline(*actorDef, wireframePipelineDef, scene);
+            // scene->actors[i]->pipeline = wireframeActor->pipeline;
+            debugWireframeActors.push_back(wireframeActor);
+        }
 
         // always create the debug actors/pipeline so we can render them on command.
         debugNormalsPipeline = resources.loadPipeline(vk.renderPass, vk.swapChainExtent, "DebugNormals");
@@ -120,6 +134,7 @@ class World : public VulkRenderable {
         if (ImGui::CollapsingHeader("Debug")) {
             ImGui::Checkbox("Render Normals", &debug.renderNormals);
             ImGui::Checkbox("Render Tangents", &debug.renderTangents);
+            ImGui::Checkbox("Render Wireframe", &debug.renderWireframe);
         }
 
         VulkPBRDebugUBO &pbrDebugUBO = *scene->pbrDebugUBO->mappedUBO;
@@ -240,14 +255,25 @@ class World : public VulkRenderable {
     }
 
     void render(VkCommandBuffer commandBuffer, uint32_t currentFrame) {
-        // render the scene?
-        for (auto &actor : scene->actors) {
-            auto model = actor->model;
-            vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipeline);
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout, 0, 1,
-                                    &actor->dsInfo->descriptorSets[currentFrame]->descriptorSet, 0, nullptr);
-            model->bindInputBuffers(commandBuffer);
-            vkCmdDrawIndexed(commandBuffer, model->numIndices, 1, 0, 0, 0);
+        // render the scene
+        if (debug.renderWireframe) {
+            for (auto &actor : debugWireframeActors) {
+                auto model = actor->model;
+                vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, wireframePipeline->pipeline);
+                vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, wireframePipeline->pipelineLayout, 0, 1,
+                                        &actor->dsInfo->descriptorSets[currentFrame]->descriptorSet, 0, nullptr);
+                model->bindInputBuffers(commandBuffer);
+                vkCmdDrawIndexed(commandBuffer, model->numIndices, 1, 0, 0, 0);
+            }
+        } else {
+            for (auto &actor : scene->actors) {
+                auto model = actor->model;
+                vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipeline);
+                vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout, 0, 1,
+                                        &actor->dsInfo->descriptorSets[currentFrame]->descriptorSet, 0, nullptr);
+                model->bindInputBuffers(commandBuffer);
+                vkCmdDrawIndexed(commandBuffer, model->numIndices, 1, 0, 0, 0);
+            }
         }
 
         // render the debug normals

@@ -42,6 +42,14 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
+## PBR 5/23/24
+
+Working towards more lights so I can figure out why things seem a little dark.
+
+![](Assets/Screenshots/debug_wireframe_menu.png)
+
+![](Assets/Screenshots/wireframe_sphere.png)
+
 ## PR 5/21/24
 
 Getting close, but the sphere is a little dark. some things I'd like to do:
