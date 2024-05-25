@@ -22,8 +22,8 @@
 #include "Vulk/VulkUniformBuffer.h"
 
 class World : public VulkRenderable {
-  public:
-    Vulk &vk;
+public:
+    Vulk& vk;
     std::shared_ptr<VulkScene> scene;
 
     std::shared_ptr<VulkDepthRenderpass> shadowMapRenderpass;
@@ -40,15 +40,16 @@ class World : public VulkRenderable {
         bool renderTangents = false;
     } debug;
 
-  public:
-    World(Vulk &vk, std::string sceneName) : vk(vk) {
+public:
+    World(Vulk& vk, std::string sceneName)
+        : vk(vk) {
         shadowMapRenderpass = std::make_shared<VulkDepthRenderpass>(vk);
         shadowMapFence = std::make_shared<VulkFence>(vk);
 
         VulkResources resources(vk);
         resources.loadScene(vk.renderPass, sceneName, shadowMapRenderpass->depthViews);
         scene = resources.scenes[sceneName];
-        SceneDef &sceneDef = *resources.metadata.scenes.at(sceneName);
+        SceneDef& sceneDef = *resources.metadata.scenes.at(sceneName);
 
         shadowMapPipeline = resources.loadPipeline(shadowMapRenderpass->renderPass, shadowMapRenderpass->extent, "ShadowMap");
         auto shadowMapPipelineDef = resources.metadata.pipelines.at("ShadowMap");
@@ -89,7 +90,7 @@ class World : public VulkRenderable {
         // a useful demo of a variety of features
         ImGui::ShowDemoWindow(nullptr);
 
-        const ImGuiViewport *viewport = ImGui::GetMainViewport();
+        const ImGuiViewport* viewport = ImGui::GetMainViewport();
         ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x, viewport->WorkPos.y), ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowSize(ImVec2(550, 680), ImGuiCond_FirstUseEver);
         if (!ImGui::Begin("VulkUI Menu", &menu.isOpen, menu.windowFlags)) {
@@ -128,20 +129,16 @@ class World : public VulkRenderable {
         float nearClip = scene->camera.nearClip;
         float farClip = scene->camera.farClip;
 
-        glm::vec3 lookAt = scene->camera.lookAt;
-        glm::vec3 up = scene->camera.getUpVec();
         *scene->sceneUBOs.eyePos.ptrs[vk.currentFrame] = scene->camera.eye;
 
-        VulkSceneUBOs::XformsUBO &ubo = *scene->sceneUBOs.xforms.ptrs[vk.currentFrame];
+        VulkSceneUBOs::XformsUBO& ubo = *scene->sceneUBOs.xforms.ptrs[vk.currentFrame];
         ubo.world = glm::rotate(glm::mat4(1.0f), rotationTime * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        ubo.view = glm::lookAt(scene->camera.eye, lookAt, up);
+        ubo.view = scene->camera.getViewMat(); // glm::lookAt(scene->camera.eye, lookAt, up);
         ubo.proj = glm::perspective(glm::radians(45.0f), viewport.width / (float)viewport.height, nearClip, farClip);
 
         // set up the light view proj
-        VulkPointLight &light = *scene->sceneUBOs.pointLight.mappedUBO;
-        glm::vec3 lightLookAt = scene->camera.lookAt;
-        up = glm::vec3(0.0f, 1.0f, 0.0f);
-        glm::mat4 lightView = glm::lookAt(light.pos, lightLookAt, up);
+        VulkPointLight& light = *scene->sceneUBOs.pointLight.mappedUBO;
+        glm::mat4 lightView = glm::lookAt(light.pos, glm::vec3(0.0f, 0.0f, 0.0f), DEFAULT_UP_VEC);
         glm::mat4 lightProj = glm::perspective(glm::radians(45.0f), viewport.width / (float)viewport.height, nearClip, farClip);
         glm::mat4 viewProj = lightProj * lightView;
         scene->lightViewProjUBO->mappedUBO->viewProj = viewProj;
@@ -169,7 +166,7 @@ class World : public VulkRenderable {
         renderPassBeginInfo.pClearValues = &clearValue;
 
         vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-        for (auto &actor : shadowMapActors) {
+        for (auto& actor : shadowMapActors) {
             auto model = actor->model;
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipeline);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout, 0, 1,
@@ -202,7 +199,7 @@ class World : public VulkRenderable {
 
     void render(VkCommandBuffer commandBuffer, uint32_t currentFrame) {
         // render the scene?
-        for (auto &actor : scene->actors) {
+        for (auto& actor : scene->actors) {
             auto model = actor->model;
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipeline);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout, 0, 1,
@@ -214,7 +211,7 @@ class World : public VulkRenderable {
         // render the debug normals
         if (debug.renderNormals) {
             scene->debugNormalsUBO->mappedUBO->useModel = false;
-            for (auto &actor : debugNormalsActors) {
+            for (auto& actor : debugNormalsActors) {
                 auto model = actor->model;
                 vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipeline);
                 vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout, 0, 1,
@@ -228,7 +225,7 @@ class World : public VulkRenderable {
         // render the debug tangents
         if (debug.renderTangents) {
             scene->debugTangentsUBO->mappedUBO->length = .1f;
-            for (auto &actor : debugTangentsActors) {
+            for (auto& actor : debugTangentsActors) {
                 auto model = actor->model;
                 vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipeline);
                 vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout, 0, 1,
@@ -240,56 +237,5 @@ class World : public VulkRenderable {
         }
     }
 
-    bool keyCallback(int key, int /*scancode*/, int action, int /*mods*/) {
-        VulkCamera &camera = scene->camera;
-        bool handled = false;
-        if (action == GLFW_PRESS || action == GLFW_REPEAT) {
-            glm::vec3 fwd = camera.getForwardVec();
-            glm::vec3 right = camera.getRightVec();
-            glm::vec3 up = camera.getUpVec();
-            handled = true;
-            float move = .2f;
-            if (key == GLFW_KEY_W)
-                camera.eye += move * fwd;
-            else if (key == GLFW_KEY_A)
-                camera.eye -= move * right;
-            else if (key == GLFW_KEY_S)
-                camera.eye -= move * fwd;
-            else if (key == GLFW_KEY_D)
-                camera.eye += move * right;
-            else if (key == GLFW_KEY_Q)
-                camera.eye -= move * up;
-            else if (key == GLFW_KEY_E)
-                camera.eye += move * up;
-            else if (key == GLFW_KEY_LEFT)
-                camera.yaw -= 15.0f;
-            else if (key == GLFW_KEY_RIGHT)
-                camera.yaw += 15.0f;
-            else if (key == GLFW_KEY_UP)
-                camera.pitch += 15.0f;
-            else if (key == GLFW_KEY_DOWN)
-                camera.pitch -= 15.0f;
-            else if (key == GLFW_KEY_SPACE)
-                rotateWorldTimer.toggle();
-            else if (key == GLFW_KEY_N) {
-                debug.renderNormals = !debug.renderNormals;
-                std::cout << "render normals: " << debug.renderNormals << std::endl;
-            } else if (key == GLFW_KEY_T) {
-                debug.renderTangents = !debug.renderTangents;
-                std::cout << "render tangents: " << debug.renderTangents << std::endl;
-            } else
-                handled = false;
-            if (handled) {
-                camera.yaw = fmodf(camera.yaw, 360.0f);
-                camera.pitch = fmodf(camera.pitch, 360.0f);
-                std::cout << "eye: " << camera.eye.x << ", " << camera.eye.y << ", " << camera.eye.z << " yaw: " << camera.yaw << " pitch: " << camera.pitch
-                          << std::endl;
-                return true;
-            }
-        }
-        return false;
-    }
-
-    ~World() {
-    }
+    ~World() {}
 };

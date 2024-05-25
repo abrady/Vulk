@@ -52,14 +52,8 @@ public:
 
         VulkResources resources(vk);
         resources.loadScene(vk.renderPass, sceneName, shadowMapRenderpass->depthViews);
-        scene = resources.scenes[sceneName];
-
-        //
-        glm::vec3 lookAt = scene->camera.lookAt;
-        glm::vec3 up = scene->camera.getUpVec();
-        glm::mat4 cam = glm::lookAt(scene->camera.eye, lookAt, up);
-
         SceneDef& sceneDef = *resources.metadata.scenes.at(sceneName);
+        scene = resources.scenes[sceneName];
 
         shadowMapPipeline = resources.loadPipeline(shadowMapRenderpass->renderPass, shadowMapRenderpass->extent, "ShadowMap");
         auto shadowMapPipelineDef = resources.metadata.pipelines.at("ShadowMap");
@@ -187,13 +181,12 @@ public:
         VulkSceneUBOs::XformsUBO& ubo = *scene->sceneUBOs.xforms.ptrs[vk.currentFrame];
         ubo.world = glm::rotate(glm::mat4(1.0f), rotationTime * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         // ubo.view = glm::lookAt(scene->camera.eye, lookAt, up);
-        ubo.view = glm::mat4(scene->camera.getRotMat());
+        ubo.view = glm::mat4(scene->camera.getViewMat());
         ubo.proj = glm::perspective(glm::radians(45.0f), viewport.width / (float)viewport.height, nearClip, farClip);
 
         // set up the light view proj
         VulkPointLight& light = *scene->sceneUBOs.pointLight.mappedUBO;
-        glm::vec3 lightLookAt = scene->camera.lookAt;
-        glm::mat4 lightView = glm::lookAt(light.pos, lightLookAt, glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::mat4 lightView = glm::lookAt(light.pos, glm::vec3(0.0f, 0.0f, 0.0f), DEFAULT_UP_VEC);
         glm::mat4 lightProj = glm::perspective(glm::radians(45.0f), viewport.width / (float)viewport.height, nearClip, farClip);
         glm::mat4 viewProj = lightProj * lightView;
         scene->lightViewProjUBO->mappedUBO->viewProj = viewProj;
@@ -303,6 +296,7 @@ public:
         }
     }
 
+    // TODO: re-wire this up
     bool keyCallback(int key, int /*scancode*/, int action, int /*mods*/) {
         VulkCamera& camera = scene->camera;
         bool handled = false;
@@ -325,13 +319,13 @@ public:
             else if (key == GLFW_KEY_E)
                 camera.eye += move * up;
             else if (key == GLFW_KEY_LEFT)
-                camera.yaw -= 15.0f;
+                camera.updateOrientation(15.0f, 0.0f);
             else if (key == GLFW_KEY_RIGHT)
-                camera.yaw += 15.0f;
+                camera.updateOrientation(-15.0f, 0.0f);
             else if (key == GLFW_KEY_UP)
-                camera.pitch += 15.0f;
+                camera.updateOrientation(0.0f, 15.0f);
             else if (key == GLFW_KEY_DOWN)
-                camera.pitch -= 15.0f;
+                camera.updateOrientation(0.0f, -15.0f);
             else if (key == GLFW_KEY_SPACE)
                 rotateWorldTimer.toggle();
             else if (key == GLFW_KEY_N) {
@@ -343,9 +337,8 @@ public:
             } else
                 handled = false;
             if (handled) {
-                camera.yaw = fmodf(camera.yaw, 360.0f);
-                camera.pitch = fmodf(camera.pitch, 360.0f);
-                std::cout << "eye: " << camera.eye.x << ", " << camera.eye.y << ", " << camera.eye.z << " yaw: " << camera.yaw << " pitch: " << camera.pitch << std::endl;
+                glm::vec3 eulers = camera.getEulers();
+                std::cout << "eye: " << camera.eye.x << ", " << camera.eye.y << ", " << camera.eye.z << " yaw: " << eulers.y << " pitch: " << eulers.x << std::endl;
                 return true;
             }
         }
@@ -355,9 +348,9 @@ public:
     void onDrag(double /*xpos*/, double /*ypos*/, MouseDragContext const& drag, MouseEventContext const& /*ctxt*/) override {
         float dx = (float)drag.dxdt * 10.0f;
         float dy = (float)drag.dydt * 10.0f;
-        scene->camera.yaw += dx;
-        scene->camera.pitch += dy;
-        std::cout << "yaw: " << scene->camera.yaw << " pitch: " << scene->camera.pitch << " dx: " << dx << " dy: " << dy << std::endl;
+        scene->camera.updateOrientation(dx, dy);
+        glm::vec3 eulers = scene->camera.getEulers();
+        std::cout << "yaw: " << eulers.y << " pitch: " << eulers.x << " dx: " << dx << " dy: " << dy << std::endl;
     }
 
     ~World() {

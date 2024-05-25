@@ -5,6 +5,7 @@
 #endif
 
 #include "VulkConstants.h"
+#include <glm/gtx/quaternion.hpp>
 
 #include <cereal/archives/binary.hpp>
 #include <cereal/archives/json.hpp>
