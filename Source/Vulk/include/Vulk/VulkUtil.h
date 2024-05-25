@@ -1,20 +1,10 @@
 #pragma once
 
-#ifdef _MSC_VER          // Check if we're using MSVC
-#pragma warning(push, 0) // assume these headers know what they're doing
+#ifdef _MSC_VER              // Check if we're using MSVC
+#    pragma warning(push, 0) // assume these headers know what they're doing
 #endif
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-
-#define GLM_FORCE_EXPLICIT_CTOR
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/euler_angles.hpp>
-#include <glm/gtx/hash.hpp>
+#include "VulkConstants.h"
 
 #include <cereal/archives/binary.hpp>
 #include <cereal/archives/json.hpp>
@@ -25,7 +15,7 @@
 #include <stb_image.h>
 
 #ifdef _MSC_VER
-#pragma warning(pop) // Restore original warning settings from before 'push'
+#    pragma warning(pop) // Restore original warning settings from before 'push'
 #endif
 
 #include <algorithm>
@@ -52,13 +42,13 @@
 #include "VulkLogger.h"
 #include "VulkShaderEnums_generated.h"
 
-#define VK_CALL(func)                                                                                                                                          \
-    do {                                                                                                                                                       \
-        VkResult vkcall_macro_result = (func);                                                                                                                 \
-        if (vkcall_macro_result != VK_SUCCESS) {                                                                                                               \
-            std::cerr << "Vulkan error: " << (vkcall_macro_result) << " at " << __FILE__ << ":" << __LINE__ << std::endl;                                      \
-            VULK_THROW_FMT("Vulkan error: {}", std::to_string(vkcall_macro_result));                                                                           \
-        }                                                                                                                                                      \
+#define VK_CALL(func)                                                                                                     \
+    do {                                                                                                                  \
+        VkResult vkcall_macro_result = (func);                                                                            \
+        if (vkcall_macro_result != VK_SUCCESS) {                                                                          \
+            std::cerr << "Vulkan error: " << (vkcall_macro_result) << " at " << __FILE__ << ":" << __LINE__ << std::endl; \
+            VULK_THROW_FMT("Vulkan error: {}", std::to_string(vkcall_macro_result));                                      \
+        }                                                                                                                 \
     } while (0)
 
 #define ASSERT_KEY_NOT_SET(findable_container, key) assert((findable_container).find(key) == (findable_container).end())
@@ -96,12 +86,13 @@ class VulkMesh;
 
 SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface);
 QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface);
-std::vector<char> readFileIntoMem(const std::string &filename);
+std::vector<char> readFileIntoMem(const std::string& filename);
 
 class VulkPauseableTimer {
-  public:
-    VulkPauseableTimer() : isRunning(false), elapsedTime(0.0f) {
-    }
+public:
+    VulkPauseableTimer()
+        : isRunning(false)
+        , elapsedTime(0.0f) {}
 
     void start() {
         if (!isRunning) {
@@ -145,7 +136,7 @@ class VulkPauseableTimer {
         }
     }
 
-  private:
+private:
     bool isRunning;
     float elapsedTime; // In seconds
     std::chrono::time_point<std::chrono::high_resolution_clock> startTime;

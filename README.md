@@ -42,6 +42,37 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
+## 5/24 camera controls refresher
+
+A quaternion is a four-dimensional complex number that can represent a rotation in 3D space. It consists of one real part and three imaginary parts:
+
+q=w+xi+yj+zk
+
+w is the scalar (real) part.
+x,y,z are the vector (imaginary) parts.
+
+Unit Quaternion: A quaternion representing a rotation must have a norm (magnitude) of 1. This is called a unit quaternion.
+Conjugate: The conjugate of a quaternion
+q is given by:
+q∗ =w−xi−yj−zk
+
+Inverse: For a unit quaternion, the inverse is simply its conjugate.
+
+Quaternion multiplication combines rotations. The multiplication is not commutative
+From Euler Angles to Quaternion
+To convert Euler angles (yaw, pitch, roll) to a quaternion:
+
+```cpp
+glm::quat eulerToQuaternion(float yaw, float pitch, float roll) {
+    glm::quat qYaw = glm::angleAxis(glm::radians(yaw), glm::vec3(0.0f, 1.0f, 0.0f));
+    glm::quat qPitch = glm::angleAxis(glm::radians(pitch), glm::vec3(1.0f, 0.0f, 0.0f));
+    glm::quat qRoll = glm::angleAxis(glm::radians(roll), glm::vec3(0.0f, 0.0f, 1.0f));
+    return qYaw * qPitch * qRoll;
+}
+```
+
+v_rotated=qvq_inv
+
 ## PBR 5/23/24
 
 Working towards more lights so I can figure out why things seem a little dark.
