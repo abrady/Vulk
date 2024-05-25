@@ -46,8 +46,9 @@ void main() {
     float roughness = texture(roughnessMap, inTexCoord).r;
     float ao = texture(aoMap, inTexCoord).r;
     vec3 mapN = texture(normalMap, inTexCoord).rgb;
+    vec3 N = sampleNormalMap(normalMap, inTexCoord, inNormal, inTangent, inBitangent);
 
-    vec3 Lo = PBR(lightsBuf.lights, eyePosUBO.eyePos, inPos, inNormal, inTangent, inBitangent, mapN, albedo, metallic, roughness, ao);
+    vec3 Lo = PBR(lightsBuf.lights, eyePosUBO.eyePos, inPos, N, albedo, metallic, roughness, ao);
     // Output final color
     vec4 color = vec4(Lo, 1.0);
     outColor = color;

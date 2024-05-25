@@ -42,6 +42,106 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
+## 5/24 camera controls refresher
+
+A quaternion is a four-dimensional complex number that can represent a rotation in 3D space. It consists of one real part and three imaginary parts:
+
+q=w+xi+yj+zk
+
+w is the scalar (real) part.
+x,y,z are the vector (imaginary) parts.
+
+Unit Quaternion: A quaternion representing a rotation must have a norm (magnitude) of 1. This is called a unit quaternion.
+Conjugate: The conjugate of a quaternion
+q is given by:
+q∗ =w−xi−yj−zk
+
+Inverse: For a unit quaternion, the inverse is simply its conjugate.
+
+Quaternion multiplication combines rotations. The multiplication is not commutative
+From Euler Angles to Quaternion
+To convert Euler angles (yaw, pitch, roll) to a quaternion:
+
+```cpp
+glm::quat eulerToQuaternion(float yaw, float pitch, float roll) {
+    glm::quat qYaw = glm::angleAxis(glm::radians(yaw), glm::vec3(0.0f, 1.0f, 0.0f));
+    glm::quat qPitch = glm::angleAxis(glm::radians(pitch), glm::vec3(1.0f, 0.0f, 0.0f));
+    glm::quat qRoll = glm::angleAxis(glm::radians(roll), glm::vec3(0.0f, 0.0f, 1.0f));
+    return qYaw * qPitch * qRoll;
+}
+```
+
+v_rotated=qvq_inv
+
+## PBR 5/23/24
+
+Working towards more lights so I can figure out why things seem a little dark.
+
+![](Assets/Screenshots/debug_wireframe_menu.png)
+
+![](Assets/Screenshots/wireframe_sphere.png)
+
+## PR 5/21/24
+
+Getting close, but the sphere is a little dark. some things I'd like to do:
+
+1. debug into the shininess. it feels like our specular isn't working the way I'd expect it.
+2. get scene nav working: zoom in/out, rotate world with mouse grab, etc.
+3. wire up the debug overrides in the menu: metallic, roughness (scale?)
+4. another model? maybe a metallic/diffuse side by side.
+5. add support for multiple lights
+6. visualize the lights maybe?
+
+## PBR 5/20/24
+
+Feeling like I'm finally getting PBR:
+
+1. PBR is a way of modelling illumination where energy is conserved.
+2. the BRDF or "bidirectional reflectance distribution function" F(l,v) determines the light coming from l that reaches the viewer's eye v.
+3. the distribution of the BRDF is a hemisphere above the surface of the material the function is for. the integral of this hemisphere over the solid angle should be <= 1 (and hence conserve energy)
+4. The integral of a constant 1 over the solid angle is pi, so dividing by pi creates a valid BRDF
+5. The lambertian has a constant rho <= 1, so the lambertial BRDF is rho/pi. This is often used for the diffuse component of PBR.
+6. The Cook-Torrence BRDF is more complicated and is composed of functions: D(h)G(h)F(v,h)/4(n.l)(n.v) where:
+    * D is the distribution function for the percent of microfacts that have the half-angle h so that l reflects to v (see NDF below)
+    * G is the geometry function for describing how roughness on the surface might self-shadow and prevent reflection
+    * F is the fresnel equation which just accounts for how things get more reflective at oblique angles.
+7. The NDF is the normal distribution function (not strictly a gaussian btw). The microfacet model treats a surface as being made up of tiny flat surfaces large enough to reflect the incoming light with a
+  distribution of directions they face. if the normal of a microfacet lines up with the half-angle of v and l, then it will reflect v to l.
+
+Note: I'm eliding specific NDFs or D/G functions for simplicity.
+
+So pulling it all together. Given a light, a viewer, and an arbitrary point on a surface we have
+
+* L - the RGB intensity of the light
+* l - the light ray towards the point
+* n - the normal of the surface
+* v - the ray from the viewer towards the point
+* 𝜌 - the albedo of the surface as an RGB (aka the diffuse reflection of the surface)
+*
+
+PBR(L,l,v,𝜌) = 𝜌/pi . L . (n . l) + D(h)G(h)F(v,h)/4(n.l)(n.v)
+
+note that since you're adding two different functions you want to make sure to conserve energy. One common
+method for doing this is to use F0 the reflectance of the surface at normal incidence and set 𝜌' = 𝜌(1 - F0)
+which effectively makes this a blend operation.
+
+Here's my first rendering:
+![](Assets/Screenshots/my_pbr_render1.png)
+
+not bad!
+  
+## PBR 5/19/24
+
+What is PBR?
+
+<https://graphicscompendium.com/gamedev/15-pbr>
+
+## PBR 5/18/24
+
+![](Assets/Screenshots/diffuse_pbr.png)
+
+the debug channels are working. this is just a white material but you can see the normal map working, very cool.
+
 ## 5/14 PBR with UI part 2
 
 Coded up <https://www.shadertoy.com/view/4sSfzK> and got it compiling. next I'll

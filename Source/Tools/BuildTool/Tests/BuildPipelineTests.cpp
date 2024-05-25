@@ -19,6 +19,7 @@ static SourcePipelineDef makeTestPipelineDeclDef() {
     def.geomShaderName = "DebugNormals";
     def.fragShaderName = "DebugNormals";
     def.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN;
+    def.polygonMode = VK_POLYGON_MODE_FILL;
     def.depthTestEnabled = true;
     def.depthWriteEnabled = true;
     def.depthCompareOp = VK_COMPARE_OP_NOT_EQUAL;
@@ -72,6 +73,7 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
         CHECK(res.geomShaderName == "DebugNormals");
         CHECK(res.fragShaderName == "DebugNormals");
         CHECK(res.primitiveTopology == VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN);
+        CHECK(res.polygonMode == VK_POLYGON_MODE_FILL);
         CHECK(res.depthTestEnabled == true);
         CHECK(res.depthWriteEnabled == true);
         CHECK(res.vertInputs ==
@@ -109,6 +111,8 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
             CHECK(builtDef.geomShaderName == def.geomShaderName);
             CHECK(builtDef.fragShaderName == def.fragShaderName);
             CHECK(builtDef.primitiveTopology == def.primitiveTopology);
+            CHECK(builtDef.polygonMode == def.polygonMode);
+            CHECK(builtDef.polygonMode == def.polygonMode);
             CHECK(builtDef.depthTestEnabled == def.depthTestEnabled);
             CHECK(builtDef.depthWriteEnabled == def.depthWriteEnabled);
             CHECK(builtDef.depthCompareOp == def.depthCompareOp);

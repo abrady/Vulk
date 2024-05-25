@@ -103,6 +103,7 @@ std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(VkRenderPass renderPas
         .setDepthWriteEnabled(def.depthWriteEnabled)
         .setDepthCompareOp(def.depthCompareOp)
         .setPrimitiveTopology(def.primitiveTopology)
+        .setPolygonMode(def.polygonMode)
         .setLineWidth(1.0f)
         .setScissor(extent)
         .setViewport(extent)

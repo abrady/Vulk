@@ -8,20 +8,21 @@ using namespace vulk;
 namespace fs = std::filesystem;
 
 namespace nlohmann {
-    template <> struct adl_serializer<glm::vec3> {
-        static void to_json(json &j, const glm::vec3 &v) {
-            j = json{v.x, v.y, v.z};
-        }
+template <>
+struct adl_serializer<glm::vec3> {
+    static void to_json(json& j, const glm::vec3& v) {
+        j = json{v.x, v.y, v.z};
+    }
 
-        static void from_json(const json &j, glm::vec3 &v) {
-            v.x = j.at(0).get<float>();
-            v.y = j.at(1).get<float>();
-            v.z = j.at(2).get<float>();
-        }
-    };
+    static void from_json(const json& j, glm::vec3& v) {
+        v.x = j.at(0).get<float>();
+        v.y = j.at(1).get<float>();
+        v.z = j.at(2).get<float>();
+    }
+};
 } // namespace nlohmann
 
-MaterialDef loadMaterialDef(const fs::path &file) {
+MaterialDef loadMaterialDef(const fs::path& file) {
     if (!fs::exists(file)) {
         VULK_THROW("Material file does not exist: " + file.string());
     }
@@ -70,7 +71,7 @@ MaterialDef loadMaterialDef(const fs::path &file) {
         std::string prefix;
         lineStream >> prefix;
 
-        auto processPath = [&](const std::string &relativePath) -> std::string {
+        auto processPath = [&](const std::string& relativePath) -> std::string {
             fs::path absPath = fs::absolute(basePath / relativePath);
             if (!fs::exists(absPath)) {
                 VULK_THROW("Referenced file does not exist: " + absPath.string());
@@ -136,8 +137,7 @@ MaterialDef loadMaterialDef(const fs::path &file) {
     return material;
 }
 
-ModelDef ModelDef::fromJSON(const nlohmann::json &j, unordered_map<string, shared_ptr<MeshDef>> const &meshes,
-                            unordered_map<string, shared_ptr<MaterialDef>> materials) {
+ModelDef ModelDef::fromJSON(const nlohmann::json& j, unordered_map<string, shared_ptr<MeshDef>> const& meshes, unordered_map<string, shared_ptr<MaterialDef>> materials) {
     assert(j.at("version").get<uint32_t>() == MODEL_JSON_VERSION);
     auto name = j.at("name").get<string>();
     string mn = j.at("material").get<string>();
@@ -199,12 +199,13 @@ ModelDef ModelDef::fromJSON(const nlohmann::json &j, unordered_map<string, share
     };
 }
 
-ActorDef ActorDef::fromJSON(const nlohmann::json &j, unordered_map<string, shared_ptr<BuiltPipelineDef>> const &pipelines,
-                            unordered_map<string, shared_ptr<ModelDef>> const &models, unordered_map<string, shared_ptr<MeshDef>> meshes,
+ActorDef ActorDef::fromJSON(const nlohmann::json& j, unordered_map<string, shared_ptr<BuiltPipelineDef>> const& pipelines,
+                            unordered_map<string, shared_ptr<ModelDef>> const& models, unordered_map<string, shared_ptr<MeshDef>> meshes,
                             unordered_map<string, shared_ptr<MaterialDef>> materials) {
     ActorDef a;
     a.name = j.at("name").get<string>();
-    a.pipeline = pipelines.at(j.at("pipeline").get<string>());
+    string pipelineName = j.at("pipeline").get<string>();
+    a.pipeline = pipelines.at(pipelineName);
 
     if (j.contains("model")) {
         assert(!j.contains("inlineModel"));
@@ -230,9 +231,9 @@ ActorDef ActorDef::fromJSON(const nlohmann::json &j, unordered_map<string, share
     return a;
 }
 
-SceneDef SceneDef::fromJSON(const nlohmann::json &j, unordered_map<string, shared_ptr<BuiltPipelineDef>> const &pipelines,
-                            unordered_map<string, shared_ptr<ModelDef>> const &models, unordered_map<string, shared_ptr<MeshDef>> const &meshes,
-                            unordered_map<string, shared_ptr<MaterialDef>> const &materials) {
+SceneDef SceneDef::fromJSON(const nlohmann::json& j, unordered_map<string, shared_ptr<BuiltPipelineDef>> const& pipelines,
+                            unordered_map<string, shared_ptr<ModelDef>> const& models, unordered_map<string, shared_ptr<MeshDef>> const& meshes,
+                            unordered_map<string, shared_ptr<MaterialDef>> const& materials) {
     SceneDef s;
     assert(j.at("version").get<uint32_t>() == SCENE_JSON_VERSION);
     s.name = j.at("name").get<string>();
@@ -249,7 +250,7 @@ SceneDef SceneDef::fromJSON(const nlohmann::json &j, unordered_map<string, share
         s.camera.farClip = jcam.at("farClip").get<float>();
 
     // load the lights
-    for (auto const &light : j.at("lights").get<vector<json>>()) {
+    for (auto const& light : j.at("lights").get<vector<json>>()) {
         string type = light.at("type").get<string>();
         if (type == "point") {
             auto pos = light.at("pos").get<glm::vec3>();
@@ -263,7 +264,7 @@ SceneDef SceneDef::fromJSON(const nlohmann::json &j, unordered_map<string, share
     };
 
     // load the actors
-    for (auto const &actor : j.at("actors").get<vector<nlohmann::json>>()) {
+    for (auto const& actor : j.at("actors").get<vector<nlohmann::json>>()) {
         auto a = make_shared<ActorDef>(ActorDef::fromJSON(actor, pipelines, models, meshes, materials));
         s.actors.push_back(a);
         assert(!s.actorMap.contains(a->name));
@@ -273,7 +274,7 @@ SceneDef SceneDef::fromJSON(const nlohmann::json &j, unordered_map<string, share
     return s;
 }
 
-void findAndProcessMetadata(const fs::path path, Metadata &metadata) {
+void findAndProcessMetadata(const fs::path path, Metadata& metadata) {
     cout << "Finding and processing metadata in " << path << endl;
     assert(fs::exists(path) && fs::is_directory(path));
 
@@ -288,7 +289,7 @@ void findAndProcessMetadata(const fs::path path, Metadata &metadata) {
     };
     unordered_map<string, unordered_map<string, LoadInfo>> loadInfos;
 
-    for (const auto &entry : fs::recursive_directory_iterator(path)) {
+    for (const auto& entry : fs::recursive_directory_iterator(path)) {
         if (entry.is_regular_file()) {
             string stem = entry.path().stem().string();
             string ext = entry.path().stem().extension().string() + entry.path().extension().string(); // get 'bar' from foo.bar and 'bar.bin' from foo.bar.bin
@@ -344,17 +345,17 @@ void findAndProcessMetadata(const fs::path path, Metadata &metadata) {
     // The order matters here: models depend on meshes and materials, actors depend on models and pipelines
     // and the scene depends on actors
 
-    for (auto const &[name, pipeline] : metadata.pipelines) {
+    for (auto const& [name, pipeline] : metadata.pipelines) {
         pipeline->fixup(metadata.vertShaders, metadata.geometryShaders, metadata.fragmentShaders);
     }
 
-    for (auto const &[name, loadInfo] : loadInfos[".model"]) {
+    for (auto const& [name, loadInfo] : loadInfos[".model"]) {
         auto modelDef = make_shared<ModelDef>(ModelDef::fromJSON(loadInfo.j, metadata.meshes, metadata.materials));
         assert(!metadata.models.contains(modelDef->name));
         metadata.models[modelDef->name] = modelDef;
     }
 
-    for (auto const &[name, loadInfo] : loadInfos[".scene"]) {
+    for (auto const& [name, loadInfo] : loadInfos[".scene"]) {
         auto sceneDef = make_shared<SceneDef>(SceneDef::fromJSON(loadInfo.j, metadata.pipelines, metadata.models, metadata.meshes, metadata.materials));
         assert(!metadata.scenes.contains(sceneDef->name));
         metadata.scenes[sceneDef->name] = sceneDef;
@@ -386,7 +387,7 @@ std::filesystem::path getResourcesDir() {
     return path;
 }
 
-Metadata const *getMetadata() {
+Metadata const* getMetadata() {
     static Metadata metadata;
     static once_flag flag;
     call_once(flag, [&]() {

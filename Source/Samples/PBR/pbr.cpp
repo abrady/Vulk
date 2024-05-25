@@ -1,9 +1,5 @@
 #pragma once
 
-#include <memory>
-
-#include "imgui.h"
-
 #include "Vulk/Vulk.h"
 #include "Vulk/VulkActor.h"
 #include "Vulk/VulkBufferBuilder.h"
@@ -20,20 +16,12 @@
 #include "Vulk/VulkScene.h"
 #include "Vulk/VulkStorageBuffer.h"
 #include "Vulk/VulkUniformBuffer.h"
+#include "imgui.h"
+#include <memory>
 
-static void HelpMarker(const char *desc) {
-    ImGui::TextDisabled("(?)");
-    if (ImGui::BeginItemTooltip()) {
-        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
-        ImGui::TextUnformatted(desc);
-        ImGui::PopTextWrapPos();
-        ImGui::EndTooltip();
-    }
-}
-
-class World : public VulkRenderable {
-  public:
-    Vulk &vk;
+class World : public VulkRenderable, public MouseEventHandler {
+public:
+    Vulk& vk;
     std::shared_ptr<VulkScene> scene;
 
     std::shared_ptr<VulkDepthRenderpass> shadowMapRenderpass;
@@ -45,20 +33,33 @@ class World : public VulkRenderable {
     std::vector<std::shared_ptr<VulkActor>> debugTangentsActors;
     std::vector<std::shared_ptr<VulkActor>> debugNormalsActors;
 
+    std::shared_ptr<VulkPipeline> wireframePipeline;
+    std::vector<std::shared_ptr<VulkActor>> debugWireframeActors;
+
     struct Debug {
         bool renderNormals = false;
         bool renderTangents = false;
+        bool renderWireframe = false;
     } debug;
 
-  public:
-    World(Vulk &vk, std::string sceneName) : vk(vk) {
+public:
+    World(Vulk& vk, std::string sceneName)
+        : vk(vk) {
+        setMouseEventHandler(this);
+
         shadowMapRenderpass = std::make_shared<VulkDepthRenderpass>(vk);
         shadowMapFence = std::make_shared<VulkFence>(vk);
 
         VulkResources resources(vk);
         resources.loadScene(vk.renderPass, sceneName, shadowMapRenderpass->depthViews);
         scene = resources.scenes[sceneName];
-        SceneDef &sceneDef = *resources.metadata.scenes.at(sceneName);
+
+        //
+        glm::vec3 lookAt = scene->camera.lookAt;
+        glm::vec3 up = scene->camera.getUpVec();
+        glm::mat4 cam = glm::lookAt(scene->camera.eye, lookAt, up);
+
+        SceneDef& sceneDef = *resources.metadata.scenes.at(sceneName);
 
         shadowMapPipeline = resources.loadPipeline(shadowMapRenderpass->renderPass, shadowMapRenderpass->extent, "ShadowMap");
         auto shadowMapPipelineDef = resources.metadata.pipelines.at("ShadowMap");
@@ -72,9 +73,26 @@ class World : public VulkRenderable {
         // ========================================================================================================
         // Debug stuff
 
+        VulkPBRDebugUBO& pbrDebugUBO = *scene->pbrDebugUBO->mappedUBO;
+        pbrDebugUBO.isMetallic = 0;
+        pbrDebugUBO.roughness = 0.5f;
+        pbrDebugUBO.diffuse = 1;
+        pbrDebugUBO.specular = 1;
+
+        wireframePipeline = resources.loadPipeline(vk.renderPass, vk.swapChainExtent, "Wireframe");
+        auto wireframePipelineDef = resources.metadata.pipelines.at("Wireframe");
+        for (size_t i = 0; i < scene->actors.size(); ++i) {
+            auto actor = scene->actors[i];
+            auto actorDef = sceneDef.actors[i];
+            std::shared_ptr<VulkActor> wireframeActor = resources.createActorFromPipeline(*actorDef, wireframePipelineDef, scene);
+            // scene->actors[i]->pipeline = wireframeActor->pipeline;
+            debugWireframeActors.push_back(wireframeActor);
+        }
+
         // always create the debug actors/pipeline so we can render them on command.
         debugNormalsPipeline = resources.loadPipeline(vk.renderPass, vk.swapChainExtent, "DebugNormals");
-        resources.loadPipeline(vk.renderPass, vk.swapChainExtent, "DebugTangents"); // TODO: does this even need to be a separate pipeline?
+        resources.loadPipeline(vk.renderPass, vk.swapChainExtent,
+                               "DebugTangents"); // TODO: does this even need to be a separate pipeline?
         auto debugNormalsPipelineDef = resources.metadata.pipelines.at("DebugNormals");
         auto debugTangentsPipelineDef = resources.metadata.pipelines.at("DebugTangents");
 
@@ -99,7 +117,7 @@ class World : public VulkRenderable {
         // a useful demo of a variety of features
         ImGui::ShowDemoWindow(nullptr);
 
-        const ImGuiViewport *viewport = ImGui::GetMainViewport();
+        const ImGuiViewport* viewport = ImGui::GetMainViewport();
         ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x, viewport->WorkPos.y), ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowSize(ImVec2(550, 680), ImGuiCond_FirstUseEver);
         if (!ImGui::Begin("VulkUI Menu", &menu.isOpen, menu.windowFlags)) {
@@ -111,12 +129,13 @@ class World : public VulkRenderable {
         // e.g. Use 2/3 of the space for widgets and 1/3 for labels (right align)
         // e.g. Leave a fixed amount of width for labels (by passing a negative value), the rest goes to widgets.
         ImGui::PushItemWidth(ImGui::GetFontSize() * -12);
-        if (ImGui::CollapsingHeader("Debug")) {
+        if (ImGui::CollapsingHeader("Debug", ImGuiTreeNodeFlags_DefaultOpen)) {
             ImGui::Checkbox("Render Normals", &debug.renderNormals);
             ImGui::Checkbox("Render Tangents", &debug.renderTangents);
+            ImGui::Checkbox("Render Wireframe", &debug.renderWireframe);
         }
 
-        VulkPBRDebugUBO &pbrDebugUBO = *scene->pbrDebugUBO->mappedUBO;
+        VulkPBRDebugUBO& pbrDebugUBO = *scene->pbrDebugUBO->mappedUBO;
         ImGui::Text("Material");
         ImGui::RadioButton("Dielectric", &pbrDebugUBO.isMetallic, 0);
         ImGui::SameLine();
@@ -125,8 +144,8 @@ class World : public VulkRenderable {
         ImGui::SliderFloat("Roughness", &pbrDebugUBO.roughness, 0.0f, 1.0f);
 
         ImGui::Text("Lighting");
-        ImGui::Checkbox("Diffuse", (bool *)&pbrDebugUBO.diffuse);
-        ImGui::Checkbox("Specular", (bool *)&pbrDebugUBO.specular);
+        ImGui::Checkbox("Diffuse", (bool*)&pbrDebugUBO.diffuse);
+        ImGui::Checkbox("Specular", (bool*)&pbrDebugUBO.specular);
 
         // ImGui::SliderInt("slider int", &i1, -1, 3);
         // ImGui::SameLine();
@@ -161,20 +180,20 @@ class World : public VulkRenderable {
         float nearClip = scene->camera.nearClip;
         float farClip = scene->camera.farClip;
 
-        glm::vec3 lookAt = scene->camera.lookAt;
-        glm::vec3 up = scene->camera.getUpVec();
+        // glm::vec3 lookAt = scene->camera.lookAt;
+        // glm::vec3 up = scene->camera.getUpVec();
         *scene->sceneUBOs.eyePos.ptrs[vk.currentFrame] = scene->camera.eye;
 
-        VulkSceneUBOs::XformsUBO &ubo = *scene->sceneUBOs.xforms.ptrs[vk.currentFrame];
+        VulkSceneUBOs::XformsUBO& ubo = *scene->sceneUBOs.xforms.ptrs[vk.currentFrame];
         ubo.world = glm::rotate(glm::mat4(1.0f), rotationTime * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        ubo.view = glm::lookAt(scene->camera.eye, lookAt, up);
+        // ubo.view = glm::lookAt(scene->camera.eye, lookAt, up);
+        ubo.view = glm::mat4(scene->camera.getRotMat());
         ubo.proj = glm::perspective(glm::radians(45.0f), viewport.width / (float)viewport.height, nearClip, farClip);
 
         // set up the light view proj
-        VulkPointLight &light = *scene->sceneUBOs.pointLight.mappedUBO;
+        VulkPointLight& light = *scene->sceneUBOs.pointLight.mappedUBO;
         glm::vec3 lightLookAt = scene->camera.lookAt;
-        up = glm::vec3(0.0f, 1.0f, 0.0f);
-        glm::mat4 lightView = glm::lookAt(light.pos, lightLookAt, up);
+        glm::mat4 lightView = glm::lookAt(light.pos, lightLookAt, glm::vec3(0.0f, 1.0f, 0.0f));
         glm::mat4 lightProj = glm::perspective(glm::radians(45.0f), viewport.width / (float)viewport.height, nearClip, farClip);
         glm::mat4 viewProj = lightProj * lightView;
         scene->lightViewProjUBO->mappedUBO->viewProj = viewProj;
@@ -202,7 +221,7 @@ class World : public VulkRenderable {
         renderPassBeginInfo.pClearValues = &clearValue;
 
         vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-        for (auto &actor : shadowMapActors) {
+        for (auto& actor : shadowMapActors) {
             auto model = actor->model;
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipeline);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout, 0, 1,
@@ -234,20 +253,31 @@ class World : public VulkRenderable {
     }
 
     void render(VkCommandBuffer commandBuffer, uint32_t currentFrame) {
-        // render the scene?
-        for (auto &actor : scene->actors) {
-            auto model = actor->model;
-            vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipeline);
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout, 0, 1,
-                                    &actor->dsInfo->descriptorSets[currentFrame]->descriptorSet, 0, nullptr);
-            model->bindInputBuffers(commandBuffer);
-            vkCmdDrawIndexed(commandBuffer, model->numIndices, 1, 0, 0, 0);
+        // render the scene
+        if (debug.renderWireframe) {
+            for (auto& actor : debugWireframeActors) {
+                auto model = actor->model;
+                vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, wireframePipeline->pipeline);
+                vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, wireframePipeline->pipelineLayout, 0, 1,
+                                        &actor->dsInfo->descriptorSets[currentFrame]->descriptorSet, 0, nullptr);
+                model->bindInputBuffers(commandBuffer);
+                vkCmdDrawIndexed(commandBuffer, model->numIndices, 1, 0, 0, 0);
+            }
+        } else {
+            for (auto& actor : scene->actors) {
+                auto model = actor->model;
+                vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipeline);
+                vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout, 0, 1,
+                                        &actor->dsInfo->descriptorSets[currentFrame]->descriptorSet, 0, nullptr);
+                model->bindInputBuffers(commandBuffer);
+                vkCmdDrawIndexed(commandBuffer, model->numIndices, 1, 0, 0, 0);
+            }
         }
 
         // render the debug normals
         if (debug.renderNormals) {
             scene->debugNormalsUBO->mappedUBO->useModel = false;
-            for (auto &actor : debugNormalsActors) {
+            for (auto& actor : debugNormalsActors) {
                 auto model = actor->model;
                 vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipeline);
                 vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout, 0, 1,
@@ -261,7 +291,7 @@ class World : public VulkRenderable {
         // render the debug tangents
         if (debug.renderTangents) {
             scene->debugTangentsUBO->mappedUBO->length = .1f;
-            for (auto &actor : debugTangentsActors) {
+            for (auto& actor : debugTangentsActors) {
                 auto model = actor->model;
                 vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipeline);
                 vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout, 0, 1,
@@ -274,7 +304,7 @@ class World : public VulkRenderable {
     }
 
     bool keyCallback(int key, int /*scancode*/, int action, int /*mods*/) {
-        VulkCamera &camera = scene->camera;
+        VulkCamera& camera = scene->camera;
         bool handled = false;
         if (action == GLFW_PRESS || action == GLFW_REPEAT) {
             glm::vec3 fwd = camera.getForwardVec();
@@ -315,21 +345,29 @@ class World : public VulkRenderable {
             if (handled) {
                 camera.yaw = fmodf(camera.yaw, 360.0f);
                 camera.pitch = fmodf(camera.pitch, 360.0f);
-                std::cout << "eye: " << camera.eye.x << ", " << camera.eye.y << ", " << camera.eye.z << " yaw: " << camera.yaw << " pitch: " << camera.pitch
-                          << std::endl;
+                std::cout << "eye: " << camera.eye.x << ", " << camera.eye.y << ", " << camera.eye.z << " yaw: " << camera.yaw << " pitch: " << camera.pitch << std::endl;
                 return true;
             }
         }
         return false;
     }
 
+    void onDrag(double /*xpos*/, double /*ypos*/, MouseDragContext const& drag, MouseEventContext const& /*ctxt*/) override {
+        float dx = (float)drag.dxdt * 10.0f;
+        float dy = (float)drag.dydt * 10.0f;
+        scene->camera.yaw += dx;
+        scene->camera.pitch += dy;
+        std::cout << "yaw: " << scene->camera.yaw << " pitch: " << scene->camera.pitch << " dx: " << dx << " dy: " << dy << std::endl;
+    }
+
     ~World() {
+        clearMouseEventHandler();
     }
 };
 
 int main() {
     Vulk app;
-    app.renderable = std::make_shared<World>(app, "PBR");
+    app.renderable = std::make_shared<World>(app, "PBR2");
     app.run();
     return 0;
 }

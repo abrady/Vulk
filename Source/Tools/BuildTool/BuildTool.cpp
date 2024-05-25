@@ -58,16 +58,16 @@ namespace fs = std::filesystem;
 //     return EXCEPTION_EXECUTE_HANDLER;
 // }
 
-int sceneBuilder(fs::path sceneFileIn, fs::path sceneOutDir) {
+void sceneBuilder(fs::path sceneFileIn, fs::path sceneOutDir) {
     std::shared_ptr<spdlog::logger> logger = VulkLogger::CreateLogger("buildtool:SceneBuilder");
     logger->info("Building scene from file: {}", sceneFileIn.string());
     if (!fs::exists(sceneFileIn)) {
         logger->error("Scene file does not exist: {}", sceneFileIn.string());
-        return 1;
+        throw CLI::ValidationError("Scene file does not exist: " + sceneFileIn.string());
     }
     if (!fs::exists(sceneOutDir)) {
         logger->error("Scene output directory does not exist: {}", sceneOutDir.string());
-        return 1;
+        throw CLI::ValidationError("Scene output directory does not exist: " + sceneOutDir.string());
     }
     // Read from the input file
     std::ifstream sceneIn(sceneFileIn);
@@ -86,16 +86,16 @@ int sceneBuilder(fs::path sceneFileIn, fs::path sceneOutDir) {
     cereal::JSONOutputArchive output(sceneFileOut);
     output(data); // Serialize data to the file
     sceneFileOut.close();
-    return 0;
+    throw CLI::Success(); // not really necessary
 }
 
-int glslShaderEnumsGenerator(fs::path outFile, bool verbose) {
+void glslShaderEnumsGenerator(fs::path outFile, bool verbose) {
     auto logger = VulkLogger::CreateLogger("Buildtool:ShaderEnumsGenerator");
     logger->info("GLSLIncludesGenerator: Generating GLSL includes for enum values to: {}", outFile.string());
     auto parent_dir = outFile.parent_path();
     if (!fs::exists(parent_dir)) {
         logger->error("Output directory does not exist: {}", parent_dir.string());
-        return 1;
+        throw CLI::ValidationError("Output directory does not exist: " + parent_dir.string());
     }
 
     if (verbose) {
@@ -143,10 +143,10 @@ int glslShaderEnumsGenerator(fs::path outFile, bool verbose) {
 
     out.close();
 
-    return 0;
+    throw CLI::Success(); // not really necessary
 }
 
-int pipelineBuilder(fs::path builtShadersDir, fs::path pipelineFileOut, fs::path pipelineFileIn, bool verbose) {
+void pipelineBuilder(fs::path builtShadersDir, fs::path pipelineFileOut, fs::path pipelineFileIn, bool verbose) {
     auto logger = VulkLogger::CreateLogger("PipelineBuilder");
     if (verbose) {
         logger->set_level(spdlog::level::trace);
@@ -155,15 +155,15 @@ int pipelineBuilder(fs::path builtShadersDir, fs::path pipelineFileOut, fs::path
     logger->info("PipelineBuilder: Building pipeline from file: {}", pipelineFileIn.string());
     if (!fs::exists(builtShadersDir)) {
         logger->error("Shaders directory does not exist: {}", builtShadersDir.string());
-        return 1;
+        throw CLI::ValidationError("Shaders directory does not exist: " + builtShadersDir.string());
     }
     if (!fs::exists(pipelineFileOut.parent_path())) {
         logger->error("Pipeline output directory does not exist: {}", pipelineFileOut.parent_path().string());
-        return 2;
+        throw CLI::ValidationError("Pipeline output directory does not exist: " + pipelineFileOut.parent_path().string());
     }
     if (!fs::exists(pipelineFileIn)) {
         logger->error("Pipeline file does not exist: {}", pipelineFileIn.string());
-        return 3;
+        throw CLI::ValidationError("Pipeline file does not exist: " + pipelineFileIn.string());
     }
 
     logger->trace("Shaders Dir: {}, Pipeline Out Dir: {}, Processing pipeline: {}", builtShadersDir.string(), pipelineFileOut.string(),
@@ -173,15 +173,15 @@ int pipelineBuilder(fs::path builtShadersDir, fs::path pipelineFileOut, fs::path
         PipelineBuilder::buildPipelineFromFile(builtShadersDir, pipelineFileOut, pipelineFileIn);
     } catch (std::exception &e) {
         logger->error("PipelineBuilder: Error: {}", e.what());
-        return 4;
+        throw CLI::Error("PipelineBuilder", "Error: " + string(e.what()));
     } catch (...) {
         VulkException e("Unknown error while processing " + pipelineFileIn.string());
         logger->error("PipelineBuilder: Unknown error while processing {}", e.what());
-        return 5;
+        throw CLI::Error("PipelineBuilder", "win32 Error: " + string(e.what()));
     }
 
     logger->trace("PipelineBuilder: Done!");
-    return 0;
+    throw CLI::Success(); // not really necessary
 }
 
 int main(int argc, char **argv) {

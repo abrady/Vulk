@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Common/ClassNonCopyableNonMovable.h"
+#include "ClassNonCopyableNonMovable.h"
 #include "Vulk.h"
 
 class VulkFence : public ClassNonCopyableNonMovable {

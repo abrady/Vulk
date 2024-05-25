@@ -29,6 +29,8 @@ struct ShaderInfo {
 
 class PipelineBuilder {
   public:
+#pragma warning(push)
+#pragma warning(disable : 6262) // Function uses '18964' bytes of stack. - the SPIRV structs are big, not a problem.
     static ShaderInfo getShaderInfo(std::filesystem::path shaderPath) {
         auto spirvData = readSPIRVFile(shaderPath);
         spirv_cross::CompilerGLSL glsl(std::move(spirvData));
@@ -79,7 +81,7 @@ class PipelineBuilder {
 
         return parsedShader;
     }
-
+#pragma warning(pop)
     static bool checkConnections(ShaderInfo &upstream, ShaderInfo &downstream, std::string &errMsg) {
         errMsg = "";
         // Check if the downstream shader has any inputs that are not outputs of the upstream shader
@@ -175,7 +177,7 @@ class PipelineBuilder {
 
     static void buildPipelineFromFile(std::filesystem::path builtShadersDir, std::filesystem::path pipelineFileOut, fs::path pipelineFileSrc) {
         if (!std::filesystem::exists(pipelineFileSrc)) {
-            std::cerr << "Pipeline file does not exist: " << pipelineFileSrc << std::endl;
+            std::cerr << "Pipeline file does not exist: '" << pipelineFileSrc << "'" << std::endl;
             VULK_THROW("PipelineBuilder: Pipeline file does not exist");
         }
         if (!std::filesystem::exists(builtShadersDir)) {

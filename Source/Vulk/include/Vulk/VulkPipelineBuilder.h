@@ -48,6 +48,7 @@ class VulkPipelineBuilder {
     }
 
     VulkPipelineBuilder &setPrimitiveTopology(VkPrimitiveTopology topology);
+    VulkPipelineBuilder &setPolygonMode(VkPolygonMode polygonMode);
     VulkPipelineBuilder &setLineWidth(float lineWidth);
     VulkPipelineBuilder &setCullMode(VkCullModeFlags cullMode);
     VulkPipelineBuilder &setDepthTestEnabled(bool enabled);

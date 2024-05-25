@@ -2,8 +2,8 @@
 #include <string>
 #include <vector>
 
-#include "Samples/SampleRunner.h"
-#include "Samples/World.h"
+#include "SampleRunner.h"
+#include "World.h"
 
 int main() {
     uint32_t apiVersion = 0;

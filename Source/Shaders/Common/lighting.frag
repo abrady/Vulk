@@ -100,15 +100,20 @@ vec3 PBRDirectIllumination(vec3 posToLightVec, vec3 lightColor, vec3 albedo, vec
     return color;
 }
 
-
-// Note: assumes all params incoming have had no transformations applied
-vec3 PBR(PointLight lights[VulkLights_NumLights], vec3 eyePos, vec3 inPos, vec3 inNormal, vec3 inTangent, vec3 inBitangent, vec3 mapN, vec3 albedo, float metallic, float roughness, float ao) {
-    vec3 N = normalize(inNormal);
+// Sample a normal map and return the new normal
+// in a normal map the normals are stored in object space
+// so we need to transform them to world space. 
+// the x is the tangent length, the y is the bitangent length, and the z is the normal length
+vec3 sampleNormalMap(sampler2D normalMap, vec2 texCoord, vec3 inNormal, vec3 inTangent, vec3 inBitangent) {
+    vec3 mapN = texture(normalMap, texCoord).rgb;
     mapN = mapN * 2.0 - 1.0;
     vec3 T = normalize(inTangent);
     vec3 B = normalize(inBitangent);
-    N = normalize(T * mapN.x + B * mapN.y + N * mapN.z);
+    return normalize(T * mapN.x + B * mapN.y + inNormal * mapN.z);
+}
 
+// Note: assumes all params incoming have had no transformations applied
+vec3 PBR(PointLight lights[VulkLights_NumLights], vec3 eyePos, vec3 inPos, vec3 N, vec3 albedo, float metallic, float roughness, float ao) {
     // Calculate reflectance at normal incidence (F0)
     // pick something between our base F0 and the albedo color
     // this is a fairly standard value for dielectrics (non-metals) and will be used for most materials

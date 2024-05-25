@@ -22,13 +22,11 @@
  */
 #pragma once
 
+#include "ClassNonCopyableNonMovable.h"
 #include "Vulk.h"
-#include "Common/ClassNonCopyableNonMovable.h"
 
-template <typename T>
-class VulkStorageBuffer : public ClassNonCopyableNonMovable
-{
-public:
+template <typename T> class VulkStorageBuffer : public ClassNonCopyableNonMovable {
+  public:
     VkBuffer buf;       // Vulkan buffer handle
     VkDeviceMemory mem; // Vulkan device memory handle
     T *mappedObjs;      // Contiguous array of memory mapped objects
@@ -39,8 +37,7 @@ public:
      * @param vk The Vulk object used for Vulkan operations.
      * @param numActors The number of objects to be stored in the buffer.
      */
-    void createAndMap(Vulk &vk, uint32_t numElts)
-    {
+    void createAndMap(Vulk &vk, uint32_t numElts) {
         VkDeviceSize bufferSize = sizeof(T) * numElts;
         vk.createBuffer(bufferSize, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, buf, mem);
         vkMapMemory(vk.device, mem, 0, bufferSize, 0, (void **)&mappedObjs);
@@ -51,14 +48,12 @@ public:
      * Cleans up the Vulkan buffer and device memory.
      * @param dev The Vulkan device.
      */
-    void cleanup(VkDevice dev)
-    {
+    void cleanup(VkDevice dev) {
         vkDestroyBuffer(dev, buf, nullptr);
         vkFreeMemory(dev, mem, nullptr);
     }
 
-    uint32_t getSize()
-    {
+    uint32_t getSize() {
         return sizeof(T) * numObjs;
     }
 };
