@@ -30,6 +30,7 @@ public:
     glm::vec3 getEulers();
 
     void updateOrientation(float dx, float dy);
+    void updatePosition(float dx, float dy, float dz);
 
     template <class Archive>
     void serialize(Archive& archive) {

@@ -2,7 +2,8 @@
 
 #include <spdlog/spdlog.h>
 
-#include <spdlog/sinks/rotating_file_sink.h>
+#include "spdlog/sinks/basic_file_sink.h"
+// #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/stdout_sinks.h>
 
@@ -10,7 +11,10 @@ class VulkLogger {
 public:
     static std::shared_ptr<spdlog::logger> CreateLogger(std::string name) {
         auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-        auto file_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(name + "_logfile.log", 1024 * 1024 * 5, 30, true);
+        // garr, on windows we get a periodic log rename error, thanks to windows file locks.
+        // just do a single log file for now.
+        // auto file_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(name + "_logfile.log", 1024 * 1024 * 5, 30, false);
+        auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>("logfile.log", /*truncate=*/false);
         spdlog::sinks_init_list sink_list = {file_sink, console_sink};
         auto p = std::make_shared<spdlog::logger>(name, sink_list.begin(), sink_list.end());
         auto level = spdlog::get_level();

@@ -42,8 +42,15 @@ glm::vec3 VulkCamera::getEulers() {
 }
 
 void VulkCamera::updateOrientation(float dx, float dy) {
-    // glm::quat pitch = glm::angleAxis(dy, DEFAULT_RIGHT_VEC);
-    // glm::quat yaw = glm::angleAxis(dx, DEFAULT_UP_VEC);
-    // orientation = glm::normalize(pitch * yaw * orientation);
-    orientation = glm::rotate(glm::rotate(orientation, dx, DEFAULT_UP_VEC), dy, DEFAULT_RIGHT_VEC);
+    glm::quat pitch = glm::angleAxis(dy, DEFAULT_RIGHT_VEC);
+    glm::quat yaw = glm::angleAxis(-dx, DEFAULT_UP_VEC);
+    orientation = glm::normalize(pitch * yaw * orientation);
+}
+
+void VulkCamera::updatePosition(float dx, float dy, float dz) {
+    glm::vec3 forward = getForwardVec();
+    glm::vec3 right = getRightVec();
+    glm::vec3 upv = getUpVec();
+
+    eye += right * dx + upv * dy + forward * dz;
 }

@@ -86,7 +86,7 @@ void sceneBuilder(fs::path sceneFileIn, fs::path sceneOutDir) {
     cereal::JSONOutputArchive output(sceneFileOut);
     output(data); // Serialize data to the file
     sceneFileOut.close();
-    throw CLI::Success(); // not really necessary
+    // throw CLI::Success(); // not really necessary
 }
 
 void glslShaderEnumsGenerator(fs::path outFile, bool verbose) {
@@ -113,8 +113,8 @@ void glslShaderEnumsGenerator(fs::path outFile, bool verbose) {
     out << "\n// UBO Bindings\n";
     logger->trace("// UBO Bindings");
 
-    const VulkShaderBinding *bindings = EnumValuesVulkShaderBinding();
-    const char *const *ns = EnumNamesVulkShaderBinding();
+    const VulkShaderBinding* bindings = EnumValuesVulkShaderBinding();
+    const char* const* ns = EnumNamesVulkShaderBinding();
     for (int i = 0; ns[i] != nullptr; i++) {
         out << "const int VulkShaderBinding_" << ns[i] << " = " << (int)bindings[i] << ";\n";
         logger->trace("const int VulkShaderBinding_{} = {};", ns[i], (int)bindings[i]);
@@ -122,7 +122,7 @@ void glslShaderEnumsGenerator(fs::path outFile, bool verbose) {
 
     // Write the layout locations
     out << "\n// Shader Input Locations\n";
-    const VulkShaderLocation *locs = EnumValuesVulkShaderLocation();
+    const VulkShaderLocation* locs = EnumValuesVulkShaderLocation();
     ns = EnumNamesVulkShaderLocation();
     for (int i = 0; ns[i] != nullptr; i++) {
         out << "const int VulkShaderLocation_" << ns[i] << " = " << (int)locs[i] << ";\n";
@@ -132,7 +132,7 @@ void glslShaderEnumsGenerator(fs::path outFile, bool verbose) {
     // Write the light constants
     // Write the layout locations
     out << "\n// Shader Input Locations\n";
-    auto *lights = EnumValuesVulkLights();
+    auto* lights = EnumValuesVulkLights();
     ns = EnumNamesVulkLights();
     for (int i = 0; ns[i] != nullptr; i++) {
         out << "const int VulkLights_" << ns[i] << " = " << (int)lights[i] << ";\n";
@@ -143,7 +143,7 @@ void glslShaderEnumsGenerator(fs::path outFile, bool verbose) {
 
     out.close();
 
-    throw CLI::Success(); // not really necessary
+    // // throw CLI::Success(); // not really necessary
 }
 
 void pipelineBuilder(fs::path builtShadersDir, fs::path pipelineFileOut, fs::path pipelineFileIn, bool verbose) {
@@ -166,12 +166,11 @@ void pipelineBuilder(fs::path builtShadersDir, fs::path pipelineFileOut, fs::pat
         throw CLI::ValidationError("Pipeline file does not exist: " + pipelineFileIn.string());
     }
 
-    logger->trace("Shaders Dir: {}, Pipeline Out Dir: {}, Processing pipeline: {}", builtShadersDir.string(), pipelineFileOut.string(),
-                  pipelineFileIn.string());
+    logger->trace("Shaders Dir: {}, Pipeline Out Dir: {}, Processing pipeline: {}", builtShadersDir.string(), pipelineFileOut.string(), pipelineFileIn.string());
 
     try {
         PipelineBuilder::buildPipelineFromFile(builtShadersDir, pipelineFileOut, pipelineFileIn);
-    } catch (std::exception &e) {
+    } catch (std::exception& e) {
         logger->error("PipelineBuilder: Error: {}", e.what());
         throw CLI::Error("PipelineBuilder", "Error: " + string(e.what()));
     } catch (...) {
@@ -181,10 +180,9 @@ void pipelineBuilder(fs::path builtShadersDir, fs::path pipelineFileOut, fs::pat
     }
 
     logger->trace("PipelineBuilder: Done!");
-    throw CLI::Success(); // not really necessary
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
     // SetUnhandledExceptionFilter(exceptionFilter);
     std::shared_ptr<spdlog::logger> logger = VulkLogger::CreateLogger("BuildTool");
     string args = "Args: ";
@@ -206,17 +204,18 @@ int main(int argc, char **argv) {
     CLI::App app{"BuildTool for compiling vulk resources like shaders/pipelines etc."};
     app.add_flag("-v, --verbose", verbose, "be verbose");
 
-    CLI::App *pipeline = app.add_subcommand("pipeline", "build the pipeline file");
+    CLI::App* pipeline = app.add_subcommand("pipeline", "build the pipeline file");
     fs::path builtShadersDir;
     pipeline->add_option("builtShadersDir", builtShadersDir, "Directory where the built shaders are located (for reading).");
     fs::path pipelineFileOut;
     pipeline->add_option("pipelineFileOut", pipelineFileOut, "Directory where the pipelines are built to."); // Corrected here
     fs::path pipelineFileIn;
     pipeline->add_option("pipelineFileIn", pipelineFileIn, "Pipeline file to build."); // Corrected here
-    pipeline->callback(
-        [&builtShadersDir, &pipelineFileOut, &pipelineFileIn, &verbose]() { pipelineBuilder(builtShadersDir, pipelineFileOut, pipelineFileIn, verbose); });
+    pipeline->callback([&builtShadersDir, &pipelineFileOut, &pipelineFileIn, &verbose]() {
+        pipelineBuilder(builtShadersDir, pipelineFileOut, pipelineFileIn, verbose);
+    });
 
-    CLI::App *glsl = app.add_subcommand("GenVulkShaderEnums", "generate GLSL includes");
+    CLI::App* glsl = app.add_subcommand("GenVulkShaderEnums", "generate GLSL includes");
     fs::path outFile;
     glsl->add_option("outFile", outFile, "Directory where the GLSL includes are generated to.");
     glsl->callback([&outFile, verbose]() {

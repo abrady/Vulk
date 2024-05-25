@@ -17,7 +17,7 @@
 #include "imgui.h"
 #include <memory>
 
-class World : public VulkRenderable, public MouseEventHandler {
+class World : public VulkRenderable {
 public:
     Vulk& vk;
     std::shared_ptr<VulkScene> scene;
@@ -45,8 +45,6 @@ public:
 public:
     World(Vulk& vk, std::string sceneName)
         : vk(vk) {
-        setMouseEventHandler(this);
-
         shadowMapRenderpass = std::make_shared<VulkDepthRenderpass>(vk);
         shadowMapFence = std::make_shared<VulkFence>(vk);
 
@@ -108,9 +106,40 @@ public:
     } menu;
 
     void tick() override {
+        ImGuiIO& io = ImGui::GetIO();
+
+        float dragScale = 0.001f;
+        float dx = dragScale * io.MouseDelta.x;
+        float dy = dragScale * io.MouseDelta.y;
+        float scroll = ImGui::GetIO().MouseWheel;
+        bool camUpdated = false;
+        if (ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
+            // left mouse is rotate around y axis and move +z/-z
+            scene->camera.updatePosition(0.0f, 0.0f, -dy);
+            scene->camera.updateOrientation(dx, 0.0f);
+            camUpdated = true;
+        } else if (ImGui::IsMouseDragging(ImGuiMouseButton_Middle)) {
+            // middle mouse translates in the x/y axis
+            scene->camera.updatePosition(-dx, dy, 0.0f);
+        } else if (ImGui::IsMouseDragging(ImGuiMouseButton_Right)) {
+            // right mouse button is purely for camera control
+            scene->camera.updateOrientation(dx, dy);
+            camUpdated = true;
+        } else if (scroll != 0.0f) {
+            // right mouse button + shift is purely for camera control
+            float scrollScale = 0.1f;
+            scene->camera.updatePosition(0.0f, 0.0f, scroll * scrollScale);
+            camUpdated = true;
+        }
+
+        if (camUpdated) {
+            glm::vec3 eulers = scene->camera.getEulers();
+            logger->trace("dx: {:.2f} dy: {:.2f} camera yaw: {:.2f} pitch: {:.2f}", dx, dy, eulers.y, eulers.x);
+        }
+
         // a useful demo of a variety of features
-        // bool open = false;
-        // ImGui::ShowDemoWindow(&open);
+        bool demoWindowOpen = true;
+        ImGui::ShowDemoWindow(&demoWindowOpen);
 
         const ImGuiViewport* viewport = ImGui::GetMainViewport();
         ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x, viewport->WorkPos.y), ImGuiCond_FirstUseEver);
@@ -346,17 +375,7 @@ public:
         return false;
     }
 
-    void onDrag(double /*xpos*/, double /*ypos*/, MouseDragContext const& drag, MouseEventContext const& /*ctxt*/) override {
-        float dx = (float)drag.dxdt * 10.0f;
-        float dy = (float)drag.dydt * 10.0f;
-        scene->camera.updateOrientation(dx, dy);
-        glm::vec3 eulers = scene->camera.getEulers();
-        logger->info("yaw: {} pitch: {} dx: {} dy: {}", eulers.y, eulers.x, dx, dy);
-    }
-
-    ~World() {
-        clearMouseEventHandler();
-    }
+    ~World() {}
 };
 
 int main() {
