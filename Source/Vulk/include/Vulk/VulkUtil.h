@@ -6,6 +6,7 @@
 
 #include "VulkConstants.h"
 #include <glm/gtx/quaternion.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 #include <cereal/archives/binary.hpp>
 #include <cereal/archives/json.hpp>

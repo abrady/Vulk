@@ -1,5 +1,3 @@
-#pragma once
-
 #include "Vulk/Vulk.h"
 #include "Vulk/VulkActor.h"
 #include "Vulk/VulkBufferBuilder.h"
@@ -41,6 +39,8 @@ public:
         bool renderTangents = false;
         bool renderWireframe = false;
     } debug;
+
+    std::shared_ptr<spdlog::logger> logger = VulkLogger::CreateLogger("World");
 
 public:
     World(Vulk& vk, std::string sceneName)
@@ -183,12 +183,12 @@ public:
         ubo.world = glm::rotate(glm::mat4(1.0f), rotationTime * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         // ubo.view = glm::lookAt(scene->camera.eye, lookAt, up);
         ubo.view = scene->camera.getViewMat();
-        ubo.proj = glm::perspective(glm::radians(45.0f), viewport.width / (float)viewport.height, nearClip, farClip);
+        ubo.proj = glm::perspective(DEFAULT_FOV_RADS, viewport.width / (float)viewport.height, nearClip, farClip);
 
         // set up the light view proj
         VulkPointLight& light = *scene->sceneUBOs.pointLight.mappedUBO;
         glm::mat4 lightView = glm::lookAt(light.pos, glm::vec3(0.0f, 0.0f, 0.0f), DEFAULT_UP_VEC);
-        glm::mat4 lightProj = glm::perspective(glm::radians(45.0f), viewport.width / (float)viewport.height, nearClip, farClip);
+        glm::mat4 lightProj = glm::perspective(DEFAULT_FOV_RADS, viewport.width / (float)viewport.height, nearClip, farClip);
         glm::mat4 viewProj = lightProj * lightView;
         scene->lightViewProjUBO->mappedUBO->viewProj = viewProj;
 
@@ -339,7 +339,7 @@ public:
                 handled = false;
             if (handled) {
                 glm::vec3 eulers = camera.getEulers();
-                std::cout << "eye: " << camera.eye.x << ", " << camera.eye.y << ", " << camera.eye.z << " yaw: " << eulers.y << " pitch: " << eulers.x << std::endl;
+                logger->info("eye: {} yaw: {} pitch: {}", glm::to_string(camera.eye), eulers.y, eulers.x);
                 return true;
             }
         }
@@ -351,7 +351,7 @@ public:
         float dy = (float)drag.dydt * 10.0f;
         scene->camera.updateOrientation(dx, dy);
         glm::vec3 eulers = scene->camera.getEulers();
-        std::cout << "yaw: " << eulers.y << " pitch: " << eulers.x << " dx: " << dx << " dy: " << dy << std::endl;
+        logger->info("yaw: {} pitch: {} dx: {} dy: {}", eulers.y, eulers.x, dx, dy);
     }
 
     ~World() {

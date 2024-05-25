@@ -41,8 +41,8 @@ target_link_libraries(Vulk PRIVATE assimp::assimp)
 target_link_libraries(Vulk PRIVATE flatbuffers::flatbuffers)
 #target_link_libraries(Vulk PRIVATE protobuf::libprotoc protobuf::libprotobuf protobuf::libprotobuf-lite)
 target_link_libraries(Vulk PRIVATE cereal::cereal)
-target_link_libraries(Vulk PRIVATE spdlog::spdlog)
 target_link_libraries(Vulk PRIVATE fmt::fmt)
+target_link_libraries(Vulk PUBLIC spdlog::spdlog) # Make spdlog public so that anyone using this library can use it too due to VulkLogger.h
 target_link_libraries(Vulk PUBLIC GenSchemaFiles)
 
 target_include_directories(Vulk PUBLIC ${THRIFT_INCLUDE_DIR})

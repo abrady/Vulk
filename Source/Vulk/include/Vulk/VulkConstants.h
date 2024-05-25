@@ -24,7 +24,7 @@ constexpr glm::vec3 DEFAULT_UP_VEC = glm::vec3(0.0f, 1.0f, 0.0f);
 constexpr glm::vec3 DEFAULT_RIGHT_VEC = glm::vec3(1.0f, 0.0f, 0.0f);
 
 // Camera Settings
-// constexpr float FOV = 45.0f; // In degrees
+constexpr float DEFAULT_FOV_RADS = glm::radians(45.0f);
 // constexpr float ASPECT_RATIO = 16.0f / 9.0f;
 // constexpr float NEAR_PLANE = 0.1f;
 // constexpr float FAR_PLANE = 100.0f;

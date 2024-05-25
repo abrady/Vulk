@@ -1,14 +1,16 @@
 #pragma once
 
-#include "spdlog/sinks/basic_file_sink.h"
-#include "spdlog/sinks/stdout_color_sinks.h"
-#include "spdlog/spdlog.h"
+#include <spdlog/spdlog.h>
+
+#include <spdlog/sinks/rotating_file_sink.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/sinks/stdout_sinks.h>
 
 class VulkLogger {
-  public:
+public:
     static std::shared_ptr<spdlog::logger> CreateLogger(std::string name) {
         auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-        auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(name + "_logfile.log", true);
+        auto file_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(name + "_logfile.log", 1024 * 1024 * 5, 30, true);
         spdlog::sinks_init_list sink_list = {file_sink, console_sink};
         auto p = std::make_shared<spdlog::logger>(name, sink_list.begin(), sink_list.end());
         auto level = spdlog::get_level();
@@ -16,7 +18,7 @@ class VulkLogger {
         return p;
     }
     // Initialize a shared logger instance
-    static std::shared_ptr<spdlog::logger> &GetLogger() {
+    static std::shared_ptr<spdlog::logger>& GetLogger() {
         static std::shared_ptr<spdlog::logger> logger;
         static std::once_flag flag;
         std::call_once(flag, []() {
