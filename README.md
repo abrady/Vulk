@@ -42,6 +42,8 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
+## 5/25 camera controls continued
+
 ## 5/24 camera controls refresher
 
 A quaternion is a four-dimensional complex number that can represent a rotation in 3D space. It consists of one real part and three imaginary parts:

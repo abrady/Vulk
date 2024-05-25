@@ -109,7 +109,8 @@ public:
 
     void tick() override {
         // a useful demo of a variety of features
-        ImGui::ShowDemoWindow(nullptr);
+        // bool open = false;
+        // ImGui::ShowDemoWindow(&open);
 
         const ImGuiViewport* viewport = ImGui::GetMainViewport();
         ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x, viewport->WorkPos.y), ImGuiCond_FirstUseEver);
@@ -181,7 +182,7 @@ public:
         VulkSceneUBOs::XformsUBO& ubo = *scene->sceneUBOs.xforms.ptrs[vk.currentFrame];
         ubo.world = glm::rotate(glm::mat4(1.0f), rotationTime * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         // ubo.view = glm::lookAt(scene->camera.eye, lookAt, up);
-        ubo.view = glm::mat4(scene->camera.getViewMat());
+        ubo.view = scene->camera.getViewMat();
         ubo.proj = glm::perspective(glm::radians(45.0f), viewport.width / (float)viewport.height, nearClip, farClip);
 
         // set up the light view proj

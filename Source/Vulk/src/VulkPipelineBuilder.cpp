@@ -2,14 +2,15 @@
 #include "Vulk/Vulk.h"
 #include "Vulk/VulkUtil.h"
 
-VulkPipelineBuilder::VulkPipelineBuilder(Vulk &vk) : vk(vk) {
+VulkPipelineBuilder::VulkPipelineBuilder(Vulk& vk)
+    : vk(vk) {
     rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     rasterizer.depthClampEnable = VK_FALSE;
     rasterizer.rasterizerDiscardEnable = VK_FALSE;
     rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
     rasterizer.lineWidth = 1.0f;
     rasterizer.cullMode = VK_CULL_MODE_BACK_BIT; // or VK_CULL_MODE_NONE; for no culling
-    rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+    rasterizer.frontFace = DEFAULT_FRONT_FACE_WINDING_ORDER;
     rasterizer.depthBiasEnable = VK_FALSE;
 
     inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -47,14 +48,14 @@ VulkPipelineBuilder::VulkPipelineBuilder(Vulk &vk) : vk(vk) {
     // dynamicStates = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 }
 
-VulkPipelineBuilder &VulkPipelineBuilder::addShaderStage(VkShaderStageFlagBits stage, char const *path) {
+VulkPipelineBuilder& VulkPipelineBuilder::addShaderStage(VkShaderStageFlagBits stage, char const* path) {
     auto shaderCode = readFileIntoMem(path);
     VkShaderModule shaderModule = vk.createShaderModule(shaderCode);
     addShaderStage(stage, std::make_shared<VulkShaderModule>(vk, shaderModule));
     return *this;
 }
 
-VulkPipelineBuilder &VulkPipelineBuilder::addShaderStage(VkShaderStageFlagBits stage, std::shared_ptr<VulkShaderModule> shaderModule) {
+VulkPipelineBuilder& VulkPipelineBuilder::addShaderStage(VkShaderStageFlagBits stage, std::shared_ptr<VulkShaderModule> shaderModule) {
     VkPipelineShaderStageCreateInfo shaderStageInfo{};
     shaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     shaderStageInfo.stage = stage;
@@ -66,17 +67,17 @@ VulkPipelineBuilder &VulkPipelineBuilder::addShaderStage(VkShaderStageFlagBits s
     return *this;
 }
 
-VulkPipelineBuilder &VulkPipelineBuilder::setPrimitiveTopology(VkPrimitiveTopology topology) {
+VulkPipelineBuilder& VulkPipelineBuilder::setPrimitiveTopology(VkPrimitiveTopology topology) {
     inputAssembly.topology = topology;
     return *this;
 }
 
-VulkPipelineBuilder &VulkPipelineBuilder::setPolygonMode(VkPolygonMode polygonMode) {
+VulkPipelineBuilder& VulkPipelineBuilder::setPolygonMode(VkPolygonMode polygonMode) {
     rasterizer.polygonMode = polygonMode;
     return *this;
 }
 
-VulkPipelineBuilder &VulkPipelineBuilder::setLineWidth(float lineWidth) {
+VulkPipelineBuilder& VulkPipelineBuilder::setLineWidth(float lineWidth) {
     VkPhysicalDeviceProperties deviceProperties;
     vkGetPhysicalDeviceProperties(vk.physicalDevice, &deviceProperties);
     assert(deviceProperties.limits.lineWidthRange[0] <= lineWidth && lineWidth <= deviceProperties.limits.lineWidthRange[1]);
@@ -84,26 +85,26 @@ VulkPipelineBuilder &VulkPipelineBuilder::setLineWidth(float lineWidth) {
     return *this;
 }
 
-VulkPipelineBuilder &VulkPipelineBuilder::setCullMode(VkCullModeFlags cullMode) {
+VulkPipelineBuilder& VulkPipelineBuilder::setCullMode(VkCullModeFlags cullMode) {
     rasterizer.cullMode = cullMode;
     return *this;
 }
 
-VulkPipelineBuilder &VulkPipelineBuilder::setDepthTestEnabled(bool enabled) {
+VulkPipelineBuilder& VulkPipelineBuilder::setDepthTestEnabled(bool enabled) {
     depthStencil.depthTestEnable = enabled;
     return *this;
 }
-VulkPipelineBuilder &VulkPipelineBuilder::setDepthWriteEnabled(bool enabled) {
+VulkPipelineBuilder& VulkPipelineBuilder::setDepthWriteEnabled(bool enabled) {
     depthStencil.depthWriteEnable = enabled;
     return *this;
 }
 
-VulkPipelineBuilder &VulkPipelineBuilder::setDepthCompareOp(VkCompareOp compareOp) {
+VulkPipelineBuilder& VulkPipelineBuilder::setDepthCompareOp(VkCompareOp compareOp) {
     depthStencil.depthCompareOp = compareOp;
     return *this;
 }
 
-VulkPipelineBuilder &VulkPipelineBuilder::addVertexInput(VulkShaderLocation location) {
+VulkPipelineBuilder& VulkPipelineBuilder::addVertexInput(VulkShaderLocation location) {
     VULK_THROW_IF(vertInputs.find(location) != vertInputs.end(), "Vertex input location already exists");
     VkFormat format;
     uint32_t stride;
@@ -145,7 +146,7 @@ VulkPipelineBuilder &VulkPipelineBuilder::addVertexInput(VulkShaderLocation loca
 
 // enabling means the existing value in the framebuffer will be blended with the new value output from the shader
 // while disabling it will just overwrite the existing value
-VulkPipelineBuilder &VulkPipelineBuilder::setBlending(bool enabled, VkColorComponentFlags colorWriteMask) {
+VulkPipelineBuilder& VulkPipelineBuilder::setBlending(bool enabled, VkColorComponentFlags colorWriteMask) {
     colorBlendAttachment.blendEnable = enabled;
     if (enabled) {
         colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
@@ -159,13 +160,13 @@ VulkPipelineBuilder &VulkPipelineBuilder::setBlending(bool enabled, VkColorCompo
     return *this;
 }
 
-void VulkPipelineBuilder::build(VkRenderPass renderPass, std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout, VkPipelineLayout *pipelineLayout,
-                                VkPipeline *graphicsPipeline) {
+void VulkPipelineBuilder::build(VkRenderPass renderPass, std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout, VkPipelineLayout* pipelineLayout,
+                                VkPipeline* graphicsPipeline) {
     assert(viewport.maxDepth > 0.f);
 
     std::vector<VkVertexInputBindingDescription> bindingDescriptions;
     std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
-    for (auto &input : vertInputs) {
+    for (auto& input : vertInputs) {
         bindingDescriptions.push_back(input.second.binding);
         attributeDescriptions.push_back(input.second.attribute);
     }
@@ -208,52 +209,52 @@ void VulkPipelineBuilder::build(VkRenderPass renderPass, std::shared_ptr<VulkDes
     VK_CALL(vkCreateGraphicsPipelines(vk.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, graphicsPipeline));
 }
 
-VulkPipelineBuilder &VulkPipelineBuilder::setStencilTestEnabled(bool enabled) {
+VulkPipelineBuilder& VulkPipelineBuilder::setStencilTestEnabled(bool enabled) {
     depthStencil.stencilTestEnable = enabled;
     return *this;
 }
 
-VulkPipelineBuilder &VulkPipelineBuilder::setFrontStencilFailOp(VkStencilOp failOp) {
+VulkPipelineBuilder& VulkPipelineBuilder::setFrontStencilFailOp(VkStencilOp failOp) {
     depthStencil.front.failOp = failOp;
     return *this;
 }
 
-VulkPipelineBuilder &VulkPipelineBuilder::setFrontStencilPassOp(VkStencilOp passOp) {
+VulkPipelineBuilder& VulkPipelineBuilder::setFrontStencilPassOp(VkStencilOp passOp) {
     depthStencil.front.passOp = passOp;
     return *this;
 }
 
-VulkPipelineBuilder &VulkPipelineBuilder::setFrontStencilDepthFailOp(VkStencilOp depthFailOp) {
+VulkPipelineBuilder& VulkPipelineBuilder::setFrontStencilDepthFailOp(VkStencilOp depthFailOp) {
     depthStencil.front.depthFailOp = depthFailOp;
     return *this;
 }
 
-VulkPipelineBuilder &VulkPipelineBuilder::setFrontStencilCompareOp(VkCompareOp compareOp) {
+VulkPipelineBuilder& VulkPipelineBuilder::setFrontStencilCompareOp(VkCompareOp compareOp) {
     depthStencil.front.compareOp = compareOp;
     return *this;
 }
 
-VulkPipelineBuilder &VulkPipelineBuilder::setFrontStencilCompareMask(uint32_t compareMask) {
+VulkPipelineBuilder& VulkPipelineBuilder::setFrontStencilCompareMask(uint32_t compareMask) {
     depthStencil.front.compareMask = compareMask;
     return *this;
 }
 
-VulkPipelineBuilder &VulkPipelineBuilder::setFrontStencilWriteMask(uint32_t writeMask) {
+VulkPipelineBuilder& VulkPipelineBuilder::setFrontStencilWriteMask(uint32_t writeMask) {
     depthStencil.front.writeMask = writeMask;
     return *this;
 }
 
-VulkPipelineBuilder &VulkPipelineBuilder::setFrontStencilReference(uint32_t reference) {
+VulkPipelineBuilder& VulkPipelineBuilder::setFrontStencilReference(uint32_t reference) {
     depthStencil.front.reference = reference;
     return *this;
 }
 
-VulkPipelineBuilder &VulkPipelineBuilder::copyFrontStencilToBack() {
+VulkPipelineBuilder& VulkPipelineBuilder::copyFrontStencilToBack() {
     depthStencil.back = depthStencil.front;
     return *this;
 }
 
-VulkPipelineBuilder &VulkPipelineBuilder::setScissor(VkExtent2D extent) {
+VulkPipelineBuilder& VulkPipelineBuilder::setScissor(VkExtent2D extent) {
     assert(viewportState.pScissors == nullptr);
     scissor.offset = {0, 0};
     scissor.extent = extent;
@@ -262,7 +263,7 @@ VulkPipelineBuilder &VulkPipelineBuilder::setScissor(VkExtent2D extent) {
     return *this;
 }
 
-VulkPipelineBuilder &VulkPipelineBuilder::setViewport(VkExtent2D extent) {
+VulkPipelineBuilder& VulkPipelineBuilder::setViewport(VkExtent2D extent) {
     assert(viewportState.pViewports == nullptr);
     viewport.x = 0.0f;
     viewport.y = 0.0f;

@@ -16,7 +16,7 @@
 constexpr bool IS_RIGHT_HANDED = true;
 
 // Winding Order
-constexpr VkFrontFace FRONT_FACE = VK_FRONT_FACE_COUNTER_CLOCKWISE; // VK_FRONT_FACE_COUNTER_CLOCKWISE for counter-clockwise, VK_FRONT_FACE_CLOCKWISE for clockwise
+constexpr VkFrontFace DEFAULT_FRONT_FACE_WINDING_ORDER = VK_FRONT_FACE_CLOCKWISE;
 
 // Default Vectors
 constexpr glm::vec3 DEFAULT_FORWARD_VEC = glm::vec3(0.0f, 0.0f, -1.0f);

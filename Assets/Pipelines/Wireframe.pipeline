@@ -4,6 +4,7 @@
     "vertShader": "Wireframe",
     "fragShader": "Wireframe",
     "polygonMode": "LINE",
+    "depthWriteEnabled": false,
     "vertInputs": [
         "Pos",
         "Normal",
