@@ -1,3 +1,6 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:a21b353546355e1b8ec922f329933f95ce776d20319e901e37c75507122a8de0
-size 226
+{
+    "version": 1,
+    "name": "GoochShading",
+    "vertShader": "BasicPassthru",
+    "fragShader": "GoochShading"
+}

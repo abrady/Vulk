@@ -2,11 +2,5 @@
     "version": 1,
     "name": "PBR2",
     "vertShader": "PBR",
-    "vertInputs": [
-        "Pos",
-        "Normal",
-        "Tangent",
-        "TexCoord"
-    ],
     "fragShader": "PBR2"
 }

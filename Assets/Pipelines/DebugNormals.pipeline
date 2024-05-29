@@ -1,3 +1,9 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:48bdfb172d477db023806d35d76f069c71ae3e43fba86a1bc2b550bac0091ac5
-size 332
+{
+    "version": 1,
+    "name": "DebugNormals",
+    "vertShader": "DebugNormals",
+    "geomShader": "DebugNormals",
+    "fragShader": "DebugNormals",
+    "primitiveTopology": "PointList",
+    "depthWriteEnabled": false
+}

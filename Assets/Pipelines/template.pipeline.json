@@ -1,3 +1,15 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:642a9d4e3ed7b3ffb09a7b762539d1d327ab79eb4eff1266a3386a7c3212649c
-size 864
+{
+    "version": 1,
+    "name": "match_file_name",
+    "vertShader": "foo.vert",
+    "geomShader": "optional.geom",
+    "fragShader": "bar.frag",
+    "primitiveTopology": "PointList, LineList, LineStrip, TriangleList, TriangleStrip, TriangleFan, LineListWithAdjacency, LineStripWithAdjacency, TriangleListWithAdjacency, TriangleStripWithAdjacency, PatchList""depthTestEnabled": true,
+    "depthWriteEnabled": true,
+    "depthCompareOp": "NEVER, LESS, EQUAL, LESS_OR_EQUAL, GREATER, NOT_EQUAL, GREATER_OR_EQUAL, ALWAYS",
+    "cullMode": "NONE, FRONT, BACK, FRONT_AND_BACK",
+    "blending": {
+        "enabled": false,
+        "colorMask": "RGBA, R, G, B, A, RB, GB, BB, AB, RG, GG, BG, AG, ...",
+    }
+}

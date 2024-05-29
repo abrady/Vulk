@@ -1,3 +1,6 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:eb08572aa4a6d2c011a7d899bf90315e6ddb1d035b82d897ccc377cab46a4b02
-size 218
+{
+    "version": 1,
+    "name": "LitModel",
+    "vertShader": "BasicPassthru",
+    "fragShader": "LitModel"
+}

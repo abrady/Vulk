@@ -7,27 +7,6 @@
     "depthTestEnabled": true,
     "depthWriteEnabled": true,
     "depthCompareOp": "NOT_EQUAL",
-    "vertInputs": [
-        "Color",
-        "Normal"
-    ],
-    "descriptorSet": {
-        "frag": {
-            "uniformBuffers": [
-                "eyePos"
-            ]
-        },
-        "vert": {
-            "imageSamplers": [
-                "normalSampler"
-            ],
-            "uniformBuffers": [
-                "xforms",
-                "modelXform",
-                "debugNormals"
-            ]
-        }
-    },
     "blending": {
         "enabled": true,
         "colorMask": "RB"

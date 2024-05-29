@@ -1,3 +1,10 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:1d42bae19ecbb8ad2308e9947935d4ae380c215a52bb3553aaee2414086a2056
-size 374
+{
+    "version": 1,
+    "name": "DebugTangents",
+    "vertShader": "DebugTangents",
+    "geomShader": "DebugNormals",
+    "fragShader": "DebugNormals",
+    "primitiveTopology": "PointList",
+    "depthWriteEnabled": false,
+    "depthCompareOp": "LESS_OR_EQUAL"
+}

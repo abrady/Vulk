@@ -76,8 +76,7 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
         CHECK(res.polygonMode == VK_POLYGON_MODE_FILL);
         CHECK(res.depthTestEnabled == true);
         CHECK(res.depthWriteEnabled == true);
-        CHECK(res.vertInputs ==
-              std::vector<VulkShaderLocation>{VulkShaderLocation_Pos, VulkShaderLocation_Normal, VulkShaderLocation_Tangent, VulkShaderLocation_TexCoord});
+        CHECK(res.vertInputs == std::vector<VulkShaderLocation>{VulkShaderLocation_Pos, VulkShaderLocation_Normal, VulkShaderLocation_Tangent, VulkShaderLocation_TexCoord});
 
         CHECK(res.depthCompareOp == VK_COMPARE_OP_NOT_EQUAL);
 
@@ -122,14 +121,14 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
             CHECK(builtDef.cullMode == def.cullMode);
             CHECK(builtDef.vertInputs ==
                   std::vector<VulkShaderLocation>{VulkShaderLocation_Pos, VulkShaderLocation_Normal, VulkShaderLocation_Tangent, VulkShaderLocation_TexCoord});
-            CHECK(sizeof(def) == 224);      // reminder to add new fields to the test
-            CHECK(sizeof(builtDef) == 544); // reminder to add new fields to the test
+
+            CHECK(sizeof(def) == 232);      // reminder to add new fields to the test
+            CHECK(sizeof(builtDef) == 552); // reminder to add new fields to the test
             // I would do a static assert here but it doesn't print out the sizes.
             CHECK(builtDef.descriptorSet.uniformBuffers[VK_SHADER_STAGE_VERTEX_BIT] ==
                   std::vector<VulkShaderUBOBinding>{VulkShaderUBOBinding_Xforms, VulkShaderUBOBinding_ModelXform, VulkShaderUBOBinding_DebugNormals});
             CHECK(builtDef.descriptorSet.uniformBuffers[VK_SHADER_STAGE_FRAGMENT_BIT] == std::vector<VulkShaderUBOBinding>{VulkShaderUBOBinding_EyePos});
-            CHECK(builtDef.descriptorSet.imageSamplers[VK_SHADER_STAGE_VERTEX_BIT] ==
-                  std::vector<VulkShaderTextureBinding>{VulkShaderTextureBinding_NormalSampler});
+            CHECK(builtDef.descriptorSet.imageSamplers[VK_SHADER_STAGE_VERTEX_BIT] == std::vector<VulkShaderTextureBinding>{VulkShaderTextureBinding_NormalSampler});
         } while (VulkCereal::inst()->useJSON);
     }
 }

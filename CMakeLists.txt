@@ -6,6 +6,8 @@ project ("VulkanRoot" CXX)
 ## project setup
 ######
 
+include(CTest)
+
 if(NOT CMAKE_BUILD_TYPE)
     message("CMAKE_BUILD_TYPE not set, defaulting to Debug")
     set(CMAKE_BUILD_TYPE Debug)

@@ -42,6 +42,12 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
+## 5/28 more controls
+
+* selection
+* make lights visible
+* debug vectors
+
 ## 5/25 camera controls continued
 
 * convert cam to quaternions DONE

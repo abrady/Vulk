@@ -1,3 +1,11 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:b883844baf02800c94eba73676d04bed593df9325cf80a65607621d4f3c8d996
-size 261
+{
+    "version": 1,
+    "name": "ShadowMap",
+    "vertShader": "ShadowMap",
+    "fragShader": "ShadowMap",
+    "cullMode": "FRONT",
+    "blending": {
+        "enabled": false,
+        "colorMask": ""
+    }
+}

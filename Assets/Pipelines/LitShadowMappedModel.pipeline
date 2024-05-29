@@ -1,3 +1,6 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:1ea1e76ffb9b44795b2e1807892c6822afbc0c0be505d4ad7a4909b3b4188828
-size 503
+{
+    "version": 1,
+    "name": "LitShadowMappedModel",
+    "vertShader": "LitShadowMappedModel",
+    "fragShader": "LitShadowMappedModel"
+}
