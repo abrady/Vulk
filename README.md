@@ -48,6 +48,21 @@ My goal for this project is to transition from the hand-coded samples I was doin
 * make lights visible
 * debug vectors
 
+what are our options for picking with the mouse?
+
+* do it CPU side with collision volumes: pros - easy, cons - inexact
+* stencil buffers: pros - easy and exact, cons - 256 max
+* Queries - <https://docs.vulkan.org/spec/latest/chapters/queries.html>
+  * look like they're only useful for visibility testing
+* just using a color buffer? apparently you can do this. what about gamma correction etc.
+
+Color buffer approach:
+
+* make an objectid-buffer pipeline
+* probably want a push constant for the object id
+* make a renderpass for picking
+* grab the buffer and get the x/y and see what object id is there
+
 ## 5/25 camera controls continued
 
 * convert cam to quaternions DONE

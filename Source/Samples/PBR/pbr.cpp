@@ -34,6 +34,11 @@ public:
     std::shared_ptr<VulkPipeline> wireframePipeline;
     std::vector<std::shared_ptr<VulkActor>> debugWireframeActors;
 
+    std::shared_ptr<VulkDepthRenderpass> pickRenderpass;
+    std::vector<std::shared_ptr<VulkActor>> pickActors;
+    std::shared_ptr<VulkPipeline> pickPipeline;
+    std::shared_ptr<VulkFence> pickFence;
+
     struct Debug {
         bool renderNormals = false;
         bool renderTangents = false;
@@ -113,7 +118,11 @@ public:
         float dy = dragScale * io.MouseDelta.y;
         float scroll = ImGui::GetIO().MouseWheel;
         bool camUpdated = false;
-        if (ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
+        if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
+            void* data;
+            vkMapMemory(device, resultBufferMemory, 0, VK_WHOLE_SIZE, 0, &data);
+            uint32_t* pickedObjectIds = reinterpret_cast<uint32_t*>(data);
+        } else if (ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
             // left mouse is rotate around y axis and move +z/-z
             scene->camera.updatePosition(0.0f, 0.0f, -dy);
             scene->camera.updateOrientation(dx, 0.0f);
@@ -221,12 +230,44 @@ public:
         glm::mat4 viewProj = lightProj * lightView;
         scene->lightViewProjUBO->mappedUBO->viewProj = viewProj;
 
-        std::shared_ptr<VulkTextureView> depthView = shadowMapRenderpass->depthViews[vk.currentFrame]->depthView;
+        std::shared_ptr<VulkImageView> depthView = shadowMapRenderpass->depthViews[vk.currentFrame]->depthView;
 
+        renderPickBuffer(commandBuffer);
         renderShadowMapImageForLight(commandBuffer);
         vk.transitionImageLayout(commandBuffer, depthView->image, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         drawMainStuff(commandBuffer, frameBuffer);
         vk.transitionImageLayout(commandBuffer, depthView->image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+    }
+
+    void renderPickBuffer(VkCommandBuffer commandBuffer) {
+        VkRenderPassBeginInfo renderPassInfo{};
+        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        renderPassInfo.renderPass = vk.renderPass;
+        renderPassInfo.framebuffer = frameBuffer;
+        renderPassInfo.renderArea.offset = {0, 0};
+        renderPassInfo.renderArea.extent = vk.swapChainExtent;
+
+        std::array<VkClearValue, 2> clearValues{};
+        clearValues[0].color = {{0.1f, 0.0f, 0.1f, 1.0f}};
+        clearValues[1].depthStencil = {1.0f, 0};
+
+        renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+        renderPassInfo.pClearValues = clearValues.data();
+
+        vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+        render(commandBuffer, vk.currentFrame);
+        vkCmdEndRenderPass(commandBuffer);
+
+        vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+        for (auto& actor : pickActors) {
+            auto model = actor->model;
+            vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pickPipeline->pipeline);
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pickPipeline->pipelineLayout, 0, 1,
+                                    &actor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet, 0, nullptr);
+            model->bindInputBuffers(commandBuffer);
+            vkCmdDrawIndexed(commandBuffer, model->numIndices, 1, 0, 0, 0);
+        }
+        vkCmdEndRenderPass(commandBuffer);
     }
 
     void renderShadowMapImageForLight(VkCommandBuffer commandBuffer) {

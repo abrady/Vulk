@@ -18,15 +18,17 @@
 using namespace std;
 namespace fs = filesystem;
 
-VulkResources::VulkResources(Vulk &vk) : vk(vk), metadata(*getMetadata()) {
+VulkResources::VulkResources(Vulk& vk)
+    : vk(vk)
+    , metadata(*getMetadata()) {
     textureSampler = VulkSampler::createImageSampler(vk);
     shadowMapSampler = VulkSampler::createShadowSampler(vk);
 }
 
-std::shared_ptr<VulkShaderModule> VulkResources::createShaderModule(ShaderType type, string const &name) {
+std::shared_ptr<VulkShaderModule> VulkResources::createShaderModule(ShaderType type, string const& name) {
     fs::path subdir;
-    char const *suffix;
-    std::unordered_map<std::string, std::shared_ptr<VulkShaderModule>> *shaders_map;
+    char const* suffix;
+    std::unordered_map<std::string, std::shared_ptr<VulkShaderModule>>* shaders_map;
     switch (type) {
     case Vert:
         subdir = "Vert";
@@ -55,7 +57,7 @@ std::shared_ptr<VulkShaderModule> VulkResources::createShaderModule(ShaderType t
     return sm;
 }
 
-std::shared_ptr<VulkModel> VulkResources::getModel(ModelDef const &modelDef, BuiltPipelineDef const &pipelineDef) {
+std::shared_ptr<VulkModel> VulkResources::getModel(ModelDef const& modelDef, BuiltPipelineDef const& pipelineDef) {
     string key = modelDef.name + ":" + pipelineDef.name;
     if (pipelineModels.contains(key)) {
         return pipelineModels.at(key);
@@ -66,29 +68,29 @@ std::shared_ptr<VulkModel> VulkResources::getModel(ModelDef const &modelDef, Bui
     return p;
 }
 
-std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(VkRenderPass renderPass, VkExtent2D extent, std::string const &name) {
+std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(VkRenderPass renderPass, VkExtent2D extent, std::string const& name) {
     if (pipelines.contains(name)) {
         return pipelines[name];
     }
-    BuiltPipelineDef &def = *metadata.pipelines.at(name);
+    BuiltPipelineDef& def = *metadata.pipelines.at(name);
     shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout;
     uint32_t dsHash = def.descriptorSet.hash();
     if (descriptorSetLayoutCache.contains(dsHash)) {
         descriptorSetLayout = descriptorSetLayoutCache[dsHash];
     } else {
         VulkDescriptorSetLayoutBuilder dslb(vk);
-        for (auto &[stage, bindings] : def.descriptorSet.uniformBuffers) {
-            for (auto &binding : bindings) {
+        for (auto& [stage, bindings] : def.descriptorSet.uniformBuffers) {
+            for (auto& binding : bindings) {
                 dslb.addUniformBuffer(stage, binding);
             }
         }
-        for (auto &[stage, bindings] : def.descriptorSet.storageBuffers) {
-            for (auto &binding : bindings) {
+        for (auto& [stage, bindings] : def.descriptorSet.storageBuffers) {
+            for (auto& binding : bindings) {
                 dslb.addStorageBuffer(stage, binding);
             }
         }
-        for (auto &[stage, bindings] : def.descriptorSet.imageSamplers) {
-            for (auto &binding : bindings) {
+        for (auto& [stage, bindings] : def.descriptorSet.imageSamplers) {
+            for (auto& binding : bindings) {
                 dslb.addImageSampler(stage, binding);
             }
         }
@@ -124,9 +126,8 @@ std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(VkRenderPass renderPas
     return p;
 }
 
-std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const &actorDef, shared_ptr<BuiltPipelineDef> pipelineDef,
-                                                                  shared_ptr<VulkScene> scene) {
-    auto const &dsDef = pipelineDef->descriptorSet;
+std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const& actorDef, shared_ptr<BuiltPipelineDef> pipelineDef, shared_ptr<VulkScene> scene) {
+    auto const& dsDef = pipelineDef->descriptorSet;
     VulkDescriptorSetBuilder builder(vk);
     shared_ptr<VulkModel> model = getModel(*actorDef.model, *pipelineDef);
     shared_ptr<VulkFrameUBOs<glm::mat4>> xformUBOs;
@@ -134,7 +135,7 @@ std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const
     if (descriptorSetLayoutCache.contains(dsHash)) {
         builder.setDescriptorSetLayout(descriptorSetLayoutCache[dsHash]);
     }
-    for (auto &iter : dsDef.uniformBuffers) {
+    for (auto& iter : dsDef.uniformBuffers) {
         VkShaderStageFlagBits stage = (VkShaderStageFlagBits)iter.first;
         for (VulkShaderUBOBinding binding : iter.second) {
             switch (binding) {
@@ -199,7 +200,7 @@ std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const
     //     }
     // }
     static_assert(VulkShaderSSBOBinding_MaxBindingID == 0);
-    for (auto &[stage, samplers] : dsDef.imageSamplers) {
+    for (auto& [stage, samplers] : dsDef.imageSamplers) {
         for (VulkShaderTextureBinding binding : samplers) {
             switch (binding) {
             case VulkShaderTextureBinding_TextureSampler:
@@ -236,33 +237,32 @@ std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const
     static_assert(VulkShaderTextureBinding_MAX == VulkShaderTextureBinding_RoughnessSampler);
 }
 
-std::shared_ptr<VulkScene> VulkResources::loadScene(VkRenderPass renderPass, std::string name,
-                                                    std::array<std::shared_ptr<VulkDepthView>, MAX_FRAMES_IN_FLIGHT> shadowMapViews) {
+std::shared_ptr<VulkScene> VulkResources::loadScene(VkRenderPass renderPass, std::string name, std::array<std::shared_ptr<VulkDepthView>, MAX_FRAMES_IN_FLIGHT> shadowMapViews) {
     if (scenes.contains(name)) {
         return scenes[name];
     }
-    SceneDef &sceneDef = *metadata.scenes.at(name);
+    SceneDef& sceneDef = *metadata.scenes.at(name);
     shared_ptr<VulkScene> scene = make_shared<VulkScene>(vk);
 
     scene->shadowMapViews = shadowMapViews;
     scene->camera = sceneDef.camera;
     *scene->sceneUBOs.pointLight.mappedUBO = *sceneDef.pointLights[0]; // just one light for now
 
-    for (auto &actorDef : sceneDef.actors) {
+    for (auto& actorDef : sceneDef.actors) {
         loadPipeline(renderPass, vk.swapChainExtent, actorDef->pipeline->name);
         scene->actors.push_back(createActorFromPipeline(*actorDef, actorDef->pipeline, scene));
     }
     return scenes[name] = scene;
 }
 
-shared_ptr<VulkUniformBuffer<VulkMaterialConstants>> VulkResources::getMaterial(string const &name) {
+shared_ptr<VulkUniformBuffer<VulkMaterialConstants>> VulkResources::getMaterial(string const& name) {
     if (!materialUBOs.contains(name)) {
         materialUBOs[name] = make_shared<VulkUniformBuffer<VulkMaterialConstants>>(vk, metadata.materials.at(name)->toVulkMaterialConstants());
     }
     return materialUBOs[name];
 }
 
-shared_ptr<VulkMesh> VulkResources::getMesh(MeshDef &meshDef) {
+shared_ptr<VulkMesh> VulkResources::getMesh(MeshDef& meshDef) {
     string name = meshDef.name;
     if (meshes.contains(name)) {
         return meshes[name];
@@ -282,16 +282,16 @@ shared_ptr<VulkMesh> VulkResources::getMesh(MeshDef &meshDef) {
     return m;
 }
 
-shared_ptr<VulkMaterialTextures> VulkResources::getMaterialTextures(string const &name) {
+shared_ptr<VulkMaterialTextures> VulkResources::getMaterialTextures(string const& name) {
     if (!materialTextures.contains(name)) {
-        MaterialDef const &def = *metadata.materials.at(name);
+        MaterialDef const& def = *metadata.materials.at(name);
         materialTextures[name] = make_shared<VulkMaterialTextures>();
-        materialTextures[name]->diffuseView = !def.mapKd.empty() ? make_unique<VulkTextureView>(vk, def.mapKd, false) : nullptr;
-        materialTextures[name]->normalView = !def.mapNormal.empty() ? make_unique<VulkTextureView>(vk, def.mapNormal, true) : nullptr;
-        materialTextures[name]->ambientOcclusionView = !def.mapKa.empty() ? make_unique<VulkTextureView>(vk, def.mapKa, true) : nullptr;
-        materialTextures[name]->displacementView = !def.disp.empty() ? make_unique<VulkTextureView>(vk, def.disp, true) : nullptr;
-        materialTextures[name]->metallicView = !def.mapPm.empty() ? make_unique<VulkTextureView>(vk, def.mapPm, true) : nullptr;
-        materialTextures[name]->roughnessView = !def.mapPr.empty() ? make_unique<VulkTextureView>(vk, def.mapPr, true) : nullptr;
+        materialTextures[name]->diffuseView = !def.mapKd.empty() ? make_unique<VulkImageView>(vk, def.mapKd, false) : nullptr;
+        materialTextures[name]->normalView = !def.mapNormal.empty() ? make_unique<VulkImageView>(vk, def.mapNormal, true) : nullptr;
+        materialTextures[name]->ambientOcclusionView = !def.mapKa.empty() ? make_unique<VulkImageView>(vk, def.mapKa, true) : nullptr;
+        materialTextures[name]->displacementView = !def.disp.empty() ? make_unique<VulkImageView>(vk, def.disp, true) : nullptr;
+        materialTextures[name]->metallicView = !def.mapPm.empty() ? make_unique<VulkImageView>(vk, def.mapPm, true) : nullptr;
+        materialTextures[name]->roughnessView = !def.mapPr.empty() ? make_unique<VulkImageView>(vk, def.mapPr, true) : nullptr;
         static_assert(VulkShaderTextureBinding_MAX == VulkShaderTextureBinding_RoughnessSampler);
     }
 

@@ -4,23 +4,25 @@
 #include "ClassNonCopyableNonMovable.h"
 
 class Vulk;
-class VulkTextureView : public ClassNonCopyableNonMovable {
-  public:
-    Vulk &vk;
+class VulkImageView : public ClassNonCopyableNonMovable {
+public:
+    Vulk& vk;
     VkImage image;
     VkDeviceMemory imageMemory;
     VkImageView imageView;
 
     // isUNORM just means load the texture without changing the format - for example loading a normal map.
-    VulkTextureView(Vulk &vkIn, std::filesystem::path const &texturePath, bool isUNORM);
-    VulkTextureView(Vulk &vkIn, char const *texturePath, bool isUNORM);
-    VulkTextureView(Vulk &vkIn, std::string const &texturePath, bool isUNORM) : VulkTextureView(vkIn, texturePath.c_str(), isUNORM) {
-    }
-    VulkTextureView(Vulk &vkIn, VkImage depthImage, VkDeviceMemory depthImageMemory, VkImageView depthImageView)
-        : vk(vkIn), image(depthImage), imageMemory(depthImageMemory), imageView(depthImageView) {
-    }
-    ~VulkTextureView();
+    VulkImageView(Vulk& vkIn, std::filesystem::path const& texturePath, bool isUNORM);
+    VulkImageView(Vulk& vkIn, char const* texturePath, bool isUNORM);
+    VulkImageView(Vulk& vkIn, std::string const& texturePath, bool isUNORM)
+        : VulkImageView(vkIn, texturePath.c_str(), isUNORM) {}
+    VulkImageView(Vulk& vkIn, VkImage depthImage, VkDeviceMemory depthImageMemory, VkImageView depthImageView)
+        : vk(vkIn)
+        , image(depthImage)
+        , imageMemory(depthImageMemory)
+        , imageView(depthImageView) {}
+    ~VulkImageView();
 
-  private:
-    void loadTextureView(char const *texturePath, bool isUNORM);
+private:
+    void loadTextureView(char const* texturePath, bool isUNORM);
 };

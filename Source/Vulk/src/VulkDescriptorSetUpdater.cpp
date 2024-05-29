@@ -1,7 +1,7 @@
 #include "Vulk/VulkDescriptorSetUpdater.h"
 #include "Vulk/VulkImageView.h"
 
-VulkDescriptorSetUpdater &VulkDescriptorSetUpdater::addUniformBuffer(VkBuffer buf, VkDeviceSize range, uint32_t binding) {
+VulkDescriptorSetUpdater& VulkDescriptorSetUpdater::addUniformBuffer(VkBuffer buf, VkDeviceSize range, uint32_t binding) {
     auto uniformBufferInfo = std::make_unique<VkDescriptorBufferInfo>();
     uniformBufferInfo->buffer = buf;
     uniformBufferInfo->offset = 0;
@@ -20,8 +20,8 @@ VulkDescriptorSetUpdater &VulkDescriptorSetUpdater::addUniformBuffer(VkBuffer bu
     return *this;
 }
 
-VulkDescriptorSetUpdater &VulkDescriptorSetUpdater::addImageSampler(std::shared_ptr<VulkTextureView> textureImageView,
-                                                                    std::shared_ptr<VulkSampler> textureSampler, uint32_t binding) {
+VulkDescriptorSetUpdater& VulkDescriptorSetUpdater::addImageSampler(std::shared_ptr<VulkImageView> textureImageView, std::shared_ptr<VulkSampler> textureSampler,
+                                                                    uint32_t binding) {
     auto imageInfo = std::make_unique<VkDescriptorImageInfo>();
     imageInfo->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
     imageInfo->imageView = textureImageView->imageView;
@@ -43,7 +43,7 @@ VulkDescriptorSetUpdater &VulkDescriptorSetUpdater::addImageSampler(std::shared_
     return *this;
 }
 
-VulkDescriptorSetUpdater &VulkDescriptorSetUpdater::addStorageBuffer(VkBuffer buf, VkDeviceSize range, uint32_t binding) {
+VulkDescriptorSetUpdater& VulkDescriptorSetUpdater::addStorageBuffer(VkBuffer buf, VkDeviceSize range, uint32_t binding) {
     auto storageInfo = std::make_unique<VkDescriptorBufferInfo>();
     storageInfo->buffer = buf;
     storageInfo->offset = 0;

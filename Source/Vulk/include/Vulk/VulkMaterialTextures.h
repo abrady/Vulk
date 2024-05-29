@@ -4,10 +4,10 @@
 #include "VulkImageView.h"
 
 struct VulkMaterialTextures {
-    std::shared_ptr<VulkTextureView> diffuseView;
-    std::shared_ptr<VulkTextureView> normalView;
-    std::shared_ptr<VulkTextureView> ambientOcclusionView;
-    std::shared_ptr<VulkTextureView> displacementView;
-    std::shared_ptr<VulkTextureView> metallicView;
-    std::shared_ptr<VulkTextureView> roughnessView;
+    std::shared_ptr<VulkImageView> diffuseView;
+    std::shared_ptr<VulkImageView> normalView;
+    std::shared_ptr<VulkImageView> ambientOcclusionView;
+    std::shared_ptr<VulkImageView> displacementView;
+    std::shared_ptr<VulkImageView> metallicView;
+    std::shared_ptr<VulkImageView> roughnessView;
 };
