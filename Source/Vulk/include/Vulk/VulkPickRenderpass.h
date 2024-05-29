@@ -2,14 +2,13 @@
 #include <vulkan/vulkan.h>
 
 #include "ClassNonCopyableNonMovable.h"
-#include "VulkPickView.h"
 
 class Vulk;
 
 class VulkPickView : public ClassNonCopyableNonMovable {
 public:
     Vulk& vk;
-    std::shared_ptr<VulkTextureView> texView;
+    std::shared_ptr<VulkImageView> view;
     VkExtent2D extent;
     VkFormat format;
 
@@ -21,10 +20,10 @@ public:
         VkDeviceMemory imageMemory;
         VkImageView pickImageView;
 
-        vk.createImage(extent.width, extent.height, format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE__STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        vk.createImage(extent.width, extent.height, format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
                        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
         pickImageView = vk.createImageView(image, format, VK_IMAGE_ASPECT__BIT);
-        texView = std::make_shared<VulkTextureView>(vk, image, imageMemory, pickImageView);
+        view = std::make_shared<VulkImageView>(vk, image, imageMemory, pickImageView);
     }
 };
 
@@ -55,16 +54,17 @@ public:
         attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE; // Store the  information after rendering
         attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
         attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;                 // Initial layout of the attachment before the render pass starts
-        attachment.finalLayout = VK_IMAGE_LAYOUT__STENCIL_ATTACHMENT_OPTIMAL; // Layout to automatically transition to after the render pass
+        attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;          // Initial layout of the attachment before the render pass starts
+        attachment.finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL; // put it in a format we can read into CPU memory
 
-        VkAttachmentReference attachmentRef = {};
-        attachmentRef.attachment = 0; // The index of the  attachment in the attachment description array
-        attachmentRef.layout = VK_IMAGE_LAYOUT__STENCIL_ATTACHMENT_OPTIMAL;
+        VkAttachmentReference colorAttachmentRef = {};
+        colorAttachmentRef.attachment = 0;                                    // The index of the attachment in the attachment description array
+        colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL; // Layout during the subpass
 
         VkSubpassDescription subpassDescription = {};
         subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-        subpassDescription.pstencilAttachment = &attachmentRef;
+        subpassDescription.colorAttachmentCount = 1;                // Number of color attachments
+        subpassDescription.pColorAttachments = &colorAttachmentRef; // Array of color attachments
 
         VkRenderPassCreateInfo renderPassInfo = {};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;

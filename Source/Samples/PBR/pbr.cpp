@@ -8,6 +8,7 @@
 #include "Vulk/VulkDescriptorSetUpdater.h"
 #include "Vulk/VulkFence.h"
 #include "Vulk/VulkGeo.h"
+#include "Vulk/VulkPickRenderpass.h"
 #include "Vulk/VulkPipeline.h"
 #include "Vulk/VulkResourceMetadata.h"
 #include "Vulk/VulkResources.h"
@@ -34,7 +35,7 @@ public:
     std::shared_ptr<VulkPipeline> wireframePipeline;
     std::vector<std::shared_ptr<VulkActor>> debugWireframeActors;
 
-    std::shared_ptr<VulkDepthRenderpass> pickRenderpass;
+    std::shared_ptr<VulkPickRenderpass> pickRenderpass;
     std::vector<std::shared_ptr<VulkActor>> pickActors;
     std::shared_ptr<VulkPipeline> pickPipeline;
     std::shared_ptr<VulkFence> pickFence;
@@ -67,6 +68,10 @@ public:
             shadowMapActors.push_back(shadowMapActor);
         }
 
+        pickRenderpass = std::make_shared<VulkPickRenderpass>(vk);
+        pickFence = std::make_shared<VulkFence>(vk);
+        pickPipeline = resources.loadPipeline(vk.renderPass, vk.swapChainExtent, "Pick");
+        auto pickPipelineDef = resources.metadata.pipelines.at("Pick");
         // ========================================================================================================
         // Debug stuff
 
