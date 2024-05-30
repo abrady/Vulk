@@ -245,21 +245,21 @@ public:
     }
 
     void renderPickBuffer(VkCommandBuffer commandBuffer) {
-        VkRenderPassBeginInfo renderPassInfo{};
-        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        renderPassInfo.renderPass = vk.renderPass;
-        renderPassInfo.framebuffer = frameBuffer;
-        renderPassInfo.renderArea.offset = {0, 0};
-        renderPassInfo.renderArea.extent = vk.swapChainExtent;
+        VkRenderPassBeginInfo renderPassBeginInfo{};
+        renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        renderPassBeginInfo.renderPass = vk.renderPass;
+        renderPassBeginInfo.framebuffer = frameBuffer;
+        renderPassBeginInfo.renderArea.offset = {0, 0};
+        renderPassBeginInfo.renderArea.extent = vk.swapChainExtent;
 
         std::array<VkClearValue, 2> clearValues{};
         clearValues[0].color = {{0.1f, 0.0f, 0.1f, 1.0f}};
         clearValues[1].depthStencil = {1.0f, 0};
 
-        renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-        renderPassInfo.pClearValues = clearValues.data();
+        renderPassBeginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+        renderPassBeginInfo.pClearValues = clearValues.data();
 
-        vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+        vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
         render(commandBuffer, vk.currentFrame);
         vkCmdEndRenderPass(commandBuffer);
 
