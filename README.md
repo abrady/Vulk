@@ -42,6 +42,12 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
+Need to add push constant support:
+
+* in build tool check for it in the spirv data, if it exists write it to the built pipeline def
+* x in VulkResources.cpp add it to the pipelinebuilder if the size > 0
+* in pbr.cpp push it as part of pick render
+
 ## 5/28 more controls
 
 * selection
@@ -65,12 +71,6 @@ Color buffer approach:
 
 Note: I could add a 'pick' attachment to the main render call and then outObjectId could just be written, however I dont want to mandate that
 for every shader I write from now on. for now it'll be a separate renderpass
-
-Need to add push constant support:
-
-* in build tool check for it in the spirv data, if it exists write it to the built pipeline def
-* in VulkResources.cpp add it to the pipelinebuilder if the size > 0
-* in pbr.cpp push it as part of pick render
 
 ## 5/25 camera controls continued
 

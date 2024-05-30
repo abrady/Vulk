@@ -99,21 +99,23 @@ std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(VkRenderPass renderPas
     }
 
     VulkPipelineBuilder pb(vk);
-    if ()
-        pb.addvertShaderStage(getvertShader(def.vertShader->name))
-            .addFragmentShaderStage(getFragmentShader(def.fragShader->name))
-            .setDepthTestEnabled(def.depthTestEnabled)
-            .setDepthWriteEnabled(def.depthWriteEnabled)
-            .setDepthCompareOp(def.depthCompareOp)
-            .setPrimitiveTopology(def.primitiveTopology)
-            .setPolygonMode(def.polygonMode)
-            .setLineWidth(1.0f)
-            .setScissor(extent)
-            .setViewport(extent)
-            .setCullMode(def.cullMode)
-            .setDepthCompareOp(VK_COMPARE_OP_LESS)
-            .setStencilTestEnabled(false)
-            .setBlending(def.blending.enabled, def.blending.getColorMask());
+    for (auto& pc : def.pushConstants) {
+        pb.addPushConstantRange(pc.stageFlags, pc.size);
+    }
+    pb.addvertShaderStage(getvertShader(def.vertShader->name))
+        .addFragmentShaderStage(getFragmentShader(def.fragShader->name))
+        .setDepthTestEnabled(def.depthTestEnabled)
+        .setDepthWriteEnabled(def.depthWriteEnabled)
+        .setDepthCompareOp(def.depthCompareOp)
+        .setPrimitiveTopology(def.primitiveTopology)
+        .setPolygonMode(def.polygonMode)
+        .setLineWidth(1.0f)
+        .setScissor(extent)
+        .setViewport(extent)
+        .setCullMode(def.cullMode)
+        .setDepthCompareOp(VK_COMPARE_OP_LESS)
+        .setStencilTestEnabled(false)
+        .setBlending(def.blending.enabled, def.blending.getColorMask());
     if (def.geomShader) {
         pb.addGeometryShaderStage(getGeometryShader(def.geomShader->name));
     }

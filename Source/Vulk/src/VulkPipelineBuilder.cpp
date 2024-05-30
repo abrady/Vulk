@@ -181,6 +181,10 @@ void VulkPipelineBuilder::build(VkRenderPass renderPass, std::shared_ptr<VulkDes
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipelineLayoutInfo.setLayoutCount = 1;
     pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout->layout;
+    if (!pushConstantRanges.empty()) {
+        pipelineLayoutInfo.pushConstantRangeCount = static_cast<uint32_t>(pushConstantRanges.size());
+        pipelineLayoutInfo.pPushConstantRanges = pushConstantRanges.data();
+    }
 
     VK_CALL(vkCreatePipelineLayout(vk.device, &pipelineLayoutInfo, nullptr, pipelineLayout));
 
@@ -274,5 +278,14 @@ VulkPipelineBuilder& VulkPipelineBuilder::setViewport(VkExtent2D extent) {
 
     viewportState.viewportCount = 1;
     viewportState.pViewports = &viewport;
+    return *this;
+}
+
+VulkPipelineBuilder& VulkPipelineBuilder::addPushConstantRange(VkShaderStageFlags stageFlags, uint32_t size) {
+    VkPushConstantRange pushConstantRange = {};
+    pushConstantRange.stageFlags = stageFlags;
+    pushConstantRange.offset = (uint32_t)pushConstantRanges.size();
+    pushConstantRange.size = size;
+    pushConstantRanges.push_back(pushConstantRange);
     return *this;
 }

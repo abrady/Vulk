@@ -10,6 +10,7 @@
 #include "Vulk/VulkGeo.h"
 #include "Vulk/VulkPickRenderpass.h"
 #include "Vulk/VulkPipeline.h"
+#include "Vulk/VulkPipelineBuilder.h"
 #include "Vulk/VulkResourceMetadata.h"
 #include "Vulk/VulkResources.h"
 #include "Vulk/VulkScene.h"
@@ -70,8 +71,15 @@ public:
 
         pickRenderpass = std::make_shared<VulkPickRenderpass>(vk);
         pickFence = std::make_shared<VulkFence>(vk);
-        pickPipeline = resources.loadPipeline(vk.renderPass, vk.swapChainExtent, "Pick");
+        pickPipeline = resources.loadPipeline(pickRenderpass->renderPass, vk.swapChainExtent, "Pick");
         auto pickPipelineDef = resources.metadata.pipelines.at("Pick");
+        for (size_t i = 0; i < scene->actors.size(); ++i) {
+            auto actor = scene->actors[i];
+            auto actorDef = sceneDef.actors[i];
+            std::shared_ptr<VulkActor> pickActor = resources.createActorFromPipeline(*actorDef, pickPipelineDef, scene);
+            pickActors.push_back(pickActor);
+        }
+
         // ========================================================================================================
         // Debug stuff
 
@@ -124,9 +132,9 @@ public:
         float scroll = ImGui::GetIO().MouseWheel;
         bool camUpdated = false;
         if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
-            void* data;
-            vkMapMemory(device, resultBufferMemory, 0, VK_WHOLE_SIZE, 0, &data);
-            uint32_t* pickedObjectIds = reinterpret_cast<uint32_t*>(data);
+            // void* data;
+            // vkMapMemory(device, resultBufferMemory, 0, VK_WHOLE_SIZE, 0, &data);
+            // uint32_t* pickedObjectIds = reinterpret_cast<uint32_t*>(data);
         } else if (ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
             // left mouse is rotate around y axis and move +z/-z
             scene->camera.updatePosition(0.0f, 0.0f, -dy);
@@ -247,26 +255,25 @@ public:
     void renderPickBuffer(VkCommandBuffer commandBuffer) {
         VkRenderPassBeginInfo renderPassBeginInfo{};
         renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        renderPassBeginInfo.renderPass = vk.renderPass;
-        renderPassBeginInfo.framebuffer = frameBuffer;
+        renderPassBeginInfo.renderPass = pickRenderpass->renderPass;
+        renderPassBeginInfo.framebuffer = pickRenderpass->frameBuffers[vk.currentFrame];
         renderPassBeginInfo.renderArea.offset = {0, 0};
         renderPassBeginInfo.renderArea.extent = vk.swapChainExtent;
 
         std::array<VkClearValue, 2> clearValues{};
-        clearValues[0].color = {{0.1f, 0.0f, 0.1f, 1.0f}};
+        clearValues[0].color = {0};
         clearValues[1].depthStencil = {1.0f, 0};
 
         renderPassBeginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
         renderPassBeginInfo.pClearValues = clearValues.data();
 
         vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-        render(commandBuffer, vk.currentFrame);
-        vkCmdEndRenderPass(commandBuffer);
-
-        vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-        for (auto& actor : pickActors) {
-            auto model = actor->model;
+        for (uint32_t i = 0; i < pickActors.size(); ++i) {
+            auto& actor = pickActors[i];
+            auto& model = actor->model;
+            uint32_t data = i + 1;
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pickPipeline->pipeline);
+            vkCmdPushConstants(commandBuffer, pickPipeline->pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(data), &data);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pickPipeline->pipelineLayout, 0, 1,
                                     &actor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet, 0, nullptr);
             model->bindInputBuffers(commandBuffer);

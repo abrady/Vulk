@@ -22,7 +22,7 @@ public:
 
         vk.createImage(extent.width, extent.height, format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
                        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
-        pickImageView = vk.createImageView(image, format, VK_IMAGE_ASPECT__BIT);
+        pickImageView = vk.createImageView(image, format, VK_IMAGE_ASPECT_COLOR_BIT);
         view = std::make_shared<VulkImageView>(vk, image, imageMemory, pickImageView);
     }
 };
