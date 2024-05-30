@@ -8,7 +8,7 @@
                 "/Zi",
                 "/EHsc",
                 "/nologo",
-                "/Fe${fileDirname}\\${fileBasenameNoExtension}.exe",
+                "/Fe${fileDirname}//${fileBasenameNoExtension}.exe",
                 "${file}"
             ],
             "options": {
@@ -33,6 +33,27 @@
             "group": "build",
             "problemMatcher": [],
             "detail": "CMake template build task"
+        },
+        {
+            "label": "Build BuildToolTests",
+            "type": "shell",
+            "command": "C:/Program Files/Microsoft Visual Studio/2022/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/bin/cmake.exe",
+            "args": [
+                "--build",
+                "${workspaceFolder}/build", // Adjust the path to your build directory
+                "--target",
+                "BuildToolTests",
+                "--config",
+                "Debug" // Or "Release", depending on your needs
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "detail": "Builds the BuildToolTests target"
         }
     ],
     "version": "2.0.0"

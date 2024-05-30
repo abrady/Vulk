@@ -35,7 +35,7 @@ class PipelineBuilder {
         static std::once_flag flag;
         std::call_once(flag, []() {
             logger = VulkLogger::CreateLogger("PipelineBuilder");
-            logger->set_level(spdlog::level::trace);
+            // logger->set_level(spdlog::level::trace);
         });
         return logger;
     }
@@ -126,18 +126,18 @@ public:
         for (const spirv_cross::Resource& resource : resources.push_constant_buffers) {
             // Get the buffer size
             spirv_cross::SPIRType const& type = glsl.get_type(resource.base_type_id);
-            size_t buffer_size = glsl.get_declared_struct_size(type);
+            uint32_t size = (uint32_t)glsl.get_declared_struct_size(type);
             // Note: Push constants do not have a traditional binding location like uniforms yet.
             unsigned location = 0;
             if (glsl.has_decoration(resource.id, spv::DecorationLocation)) {
                 location = glsl.get_decoration(resource.id, spv::DecorationLocation);
             }
-            logger()->trace("Push constant buffer: name={}, size={}, location={}", resource.name, buffer_size, location);
+            logger()->trace("Push constant buffer: name={}, size={}, location={}", resource.name, size, location);
             VULK_ASSERT(location < 32, "Push constant location is too large"); // no idea what the max may eventually be but this isn't crazy
             if (parsedShader.pushConstants.size() <= location) {
                 parsedShader.pushConstants.resize(location + 1);
             }
-            parsedShader.pushConstants[location] |= shaderStage;
+            parsedShader.pushConstants[location] = size;
         }
 
         return parsedShader;
@@ -164,7 +164,8 @@ public:
     }
 
     // e.g. the "vert" or "frag" part of the descriptor set
-    static void updateDSDef(ShaderInfo info, std::string stage, DescriptorSetDef& def) {
+    static void updateBuiltPipelineDef(ShaderInfo info, std::string stage, BuiltPipelineDef& bp) {
+        DescriptorSetDef& def = bp.descriptorSet;
         VkShaderStageFlagBits stageFlag = DescriptorSetDef::getShaderStageFromStr(stage);
         for (auto& ubo : info.uboBindings) {
             def.uniformBuffers[stageFlag].push_back(ubo.first);
@@ -174,6 +175,19 @@ public:
         }
         for (auto& sampler : info.samplerBindings) {
             def.imageSamplers[stageFlag].push_back(sampler.first);
+        }
+
+        for (uint32_t i = 0; i < info.pushConstants.size(); i++) {
+            if (i >= bp.pushConstants.size()) {
+                bp.pushConstants.resize(i + 1);
+                PushConstantDef pc = {.stageFlags = (uint32_t)stageFlag, .size = info.pushConstants[i]};
+                bp.pushConstants[i] = pc;
+            } else {
+                VULK_ASSERT(bp.pushConstants[i].size == info.pushConstants[i], "Push constant size mismatch");
+                uint32_t flags = bp.pushConstants[i].stageFlags;
+                flags |= (uint32_t)stageFlag;
+                bp.pushConstants[i].stageFlags = flags;
+            }
         }
     }
 
@@ -188,17 +202,17 @@ public:
         std::vector<ShaderInfo> shaderInfos;
         ShaderInfo vertShaderInfo = infoFromShader(pipelineIn.vertShaderName, "vert", builtShadersDir);
         shaderInfos.push_back(vertShaderInfo);
-        updateDSDef(vertShaderInfo, "vert", pipelineOut.descriptorSet);
+        updateBuiltPipelineDef(vertShaderInfo, "vert", pipelineOut);
 
         if (!pipelineIn.geomShaderName.empty()) {
             ShaderInfo info = infoFromShader(pipelineIn.geomShaderName, "geom", builtShadersDir);
             shaderInfos.push_back(info);
-            updateDSDef(info, "geom", pipelineOut.descriptorSet);
+            updateBuiltPipelineDef(info, "geom", pipelineOut);
         }
         if (!pipelineIn.fragShaderName.empty()) {
             ShaderInfo info = infoFromShader(pipelineIn.fragShaderName, "frag", builtShadersDir);
             shaderInfos.push_back(info);
-            updateDSDef(info, "frag", pipelineOut.descriptorSet);
+            updateBuiltPipelineDef(info, "frag", pipelineOut);
         }
 
         for (auto& [location, name] : vertShaderInfo.inputLocations) {

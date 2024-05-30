@@ -13,6 +13,11 @@ layout (line_strip, max_vertices = 2) out;
 layout(location = VulkShaderLocation_Pos) out vec3 outWorldPos;
 layout(location = VulkShaderLocation_Normal) out vec3 outWorldNorm;
 
+layout(push_constant) uniform pickPushConstants {
+    uint objectID;
+} pc;
+
+
 void main() {    
     // Output the original point
     gl_Position = gl_in[0].gl_Position;

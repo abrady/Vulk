@@ -6,6 +6,9 @@ layout(binding = VulkShaderBinding_EyePos) uniform EyePos {
     vec3 eyePos;
 } eyePosUBO;
 
+layout(push_constant) uniform pickPushConstants {
+    uint objectID;
+} pc;
 
 layout(location = VulkShaderLocation_Pos) in vec3 inPos;
 layout(location = VulkShaderLocation_Normal) in vec3 inNorm;

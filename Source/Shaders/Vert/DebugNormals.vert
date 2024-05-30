@@ -7,6 +7,11 @@
 XFORMS_UBO(xformUBO);
 MODELXFORM_UBO(modelUBO);
 
+layout(push_constant) uniform pickPushConstants {
+    uint objectID;
+} pc;
+
+
 layout(binding = VulkShaderBinding_DebugNormalsUBO) uniform DebugNormalsUBO {
     float len;        
     bool useModel;       

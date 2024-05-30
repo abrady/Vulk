@@ -4,6 +4,8 @@
 #include "VulkResourceMetadata_generated.h"
 #include "VulkShaderEnums_generated.h"
 #include "spirv_cross/spirv_glsl.hpp"
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers.hpp>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -53,7 +55,7 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
     SECTION("Test Pick Frag") {
         ShaderInfo info = PipelineBuilder::getShaderInfo(builtShadersDir / "frag" / "pick.fragspv");
         CHECK(info.pushConstants.size() == 1);
-        CHECK(info.pushConstants[0].size == 4);
+        CHECK(info.pushConstants[0] == 4);
     }
     SECTION("Test mismatch in upstream/downstream") {
         ShaderInfo info1 = PipelineBuilder::getShaderInfo(builtShadersDir / "vert" / "DebugNormals.vertspv");
@@ -126,9 +128,12 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
             CHECK(builtDef.cullMode == def.cullMode);
             CHECK(builtDef.vertInputs ==
                   std::vector<VulkShaderLocation>{VulkShaderLocation_Pos, VulkShaderLocation_Normal, VulkShaderLocation_Tangent, VulkShaderLocation_TexCoord});
+            CHECK(builtDef.pushConstants.size() == 1);
+            CHECK(builtDef.pushConstants[0].stageFlags == (VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_GEOMETRY_BIT));
+            CHECK(builtDef.pushConstants[0].size == 4);
 
-            CHECK(sizeof(def) == 232);      // reminder to add new fields to the test
-            CHECK(sizeof(builtDef) == 552); // reminder to add new fields to the test
+            REQUIRE(sizeof(def) == 232);      // reminder to add new fields to the test
+            REQUIRE(sizeof(builtDef) == 584); // reminder to add new fields to the test
             // I would do a static assert here but it doesn't print out the sizes.
             CHECK(builtDef.descriptorSet.uniformBuffers[VK_SHADER_STAGE_VERTEX_BIT] ==
                   std::vector<VulkShaderUBOBinding>{VulkShaderUBOBinding_Xforms, VulkShaderUBOBinding_ModelXform, VulkShaderUBOBinding_DebugNormals});

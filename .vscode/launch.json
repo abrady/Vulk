@@ -51,11 +51,17 @@
             "environment": [],
             "preLaunchTask": "CMake: build buildtool"
         },
+        // C:\open\Github\Vulk\build\Source\Tools\BuildTool\Tests\Debug
         {
-            "name": "(gdb) Attach",
+            "name": "BuildToolTests - Debug",
+            "program": "${workspaceFolder}/build/Source/Tools/BuildTool/Tests/Debug/BuildToolTests.exe",
             "type": "cppvsdbg",
-            "request": "attach",
-            "processId": "${command:pickProcess}"
-        }
+            "request": "launch",
+            "cwd": "${workspaceRoot}/Build",
+            "args": [],
+            "stopAtEntry": false,
+            "environment": [],
+            "preLaunchTask": "Build BuildToolTests"
+        },
     ]
 }
