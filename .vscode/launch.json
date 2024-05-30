@@ -20,6 +20,7 @@
         // building C:/open/Github/Vulk/build/Resources/Assets/Pipelines/LitShadowMappedModel.pipeline from C:/open/Github/Vulk/Assets/Pipelines/LitShadowMappedModel.pipeline
         // [BuildTool.exe pipeline C:/open/Github/Vulk/build/Resources/Source/Shaders C:/open/Github/Vulk/build/Resources/Assets/Pipelines/PBR.pipeline.bin C:/open/Github/Vulk/Assets/Pipelines/PBR.pipeline 
         // BuildTool.exe GenVulkShaderEnums C:/open/Github/Vulk/build/generated/Shaders/VulkShaderEnums_generated.glsl 
+        // "${workspaceFolder}/Assets/Pipelines/PBR.pipeline"
         {
             "name": "PipelineBuilder - Debug Pipeline",
             "program": "${workspaceFolder}/build/Source/Tools/BuildTool/Debug/BuildTool.exe",
@@ -29,8 +30,8 @@
             "args": [
                 "pipeline",
                 "${workspaceFolder}/build/Resources/Source/Shaders",
-                "${workspaceFolder}/build/Resources/Assets/Pipelines/PBR.pipeline.bin",
-                "${workspaceFolder}/Assets/Pipelines/PBR.pipeline"
+                "${workspaceFolder}/build/Resources/Assets/Pipelines/Pick.pipeline.bin",
+                "${workspaceFolder}/Assets/Pipelines/Pick.pipeline"
             ],
             "stopAtEntry": false,
             "environment": [],

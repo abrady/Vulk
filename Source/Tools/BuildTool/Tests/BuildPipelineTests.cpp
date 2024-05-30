@@ -50,6 +50,11 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
         ShaderInfo info = PipelineBuilder::getShaderInfo(builtShadersDir / "frag" / "GoochShading.fragspv");
         CHECK(info.samplerBindings[VulkShaderTextureBinding_NormalSampler] == "normSampler");
     }
+    SECTION("Test Pick Frag") {
+        ShaderInfo info = PipelineBuilder::getShaderInfo(builtShadersDir / "frag" / "pick.fragspv");
+        CHECK(info.pushConstants.size() == 1);
+        CHECK(info.pushConstants[0].size == 4);
+    }
     SECTION("Test mismatch in upstream/downstream") {
         ShaderInfo info1 = PipelineBuilder::getShaderInfo(builtShadersDir / "vert" / "DebugNormals.vertspv");
         ShaderInfo info2 = PipelineBuilder::getShaderInfo(builtShadersDir / "frag" / "GoochShading.fragspv");
