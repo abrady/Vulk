@@ -30,6 +30,8 @@ public:
 // A renderpass for rendering objectids to so you can see what
 // the mouse currently has selected.
 class VulkPickRenderpass : public ClassNonCopyableNonMovable {
+    std::shared_ptr<VulkFence> pickFence;
+
 public:
     Vulk& vk;
     VkRenderPass renderPass;
@@ -37,9 +39,12 @@ public:
     std::array<VkFramebuffer, MAX_FRAMES_IN_FLIGHT> frameBuffers;
     VkExtent2D extent = {};
     VkFormat format = VK_FORMAT_R32_UINT;
+    std::vector<uint32_t> pickData;
 
     VulkPickRenderpass(Vulk& vkIn)
         : vk(vkIn) {
+        pickFence = std::make_shared<VulkFence>(vk);
+
         // I've been told matching the aspect ratio is important for shadow mapping
         extent.width = vk.swapChainExtent.width;
         extent.height = vk.swapChainExtent.height;
@@ -87,7 +92,17 @@ public:
 
             VK_CALL(vkCreateFramebuffer(vk.device, &framebufferInfo, nullptr, &frameBuffers[i]));
         }
+
+        pickData.resize(extent.width * extent.height);
     }
+
+    void updatePickDataFromBuffer(uint32_t frameIndex) {
+        // use a fence to wait for the pick buffer to be done
+        VK_CALL(vkWaitForFences(vk.device, 1, &pickFence->fence, VK_TRUE, UINT64_MAX));
+        VulkPickView* pickView = pickViews[frameIndex].get();
+        vk.copyImageToMem(pickView->view->image, pickData.data(), pickData.size() * sizeof(uint32_t));
+    }
+
     ~VulkPickRenderpass() {
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
             vkDestroyFramebuffer(vk.device, frameBuffers[i], nullptr);

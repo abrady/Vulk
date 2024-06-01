@@ -39,7 +39,6 @@ public:
     std::shared_ptr<VulkPickRenderpass> pickRenderpass;
     std::vector<std::shared_ptr<VulkActor>> pickActors;
     std::shared_ptr<VulkPipeline> pickPipeline;
-    std::shared_ptr<VulkFence> pickFence;
 
     struct Debug {
         bool renderNormals = false;
@@ -70,7 +69,6 @@ public:
         }
 
         pickRenderpass = std::make_shared<VulkPickRenderpass>(vk);
-        pickFence = std::make_shared<VulkFence>(vk);
         pickPipeline = resources.loadPipeline(pickRenderpass->renderPass, vk.swapChainExtent, "Pick");
         auto pickPipelineDef = resources.metadata.pipelines.at("Pick");
         for (size_t i = 0; i < scene->actors.size(); ++i) {
@@ -280,6 +278,8 @@ public:
             vkCmdDrawIndexed(commandBuffer, model->numIndices, 1, 0, 0, 0);
         }
         vkCmdEndRenderPass(commandBuffer);
+
+        pickRenderpass->updatePickDataFromBuffer(vk.currentFrame);
     }
 
     void renderShadowMapImageForLight(VkCommandBuffer commandBuffer) {
