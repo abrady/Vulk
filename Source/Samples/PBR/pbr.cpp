@@ -121,6 +121,11 @@ public:
         bool isOpen = false;
     } menu;
 
+    struct Selection {
+        uint32_t selectedModelID = 0;
+    } selection;
+    std::shared_ptr<Selection> selectedActor;
+
     void tick() override {
         ImGuiIO& io = ImGui::GetIO();
 
@@ -129,10 +134,25 @@ public:
         float dy = dragScale * io.MouseDelta.y;
         float scroll = ImGui::GetIO().MouseWheel;
         bool camUpdated = false;
-        if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
-            // void* data;
-            // vkMapMemory(device, resultBufferMemory, 0, VK_WHOLE_SIZE, 0, &data);
-            // uint32_t* pickedObjectIds = reinterpret_cast<uint32_t*>(data);
+
+        uint32_t mouseIdx = (uint32_t)(io.MousePos.x + io.MousePos.y * vk.swapChainExtent.width);
+        bool modelPicked = false;
+        uint32_t selectedModelID = 0;
+        if (mouseIdx < pickRenderpass->pickData.size()) {
+            modelPicked = pickRenderpass->pickData[mouseIdx] > 0;
+            selectedModelID = pickRenderpass->pickData[mouseIdx] - 1;
+        }
+
+        if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+            if (modelPicked && selectedActor && selectedActor->selectedModelID == selectedModelID) {
+                logger->trace("re-clicked on current model: {}", selectedModelID);
+            } else if (modelPicked) {
+                logger->trace("selected model: {}", selectedModelID);
+                selectedActor = std::make_shared<Selection>(Selection{selectedModelID});
+            } else {
+                logger->trace("clearing selection");
+                selectedActor = nullptr;
+            }
         } else if (ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
             // left mouse is rotate around y axis and move +z/-z
             scene->camera.updatePosition(0.0f, 0.0f, -dy);
@@ -158,8 +178,11 @@ public:
         }
 
         // a useful demo of a variety of features
-        bool demoWindowOpen = true;
-        ImGui::ShowDemoWindow(&demoWindowOpen);
+        static bool showDemo = false;
+        if (showDemo) {
+            static bool demoWindowOpen = false;
+            ImGui::ShowDemoWindow(&demoWindowOpen);
+        }
 
         const ImGuiViewport* viewport = ImGui::GetMainViewport();
         ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x, viewport->WorkPos.y), ImGuiCond_FirstUseEver);
