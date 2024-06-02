@@ -30,7 +30,6 @@ public:
 // A renderpass for rendering objectids to so you can see what
 // the mouse currently has selected.
 class VulkPickRenderpass : public ClassNonCopyableNonMovable {
-    std::shared_ptr<VulkFence> pickFence;
 
 public:
     Vulk& vk;
@@ -43,8 +42,6 @@ public:
 
     VulkPickRenderpass(Vulk& vkIn)
         : vk(vkIn) {
-        pickFence = std::make_shared<VulkFence>(vk);
-
         // I've been told matching the aspect ratio is important for shadow mapping
         extent.width = vk.swapChainExtent.width;
         extent.height = vk.swapChainExtent.height;
@@ -98,9 +95,8 @@ public:
 
     void updatePickDataFromBuffer(uint32_t frameIndex) {
         // use a fence to wait for the pick buffer to be done
-        VK_CALL(vkWaitForFences(vk.device, 1, &pickFence->fence, VK_TRUE, UINT64_MAX));
         VulkPickView* pickView = pickViews[frameIndex].get();
-        vk.copyImageToMem(pickView->view->image, pickData.data(), pickData.size() * sizeof(uint32_t));
+        vk.copyImageToMem(pickView->view->image, pickData.data(), extent.width, extent.height, sizeof(uint32_t));
     }
 
     ~VulkPickRenderpass() {

@@ -277,9 +277,12 @@ public:
             model->bindInputBuffers(commandBuffer);
             vkCmdDrawIndexed(commandBuffer, model->numIndices, 1, 0, 0, 0);
         }
-        vkCmdEndRenderPass(commandBuffer);
 
-        pickRenderpass->updatePickDataFromBuffer(vk.currentFrame);
+        vkCmdEndRenderPass(commandBuffer);
+    }
+
+    void onBeforeRender() override {
+        pickRenderpass->updatePickDataFromBuffer(vk.lastFrame);
     }
 
     void renderShadowMapImageForLight(VkCommandBuffer commandBuffer) {

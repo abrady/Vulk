@@ -78,6 +78,14 @@ class VulkRenderable {
 public:
     virtual void tick() = 0;
     virtual void renderFrame(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer) = 0;
+
+    // ==================
+    // events
+
+    // after vkQueuePresentKHR but before currentFrame is incremented
+    virtual void onAfterPresent() {}
+    // after vkWaitForFences, before vkBeginCommandBuffer
+    virtual void onBeforeRender() {}
 };
 
 class VulkImGui;
@@ -101,12 +109,14 @@ public:
     VkRenderPass renderPass;
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
     VkPresentModeKHR presentMode; // for ImGUI
+
+public: // utilities
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
     void copyMemToBuffer(void const* srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
     void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
     void copyImageToBuffer(VkImage image, VkBuffer buffer, uint32_t width, uint32_t height);
-    void copyBufferToMem(VkBuffer srcBuffer, void* dstBuffer, VkDeviceSize size);
-    void copyImageToMem(VkImage image, void* dstBuffer, VkDeviceSize size);
+    void copyBufferToMem(VkBuffer srcBuffer, void* dstMem, VkDeviceSize size);
+    void copyImageToMem(VkImage image, void* dstBuffer, uint32_t width, uint32_t height, VkDeviceSize dstEltSize);
     VkSampler createTextureSampler();
     VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
     VkImage createTextureImage(char const* texture_path, VkDeviceMemory& textureImageMemory, VkImage& textureImage, bool isUNORM, VkFormat& formatOut);
@@ -122,6 +132,8 @@ public:
     void transitionImageLayout(VkCommandBuffer commandBuffer, VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout);
 
     uint32_t currentFrame = 0; // index of the current frame in flight, always between 0 and MAX_FRAMES_IN_FLIGHT
+    uint32_t lastFrame = UINT32_MAX;
+    uint32_t frameCount = 0;
     VkExtent2D swapChainExtent;
     VkCommandPool commandPool;
     std::vector<VkCommandBuffer> commandBuffers;

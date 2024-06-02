@@ -42,6 +42,86 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
+## 6/1 wtf do we have to do to get this buffer readable
+
+1. start a single-time command buffer
+2. transition the image to a format we can copy to cpu: from VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL to VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL using a vkCmdPipelineBarrier
+3. call vkCmdCopyImageToBuffer to copy the image to a buffer
+4. submit the commands
+
+when I submit I get: Validation Error: ... expects VkImage .. to be in layout VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL--instead, current layout is VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL.
+
+Now, if I look around for VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL I see it in VulkPickRenderpass in the VkAttachmentDescription: attachment.finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+
+So can I skip this? what format does it need to go back into?
+
+1. I notice when I make the renderpass that I specify finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL in VkAttachmentDescription, maybe I don't need to do the transition?
+
+Okay, so comment out the transition code, let's see what happens:
+
+VkBuffer should have VK_BUFFER_USAGE_TRANSFER_SRC_BIT set during creation. The Vulkan spec states: srcBuffer must have been created with VK_BUFFER_USAGE_TRANSFER_SRC_BIT usage flag (<https://vulkan.lunarg.com/doc/view/1.3.250.1/windows/1.3-extensions/vkspec.html#VUID-vkCmdCopyBuffer-srcBuffer-00118>)
+
+2. progress? looks like we need the buffer to have this bit set, fine.
+
+Vulk: ERROR: 2 message: Validation Error: [ VUID-vkCmdCopyImageToBuffer-dstBuffer-00191 ] Object 0: handle = 0x189c4a64360, type = VK_OBJECT_TYPE_COMMAND_BUFFER; Object 1: handle = 0x80f3660000000110, type = VK_OBJECT_TYPE_BUFFER; | MessageID = 0x9936f2bd | Invalid usage flag for VkBuffer 0x80f3660000000110[] used by vkCmdCopyImageToBuffer. In this case, VkBuffer should have VK_BUFFER_USAGE_TRANSFER_DST_BIT set during creation. The Vulkan spec states: dstBuffer must have been created with VK_BUFFER_USAGE_TRANSFER_DST_BIT usage flag (<https://vulkan.lunarg.com/doc/view/1.3.250.1/windows/1.3-extensions/vkspec.html#VUID-vkCmdCopyImageToBuffer-dstBuffer-00191>)
+
+so....
+vkCmdCopyImageToBuffer fails because stagingBuffer doesn't have the DST bit set
+but if I set the src bit I can't copy from it ...
+
+3. can I set both?
+
+Invalid usage flag for VkBuffer 0x27a9e40000000112[] used by vkCmdCopyBuffer. In this case, VkBuffer should have VK_BUFFER_USAGE_TRANSFER_DST_BIT set during creation.
+
+4. that worked, yay.
+
+God damn, what did I learn?
+
+1. images have formats that you need to set
+2.
+
+## 6/1
+
+Little refresher on VkBuffer vs VkImage vs VkImageView vs Samplers
+<https://vkguide.dev/docs/chapter-5/vulkan_images/>
+
+* VkBuffer: stores bytes 1D data, typically verts, uniforms, etc.
+  * usage: VK_BUFFER_USAGE_VERTEX_BUFFER_BIT (or index, uniform, storage, indirect etc.)
+* VkImage: stores pixels as 2D/3D data, typically textures (albedo, normal maps etc.) or render targets
+  * format: bits/pixel
+  * layout: how they're arranged in memory. OPTIMAL layouts work best for the GPU while LINEAR is just the expected array.
+    * images begin life in the VK_IMAGE_LAYOUT_UNDEFINED layout. you transition them to something, e.g. VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+    * it's important to use pipeline barriers to isolate these operations.
+* VkImageView: used in descriptor sets for accessing an image. can also be used to reinterpret pixels in some cases or access a single mip level
+* VkSampler: used in shaders, has border modes (e.g. clamp), anisotropy, various mip flags, how the texture is filtered.
+
+blarg, now I'm hanging on vkWaitForFences...
+
+synchronization refresher:
+
+* <https://www.khronos.org/blog/understanding-vulkan-synchronization>
+* <https://github.com/KhronosGroup/Vulkan-Docs/wiki/Synchronization-Examples>
+
+### Single Queue Synchronization
+
+#### Barriers (GPU only)
+
+* Pipeline barriers:  specify what data or which stages of the rendering pipeline to wait for and which stages to block until other specified stages in previous commands are completed.
+* Execution Barriers: ensure commands in a command buffer are executed before others. Often used to manage dependencies between successive command buffers or within a single command buffer.
+* Memory barriers: ensures that caches are flushed and our memory writes from commands executed before the barrier are available to the pending after-barrier commands
+
+#### Events (GPU and CPU)
+
+Events use source stage masks and destination stage masks just like pipeline barriers. The key difference between events and pipeline barriers is that event barriers occur in two parts. The first part is setting an event using vkCmdSetEvent, and the second is waiting for an event with vkCmdWaitEvents
+
+### Synchronization Across Multiple Device Queues
+
+Now that we’ve gone through some mechanisms for setting up dependencies within a single device queue, let’s check out how we can orchestrate synchronization across different queues.
+
+The Vulkan API provides two options, each with different purposes: semaphores and fences.
+
+## older
+
 Need to add push constant support:
 
 * in build tool check for it in the spirv data, if it exists write it to the built pipeline def
