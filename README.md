@@ -42,6 +42,13 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
+## 6/1 pick data
+
+looks like about 10% of the pixels are covered by the sphere, oh yeah, I remember in renderdoc seeing the projection isn't the same.
+
+* make the projection the same
+* I should also revisit all the transition shit I did to make sure it makes sense.
+
 ## 6/1 wtf do we have to do to get this buffer readable
 
 1. start a single-time command buffer
