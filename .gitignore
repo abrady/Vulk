@@ -1,4 +1,5 @@
 build/
+build_ninja/
 vcpkg_installed/
 Source/Tools/PipelineBuilder/Tests/pipelines
 # Visual Studio files
