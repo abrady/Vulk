@@ -73,10 +73,19 @@ Let's keep digging:
   * full build: 29s, hmm, worse.
   * pbr.cpp: 6.9s down from 8s
     * Source down to 1.3s from 3.758! nice, 3.5s savings (not sure why it didn't translate to like a 5s build...)
-* what else is taking time:
-  *
-* next is the PerformPendingInstantations
-  *
+* what if I pch everything in vulk?
+  * actually made things slower. probably all the unused crap
+  * compiling pbr.cpp itself is only taking 234ms so that's diminishing returns
+* next is the PerformPendingInstantations: saved .5s from templates
+  * Cereal's JSON reader is super slow. I don't think I use it: 3.192s down to 2.739s, so almost half a sec
+  * nlohmann/json.hpp is also taking some time: .3s, but we still need it
+* what about CMAKE_UNITY_BUILD? Not worth it.
+  * full build: 18 up to 30.7
+  * pbr: 6.16 down to 6.081, so a little savings? .08s, meh
+
+Conclusion: at this point almost 3 seconds is dedicated to templates and most of those templates are from
+Cereal and json parsers. so... switching over to flatbuffers entirely is the next thing to do if we really
+want to save time...
 
 ## 6/1 pick data
 

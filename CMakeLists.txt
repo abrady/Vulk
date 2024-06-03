@@ -17,6 +17,11 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# performance optimization, but can mask some errors
+# see https://cmake.org/cmake/help/latest/prop_tgt/UNITY_BUILD.html
+# didn't actually save time, so keeping it off
+# set(CMAKE_UNITY_BUILD ON)
+
 # this basically did nothing to build times, but keeping it
 if(MSVC)
     message("Using MSVC")
