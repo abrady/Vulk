@@ -1,5 +1,4 @@
-#include "Vulk/VulkGeo.h"
-#include "Vulk/VulkMesh.h"
+#include "Vulk/VulkPCH.h"
 
 // TODO: get subdivideTris working with our geo creation functions and maybe we can accumulate the vertices and indices in the meshData
 #define CHECK_MESH_DATA(meshData) assert(meshData.vertices.size() == 0 && meshData.indices.size() == 0)
@@ -11,8 +10,7 @@ using namespace glm;
 //
 // 2. E1=ΔU1T+ΔV1B
 // see also https://learnopengl.com/Advanced-Lighting/Normal-Mapping
-static vec3 calcTangent(vec3 pos1, vec3 pos2, vec3 pos3, vec2 uv1, vec2 uv2, vec2 uv3)
-{
+static vec3 calcTangent(vec3 pos1, vec3 pos2, vec3 pos3, vec2 uv1, vec2 uv2, vec2 uv3) {
     // positions
     // pos1 = vec3(-1.0, 1.0, 0.0);
     // pos2 = vec3(-1.0, -1.0, 0.0);
@@ -44,15 +42,12 @@ static vec3 calcTangent(vec3 pos1, vec3 pos2, vec3 pos3, vec2 uv1, vec2 uv2, vec
     return tangent1;
 }
 
-static void calcMeshTangents(VulkMesh &meshData)
-{
-    for (auto &vert : meshData.vertices)
-    {
+static void calcMeshTangents(VulkMesh& meshData) {
+    for (auto& vert : meshData.vertices) {
         vert.tangent = vec3(0.f); // normalize to get the 'average' tangent
     }
     // tangent space needs special handling
-    for (uint32_t i = 0; i < meshData.indices.size(); i += 3)
-    {
+    for (uint32_t i = 0; i < meshData.indices.size(); i += 3) {
         uint32_t i0 = meshData.indices[i + 0];
         uint32_t i1 = meshData.indices[i + 1];
         uint32_t i2 = meshData.indices[i + 2];
@@ -68,8 +63,7 @@ static void calcMeshTangents(VulkMesh &meshData)
         meshData.vertices[i2].tangent += tangent;
     }
 
-    for (auto &vert : meshData.vertices)
-    {
+    for (auto& vert : meshData.vertices) {
         vert.tangent = normalize(vert.tangent); // normalize to get the 'average' tangent
     }
 }
@@ -87,8 +81,7 @@ static void calcMeshTangents(VulkMesh &meshData)
 //    /\  /\
 //   /__\/__\
 //
-static void subdivideTris(VulkMesh &meshData)
-{
+static void subdivideTris(VulkMesh& meshData) {
     // save a copy of the input geometry
     std::vector<Vertex> verticesCopy = meshData.vertices;
     std::vector<uint32_t> indicesCopy = meshData.indices;
@@ -98,15 +91,11 @@ static void subdivideTris(VulkMesh &meshData)
     meshData.indices.reserve(indicesCopy.size() * 4);
 
     std::unordered_map<glm::vec3, uint32_t> indexFromPoint;
-    auto addVertex = [&](Vertex const &v) -> uint32_t
-    {
+    auto addVertex = [&](Vertex const& v) -> uint32_t {
         auto it = indexFromPoint.find(v.pos);
-        if (it != indexFromPoint.end())
-        {
+        if (it != indexFromPoint.end()) {
             return it->second;
-        }
-        else
-        {
+        } else {
             uint32_t index = (uint32_t)meshData.vertices.size();
             meshData.vertices.push_back(v);
             indexFromPoint[v.pos] = index;
@@ -114,8 +103,7 @@ static void subdivideTris(VulkMesh &meshData)
         }
     };
 
-    for (uint32_t i = 0; i < indicesCopy.size(); i += 3)
-    {
+    for (uint32_t i = 0; i < indicesCopy.size(); i += 3) {
         Vertex v0 = verticesCopy[indicesCopy[i + 0]];
         Vertex v1 = verticesCopy[indicesCopy[i + 1]];
         Vertex v2 = verticesCopy[indicesCopy[i + 2]];
@@ -165,8 +153,7 @@ static void subdivideTris(VulkMesh &meshData)
     }
 }
 
-void makeEquilateralTri(float side, uint32_t numSubdivisions, VulkMesh &meshData)
-{
+void makeEquilateralTri(float side, uint32_t numSubdivisions, VulkMesh& meshData) {
     CHECK_MESH_DATA(meshData);
     meshData.name = "EquilateralTriangle";
     Vertex v0;
@@ -194,17 +181,15 @@ void makeEquilateralTri(float side, uint32_t numSubdivisions, VulkMesh &meshData
     meshData.indices.push_back(baseIndex + 2);
 
     assert(numSubdivisions <= 6u);
-    numSubdivisions = min(numSubdivisions, 6u);
-    for (uint32_t i = 0; i < numSubdivisions; ++i)
-    {
+    numSubdivisions = glm::min(numSubdivisions, 6u);
+    for (uint32_t i = 0; i < numSubdivisions; ++i) {
         subdivideTris(meshData);
     }
 
     calcMeshTangents(meshData);
 }
 
-void makeQuad(float x, float y, float w, float h, float depth, uint32_t numSubdivisions, VulkMesh &meshData)
-{
+void makeQuad(float x, float y, float w, float h, float depth, uint32_t numSubdivisions, VulkMesh& meshData) {
     CHECK_MESH_DATA(meshData);
     meshData.name = "Quad";
 
@@ -242,53 +227,47 @@ void makeQuad(float x, float y, float w, float h, float depth, uint32_t numSubdi
     meshData.indices.push_back(baseIndex + 3);
 
     assert(numSubdivisions <= 6u);
-    numSubdivisions = min(numSubdivisions, 6u);
-    for (uint32_t i = 0; i < numSubdivisions; ++i)
-    {
+    numSubdivisions = glm::min(numSubdivisions, 6u);
+    for (uint32_t i = 0; i < numSubdivisions; ++i) {
         subdivideTris(meshData);
     }
     calcMeshTangents(meshData);
 }
 
-void makeQuad(float w, float h, uint32_t numSubdivisions, VulkMesh &meshData)
-{
+void makeQuad(float w, float h, uint32_t numSubdivisions, VulkMesh& meshData) {
     makeQuad(-w / 2.0f, -h / 2.0f, w, h, 0.0f, numSubdivisions, meshData);
 }
 
 // make a cylinder of height `height` with radius `radius`, `numStacks` and `numSlices` slices (stacks are vertical, slices are horizontal - think pizza slices)
 // cenetered at the origin
-void makeCylinder(float height, float bottomRadius, float topRadius, uint32_t numStacks, uint32_t numSlices, VulkMesh &meshData)
-{
+void makeCylinder(float height, float bottomRadius, float topRadius, uint32_t numStacksIn, uint32_t numSlices, VulkMesh& meshData) {
     CHECK_MESH_DATA(meshData);
     meshData.name = "Cylinder";
 
     uint32_t baseIndex;
+    float numStacks = (float)numStacksIn;
 
     float stackHeight = height / numStacks;
     float radiusStep = (topRadius - bottomRadius) / numStacks;
-    uint32_t ringCount = numStacks + 1;
+    uint32_t ringCount = numStacksIn + 1;
     baseIndex = (uint32_t)meshData.vertices.size();
-    for (uint32_t i = 0; i < ringCount; ++i)
-    {
-        float y = -0.5f * height + i * stackHeight;
-        float r = bottomRadius + i * radiusStep;
-        float dTheta = 2.0f * pi<float>() / numSlices;
-        for (uint32_t j = 0; j <= numSlices; ++j)
-        {
+    for (uint32_t i = 0; i < ringCount; ++i) {
+        float y = -0.5f * height + (float)i * stackHeight;
+        float r = bottomRadius + (float)i * radiusStep;
+        float dTheta = 2.0f * pi<float>() / (float)numSlices;
+        for (uint32_t j = 0; j <= numSlices; ++j) {
             Vertex vertex;
-            float c = cosf(j * dTheta);
-            float s = sinf(j * dTheta);
+            float c = cosf((float)j * dTheta);
+            float s = sinf((float)j * dTheta);
             vertex.pos = vec3(r * c, y, r * s);
-            vertex.uv = vec2((float)j / numSlices, 1.0f - (float)i / numStacks);
+            vertex.uv = vec2((float)j / (float)numSlices, 1.0f - (float)i / (float)numStacks);
             vertex.normal = vec3(c, 0.0f, s);
             meshData.vertices.push_back(vertex);
         }
     }
     uint32_t ringVertexCount = numSlices + 1;
-    for (uint32_t i = 0; i < numStacks; ++i)
-    {
-        for (uint32_t j = 0; j < numSlices; ++j)
-        {
+    for (uint32_t i = 0; i < numStacksIn; ++i) {
+        for (uint32_t j = 0; j < numSlices; ++j) {
             meshData.indices.push_back(baseIndex + i * ringVertexCount + j);
             meshData.indices.push_back(baseIndex + (i + 1) * ringVertexCount + j);
             meshData.indices.push_back(baseIndex + (i + 1) * ringVertexCount + j + 1);
@@ -298,16 +277,15 @@ void makeCylinder(float height, float bottomRadius, float topRadius, uint32_t nu
         }
     }
 
-    float const dTheta = 2.0f * pi<float>() / numSlices;
+    float const dTheta = 2.0f * pi<float>() / (float)numSlices;
     uint32_t centerIndex;
 
     // // make top
     baseIndex = (uint32_t)meshData.vertices.size();
-    for (uint32_t i = 0; i <= numSlices; ++i)
-    {
+    for (uint32_t i = 0; i <= numSlices; ++i) {
         Vertex vertex;
-        float c = cosf(i * dTheta);
-        float s = sinf(i * dTheta);
+        float c = cosf((float)i * dTheta);
+        float s = sinf((float)i * dTheta);
         float x = topRadius * c;
         float z = topRadius * s;
         float u = x / height + 0.5f;
@@ -326,8 +304,7 @@ void makeCylinder(float height, float bottomRadius, float topRadius, uint32_t nu
     meshData.vertices.push_back(topCenter);
     centerIndex = (uint32_t)meshData.vertices.size() - 1;
 
-    for (uint32_t i = 0; i < numSlices; ++i)
-    {
+    for (uint32_t i = 0; i < numSlices; ++i) {
         meshData.indices.push_back(baseIndex + i + 1);
         meshData.indices.push_back(baseIndex + i);
         meshData.indices.push_back(centerIndex);
@@ -335,11 +312,10 @@ void makeCylinder(float height, float bottomRadius, float topRadius, uint32_t nu
 
     // make bottom
     baseIndex = (uint32_t)meshData.vertices.size();
-    for (uint32_t i = 0; i <= numSlices; ++i)
-    {
+    for (uint32_t i = 0; i <= numSlices; ++i) {
         Vertex vertex;
-        float c = cosf(i * dTheta);
-        float s = sinf(i * dTheta);
+        float c = cosf((float)i * dTheta);
+        float s = sinf((float)i * dTheta);
         float x = bottomRadius * c;
         float z = bottomRadius * s;
         float u = x / height + 0.5f;
@@ -359,8 +335,7 @@ void makeCylinder(float height, float bottomRadius, float topRadius, uint32_t nu
     meshData.vertices.push_back(bottomCenter);
     centerIndex = (uint32_t)meshData.vertices.size() - 1;
 
-    for (uint32_t i = 0; i < numSlices; ++i)
-    {
+    for (uint32_t i = 0; i < numSlices; ++i) {
         meshData.indices.push_back(baseIndex + i);
         meshData.indices.push_back(baseIndex + i + 1);
         meshData.indices.push_back(centerIndex);
@@ -368,54 +343,40 @@ void makeCylinder(float height, float bottomRadius, float topRadius, uint32_t nu
     calcMeshTangents(meshData);
 }
 
-void makeGeoSphere(float radius, uint32_t numSubdivisions, VulkMesh &meshData)
-{
+void makeGeoSphere(float radius, uint32_t numSubdivisions, VulkMesh& meshData) {
     CHECK_MESH_DATA(meshData);
     meshData.name = "GeoSphere";
 
     // put a cap on the number of subdivisions
-    numSubdivisions = min(numSubdivisions, 6u);
+    numSubdivisions = glm::min(numSubdivisions, 6u);
 
     // put a cap on the number of subdivisions
     const float x = 0.525731f;
     const float z = 0.850651f;
 
-    vec3 pos[12] = {
-        vec3(-x, 0.0f, z), vec3(x, 0.0f, z),
-        vec3(-x, 0.0f, -z), vec3(x, 0.0f, -z),
-        vec3(0.0f, z, x), vec3(0.0f, z, -x),
-        vec3(0.0f, -z, x), vec3(0.0f, -z, -x),
-        vec3(z, x, 0.0f), vec3(-z, x, 0.0f),
-        vec3(z, -x, 0.0f), vec3(-z, -x, 0.0f)};
+    vec3 pos[12] = {vec3(-x, 0.0f, z), vec3(x, 0.0f, z),   vec3(-x, 0.0f, -z), vec3(x, 0.0f, -z), vec3(0.0f, z, x),  vec3(0.0f, z, -x),
+                    vec3(0.0f, -z, x), vec3(0.0f, -z, -x), vec3(z, x, 0.0f),   vec3(-z, x, 0.0f), vec3(z, -x, 0.0f), vec3(-z, -x, 0.0f)};
 
-    uint32_t k[60] = {
-        1, 4, 0, 4, 9, 0, 4, 5, 9, 8, 5, 4,
-        1, 8, 4, 1, 10, 8, 10, 3, 8, 8, 3, 5,
-        3, 2, 5, 3, 7, 2, 3, 10, 7, 10, 6, 7,
-        6, 11, 7, 6, 0, 11, 6, 1, 0, 10, 1, 6,
-        11, 0, 9, 2, 11, 9, 5, 2, 9, 11, 2, 7};
+    uint32_t k[60] = {1, 4,  0, 4,  9, 0, 4, 5,  9, 8, 5, 4,  1, 8, 4, 1,  10, 8, 10, 3, 8, 8, 3,  5, 3, 2, 5, 3,  7, 2,
+                      3, 10, 7, 10, 6, 7, 6, 11, 7, 6, 0, 11, 6, 1, 0, 10, 1,  6, 11, 0, 9, 2, 11, 9, 5, 2, 9, 11, 2, 7};
 
     uint32_t baseIndex = (uint32_t)meshData.vertices.size();
     meshData.vertices.resize(meshData.vertices.size() + 12);
     meshData.indices.resize(meshData.indices.size() + 60);
-    for (uint32_t i = 0; i < 60; ++i)
-    {
+    for (uint32_t i = 0; i < 60; ++i) {
         meshData.indices[i] = baseIndex + k[i];
     }
 
-    for (uint32_t i = 0; i < 12; ++i)
-    {
+    for (uint32_t i = 0; i < 12; ++i) {
         meshData.vertices[i].pos = pos[i];
     }
 
-    for (uint32_t i = 0; i < numSubdivisions; ++i)
-    {
+    for (uint32_t i = 0; i < numSubdivisions; ++i) {
         subdivideTris(meshData);
     }
 
     // project vertices onto sphere and scale
-    for (uint32_t i = 0; i < meshData.vertices.size(); ++i)
-    {
+    for (uint32_t i = 0; i < meshData.vertices.size(); ++i) {
         vec3 n = normalize(meshData.vertices[i].pos);
         vec3 p = radius * n;
         meshData.vertices[i].pos = p;
@@ -426,8 +387,7 @@ void makeGeoSphere(float radius, uint32_t numSubdivisions, VulkMesh &meshData)
     calcMeshTangents(meshData);
 }
 
-void makeAxes(float length, VulkMesh &meshData)
-{
+void makeAxes(float length, VulkMesh& meshData) {
     CHECK_MESH_DATA(meshData);
     meshData.name = "Axes";
     VulkMesh x, y, z;
@@ -452,8 +412,12 @@ void makeAxes(float length, VulkMesh &meshData)
     calcMeshTangents(meshData);
 }
 
-void makeGrid(float width, float depth, uint32_t m, uint32_t n, VulkMesh &meshData, float repeatU, float repeatV)
-{
+#ifdef __clang__
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wimplicit-int-float-conversion"
+#endif
+
+void makeGrid(float width, float depth, uint32_t m, uint32_t n, VulkMesh& meshData, float repeatU, float repeatV) {
     uint32_t vertexCount = m * n;
     uint32_t faceCount = (m - 1) * (n - 1) * 2;
 
@@ -468,11 +432,9 @@ void makeGrid(float width, float depth, uint32_t m, uint32_t n, VulkMesh &meshDa
     float dv = repeatV / (m - 1);
 
     meshData.vertices.resize(vertexCount);
-    for (uint32_t i = 0; i < m; ++i)
-    {
+    for (uint32_t i = 0; i < m; ++i) {
         float z = halfDepth - i * dz;
-        for (uint32_t j = 0; j < n; ++j)
-        {
+        for (uint32_t j = 0; j < n; ++j) {
             float x = -halfWidth + j * dx;
 
             meshData.vertices[i * n + j].pos = vec3(x, 0.0f, z);
@@ -487,10 +449,8 @@ void makeGrid(float width, float depth, uint32_t m, uint32_t n, VulkMesh &meshDa
 
     // Iterate over each quad and compute indices.
     uint32_t k = 0;
-    for (uint32_t i = 0; i < m - 1; ++i)
-    {
-        for (uint32_t j = 0; j < n - 1; ++j)
-        {
+    for (uint32_t i = 0; i < m - 1; ++i) {
+        for (uint32_t j = 0; j < n - 1; ++j) {
             meshData.indices[k] = i * n + j;
             meshData.indices[k + 1] = i * n + j + 1;
             meshData.indices[k + 2] = (i + 1) * n + j;

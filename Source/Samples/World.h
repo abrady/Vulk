@@ -21,7 +21,7 @@
 #include "Vulk/VulkStorageBuffer.h"
 #include "Vulk/VulkUniformBuffer.h"
 
-class World : public VulkRenderable {
+class World final : public VulkRenderable {
 public:
     Vulk& vk;
     std::shared_ptr<VulkScene> scene;

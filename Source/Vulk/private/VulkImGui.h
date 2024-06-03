@@ -17,14 +17,16 @@ class VulkImGui {
     std::vector<VkImageView> swapChainImageViews;
     std::vector<VkFramebuffer> swapChainFramebuffers;
     VkDescriptorPool imguiDescriptorPool;
-    Vulk &vk;
-    GLFWwindow *window = nullptr;
-    ImDrawData *drawData = nullptr;
-    VkClearValue clearColor = {0.45f, 0.55f, 0.60f, 1.00f};
-    ImGuiIO *io = nullptr;
+    Vulk& vk;
+    GLFWwindow* window = nullptr;
+    ImDrawData* drawData = nullptr;
+    VkClearValue clearColor = {.color = {{0.45f, 0.55f, 0.60f, 1.00f}}};
+    ImGuiIO* io = nullptr;
 
-  public:
-    VulkImGui(Vulk &vk, GLFWwindow *window) : vk(vk), window(window) {
+public:
+    VulkImGui(Vulk& vk, GLFWwindow* window)
+        : vk(vk)
+        , window(window) {
         // renderPass
         {
             VkAttachmentDescription colorAttachment{};
@@ -136,7 +138,7 @@ class VulkImGui {
         io->FontGlobalScale = 2.f;
     }
 
-  public:
+public:
     // make your ImGui:: type calls between the begin and end
     void beginFrame() {
         VULK_ASSERT(!drawData, "drawData is not null, did you forget to call render?");

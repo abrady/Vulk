@@ -76,6 +76,7 @@ enum VulkTextureType {
 
 class VulkRenderable {
 public:
+    virtual ~VulkRenderable() = default;
     virtual void tick() = 0;
     virtual void renderFrame(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer) = 0;
 

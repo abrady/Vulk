@@ -21,17 +21,15 @@ find_package(Vulkan REQUIRED)
 
 # Add all the source files to a library
 file(GLOB SOURCES "src/*.cpp")
-add_library(Vulk 
-  ${SOURCES} 
-)
+add_library(Vulk ${SOURCES})
 target_include_directories(Vulk PUBLIC include) # Make the include directory public
-
 target_include_directories(Vulk PRIVATE private)
 
 # Specify the include directories
 target_include_directories(Vulk PRIVATE ${Stb_INCLUDE_DIR})
 
 target_include_directories(Vulk PUBLIC ${GENSCHEMAFILES_INCLUDE_DIRS})
+target_precompile_headers(Vulk PUBLIC include/Vulk/VulkPCH.h)
 
 target_link_libraries(Vulk PRIVATE glfw)
 target_link_libraries(Vulk PRIVATE Vulkan::Vulkan)

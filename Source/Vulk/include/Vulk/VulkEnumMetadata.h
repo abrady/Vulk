@@ -15,7 +15,7 @@ constexpr std::size_t flatbufArraySize(const T (&)[N]) noexcept {
 
 template <>
 struct EnumNameGetter<VulkShaderLocation> {
-    static const char* const getName(VulkShaderLocation e) {
+    static const char* getName(VulkShaderLocation e) {
         return EnumNameVulkShaderLocation(e);
     }
     static std::vector<VulkShaderLocation> getValues() {
@@ -27,7 +27,7 @@ struct EnumNameGetter<VulkShaderLocation> {
 
 template <>
 struct EnumNameGetter<VulkShaderBinding> {
-    static const char* const getName(VulkShaderBinding e) {
+    static const char* getName(VulkShaderBinding e) {
         return EnumNameVulkShaderBinding(e);
     }
     static std::vector<VulkShaderBinding> getValues() {
@@ -39,7 +39,7 @@ struct EnumNameGetter<VulkShaderBinding> {
 
 template <>
 struct EnumNameGetter<VulkShaderUBOBinding> {
-    static const char* const getName(VulkShaderUBOBinding e) {
+    static const char* getName(VulkShaderUBOBinding e) {
         return EnumNameVulkShaderUBOBinding(e);
     }
     static std::vector<VulkShaderUBOBinding> getValues() {
@@ -51,7 +51,7 @@ struct EnumNameGetter<VulkShaderUBOBinding> {
 
 template <>
 struct EnumNameGetter<VulkShaderDebugUBO> {
-    static const char* const getName(VulkShaderDebugUBO e) {
+    static const char* getName(VulkShaderDebugUBO e) {
         return EnumNameVulkShaderDebugUBO(e);
     }
     static std::vector<VulkShaderDebugUBO> getValues() {
@@ -63,7 +63,7 @@ struct EnumNameGetter<VulkShaderDebugUBO> {
 
 template <>
 struct EnumNameGetter<VulkShaderSSBOBinding> {
-    static const char* const getName(VulkShaderSSBOBinding e) {
+    static const char* getName(VulkShaderSSBOBinding e) {
         return EnumNameVulkShaderSSBOBinding(e);
     }
     static std::vector<VulkShaderSSBOBinding> getValues() {
@@ -75,7 +75,7 @@ struct EnumNameGetter<VulkShaderSSBOBinding> {
 
 template <>
 struct EnumNameGetter<VulkShaderTextureBinding> {
-    static const char* const getName(VulkShaderTextureBinding e) {
+    static const char* getName(VulkShaderTextureBinding e) {
         return EnumNameVulkShaderTextureBinding(e);
     }
     static std::vector<VulkShaderTextureBinding> getValues() {
@@ -87,7 +87,7 @@ struct EnumNameGetter<VulkShaderTextureBinding> {
 
 template <>
 struct EnumNameGetter<VulkPrimitiveTopology> {
-    static const char* const getName(VulkPrimitiveTopology e) {
+    static const char* getName(VulkPrimitiveTopology e) {
         return EnumNameVulkPrimitiveTopology(e);
     }
     static std::vector<VulkPrimitiveTopology> getValues() {
@@ -99,7 +99,7 @@ struct EnumNameGetter<VulkPrimitiveTopology> {
 
 template <>
 struct EnumNameGetter<VulkPolygonMode> {
-    static const char* const getName(VulkPolygonMode e) {
+    static const char* getName(VulkPolygonMode e) {
         return EnumNameVulkPolygonMode(e);
     }
     static std::vector<VulkPolygonMode> getValues() {
@@ -111,7 +111,7 @@ struct EnumNameGetter<VulkPolygonMode> {
 
 template <>
 struct EnumNameGetter<MeshDefType> {
-    static const char* const getName(MeshDefType e) {
+    static const char* getName(MeshDefType e) {
         return EnumNameMeshDefType(e);
     }
     static std::vector<MeshDefType> getValues() {
@@ -123,7 +123,7 @@ struct EnumNameGetter<MeshDefType> {
 
 template <>
 struct EnumNameGetter<GeoMeshDefType> {
-    static const char* const getName(GeoMeshDefType e) {
+    static const char* getName(GeoMeshDefType e) {
         return EnumNameGeoMeshDefType(e);
     }
     static std::vector<GeoMeshDefType> getValues() {
@@ -135,7 +135,7 @@ struct EnumNameGetter<GeoMeshDefType> {
 
 template <>
 struct EnumNameGetter<VulkCompareOp> {
-    static const char* const getName(VulkCompareOp e) {
+    static const char* getName(VulkCompareOp e) {
         return EnumNameVulkCompareOp(e);
     }
     static std::vector<VulkCompareOp> getValues() {
@@ -147,7 +147,7 @@ struct EnumNameGetter<VulkCompareOp> {
 
 template <>
 struct EnumNameGetter<VulkCullModeFlags> {
-    static const char* const getName(VulkCullModeFlags e) {
+    static const char* getName(VulkCullModeFlags e) {
         return EnumNameVulkCullModeFlags(e);
     }
     static std::vector<VulkCullModeFlags> getValues() {
@@ -159,7 +159,7 @@ struct EnumNameGetter<VulkCullModeFlags> {
 
 template <>
 struct EnumNameGetter<VulkShaderStage> {
-    static const char* const getName(VulkShaderStage e) {
+    static const char* getName(VulkShaderStage e) {
         return EnumNameVulkShaderStage(e);
     }
     static std::vector<VulkShaderStage> getValues() {

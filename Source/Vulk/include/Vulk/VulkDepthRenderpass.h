@@ -10,18 +10,19 @@ class Vulk;
 // e.g. For shadow mapping, you generally need a render pass with a single depth attachment,
 // since you're interested in capturing depth information from the light's perspective.
 class VulkDepthRenderpass : public ClassNonCopyableNonMovable {
-  public:
-    Vulk &vk;
+public:
+    Vulk& vk;
     VkRenderPass renderPass;
     std::array<std::shared_ptr<VulkDepthView>, MAX_FRAMES_IN_FLIGHT> depthViews;
     std::array<VkFramebuffer, MAX_FRAMES_IN_FLIGHT> frameBuffers;
     VkExtent2D extent = {};
     VkFormat depthFormat = VK_FORMAT_D32_SFLOAT;
 
-    VulkDepthRenderpass(Vulk &vkIn) : vk(vkIn) {
+    VulkDepthRenderpass(Vulk& vkIn)
+        : vk(vkIn) {
         // I've been told matching the aspect ratio is important for shadow mapping
         extent.width = 1024;
-        extent.height = static_cast<uint32_t>(1024 * (static_cast<float>(vk.swapChainExtent.height) / vk.swapChainExtent.width));
+        extent.height = static_cast<uint32_t>(1024 * (static_cast<float>(vk.swapChainExtent.height) / (float)vk.swapChainExtent.width));
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
             depthViews[i] = std::make_unique<VulkDepthView>(vk, extent, depthFormat);
         }
@@ -73,6 +74,6 @@ class VulkDepthRenderpass : public ClassNonCopyableNonMovable {
         vkDestroyRenderPass(vk.device, renderPass, nullptr);
     }
 
-  private:
-    void loadTextureView(char const *texturePath, bool isUNORM);
+private:
+    void loadTextureView(char const* texturePath, bool isUNORM);
 };

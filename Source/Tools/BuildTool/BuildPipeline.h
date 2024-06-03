@@ -53,35 +53,35 @@ public:
         parsedShader.name = shaderPath.stem().string();
         parsedShader.entryPoint = glsl.get_entry_points_and_stages()[0].name;
 
-        VulkShaderStage shaderStage;
-        switch (glsl.get_execution_model()) {
-        case spv::ExecutionModelVertex:
-            logger()->trace("Vertex Shader");
-            shaderStage = VulkShaderStage_VERTEX;
-            break;
-        case spv::ExecutionModelGeometry:
-            logger()->trace("Geometry Shader");
-            shaderStage = VulkShaderStage_GEOMETRY;
-            break;
-        case spv::ExecutionModelFragment:
-            logger()->trace("Fragment Shader");
-            shaderStage = VulkShaderStage_FRAGMENT;
-            break;
-        case spv::ExecutionModelTessellationControl:
-            logger()->trace("Tessellation Control Shader");
-            shaderStage = VulkShaderStage_TESSELLATION_CONTROL;
-            break;
-        case spv::ExecutionModelTessellationEvaluation:
-            logger()->trace("Tessellation Evaluation Shader");
-            shaderStage = VulkShaderStage_TESSELLATION_EVALUATION;
-            break;
-        case spv::ExecutionModelGLCompute: // GL compute?
-            logger()->trace("Compute Shader");
-            shaderStage = VulkShaderStage_COMPUTE;
-            break;
-        default:
-            VULK_THROW_FMT("Unsupported shader stage: {}", (int)glsl.get_execution_model());
-        }
+        // VulkShaderStage shaderStage;
+        // switch (glsl.get_execution_model()) {
+        // case spv::ExecutionModelVertex:
+        //     logger()->trace("Vertex Shader");
+        //     shaderStage = VulkShaderStage_VERTEX;
+        //     break;
+        // case spv::ExecutionModelGeometry:
+        //     logger()->trace("Geometry Shader");
+        //     shaderStage = VulkShaderStage_GEOMETRY;
+        //     break;
+        // case spv::ExecutionModelFragment:
+        //     logger()->trace("Fragment Shader");
+        //     shaderStage = VulkShaderStage_FRAGMENT;
+        //     break;
+        // case spv::ExecutionModelTessellationControl:
+        //     logger()->trace("Tessellation Control Shader");
+        //     shaderStage = VulkShaderStage_TESSELLATION_CONTROL;
+        //     break;
+        // case spv::ExecutionModelTessellationEvaluation:
+        //     logger()->trace("Tessellation Evaluation Shader");
+        //     shaderStage = VulkShaderStage_TESSELLATION_EVALUATION;
+        //     break;
+        // case spv::ExecutionModelGLCompute: // GL compute?
+        //     logger()->trace("Compute Shader");
+        //     shaderStage = VulkShaderStage_COMPUTE;
+        //     break;
+        // default:
+        //     VULK_THROW_FMT("Unsupported shader stage: {}", (int)glsl.get_execution_model());
+        // }
 
         // For UBOs
         for (const spirv_cross::Resource& resource : resources.uniform_buffers) {

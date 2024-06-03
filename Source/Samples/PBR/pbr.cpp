@@ -1,25 +1,8 @@
-#include "Vulk/Vulk.h"
-#include "Vulk/VulkActor.h"
-#include "Vulk/VulkBufferBuilder.h"
-#include "Vulk/VulkCamera.h"
-#include "Vulk/VulkDepthRenderpass.h"
-#include "Vulk/VulkDescriptorPoolBuilder.h"
-#include "Vulk/VulkDescriptorSetBuilder.h"
-#include "Vulk/VulkDescriptorSetUpdater.h"
-#include "Vulk/VulkFence.h"
-#include "Vulk/VulkGeo.h"
-#include "Vulk/VulkPickRenderpass.h"
-#include "Vulk/VulkPipeline.h"
-#include "Vulk/VulkPipelineBuilder.h"
-#include "Vulk/VulkResourceMetadata.h"
-#include "Vulk/VulkResources.h"
-#include "Vulk/VulkScene.h"
-#include "Vulk/VulkStorageBuffer.h"
-#include "Vulk/VulkUniformBuffer.h"
+#include "Vulk/VulkPCH.h"
 #include "imgui.h"
 #include <memory>
 
-class World : public VulkRenderable {
+class World final : public VulkRenderable {
 public:
     Vulk& vk;
     std::shared_ptr<VulkScene> scene;
@@ -135,7 +118,7 @@ public:
         float scroll = ImGui::GetIO().MouseWheel;
         bool camUpdated = false;
 
-        uint32_t mouseIdx = (uint32_t)(io.MousePos.x + io.MousePos.y * vk.swapChainExtent.width);
+        uint32_t mouseIdx = (uint32_t)(io.MousePos.x + io.MousePos.y * (float)vk.swapChainExtent.width);
         bool modelPicked = false;
         uint32_t selectedModelID = 0;
         if (mouseIdx < pickRenderpass->pickData.size()) {
@@ -288,7 +271,7 @@ public:
         renderPassBeginInfo.renderArea.extent = vk.swapChainExtent;
 
         std::array<VkClearValue, 2> clearValues{};
-        clearValues[0].color = {0};
+        clearValues[0].color = {{0}};
         clearValues[1].depthStencil = {1.0f, 0};
 
         renderPassBeginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());

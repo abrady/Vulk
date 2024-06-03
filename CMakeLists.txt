@@ -14,16 +14,14 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # this basically did nothing to build times, but keeping it
 if(MSVC)
+    message("Using MSVC")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /INCREMENTAL")
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /INCREMENTAL")
-endif()
-
-if(WIN32)
     set(CMAKE_GENERATOR_PLATFORM x64)
     add_compile_options(/W4 /MP /WX /sdl)
     add_compile_options(/EHa) # enable exception handling - this will allow SEH to be caught by catch(...) blocks
@@ -36,6 +34,34 @@ if(WIN32)
     # # for release builds: 
     # set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Zi /Od")
     # set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /O2 /Zi /Zo")
+else()
+    message("Using Clang")
+
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftime-trace")
+
+    # https://nullprogram.com/blog/2023/04/29/ - flags from here
+    add_compile_options(
+        -Wall -Wextra # all doesn't actually do all, 
+        -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function -Wno-unused-private-field
+        -Wdouble-promotion
+        -Wconversion -Wno-sign-conversion # warns about implicit conversions that may result in data loss. Sign conversions do not have data loss, the implicit conversions are useful, and in my experience they’re not a source of defects
+        -Werror
+
+        #-fsanitize-trap=undefined # just halt on crash, no runtime checker
+        #-fsanitize=address
+        #-fsanitize=undefined
+
+        -fstack-protector-strong
+        -D_FORTIFY_SOURCE=2
+
+        # assume debug mode for now
+        -O0
+        -g3
+        -DDEBUG
+    )
+endif()
+
+if(WIN32)
 endif()
 
 # message(STATUS "Using vcpkg toolchain file: ${CMAKE_TOOLCHAIN_FILE}")

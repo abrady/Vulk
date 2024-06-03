@@ -54,8 +54,29 @@ random segue: builds are slow:
   * full build: 40.6
   * no changes: 2.42s
     * pbr.cpp changed: 11.03
+* let's try ninja + clang
+  * full build: 22s
+  * no changes: 0s
+  * pbr.cpp: 8s
 
 so incremental linking does basically nothing, blarg. 11 seconds just feels really long to compile and link a 5mb file
+
+clang + ninja definitely faster.
+
+Let's keep digging:
+
+* set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftime-trace") : doing this enables per file tracing
+* I can see in pbr.cpp that including Vulk.h takes the majority of the time: 3.75s
+* PerformPendingInstantiations is the next biggest one:
+  * The term "PerformPendingInstantiations" typically refers to a phase in the compilation process of C++ programs, particularly when dealing with templates.
+* adding pch for Vulk: VulkPCH.h
+  * full build: 29s, hmm, worse.
+  * pbr.cpp: 6.9s down from 8s
+    * Source down to 1.3s from 3.758! nice, 3.5s savings (not sure why it didn't translate to like a 5s build...)
+* what else is taking time:
+  *
+* next is the PerformPendingInstantations
+  *
 
 ## 6/1 pick data
 
