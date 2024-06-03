@@ -119,6 +119,10 @@
     },
     "files.eol": "\n",
     "cmake.configureArgs": [
-        "-DCMAKE_TOOLCHAIN_FILE=${workspaceFolder}/vcpkg/scripts/buildsystems/vcpkg.cmake"
-    ]
+        // "-DVCPKG_MANIFEST_INSTALL=OFF",
+        "-DCMAKE_TOOLCHAIN_FILE=${workspaceFolder}/vcpkg/scripts/buildsystems/vcpkg.cmake",
+        "--profiling-output=${workspaceFolder}/build/configure_profile.json",
+        "--profiling-format=google-trace"
+    ],
+    "cmake.buildArgs": []
 }

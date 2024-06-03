@@ -42,6 +42,21 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
+## 6/2
+
+random segue: builds are slow:
+
+* without incremental
+  * full build: 42s
+  * no changes: 2.63
+  * pbr.cpp: 11.68
+* let's turn on incremental linking.
+  * full build: 40.6
+  * no changes: 2.42s
+    * pbr.cpp changed: 11.03
+
+so incremental linking does basically nothing, blarg. 11 seconds just feels really long to compile and link a 5mb file
+
 ## 6/1 pick data
 
 looks like about 10% of the pixels are covered by the sphere, oh yeah, I remember in renderdoc seeing the projection isn't the same.

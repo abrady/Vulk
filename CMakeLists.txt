@@ -17,6 +17,12 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# this basically did nothing to build times, but keeping it
+if(MSVC)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /INCREMENTAL")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /INCREMENTAL")
+endif()
+
 if(WIN32)
     set(CMAKE_GENERATOR_PLATFORM x64)
     add_compile_options(/W4 /MP /WX /sdl)
