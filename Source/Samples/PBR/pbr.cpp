@@ -130,7 +130,7 @@ public:
         ImGuiIO& io = ImGui::GetIO();
 
         float dragScale = 0.001f;
-        float dx = dragScale * io.MouseDelta.x;
+        float dx = -dragScale * io.MouseDelta.x;
         float dy = dragScale * io.MouseDelta.y;
         float scroll = ImGui::GetIO().MouseWheel;
         bool camUpdated = false;
@@ -155,7 +155,7 @@ public:
             }
         } else if (ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
             // left mouse is rotate around y axis and move +z/-z
-            scene->camera.updatePosition(0.0f, 0.0f, -dy);
+            scene->camera.updatePosition(0.0f, 0.0f, dy);
             scene->camera.updateOrientation(dx, 0.0f);
             camUpdated = true;
         } else if (ImGui::IsMouseDragging(ImGuiMouseButton_Middle)) {
@@ -168,7 +168,7 @@ public:
         } else if (scroll != 0.0f) {
             // right mouse button + shift is purely for camera control
             float scrollScale = 0.1f;
-            scene->camera.updatePosition(0.0f, 0.0f, scroll * scrollScale);
+            scene->camera.updatePosition(0.0f, 0.0f, -scroll * scrollScale);
             camUpdated = true;
         }
 
@@ -213,6 +213,10 @@ public:
         ImGui::Text("Lighting");
         ImGui::Checkbox("Diffuse", (bool*)&pbrDebugUBO.diffuse);
         ImGui::Checkbox("Specular", (bool*)&pbrDebugUBO.specular);
+
+        ImGui::Text("Camera");
+        ImGui::InputFloat3("Eye", glm::value_ptr(scene->camera.eye));
+        ImGui::InputFloat4("Rot", glm::value_ptr(scene->camera.orientation));
 
         // ImGui::SliderInt("slider int", &i1, -1, 3);
         // ImGui::SameLine();
@@ -259,10 +263,12 @@ public:
 
         // set up the light view proj
         VulkPointLight& light = *scene->sceneUBOs.pointLight.mappedUBO;
-        glm::mat4 lightView = glm::lookAt(light.pos, glm::vec3(0.0f, 0.0f, 0.0f), DEFAULT_UP_VEC);
+        glm::mat4 lightView = glm::lookAt(light.pos, glm::vec3(0.0f, 0.0f, 0.0f), VIEWSPACE_UP_VEC);
         glm::mat4 lightProj = glm::perspective(DEFAULT_FOV_RADS, viewport.width / (float)viewport.height, nearClip, farClip);
         glm::mat4 viewProj = lightProj * lightView;
-        scene->lightViewProjUBO->mappedUBO->viewProj = viewProj;
+        if (scene->lightViewProjUBO) {
+            scene->lightViewProjUBO->mappedUBO->viewProj = viewProj;
+        }
 
         std::shared_ptr<VulkImageView> depthView = shadowMapRenderpass->depthViews[vk.currentFrame]->depthView;
 

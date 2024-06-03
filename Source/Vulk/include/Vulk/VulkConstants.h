@@ -9,6 +9,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp> // value_ptr
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/hash.hpp>
 
@@ -18,10 +19,10 @@ constexpr bool IS_RIGHT_HANDED = true;
 // Winding Order
 constexpr VkFrontFace DEFAULT_FRONT_FACE_WINDING_ORDER = VK_FRONT_FACE_CLOCKWISE;
 
-// Default Vectors
-constexpr glm::vec3 DEFAULT_FORWARD_VEC = glm::vec3(0.0f, 0.0f, -1.0f);
-constexpr glm::vec3 DEFAULT_UP_VEC = glm::vec3(0.0f, 1.0f, 0.0f);
-constexpr glm::vec3 DEFAULT_RIGHT_VEC = glm::vec3(1.0f, 0.0f, 0.0f);
+// Vulkan uses a right hand coordinate system with positive z pointing away from the viewer
+constexpr glm::vec3 VIEWSPACE_FORWARD_VEC = glm::vec3(0.0f, 0.0f, 1.0f);
+constexpr glm::vec3 VIEWSPACE_UP_VEC = glm::vec3(0.0f, -1.0f, 0.0f);
+constexpr glm::vec3 VIEWSPACE_RIGHT_VEC = glm::vec3(1.0f, 0.0f, 0.0f);
 
 // Camera Settings
 constexpr float DEFAULT_FOV_RADS = glm::radians(45.0f);

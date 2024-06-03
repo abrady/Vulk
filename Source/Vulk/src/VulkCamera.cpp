@@ -24,17 +24,22 @@ void VulkCamera::setLookAt(glm::vec3 eyeIn, glm::vec3 target) {
 }
 
 glm::mat4 VulkCamera::getViewMat() {
-    return glm::translate(glm::mat4_cast(orientation), -eye);
+    glm::mat4 trans = glm::translate(glm::mat4(1.0f), -eye);
+    glm::mat4 rot = glm::mat4_cast(orientation);
+    return rot * trans;
 }
+
 glm::vec3 VulkCamera::getForwardVec() {
-    return glm::normalize(orientation * DEFAULT_FORWARD_VEC);
+    glm::quat invOrientation = glm::inverse(orientation);
+    return glm::normalize(invOrientation * VIEWSPACE_FORWARD_VEC);
 }
 glm::vec3 VulkCamera::getRightVec() {
-    glm::vec3 right = glm::vec3(1.0f, 0.0f, 0.0f);
-    return glm::mat3_cast(orientation) * right;
+    glm::quat invOrientation = glm::inverse(orientation);
+    return glm::mat3_cast(invOrientation) * VIEWSPACE_RIGHT_VEC;
 }
 glm::vec3 VulkCamera::getUpVec() {
-    return glm::mat3_cast(orientation) * DEFAULT_UP_VEC;
+    glm::quat invOrientation = glm::inverse(orientation);
+    return glm::mat3_cast(invOrientation) * VIEWSPACE_UP_VEC;
 }
 
 glm::vec3 VulkCamera::getEulers() {
@@ -42,8 +47,8 @@ glm::vec3 VulkCamera::getEulers() {
 }
 
 void VulkCamera::updateOrientation(float dx, float dy) {
-    glm::quat pitch = glm::angleAxis(dy, DEFAULT_RIGHT_VEC);
-    glm::quat yaw = glm::angleAxis(-dx, DEFAULT_UP_VEC);
+    glm::quat pitch = glm::angleAxis(dy, VIEWSPACE_RIGHT_VEC);
+    glm::quat yaw = glm::angleAxis(-dx, VIEWSPACE_UP_VEC);
     orientation = glm::normalize(pitch * yaw * orientation);
 }
 
