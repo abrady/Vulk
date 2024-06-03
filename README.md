@@ -42,7 +42,19 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
-## 6/2
+## 6/2 ditch nlohmann/json and cereal
+
+these things are slow and hard to debug. we've got flabuffers, what would it take to convert those?
+
+let's see if we can thrift up DescriptorSetDef and see how it goes
+
+* TODO: need the buildtool to build this properly
+
+## 6/2 slow builds investigation
+
+final results:
+
+* halved full build time and pbr.cpp build and link time
 
 random segue: builds are slow:
 

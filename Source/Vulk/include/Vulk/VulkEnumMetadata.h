@@ -2,6 +2,7 @@
 
 #include "VulkResourceMetadata_generated.h"
 #include "VulkShaderEnums_generated.h"
+#include "VulkShaderEnums_types.h"
 #include <mutex>         // for std::once_flag
 #include <unordered_map> // for std::unordered_map
 
@@ -38,18 +39,6 @@ struct EnumNameGetter<VulkShaderBinding> {
 };
 
 template <>
-struct EnumNameGetter<VulkShaderUBOBinding> {
-    static const char* getName(VulkShaderUBOBinding e) {
-        return EnumNameVulkShaderUBOBinding(e);
-    }
-    static std::vector<VulkShaderUBOBinding> getValues() {
-        const auto& vals = EnumValuesVulkShaderUBOBinding();
-        int n = sizeof(vals) / sizeof(vals[0]);
-        return std::vector<VulkShaderUBOBinding>(vals, vals + n);
-    }
-};
-
-template <>
 struct EnumNameGetter<VulkShaderDebugUBO> {
     static const char* getName(VulkShaderDebugUBO e) {
         return EnumNameVulkShaderDebugUBO(e);
@@ -58,30 +47,6 @@ struct EnumNameGetter<VulkShaderDebugUBO> {
         const auto& vals = EnumValuesVulkShaderDebugUBO();
         int n = sizeof(vals) / sizeof(vals[0]);
         return std::vector<VulkShaderDebugUBO>(vals, vals + n);
-    }
-};
-
-template <>
-struct EnumNameGetter<VulkShaderSSBOBinding> {
-    static const char* getName(VulkShaderSSBOBinding e) {
-        return EnumNameVulkShaderSSBOBinding(e);
-    }
-    static std::vector<VulkShaderSSBOBinding> getValues() {
-        const auto& vals = EnumValuesVulkShaderSSBOBinding();
-        int n = sizeof(vals) / sizeof(vals[0]);
-        return std::vector<VulkShaderSSBOBinding>(vals, vals + n);
-    }
-};
-
-template <>
-struct EnumNameGetter<VulkShaderTextureBinding> {
-    static const char* getName(VulkShaderTextureBinding e) {
-        return EnumNameVulkShaderTextureBinding(e);
-    }
-    static std::vector<VulkShaderTextureBinding> getValues() {
-        const auto& vals = EnumValuesVulkShaderTextureBinding();
-        int n = sizeof(vals) / sizeof(vals[0]);
-        return std::vector<VulkShaderTextureBinding>(vals, vals + n);
     }
 };
 

@@ -14,15 +14,16 @@
 
 #include "Vulk/VulkResourceMetadata.h"
 #include "VulkShaderEnums_generated.h"
+#include "VulkShaderEnums_types.h"
 
 #include <nlohmann/json.hpp>
 
 struct ShaderInfo {
     std::string name;
     std::string entryPoint;
-    std::unordered_map<VulkShaderUBOBinding, std::string> uboBindings;
-    std::unordered_map<VulkShaderSSBOBinding, std::string> sboBindings;
-    std::unordered_map<VulkShaderTextureBinding, std::string> samplerBindings;
+    std::unordered_map<vulk::VulkShaderUBOBinding::type, std::string> uboBindings;
+    std::unordered_map<vulk::VulkShaderSSBOBinding::type, std::string> sboBindings;
+    std::unordered_map<vulk::VulkShaderTextureBinding::type, std::string> samplerBindings;
     std::unordered_map<VulkShaderLocation, std::string> inputLocations;
     std::unordered_map<VulkShaderLocation, std::string> outputLocations;
     std::vector<uint32_t> pushConstants; // bitfield of VulkShaderStage
@@ -86,25 +87,25 @@ public:
         // For UBOs
         for (const spirv_cross::Resource& resource : resources.uniform_buffers) {
             // unsigned set = glsl.get_decoration(resource.id, spv::DecorationDescriptorSet);
-            VulkShaderUBOBinding binding = (VulkShaderUBOBinding)glsl.get_decoration(resource.id, spv::DecorationBinding);
-            VULK_ASSERT(*EnumNameVulkShaderUBOBinding(binding), "Invalid UBO binding " + std::to_string(binding) + " in shader " + parsedShader.name);
+            vulk::VulkShaderUBOBinding::type binding = (vulk::VulkShaderUBOBinding::type)glsl.get_decoration(resource.id, spv::DecorationBinding);
+            VULK_ASSERT(vulk::_VulkShaderUBOBinding_VALUES_TO_NAMES.contains(binding), "Invalid UBO binding " + vulk::to_string(binding) + " in shader " + parsedShader.name);
             parsedShader.uboBindings[binding] = resource.name;
         }
 
         // For SBOs
         for (const spirv_cross::Resource& resource : resources.storage_buffers) {
             // unsigned set = glsl.get_decoration(resource.id, spv::DecorationDescriptorSet);
-            VulkShaderSSBOBinding binding = (VulkShaderSSBOBinding)glsl.get_decoration(resource.id, spv::DecorationBinding);
-            VULK_ASSERT(*EnumNameVulkShaderSSBOBinding(binding), "Invalid SBO binding " + std::to_string(binding) + " in shader " + parsedShader.name);
+            vulk::VulkShaderSSBOBinding::type binding = (vulk::VulkShaderSSBOBinding::type)glsl.get_decoration(resource.id, spv::DecorationBinding);
+            VULK_ASSERT(vulk::_VulkShaderSSBOBinding_VALUES_TO_NAMES.contains(binding), "Invalid SBO binding " + vulk::to_string(binding) + " in shader " + parsedShader.name);
             parsedShader.sboBindings[binding] = resource.name;
         }
 
         // For Samplers
         for (const spirv_cross::Resource& resource : resources.sampled_images) {
             // unsigned set = glsl.get_decoration(resource.id, spv::DecorationDescriptorSet);
-            VulkShaderTextureBinding binding = (VulkShaderTextureBinding)glsl.get_decoration(resource.id, spv::DecorationBinding);
-            auto foo = EnumNameVulkShaderTextureBinding(binding);
-            VULK_ASSERT(*foo, "Invalid sampler binding " + std::to_string(binding) + " in shader " + parsedShader.name);
+            vulk::VulkShaderTextureBinding::type binding = (vulk::VulkShaderTextureBinding::type)glsl.get_decoration(resource.id, spv::DecorationBinding);
+            VULK_ASSERT(vulk::_VulkShaderTextureBinding_VALUES_TO_NAMES.contains(binding),
+                        "Invalid sampler binding " + vulk::to_string(binding) + " in shader " + parsedShader.name);
             parsedShader.samplerBindings[binding] = resource.name;
         }
 
@@ -165,8 +166,8 @@ public:
 
     // e.g. the "vert" or "frag" part of the descriptor set
     static void updateBuiltPipelineDef(ShaderInfo info, std::string stage, BuiltPipelineDef& bp) {
-        DescriptorSetDef& def = bp.descriptorSet;
-        VkShaderStageFlagBits stageFlag = DescriptorSetDef::getShaderStageFromStr(stage);
+        vulk::DescriptorSetDef& def = bp.descriptorSetDef;
+        VkShaderStageFlagBits stageFlag = getShaderStageFromStr(stage);
         for (auto& ubo : info.uboBindings) {
             def.uniformBuffers[stageFlag].push_back(ubo.first);
         }

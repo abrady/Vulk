@@ -4,12 +4,13 @@
 #include "Vulk.h"
 
 class VulkFence : public ClassNonCopyableNonMovable {
-    Vulk &vk;
+    Vulk& vk;
 
-  public:
+public:
     VkFence fence;
 
-    VulkFence(Vulk &vk) : vk(vk) {
+    VulkFence(Vulk& vk)
+        : vk(vk) {
         VkFenceCreateInfo fenceInfo{};
         fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
         fenceInfo.flags = 0;
@@ -21,7 +22,7 @@ class VulkFence : public ClassNonCopyableNonMovable {
     }
 
     void wait() {
-        vkWaitForFences(vk.device, 1, &fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
+        vkWaitForFences(vk.device, 1, &fence, VK_TRUE, UINT64_MAX);
     }
 
     void reset() {

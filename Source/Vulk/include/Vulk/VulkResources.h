@@ -49,7 +49,7 @@ class VulkResources {
     std::shared_ptr<VulkMaterialTextures> getMaterialTextures(std::string const &name);
     std::shared_ptr<VulkModel> getModel(ModelDef const &modelDef, BuiltPipelineDef const &pipelineDef);
 
-    std::unordered_map<uint32_t, std::shared_ptr<VulkDescriptorSetLayout>> descriptorSetLayoutCache;
+    std::unordered_map<std::string, std::shared_ptr<VulkDescriptorSetLayout>> descriptorSetLayoutCache;
 
   public:
     std::unordered_map<std::string, std::shared_ptr<VulkMaterialTextures>> materialTextures;

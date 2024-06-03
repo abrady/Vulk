@@ -15,6 +15,7 @@
 #include "Vulk/VulkLogger.h"
 #include "Vulk/VulkUtil.h"
 #include "VulkShaderEnums_generated.h"
+#include "VulkShaderEnums_types.h"
 
 namespace fs = std::filesystem;
 

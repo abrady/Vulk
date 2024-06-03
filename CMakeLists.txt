@@ -63,6 +63,9 @@ else()
         -O0
         -g3
         -DDEBUG
+
+        # somehow some define for min and max is being set, we don't want it
+        -DNOMINMAX
     )
 endif()
 

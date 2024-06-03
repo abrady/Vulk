@@ -3,6 +3,7 @@
 #include "../BuildPipeline.h"
 #include "VulkResourceMetadata_generated.h"
 #include "VulkShaderEnums_generated.h"
+#include "VulkShaderEnums_types.h"
 #include "spirv_cross/spirv_glsl.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers.hpp>
@@ -50,7 +51,7 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
     }
     SECTION("Test Gooch Frag") {
         ShaderInfo info = PipelineBuilder::getShaderInfo(builtShadersDir / "frag" / "GoochShading.fragspv");
-        CHECK(info.samplerBindings[VulkShaderTextureBinding_NormalSampler] == "normSampler");
+        CHECK(info.samplerBindings[vulk::VulkShaderTextureBinding::type_NormalSampler] == "normSampler");
     }
     SECTION("Test Pick Frag") {
         ShaderInfo info = PipelineBuilder::getShaderInfo(builtShadersDir / "frag" / "pick.fragspv");
@@ -138,7 +139,8 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
             CHECK(builtDef.descriptorSet.uniformBuffers[VK_SHADER_STAGE_VERTEX_BIT] ==
                   std::vector<VulkShaderUBOBinding>{VulkShaderUBOBinding_Xforms, VulkShaderUBOBinding_ModelXform, VulkShaderUBOBinding_DebugNormals});
             CHECK(builtDef.descriptorSet.uniformBuffers[VK_SHADER_STAGE_FRAGMENT_BIT] == std::vector<VulkShaderUBOBinding>{VulkShaderUBOBinding_EyePos});
-            CHECK(builtDef.descriptorSet.imageSamplers[VK_SHADER_STAGE_VERTEX_BIT] == std::vector<VulkShaderTextureBinding>{VulkShaderTextureBinding_NormalSampler});
+            CHECK(builtDef.descriptorSet.imageSamplers[VK_SHADER_STAGE_VERTEX_BIT] ==
+                  std::vector<vulk::VulkShaderTextureBinding::type>{vulk::VulkShaderTextureBinding::type_NormalSampler});
         } while (VulkCereal::inst()->useJSON);
     }
 }

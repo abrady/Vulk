@@ -44,9 +44,8 @@ namespace fs = std::filesystem;
 
 namespace cereal {
 FlatBufEnumSaveMinimal(MeshDefType);
-FlatBufEnumSaveMinimal(VulkShaderUBOBinding);
-FlatBufEnumSaveMinimal(VulkShaderSSBOBinding);
-FlatBufEnumSaveMinimal(VulkShaderTextureBinding);
+FlatBufEnumSaveMinimal(vulk::VulkShaderSSBOBinding::type);
+FlatBufEnumSaveMinimal(vulk::VulkShaderTextureBinding::type);
 FlatBufEnumSaveMinimal(VulkPrimitiveTopology);
 FlatBufEnumSaveMinimal(VulkPolygonMode);
 FlatBufEnumSaveMinimal(VulkCompareOp);
@@ -111,126 +110,127 @@ struct MaterialDef {
     }
 };
 
-struct DescriptorSetDef {
-    unordered_map<VkShaderStageFlagBits, vector<VulkShaderUBOBinding>> uniformBuffers;
-    unordered_map<VkShaderStageFlagBits, vector<VulkShaderSSBOBinding>> storageBuffers;
-    unordered_map<VkShaderStageFlagBits, vector<VulkShaderTextureBinding>> imageSamplers;
+// struct DescriptorSetDefOld {
+//     unordered_map<VkShaderStageFlagBits, vector<VulkShaderUBOBinding>> uniformBuffers;
+//     unordered_map<VkShaderStageFlagBits, vector<vulk::VulkShaderSSBOBinding::type>> storageBuffers;
+//     unordered_map<VkShaderStageFlagBits, vector<vulk::VulkShaderTextureBinding::type>> imageSamplers;
 
-    template <class Archive>
-    void serialize(Archive& ar) {
-        ar(CEREAL_NVP(uniformBuffers), CEREAL_NVP(storageBuffers), CEREAL_NVP(imageSamplers));
-    }
+//     template <class Archive>
+//     void serialize(Archive& ar) {
+//         ar(CEREAL_NVP(uniformBuffers), CEREAL_NVP(storageBuffers), CEREAL_NVP(imageSamplers));
+//     }
 
-    uint32_t hash() const {
-        uint32_t h = 0;
-        for (auto const& [stage, bindings] : uniformBuffers) {
-            h ^= stage;
-            for (auto const& binding : bindings) {
-                h ^= binding;
-            }
-        }
-        for (auto const& [stage, bindings] : storageBuffers) {
-            h ^= stage;
-            for (auto const& binding : bindings) {
-                h ^= binding;
-            }
-        }
-        for (auto const& [stage, bindings] : imageSamplers) {
-            h ^= stage;
-            for (auto const& binding : bindings) {
-                h ^= binding;
-            }
-        }
-        return h;
-    }
+//     uint32_t hash() const {
+//         uint32_t h = 0;
+//         for (auto const& [stage, bindings] : uniformBuffers) {
+//             h ^= stage;
+//             for (auto const& binding : bindings) {
+//                 h ^= binding;
+//             }
+//         }
+//         for (auto const& [stage, bindings] : storageBuffers) {
+//             h ^= stage;
+//             for (auto const& binding : bindings) {
+//                 h ^= binding;
+//             }
+//         }
+//         for (auto const& [stage, bindings] : imageSamplers) {
+//             h ^= stage;
+//             for (auto const& binding : bindings) {
+//                 h ^= binding;
+//             }
+//         }
+//         return h;
+//     }
 
-    void validate() {}
+//     void validate() {}
 
-    static string shaderStageToStr(VkShaderStageFlagBits stage) {
-        static unordered_map<VkShaderStageFlagBits, string> shaderStageToStr{
-            {VK_SHADER_STAGE_VERTEX_BIT, "vert"},
-            {VK_SHADER_STAGE_FRAGMENT_BIT, "frag"},
-            {VK_SHADER_STAGE_GEOMETRY_BIT, "geom"},
-        };
-        return shaderStageToStr.at(stage);
-    }
+//     static string shaderStageToStr(VkShaderStageFlagBits stage) {
+//         static unordered_map<VkShaderStageFlagBits, string> shaderStageToStr{
+//             {VK_SHADER_STAGE_VERTEX_BIT, "vert"},
+//             {VK_SHADER_STAGE_FRAGMENT_BIT, "frag"},
+//             {VK_SHADER_STAGE_GEOMETRY_BIT, "geom"},
+//         };
+//         return shaderStageToStr.at(stage);
+//     }
 
-    static VkShaderStageFlagBits getShaderStageFromStr(std::string s) {
-        static unordered_map<string, VkShaderStageFlagBits> shaderStageFromStr{
-            {"vert", VK_SHADER_STAGE_VERTEX_BIT},
-            {"frag", VK_SHADER_STAGE_FRAGMENT_BIT},
-            {"geom", VK_SHADER_STAGE_GEOMETRY_BIT},
-        };
+static VkShaderStageFlagBits getShaderStageFromStr(std::string s) {
+    static unordered_map<string, VkShaderStageFlagBits> shaderStageFromStr{
+        {"vert", VK_SHADER_STAGE_VERTEX_BIT},
+        {"frag", VK_SHADER_STAGE_FRAGMENT_BIT},
+        {"geom", VK_SHADER_STAGE_GEOMETRY_BIT},
+    };
 
-        return shaderStageFromStr.at(s);
-    }
-
-    static void parseShaderStageMap(const nlohmann::json& j, VkShaderStageFlagBits stage, DescriptorSetDef& ds) {
-        vector<string> uniformBuffers = j.at("uniformBuffers").get<vector<string>>();
-        for (auto const& value : uniformBuffers) {
-            ds.uniformBuffers[stage].push_back(EnumLookup<VulkShaderUBOBinding>::getEnumFromStr(value));
-        }
-        if (j.contains("storageBuffers")) {
-            vector<string> storageBuffers = j.at("storageBuffers").get<vector<string>>();
-            for (auto const& value : storageBuffers) {
-                ds.storageBuffers[stage].push_back(EnumLookup<VulkShaderSSBOBinding>::getEnumFromStr(value));
-            }
-        }
-        if (j.contains("imageSamplers")) {
-            vector<string> imageSamplers = j.at("imageSamplers").get<vector<string>>();
-            for (auto const& value : imageSamplers) {
-                ds.imageSamplers[stage].push_back(EnumLookup<VulkShaderTextureBinding>::getEnumFromStr(value));
-            }
-        }
-    }
-
-    static DescriptorSetDef fromJSON(const nlohmann::json& j) {
-        DescriptorSetDef ds;
-        for (auto const& [stage, bindings] : j.items()) {
-            VkShaderStageFlagBits vkStage = getShaderStageFromStr(stage);
-            parseShaderStageMap(bindings, vkStage, ds);
-        }
-        return ds;
-    }
-
-    static nlohmann::json toJSON(const DescriptorSetDef& def) {
-        nlohmann::json j;
-        for (auto const& [stage, bindings] : def.uniformBuffers) {
-            std::vector<std::string> bindingStrs;
-            for (auto const& binding : bindings) {
-                bindingStrs.push_back(EnumLookup<VulkShaderUBOBinding>::getStrFromEnum(binding));
-            }
-            j[shaderStageToStr(stage)]["uniformBuffers"] = bindingStrs;
-        }
-        for (auto const& [stage, bindings] : def.storageBuffers) {
-            std::vector<std::string> bindingStrs;
-            for (auto const& binding : bindings) {
-                bindingStrs.push_back(EnumLookup<VulkShaderSSBOBinding>::getStrFromEnum(binding));
-            }
-            j[shaderStageToStr(stage)]["storageBuffers"] = bindingStrs;
-        }
-        for (auto const& [stage, bindings] : def.imageSamplers) {
-            std::vector<std::string> bindingStrs;
-            for (auto const& binding : bindings) {
-                bindingStrs.push_back(EnumLookup<VulkShaderTextureBinding>::getStrFromEnum(binding));
-            }
-            j[shaderStageToStr(stage)]["imageSamplers"] = bindingStrs;
-        }
-        return j;
-    }
-};
-
-namespace cereal {
-template <class Archive>
-std::string save_minimal(const Archive&, const VkShaderStageFlagBits& m) {
-    return DescriptorSetDef::shaderStageToStr(m);
+    return shaderStageFromStr.at(s);
 }
 
-template <class Archive>
-void load_minimal(const Archive&, VkShaderStageFlagBits& m, const std::string& value) {
-    m = DescriptorSetDef::getShaderStageFromStr(value);
-}
-} // namespace cereal
+//     static void parseShaderStageMap(const nlohmann::json& j, VkShaderStageFlagBits stage, vulk::DescriptorSetDef& ds) {
+//         vector<string> uniformBuffers = j.at("uniformBuffers").get<vector<string>>();
+//         for (auto const& value : uniformBuffers) {
+//             ds.uniformBuffers[stage].push_back(EnumLookup<VulkShaderUBOBinding>::getEnumFromStr(value));
+//         }
+//         if (j.contains("storageBuffers")) {
+//             vector<string> storageBuffers = j.at("storageBuffers").get<vector<string>>();
+//             for (auto const& value : storageBuffers) {
+//                 ds.storageBuffers[stage].push_back(EnumLookup<vulk::VulkShaderSSBOBinding::type>::getEnumFromStr(value));
+//             }
+//         }
+//         if (j.contains("imageSamplers")) {
+//             vector<string> imageSamplers = j.at("imageSamplers").get<vector<string>>();
+//             for (auto const& value : imageSamplers) {
+//                 ds.imageSamplers[stage].push_back(EnumLookup<vulk::VulkShaderTextureBinding::type>::getEnumFromStr(value));
+//             }
+//         }
+//     }
+
+//     static DescriptorSetDef fromJSON(const nlohmann::json& j) {
+//         DescriptorSetDef ds;
+//         for (auto const& [stage, bindings] : j.items()) {
+//             VkShaderStageFlagBits vkStage = getShaderStageFromStr(stage);
+//             parseShaderStageMap(bindings, vkStage, ds);
+//         }
+//         return ds;
+//     }
+
+//     static nlohmann::json toJSON(const DescriptorSetDef& def) {
+//         nlohmann::json j;
+//         for (auto const& [stage, bindings] : def.uniformBuffers) {
+//             std::vector<std::string> bindingStrs;
+//             for (auto const& binding : bindings) {
+//                 bindingStrs.push_back(EnumLookup<VulkShaderUBOBinding>::getStrFromEnum(binding));
+//             }
+//             j[shaderStageToStr(stage)]["uniformBuffers"] = bindingStrs;
+//         }
+//         for (auto const& [stage, bindings] : def.storageBuffers) {
+//             std::vector<std::string> bindingStrs;
+//             for (auto const& binding : bindings) {
+//                 bindingStrs.push_back(EnumLookup<vulk::VulkShaderSSBOBinding::type>::getStrFromEnum(binding));
+//             }
+//             j[shaderStageToStr(stage)]["storageBuffers"] = bindingStrs;
+//         }
+//         for (auto const& [stage, bindings] : def.imageSamplers) {
+//             std::vector<std::string> bindingStrs;
+//             for (auto const& binding : bindings) {
+//                 bindingStrs.push_back(EnumLookup<vulk::VulkShaderTextureBinding::type>::getStrFromEnum(binding));
+//             }
+//             j[shaderStageToStr(stage)]["imageSamplers"] = bindingStrs;
+//         }
+//         return j;
+//     }
+// };
+
+// namespace cereal {
+
+// template <class Archive>
+// std::string save_minimal(const Archive&, const VkShaderStageFlagBits& m) {
+//     return DescriptorSetDef::shaderStageToStr(m);
+// }
+
+// template <class Archive>
+// void load_minimal(const Archive&, VkShaderStageFlagBits& m, const std::string& value) {
+//     m = DescriptorSetDef::getShaderStageFromStr(value);
+// }
+// } // namespace cereal
 
 // represents the original pipeline declaration in the assets dir
 struct SourcePipelineDef {
@@ -328,7 +328,8 @@ struct BuiltPipelineDef : public SourcePipelineDef {
     shared_ptr<vulk::ShaderDef> vertShader;
     shared_ptr<vulk::ShaderDef> geomShader;
     shared_ptr<vulk::ShaderDef> fragShader;
-    DescriptorSetDef descriptorSet;
+    std::string descriptorSet;
+    vulk::DescriptorSetDef descriptorSetDef;
     std::vector<VulkShaderLocation> vertInputs;
     std::vector<PushConstantDef> pushConstants;
 

@@ -2,7 +2,7 @@
 #include "Vulk/Vulk.h"
 #include "Vulk/VulkUtil.h"
 
-VulkDescriptorSetLayoutBuilder &VulkDescriptorSetLayoutBuilder::addUniformBuffer(VkShaderStageFlags stageFlags, VulkShaderUBOBinding binding) {
+VulkDescriptorSetLayoutBuilder& VulkDescriptorSetLayoutBuilder::addUniformBuffer(VkShaderStageFlags stageFlags, vulk::VulkShaderUBOBinding::type binding) {
     if (!layoutBindingsMap.contains(binding)) {
         VkDescriptorSetLayoutBinding layoutBinding{};
         layoutBinding.binding = binding;
@@ -16,7 +16,7 @@ VulkDescriptorSetLayoutBuilder &VulkDescriptorSetLayoutBuilder::addUniformBuffer
     return *this;
 }
 
-VulkDescriptorSetLayoutBuilder &VulkDescriptorSetLayoutBuilder::addImageSampler(VkShaderStageFlags stageFlags, VulkShaderTextureBinding binding) {
+VulkDescriptorSetLayoutBuilder& VulkDescriptorSetLayoutBuilder::addImageSampler(VkShaderStageFlags stageFlags, vulk::VulkShaderTextureBinding::type binding) {
     if (!layoutBindingsMap.contains(binding)) {
         VkDescriptorSetLayoutBinding layoutBinding{};
         layoutBinding.binding = binding;
@@ -30,7 +30,7 @@ VulkDescriptorSetLayoutBuilder &VulkDescriptorSetLayoutBuilder::addImageSampler(
     return *this;
 }
 
-VulkDescriptorSetLayoutBuilder &VulkDescriptorSetLayoutBuilder::addStorageBuffer(VkShaderStageFlags stageFlags, VulkShaderSSBOBinding binding) {
+VulkDescriptorSetLayoutBuilder& VulkDescriptorSetLayoutBuilder::addStorageBuffer(VkShaderStageFlags stageFlags, vulk::VulkShaderSSBOBinding::type binding) {
     if (!layoutBindingsMap.contains(binding)) {
         VkDescriptorSetLayoutBinding layoutBinding{};
         layoutBinding.binding = binding;
@@ -47,7 +47,7 @@ VulkDescriptorSetLayoutBuilder &VulkDescriptorSetLayoutBuilder::addStorageBuffer
 std::shared_ptr<VulkDescriptorSetLayout> VulkDescriptorSetLayoutBuilder::build() {
     std::vector<VkDescriptorSetLayoutBinding> layoutBindings;
     layoutBindings.reserve(layoutBindingsMap.size());
-    for (auto &pair : layoutBindingsMap) {
+    for (auto& pair : layoutBindingsMap) {
         layoutBindings.push_back(pair.second);
     }
     VkDescriptorSetLayoutCreateInfo layoutCreateInfo{};

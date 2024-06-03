@@ -1,4 +1,7 @@
-enum VulkShaderLocation : byte {
+// Define enums
+namespace cpp vulk
+
+enum VulkShaderLocation {
     Color = 0,
     Pos = 1,
     Normal = 2,
@@ -7,12 +10,10 @@ enum VulkShaderLocation : byte {
     Height = 5,
     Pos2 = 6,
     PosLightSpace = 7,
-    Bitangent = 8,
+    Bitangent = 8
 }
 
-// keep in sync with derived enums below (VulkShaderUBOBinding, VulkShaderTextureBinding, VulkShaderSSBOBinding)
-// unfortunately, we can't use the enum values directly in the shader, so we have to keep them in sync manually
-enum VulkShaderBinding : byte {
+enum VulkShaderBinding {
     XformsUBO = 0,
     TextureSampler = 1,
     Lights = 2,
@@ -28,40 +29,40 @@ enum VulkShaderBinding : byte {
     DebugTangentsUBO = 12,
     LightViewProjUBO = 13,
     ShadowMapSampler = 14,
-    // PBR 
-    // we'll use TextureSampler for albedo and NormalSampler for normal map
     AmbientOcclusionSampler = 15,
     DisplacementSampler = 16,
     MetallicSampler = 17,
     RoughnessSampler = 18,
-    PBRDebugUBO = 19, // for debug purposes
-    GlobalConstantsUBO = 20,
+    PBRDebugUBO = 19,
+    GlobalConstantsUBO = 20
+    MAX = 21
 }
 
-// enum VulkShaderUBOBinding : byte {
-//     Xforms = 0,
-//     Lights = 2,
-//     EyePos = 3,
-//     ModelXform = 8,
-//     MaterialUBO = 10,
-//     DebugNormals = 11,
-//     DebugTangents = 12,
-//     LightViewProjUBO = 13,
-//     PBRDebugUBO = 19, // for debug purposes
-//     GlobalConstantsUBO = 20,
-// }
-
-enum VulkShaderDebugUBO : byte {
+enum VulkShaderUBOBinding {
+    Xforms = 0,
+    Lights = 2,
+    EyePos = 3,
+    ModelXform = 8,
+    MaterialUBO = 10,
     DebugNormals = 11,
     DebugTangents = 12,
-    PBRDebugUBO = 19, 
+    LightViewProjUBO = 13,
+    PBRDebugUBO = 19,
+    GlobalConstantsUBO = 20
+    MAX = 20
 }
 
-enum VulkShaderSSBOBinding : byte {
+enum VulkShaderDebugUBO {
+    DebugNormals = 11,
+    DebugTangents = 12,
+    PBRDebugUBO = 19
+}
+
+enum VulkShaderSSBOBinding {
     MaxBindingID = 0
 }
 
-enum VulkShaderTextureBinding : byte {
+enum VulkShaderTextureBinding {
     TextureSampler = 1,
     TextureSampler2 = 4,
     TextureSampler3 = 5,
@@ -70,18 +71,19 @@ enum VulkShaderTextureBinding : byte {
     AmbientOcclusionSampler = 15,
     DisplacementSampler = 16,
     MetallicSampler = 17,
-    RoughnessSampler = 18,
+    RoughnessSampler = 18
+    MAX = 18
 }
 
-enum VulkLights: byte {
-    NumLights = 4,
+enum VulkLights {
+    NumLights = 4
 }
 
-enum VulkShaderStage : uint32 {
+enum VulkShaderStage {
     VERTEX = 0x00000001,
     TESSELLATION_CONTROL = 0x00000002,
     TESSELLATION_EVALUATION = 0x00000004,
     GEOMETRY = 0x00000008,
     FRAGMENT = 0x00000010,
-    COMPUTE = 0x00000020,
+    COMPUTE = 0x00000020
 }

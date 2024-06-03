@@ -43,6 +43,7 @@
 #include "VulkException.h"
 #include "VulkLogger.h"
 #include "VulkShaderEnums_generated.h"
+#include "VulkShaderEnums_types.h"
 
 #define VK_CALL(func)                                                                                                     \
     do {                                                                                                                  \

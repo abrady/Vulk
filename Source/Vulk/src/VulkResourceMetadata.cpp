@@ -3,7 +3,6 @@
 
 using json = nlohmann::json;
 using namespace std;
-using namespace vulk;
 
 namespace fs = std::filesystem;
 
@@ -311,19 +310,19 @@ void findAndProcessMetadata(const fs::path path, Metadata& metadata) {
                 }
             } else if (ext == ".vertspv") {
                 assert(!metadata.vertShaders.contains(stem));
-                metadata.vertShaders[stem] = make_shared<ShaderDef>();
+                metadata.vertShaders[stem] = make_shared<vulk::ShaderDef>();
                 metadata.vertShaders[stem]->name = stem;
                 metadata.vertShaders[stem]->path = entry.path().string();
 
             } else if (ext == ".geomspv") {
                 assert(!metadata.geometryShaders.contains(stem));
-                metadata.geometryShaders[stem] = make_shared<ShaderDef>();
+                metadata.geometryShaders[stem] = make_shared<vulk::ShaderDef>();
                 metadata.geometryShaders[stem]->name = stem;
                 metadata.geometryShaders[stem]->path = entry.path().string();
 
             } else if (ext == ".fragspv") {
                 assert(!metadata.fragmentShaders.contains(stem));
-                metadata.fragmentShaders[stem] = make_shared<ShaderDef>();
+                metadata.fragmentShaders[stem] = make_shared<vulk::ShaderDef>();
                 metadata.fragmentShaders[stem]->name = stem;
                 metadata.fragmentShaders[stem]->path = entry.path().string();
 
