@@ -2,55 +2,55 @@
 
 #include "VulkUtil.h"
 
-class VulkCereal {
-public:
-    bool useJSON = false;
-    static VulkCereal* inst() {
-        static VulkCereal* instance = new VulkCereal();
-        return instance;
-    };
+// class VulkCereal {
+// public:
+//     bool useJSON = false;
+//     static VulkCereal* inst() {
+//         static VulkCereal* instance = new VulkCereal();
+//         return instance;
+//     };
 
-    std::filesystem::path addFileExtension(std::filesystem::path path) {
-        std::string ext = useJSON ? ".json" : ".bin";
-        return std::filesystem::path(path.string() + ext);
-    }
+//     std::filesystem::path addFileExtension(std::filesystem::path path) {
+//         std::string ext = useJSON ? ".json" : ".bin";
+//         return std::filesystem::path(path.string() + ext);
+//     }
 
-    template <typename T>
-    void toFile(std::filesystem::path path, T& obj) {
-        if (path.extension() != ".json" && path.extension() != ".bin") {
-            VULK_THROW("Unknown file extension: " + path.string());
-        }
-        std::ofstream file(path);
-        if (!file.is_open()) {
-            VULK_THROW("Failed to open file: " + path.string());
-        }
-        if (useJSON) {
-            cereal::JSONOutputArchive archive(file);
-            obj.serialize(archive);
-        } else {
-            cereal::BinaryOutputArchive archive(file);
-            obj.serialize(archive);
-        }
-    }
+//     template <typename T>
+//     void toFile(std::filesystem::path path, T& obj) {
+//         if (path.extension() != ".json" && path.extension() != ".bin") {
+//             VULK_THROW("Unknown file extension: " + path.string());
+//         }
+//         std::ofstream file(path);
+//         if (!file.is_open()) {
+//             VULK_THROW("Failed to open file: " + path.string());
+//         }
+//         if (useJSON) {
+//             cereal::JSONOutputArchive archive(file);
+//             obj.serialize(archive);
+//         } else {
+//             cereal::BinaryOutputArchive archive(file);
+//             obj.serialize(archive);
+//         }
+//     }
 
-    template <typename T>
-    void fromFile(std::filesystem::path path, T& obj) {
-        std::ifstream file(path);
-        if (!file.is_open()) {
-            VULK_THROW("Failed to open file: " + path.string());
-        }
-        if (path.extension() == ".json") {
-            // cereal::JSONInputArchive archive(file);
-            // obj.serialize(archive);
-            VULK_THROW("JSON not supported yet");
-        } else if (path.extension() == ".bin") {
-            cereal::BinaryInputArchive archive(file);
-            obj.serialize(archive);
-        } else {
-            VULK_THROW("Unknown file extension: " + path.extension().string());
-        }
-    }
-};
+//     template <typename T>
+//     void fromFile(std::filesystem::path path, T& obj) {
+//         std::ifstream file(path);
+//         if (!file.is_open()) {
+//             VULK_THROW("Failed to open file: " + path.string());
+//         }
+//         if (path.extension() == ".json") {
+//             // cereal::JSONInputArchive archive(file);
+//             // obj.serialize(archive);
+//             VULK_THROW("JSON not supported yet");
+//         } else if (path.extension() == ".bin") {
+//             cereal::BinaryInputArchive archive(file);
+//             obj.serialize(archive);
+//         } else {
+//             VULK_THROW("Unknown file extension: " + path.extension().string());
+//         }
+//     }
+// };
 
 namespace cereal {
 

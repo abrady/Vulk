@@ -84,14 +84,15 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
         CHECK(res.polygonMode == VK_POLYGON_MODE_FILL);
         CHECK(res.depthTestEnabled == true);
         CHECK(res.depthWriteEnabled == true);
-        CHECK(res.vertInputs == std::vector<VulkShaderLocation>{VulkShaderLocation_Pos, VulkShaderLocation_Normal, VulkShaderLocation_Tangent, VulkShaderLocation_TexCoord});
+        CHECK(res.vertInputs ==
+              std::vector<vulk::VulkShaderLocation::type>{VulkShaderLocation_Pos, VulkShaderLocation_Normal, VulkShaderLocation_Tangent, VulkShaderLocation_TexCoord});
 
         CHECK(res.depthCompareOp == VK_COMPARE_OP_NOT_EQUAL);
 
-        CHECK(res.descriptorSet.uniformBuffers[VK_SHADER_STAGE_VERTEX_BIT] ==
+        CHECK(res.descriptorSetName.uniformBuffers[VK_SHADER_STAGE_VERTEX_BIT] ==
               std::vector<VulkShaderUBOBinding>{VulkShaderUBOBinding_Xforms, VulkShaderUBOBinding_ModelXform, VulkShaderUBOBinding_DebugNormals});
-        CHECK(res.descriptorSet.uniformBuffers[VK_SHADER_STAGE_GEOMETRY_BIT] == std::vector<VulkShaderUBOBinding>{});
-        CHECK(res.descriptorSet.uniformBuffers[VK_SHADER_STAGE_FRAGMENT_BIT] == std::vector<VulkShaderUBOBinding>{VulkShaderUBOBinding_EyePos});
+        CHECK(res.descriptorSetName.uniformBuffers[VK_SHADER_STAGE_GEOMETRY_BIT] == std::vector<VulkShaderUBOBinding>{});
+        CHECK(res.descriptorSetName.uniformBuffers[VK_SHADER_STAGE_FRAGMENT_BIT] == std::vector<VulkShaderUBOBinding>{VulkShaderUBOBinding_EyePos});
     }
 
     SECTION("buildPipelineFile") {
@@ -128,7 +129,7 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
             CHECK(builtDef.blending.getColorMask() == def.blending.getColorMask());
             CHECK(builtDef.cullMode == def.cullMode);
             CHECK(builtDef.vertInputs ==
-                  std::vector<VulkShaderLocation>{VulkShaderLocation_Pos, VulkShaderLocation_Normal, VulkShaderLocation_Tangent, VulkShaderLocation_TexCoord});
+                  std::vector<vulk::VulkShaderLocation::type>{VulkShaderLocation_Pos, VulkShaderLocation_Normal, VulkShaderLocation_Tangent, VulkShaderLocation_TexCoord});
             CHECK(builtDef.pushConstants.size() == 1);
             CHECK(builtDef.pushConstants[0].stageFlags == (VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_GEOMETRY_BIT));
             CHECK(builtDef.pushConstants[0].size == 4);
@@ -136,10 +137,10 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
             REQUIRE(sizeof(def) == 232);      // reminder to add new fields to the test
             REQUIRE(sizeof(builtDef) == 584); // reminder to add new fields to the test
             // I would do a static assert here but it doesn't print out the sizes.
-            CHECK(builtDef.descriptorSet.uniformBuffers[VK_SHADER_STAGE_VERTEX_BIT] ==
+            CHECK(builtDef.descriptorSetName.uniformBuffers[VK_SHADER_STAGE_VERTEX_BIT] ==
                   std::vector<VulkShaderUBOBinding>{VulkShaderUBOBinding_Xforms, VulkShaderUBOBinding_ModelXform, VulkShaderUBOBinding_DebugNormals});
-            CHECK(builtDef.descriptorSet.uniformBuffers[VK_SHADER_STAGE_FRAGMENT_BIT] == std::vector<VulkShaderUBOBinding>{VulkShaderUBOBinding_EyePos});
-            CHECK(builtDef.descriptorSet.imageSamplers[VK_SHADER_STAGE_VERTEX_BIT] ==
+            CHECK(builtDef.descriptorSetName.uniformBuffers[VK_SHADER_STAGE_FRAGMENT_BIT] == std::vector<VulkShaderUBOBinding>{VulkShaderUBOBinding_EyePos});
+            CHECK(builtDef.descriptorSetName.imageSamplers[VK_SHADER_STAGE_VERTEX_BIT] ==
                   std::vector<vulk::VulkShaderTextureBinding::type>{vulk::VulkShaderTextureBinding::type_NormalSampler});
         } while (VulkCereal::inst()->useJSON);
     }

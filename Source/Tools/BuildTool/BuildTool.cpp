@@ -59,37 +59,6 @@ namespace fs = std::filesystem;
 //     return EXCEPTION_EXECUTE_HANDLER;
 // }
 
-void sceneBuilder(fs::path sceneFileIn, fs::path sceneOutDir) {
-    std::shared_ptr<spdlog::logger> logger = VulkLogger::CreateLogger("buildtool:SceneBuilder");
-    logger->info("Building scene from file: {}", sceneFileIn.string());
-    if (!fs::exists(sceneFileIn)) {
-        logger->error("Scene file does not exist: {}", sceneFileIn.string());
-        throw CLI::ValidationError("Scene file does not exist: " + sceneFileIn.string());
-    }
-    if (!fs::exists(sceneOutDir)) {
-        logger->error("Scene output directory does not exist: {}", sceneOutDir.string());
-        throw CLI::ValidationError("Scene output directory does not exist: " + sceneOutDir.string());
-    }
-    // Read from the input file
-    std::ifstream sceneIn(sceneFileIn);
-    cereal::JSONInputArchive input(sceneIn);
-    // SceneDef data;
-    // ActorDef data;
-    ModelDef data("foo", nullptr, nullptr);
-    // ModelMeshDef data2;
-    // MeshDef data("foo", data2);
-    // MaterialDef data;
-    // MyData data;
-    input(data); // Deserialize data from the file
-    sceneIn.close();
-    // Write to the output file
-    std::ofstream sceneFileOut(sceneOutDir / sceneFileIn.filename());
-    cereal::JSONOutputArchive output(sceneFileOut);
-    output(data); // Serialize data to the file
-    sceneFileOut.close();
-    // throw CLI::Success(); // not really necessary
-}
-
 void glslShaderEnumsGenerator(fs::path outFile, bool verbose) {
     auto logger = VulkLogger::CreateLogger("Buildtool:ShaderEnumsGenerator");
     logger->info("GLSLIncludesGenerator: Generating GLSL includes for enum values to: {}", outFile.string());
@@ -114,30 +83,24 @@ void glslShaderEnumsGenerator(fs::path outFile, bool verbose) {
     out << "\n// UBO Bindings\n";
     logger->trace("// UBO Bindings");
 
-    const VulkShaderBinding* bindings = EnumValuesVulkShaderBinding();
-    const char* const* ns = EnumNamesVulkShaderBinding();
-    for (int i = 0; ns[i] != nullptr; i++) {
-        out << "const int VulkShaderBinding_" << ns[i] << " = " << (int)bindings[i] << ";\n";
-        logger->trace("const int VulkShaderBinding_{} = {};", ns[i], (int)bindings[i]);
+    for (auto [key, value] : vulk::_VulkShaderBinding_VALUES_TO_NAMES) {
+        out << "const int VulkShaderBinding_" << value << " = " << (int)key << ";\n";
+        logger->trace("const int VulkShaderBinding_{} = {};", value, (int)key);
     }
 
     // Write the layout locations
     out << "\n// Shader Input Locations\n";
-    const VulkShaderLocation* locs = EnumValuesVulkShaderLocation();
-    ns = EnumNamesVulkShaderLocation();
-    for (int i = 0; ns[i] != nullptr; i++) {
-        out << "const int VulkShaderLocation_" << ns[i] << " = " << (int)locs[i] << ";\n";
-        logger->trace("const int VulkShaderLocation_{} = {};", ns[i], (int)locs[i]);
+    for (auto [key, value] : vulk::_VulkShaderLocation_VALUES_TO_NAMES) {
+        out << "const int VulkShaderLocation_" << value << " = " << (int)key << ";\n";
+        logger->trace("const int VulkShaderLocation_{} = {};", value, (int)key);
     }
 
     // Write the light constants
     // Write the layout locations
     out << "\n// Shader Input Locations\n";
-    auto* lights = EnumValuesVulkLights();
-    ns = EnumNamesVulkLights();
-    for (int i = 0; ns[i] != nullptr; i++) {
-        out << "const int VulkLights_" << ns[i] << " = " << (int)lights[i] << ";\n";
-        logger->trace("const int VulkLights_{} = {};", ns[i], (int)lights[i]);
+    for (auto [key, value] : vulk::_VulkLights_VALUES_TO_NAMES) {
+        out << "const int VulkLights_" << value << " = " << (int)key << ";\n";
+        logger->trace("const int VulkLights_{} = {};", value, (int)key);
     }
 
     out << "\n";

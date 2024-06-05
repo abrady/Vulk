@@ -21,40 +21,45 @@
 // * how these things are bound to the pipeline (the descriptor set info)
 // * a set of vertex and index buffers
 struct VulkModel {
-    Vulk &vk;
+    Vulk& vk;
     std::shared_ptr<VulkMesh> mesh;
     std::shared_ptr<VulkMaterialTextures> textures;
     std::shared_ptr<VulkUniformBuffer<VulkMaterialConstants>> materialUBO;
     uint32_t numIndices, numVertices;
-    std::unordered_map<VulkShaderLocation, std::shared_ptr<VulkBuffer>> bufs; // each index is VulkShaderLocation_Pos, Color, Normal, etc.;
+    std::unordered_map<vulk::VulkShaderLocation::type, std::shared_ptr<VulkBuffer>> bufs; // each index is VulkShaderLocation_Pos, Color, Normal, etc.;
     std::shared_ptr<VulkBuffer> indexBuf;
 
-    VulkModel(Vulk &vk, std::shared_ptr<VulkMesh> meshIn, std::shared_ptr<VulkMaterialTextures> texturesIn,
-              std::shared_ptr<VulkUniformBuffer<VulkMaterialConstants>> materialUBO, std::vector<VulkShaderLocation> const &inputs)
-        : vk(vk), mesh(meshIn), textures(texturesIn), materialUBO(materialUBO), numIndices((uint32_t)meshIn->indices.size()),
-          numVertices((uint32_t)meshIn->vertices.size()), indexBuf(VulkBufferBuilder(vk)
-                                                                       .setSize(sizeof(meshIn->indices[0]) * meshIn->indices.size())
-                                                                       .setMem(meshIn->indices.data())
-                                                                       .setUsage(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT)
-                                                                       .setProperties(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
-                                                                       .build()) {
-        for (VulkShaderLocation i : inputs) {
-            if (i == VulkShaderLocation_Pos || i == VulkShaderLocation_Normal || i == VulkShaderLocation_Tangent) {
+    VulkModel(Vulk& vk, std::shared_ptr<VulkMesh> meshIn, std::shared_ptr<VulkMaterialTextures> texturesIn, std::shared_ptr<VulkUniformBuffer<VulkMaterialConstants>> materialUBO,
+              std::vector<vulk::VulkShaderLocation::type> const& inputs)
+        : vk(vk)
+        , mesh(meshIn)
+        , textures(texturesIn)
+        , materialUBO(materialUBO)
+        , numIndices((uint32_t)meshIn->indices.size())
+        , numVertices((uint32_t)meshIn->vertices.size())
+        , indexBuf(VulkBufferBuilder(vk)
+                       .setSize(sizeof(meshIn->indices[0]) * meshIn->indices.size())
+                       .setMem(meshIn->indices.data())
+                       .setUsage(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT)
+                       .setProperties(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+                       .build()) {
+        for (vulk::VulkShaderLocation::type i : inputs) {
+            if (i == vulk::VulkShaderLocation::Pos || i == vulk::VulkShaderLocation::Normal || i == vulk::VulkShaderLocation::Tangent) {
                 std::vector<glm::vec3> vec3s;
                 vec3s.reserve(meshIn->vertices.size());
-                for (auto &v : meshIn->vertices) {
+                for (auto& v : meshIn->vertices) {
                     switch (i) {
-                    case VulkShaderLocation_Pos:
+                    case vulk::VulkShaderLocation::Pos:
                         vec3s.push_back(v.pos);
                         break;
-                    case VulkShaderLocation_Normal:
+                    case vulk::VulkShaderLocation::Normal:
                         vec3s.push_back(v.normal);
                         break;
-                    case VulkShaderLocation_Tangent:
+                    case vulk::VulkShaderLocation::Tangent:
                         vec3s.push_back(v.tangent);
                         break;
                     default:
-                        VULK_THROW("Unhandled VulkShaderLocation");
+                        VULK_THROW("Unhandled vulk::VulkShaderLocation::type");
                     }
                 }
                 bufs[i] = VulkBufferBuilder(vk)
@@ -63,10 +68,10 @@ struct VulkModel {
                               .setUsage(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
                               .setProperties(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
                               .build();
-            } else if (i == VulkShaderLocation_TexCoord) {
+            } else if (i == vulk::VulkShaderLocation::TexCoord) {
                 std::vector<glm::vec2> vec2s;
                 vec2s.reserve(meshIn->vertices.size());
-                for (auto &v : meshIn->vertices) {
+                for (auto& v : meshIn->vertices) {
                     vec2s.push_back(v.uv);
                 }
                 bufs[i] = VulkBufferBuilder(vk)
@@ -76,13 +81,13 @@ struct VulkModel {
                               .setProperties(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
                               .build();
             } else {
-                VULK_THROW("Unhandled VulkShaderLocation");
+                VULK_THROW("Unhandled vulk::VulkShaderLocation::type");
             }
         }
     }
 
     void bindInputBuffers(VkCommandBuffer cmdBuf) {
-        for (auto &[binding, buf] : this->bufs) {
+        for (auto& [binding, buf] : this->bufs) {
             VkDeviceSize offsets[] = {0};
             vkCmdBindVertexBuffers(cmdBuf, binding, 1, &buf->buf, offsets);
         }

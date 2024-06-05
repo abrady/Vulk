@@ -42,6 +42,29 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
+Remove VulkEnumMetadata
+remove cereal refs
+remove nlohmann::json
+
+## 6/4 cereal-b-gone
+
+How does this work end-to-end for descriptorsetdef?
+
+1. write a pipeline with shaders
+2. buildtool extracts the DS and makes a def out of it
+3. the def is serialized as part of the pipeline
+
+so:
+
+* no json to read in
+* just need to write it out.
+
+why don't I write it as a separate file and just load that?
+
+* remove it from BuiltPipelineDef
+* load it in VulkResources
+* connect the two
+
 ## 6/2 ditch nlohmann/json and cereal
 
 these things are slow and hard to debug. we've got flabuffers, what would it take to convert those?

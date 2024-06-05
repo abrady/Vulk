@@ -16,7 +16,7 @@ class VulkPipelineBuilder {
 
     std::vector<std::shared_ptr<VulkShaderModule>> shaderModules;
     std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
-    std::unordered_map<VulkShaderLocation, VertInput> vertInputs;
+    std::unordered_map<vulk::VulkShaderLocation::type, VertInput> vertInputs;
     VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
     VkPipelineViewportStateCreateInfo viewportState{};
     VkPipelineRasterizationStateCreateInfo rasterizer{};
@@ -65,7 +65,7 @@ public:
     VulkPipelineBuilder& setFrontStencilReference(uint32_t reference);
     VulkPipelineBuilder& copyFrontStencilToBack();
 
-    VulkPipelineBuilder& addVertexInput(VulkShaderLocation input);
+    VulkPipelineBuilder& addVertexInput(vulk::VulkShaderLocation::type input);
     VulkPipelineBuilder& setBlending(bool enabled, VkColorComponentFlags colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT |
                                                                                           VK_COLOR_COMPONENT_A_BIT);
 

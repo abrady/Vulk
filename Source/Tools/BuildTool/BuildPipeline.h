@@ -24,9 +24,9 @@ struct ShaderInfo {
     std::unordered_map<vulk::VulkShaderUBOBinding::type, std::string> uboBindings;
     std::unordered_map<vulk::VulkShaderSSBOBinding::type, std::string> sboBindings;
     std::unordered_map<vulk::VulkShaderTextureBinding::type, std::string> samplerBindings;
-    std::unordered_map<VulkShaderLocation, std::string> inputLocations;
-    std::unordered_map<VulkShaderLocation, std::string> outputLocations;
-    std::vector<uint32_t> pushConstants; // bitfield of VulkShaderStage
+    std::unordered_map<vulk::VulkShaderLocation::type, std::string> inputLocations;
+    std::unordered_map<vulk::VulkShaderLocation::type, std::string> outputLocations;
+    std::vector<uint32_t> pushConstants; // bitfield of vulk::VulkShaderStage
 };
 
 class PipelineBuilder {
@@ -54,7 +54,7 @@ public:
         parsedShader.name = shaderPath.stem().string();
         parsedShader.entryPoint = glsl.get_entry_points_and_stages()[0].name;
 
-        // VulkShaderStage shaderStage;
+        // vulk::VulkShaderStage shaderStage;
         // switch (glsl.get_execution_model()) {
         // case spv::ExecutionModelVertex:
         //     logger()->trace("Vertex Shader");
@@ -111,15 +111,13 @@ public:
 
         // Inputs
         for (const spirv_cross::Resource& resource : resources.stage_inputs) {
-            VulkShaderLocation location = (VulkShaderLocation)glsl.get_decoration(resource.id, spv::DecorationLocation);
-            VULK_ASSERT(*EnumNameVulkShaderLocation(location), "Invalid vertex input location " + std::to_string(location));
+            vulk::VulkShaderLocation::type location = (vulk::VulkShaderLocation::type)glsl.get_decoration(resource.id, spv::DecorationLocation);
             parsedShader.inputLocations[location] = resource.name;
         }
 
         // Outputs
         for (const spirv_cross::Resource& resource : resources.stage_outputs) {
-            VulkShaderLocation location = (VulkShaderLocation)glsl.get_decoration(resource.id, spv::DecorationLocation);
-            VULK_ASSERT(*EnumNameVulkShaderLocation(location), "Invalid vertex input location " + std::to_string(location));
+            vulk::VulkShaderLocation::type location = (vulk::VulkShaderLocation::type)glsl.get_decoration(resource.id, spv::DecorationLocation);
             parsedShader.outputLocations[location] = resource.name;
         }
 
@@ -165,7 +163,7 @@ public:
     }
 
     // e.g. the "vert" or "frag" part of the descriptor set
-    static void updateBuiltPipelineDef(ShaderInfo info, std::string stage, BuiltPipelineDef& bp) {
+    static void updateBuiltPipelineDef(ShaderInfo info, std::string stage, vulk::BuiltPipelineDef& bp) {
         vulk::DescriptorSetDef& def = bp.descriptorSetDef;
         VkShaderStageFlagBits stageFlag = getShaderStageFromStr(stage);
         for (auto& ubo : info.uboBindings) {
@@ -181,10 +179,12 @@ public:
         for (uint32_t i = 0; i < info.pushConstants.size(); i++) {
             if (i >= bp.pushConstants.size()) {
                 bp.pushConstants.resize(i + 1);
-                PushConstantDef pc = {.stageFlags = (uint32_t)stageFlag, .size = info.pushConstants[i]};
+                vulk::PushConstantDef pc = {};
+                pc.stageFlags = (uint32_t)stageFlag;
+                pc.size = info.pushConstants[i];
                 bp.pushConstants[i] = pc;
             } else {
-                VULK_ASSERT(bp.pushConstants[i].size == info.pushConstants[i], "Push constant size mismatch");
+                VULK_ASSERT(bp.pushConstants[i].size == (int)info.pushConstants[i], "Push constant size mismatch");
                 uint32_t flags = bp.pushConstants[i].stageFlags;
                 flags |= (uint32_t)stageFlag;
                 bp.pushConstants[i].stageFlags = flags;
@@ -192,13 +192,13 @@ public:
         }
     }
 
-    static BuiltPipelineDef buildPipeline(SourcePipelineDef pipelineIn, std::filesystem::path builtShadersDir) {
+    static vulk::BuiltPipelineDef buildPipeline(vulk::BuiltPipelineDef pipelineIn, std::filesystem::path builtShadersDir) {
         if (!std::filesystem::exists(builtShadersDir)) {
             std::cerr << "Shaders directory does not exist: " << builtShadersDir << std::endl;
             VULK_THROW("PipelineBuilder: Shaders directory does not exist");
         }
 
-        BuiltPipelineDef pipelineOut(pipelineIn);
+        vulk::BuiltPipelineDef pipelineOut(pipelineIn);
 
         std::vector<ShaderInfo> shaderInfos;
         ShaderInfo vertShaderInfo = infoFromShader(pipelineIn.vertShaderName, "vert", builtShadersDir);
@@ -235,7 +235,7 @@ public:
         return pipelineOut;
     }
 
-    static void buildPipelineFile(SourcePipelineDef pipelineIn, std::filesystem::path builtShadersDir, std::filesystem::path pipelineFileOut) {
+    static void buildPipelineFile(vulk::BuiltPipelineDef pipelineIn, std::filesystem::path builtShadersDir, std::filesystem::path pipelineFileOut) {
         if (!std::filesystem::exists(builtShadersDir)) {
             std::cerr << "Shaders directory does not exist: " << builtShadersDir << std::endl;
             VULK_THROW("PipelineBuilder: Shaders directory does not exist");
@@ -245,8 +245,8 @@ public:
             VULK_THROW("PipelineBuilder: Output directory does not exist");
         }
 
-        BuiltPipelineDef pipelineOut = buildPipeline(pipelineIn, builtShadersDir);
-        VulkCereal::inst()->toFile(pipelineFileOut, pipelineOut);
+        vulk::BuiltPipelineDef pipelineOut = buildPipeline(pipelineIn, builtShadersDir);
+        writeDefToFile(pipelineFileOut, pipelineOut);
     }
 
     static void buildPipelineFromFile(std::filesystem::path builtShadersDir, std::filesystem::path pipelineFileOut, fs::path pipelineFileSrc) {
@@ -263,41 +263,10 @@ public:
             VULK_THROW("PipelineBuilder: Output directory does not exist");
         }
 
-        nlohmann::json pipelineInJSON;
-        std::ifstream inFile(pipelineFileSrc);
-        inFile >> pipelineInJSON;
-        inFile.close();
-        SourcePipelineDef def = SourcePipelineDef::fromJSON(pipelineInJSON);
-
+        vulk::BuiltPipelineDef def;
+        readDefFromFile(pipelineFileSrc, def);
         buildPipelineFile(def, builtShadersDir, pipelineFileOut);
     }
-
-    // static void buildPipelinesFromMetadata(std::filesystem::path builtShadersDir, std::filesystem::path pipelineFileOut, std::string optPipeline = "") {
-    //     if (!std::filesystem::exists(builtShadersDir)) {
-    //         std::cerr << "Shaders directory does not exist: " << builtShadersDir << std::endl;
-    //         VULK_THROW("PipelineBuilder: Shaders directory does not exist");
-    //     }
-    //     if (!std::filesystem::exists(pipelineFileOut)) {
-    //         std::cerr << "Output directory does not exist: " << pipelineFileOut << std::endl;
-    //         VULK_THROW("PipelineBuilder: Output directory does not exist");
-    //     }
-
-    //     Metadata m = {};
-    //     findAndProcessMetadata(builtShadersDir.parent_path(), m);
-    //     std::string errMsg;
-    //     if (optPipeline.size() > 0) {
-    //         buildPipelineFile(*m.pipelines.at(optPipeline), builtShadersDir, pipelineFileOut / (optPipeline + ".json"), errMsg);
-    //     } else {
-    //         for (auto &pipeline : m.pipelines) {
-    //             PipelineDeclDef def = *pipeline.second;
-    //             buildPipelineFile(def, builtShadersDir, pipelineFileOut / (pipeline.first + ".json"), errMsg);
-    //         }
-    //     }
-    //     if (!errMsg.empty()) {
-    //         std::cerr << "Errors building pipelines: \n" << errMsg << std::endl;
-    //         VULK_THROW("PipelineBuilder: Errors building pipelines");
-    //     }
-    // }
 
 private:
     static std::vector<uint32_t> readSPIRVFile(std::filesystem::path filename) {

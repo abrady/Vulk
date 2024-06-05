@@ -1,42 +1,42 @@
-enum VulkShaderLocation : byte {
-    Color = 0,
-    Pos = 1,
-    Normal = 2,
-    Tangent = 3,
-    TexCoord = 4,
-    Height = 5,
-    Pos2 = 6,
-    PosLightSpace = 7,
-    Bitangent = 8,
-}
+// enum VulkShaderLocation : byte {
+//     Color = 0,
+//     Pos = 1,
+//     Normal = 2,
+//     Tangent = 3,
+//     TexCoord = 4,
+//     Height = 5,
+//     Pos2 = 6,
+//     PosLightSpace = 7,
+//     Bitangent = 8,
+// }
 
 // keep in sync with derived enums below (VulkShaderUBOBinding, VulkShaderTextureBinding, VulkShaderSSBOBinding)
 // unfortunately, we can't use the enum values directly in the shader, so we have to keep them in sync manually
-enum VulkShaderBinding : byte {
-    XformsUBO = 0,
-    TextureSampler = 1,
-    Lights = 2,
-    EyePos = 3,
-    TextureSampler2 = 4,
-    TextureSampler3 = 5,
-    WavesXform = 6,
-    NormalSampler = 7,
-    ModelXform = 8,
-    MirrorPlaneUBO = 9,
-    MaterialUBO = 10,
-    DebugNormalsUBO = 11,
-    DebugTangentsUBO = 12,
-    LightViewProjUBO = 13,
-    ShadowMapSampler = 14,
-    // PBR 
-    // we'll use TextureSampler for albedo and NormalSampler for normal map
-    AmbientOcclusionSampler = 15,
-    DisplacementSampler = 16,
-    MetallicSampler = 17,
-    RoughnessSampler = 18,
-    PBRDebugUBO = 19, // for debug purposes
-    GlobalConstantsUBO = 20,
-}
+// enum VulkShaderBinding : byte {
+//     XformsUBO = 0,
+//     TextureSampler = 1,
+//     Lights = 2,
+//     EyePos = 3,
+//     TextureSampler2 = 4,
+//     TextureSampler3 = 5,
+//     WavesXform = 6,
+//     NormalSampler = 7,
+//     ModelXform = 8,
+//     MirrorPlaneUBO = 9,
+//     MaterialUBO = 10,
+//     DebugNormalsUBO = 11,
+//     DebugTangentsUBO = 12,
+//     LightViewProjUBO = 13,
+//     ShadowMapSampler = 14,
+//     // PBR 
+//     // we'll use TextureSampler for albedo and NormalSampler for normal map
+//     AmbientOcclusionSampler = 15,
+//     DisplacementSampler = 16,
+//     MetallicSampler = 17,
+//     RoughnessSampler = 18,
+//     PBRDebugUBO = 19, // for debug purposes
+//     GlobalConstantsUBO = 20,
+// }
 
 // enum VulkShaderUBOBinding : byte {
 //     Xforms = 0,
@@ -51,37 +51,41 @@ enum VulkShaderBinding : byte {
 //     GlobalConstantsUBO = 20,
 // }
 
-enum VulkShaderDebugUBO : byte {
-    DebugNormals = 11,
-    DebugTangents = 12,
-    PBRDebugUBO = 19, 
-}
+// enum VulkShaderDebugUBO : byte {
+//     DebugNormals = 11,
+//     DebugTangents = 12,
+//     PBRDebugUBO = 19, 
+// }
 
-enum VulkShaderSSBOBinding : byte {
-    MaxBindingID = 0
-}
+// enum VulkShaderSSBOBinding : byte {
+//     MaxBindingID = 0
+// }
 
-enum VulkShaderTextureBinding : byte {
-    TextureSampler = 1,
-    TextureSampler2 = 4,
-    TextureSampler3 = 5,
-    NormalSampler = 7,
-    ShadowMapSampler = 14,
-    AmbientOcclusionSampler = 15,
-    DisplacementSampler = 16,
-    MetallicSampler = 17,
-    RoughnessSampler = 18,
-}
+// enum VulkShaderTextureBinding : byte {
+//     TextureSampler = 1,
+//     TextureSampler2 = 4,
+//     TextureSampler3 = 5,
+//     NormalSampler = 7,
+//     ShadowMapSampler = 14,
+//     AmbientOcclusionSampler = 15,
+//     DisplacementSampler = 16,
+//     MetallicSampler = 17,
+//     RoughnessSampler = 18,
+// }
 
-enum VulkLights: byte {
-    NumLights = 4,
-}
+// enum VulkLights: byte {
+//     NumLights = 4,
+// }
 
-enum VulkShaderStage : uint32 {
-    VERTEX = 0x00000001,
-    TESSELLATION_CONTROL = 0x00000002,
-    TESSELLATION_EVALUATION = 0x00000004,
-    GEOMETRY = 0x00000008,
-    FRAGMENT = 0x00000010,
-    COMPUTE = 0x00000020,
+// enum VulkShaderStage : uint32 {
+//     VERTEX = 0x00000001,
+//     TESSELLATION_CONTROL = 0x00000002,
+//     TESSELLATION_EVALUATION = 0x00000004,
+//     GEOMETRY = 0x00000008,
+//     FRAGMENT = 0x00000010,
+//     COMPUTE = 0x00000020,
+// }
+
+enum NeedToDeleteMe : uint32 {
+    Foo
 }

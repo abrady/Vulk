@@ -6,20 +6,29 @@ using namespace std;
 
 namespace fs = std::filesystem;
 
-namespace nlohmann {
-template <>
-struct adl_serializer<glm::vec3> {
-    static void to_json(json& j, const glm::vec3& v) {
-        j = json{v.x, v.y, v.z};
-    }
+// since we're loading data from files and because thrift only supports
+// double just convert quietly in this file only so we can load the data
+// without warnings
+#ifdef __clang__
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wimplicit-float-conversion"
+#    pragma clang diagnostic ignored "-Wdouble-promotion"
+#endif
 
-    static void from_json(const json& j, glm::vec3& v) {
-        v.x = j.at(0).get<float>();
-        v.y = j.at(1).get<float>();
-        v.z = j.at(2).get<float>();
-    }
-};
-} // namespace nlohmann
+// namespace nlohmann {
+// template <>
+// struct adl_serializer<glm::vec3> {
+//     static void to_json(json& j, const glm::vec3& v) {
+//         j = json{v.x, v.y, v.z};
+//     }
+
+//     static void from_json(const json& j, glm::vec3& v) {
+//         v.x = j.at(0).get<float>();
+//         v.y = j.at(1).get<float>();
+//         v.z = j.at(2).get<float>();
+//     }
+// };
+// } // namespace nlohmann
 
 MaterialDef loadMaterialDef(const fs::path& file) {
     if (!fs::exists(file)) {
@@ -136,135 +145,110 @@ MaterialDef loadMaterialDef(const fs::path& file) {
     return material;
 }
 
-ModelDef ModelDef::fromJSON(const nlohmann::json& j, unordered_map<string, shared_ptr<MeshDef>> const& meshes, unordered_map<string, shared_ptr<MaterialDef>> materials) {
-    assert(j.at("version").get<uint32_t>() == MODEL_JSON_VERSION);
-    auto name = j.at("name").get<string>();
-    string mn = j.at("material").get<string>();
+ModelDef ModelDef::fromDef(vulk::ModelDef const& defIn, unordered_map<string, shared_ptr<MeshDef>> const& meshes, unordered_map<string, shared_ptr<MaterialDef>> materials) {
+    auto name = defIn.name;
+    string mn = defIn.materialName;
     auto material = materials.at(mn);
-    MeshDefType meshDefType = EnumLookup<MeshDefType>::getEnumFromStr(j.value("type", "Model"));
+    vulk::MeshDefType::type meshDefType = defIn.meshDefType;
     switch (meshDefType) {
-    case MeshDefType_Model:
-        return ModelDef(name, meshes.at(j.at("mesh").get<string>()), material);
-    case MeshDefType_Mesh: {
+    case vulk::MeshDefType::Model:
+        return ModelDef(name, meshes.at(defIn.meshName), material);
+    case vulk::MeshDefType::Mesh: {
         shared_ptr<VulkMesh> mesh = make_shared<VulkMesh>();
-        auto meshJson = j.at("GeoMesh");
-        GeoMeshDefType type = EnumLookup<GeoMeshDefType>::getEnumFromStr(meshJson.at("type").get<string>());
-        switch (type) {
-        case GeoMeshDefType_Sphere: {
-            float radius = meshJson.at("radius").get<float>();
-            uint32_t numSubdivisions = meshJson.value("numSubdivisions", 0);
-            mesh = make_shared<VulkMesh>();
-            makeGeoSphere(radius, numSubdivisions, *mesh);
+        vulk::GeoMeshDef def = defIn.geoMeshDef;
+        switch (defIn.geoMeshDefType) {
+        case vulk::GeoMeshDefType::Sphere: {
+            makeGeoSphere(def.sphere.radius, def.sphere.numSubdivisions, *mesh);
         } break;
-        case GeoMeshDefType_Cylinder: {
-            float height = meshJson.at("height").get<float>();
-            float bottomRadius = meshJson.at("bottomRadius").get<float>();
-            float topRadius = meshJson.at("topRadius").get<float>();
-            uint32_t numStacks = meshJson.at("numStacks").get<uint32_t>();
-            uint32_t numSlices = meshJson.at("numSlices").get<uint32_t>();
-            makeCylinder(height, bottomRadius, topRadius, numStacks, numSlices, *mesh);
+        case vulk::GeoMeshDefType::Cylinder: {
+            makeCylinder(def.cylinder.height, def.cylinder.bottomRadius, def.cylinder.topRadius, def.cylinder.numStacks, def.cylinder.numSlices, *mesh);
         } break;
-        case GeoMeshDefType_EquilateralTriangle: {
-            float side = meshJson.at("side").get<float>();
-            uint32_t numSubdivisions = meshJson.value("numSubdivisions", 0);
-            makeEquilateralTri(side, numSubdivisions, *mesh);
+        case vulk::GeoMeshDefType::EquilateralTriangle: {
+            makeEquilateralTri(def.triangle.sideLength, def.triangle.numSubdivisions, *mesh);
         } break;
-        case GeoMeshDefType_Quad: {
-            float w = meshJson.at("width").get<float>();
-            float h = meshJson.at("height").get<float>();
-            uint32_t numSubdivisions = meshJson.value("numSubdivisions", 0);
-            makeQuad(w, h, numSubdivisions, *mesh);
+        case vulk::GeoMeshDefType::Quad: {
+            makeQuad(def.quad.w, def.quad.h, def.quad.numSubdivisions, *mesh);
         } break;
-        case GeoMeshDefType_Grid: {
-            float width = meshJson.at("width").get<float>();
-            float depth = meshJson.at("depth").get<float>();
-            uint32_t m = meshJson.at("m").get<uint32_t>();
-            uint32_t n = meshJson.at("n").get<uint32_t>();
-            float repeatU = meshJson.value("repeatU", 1.0f);
-            float repeatV = meshJson.value("repeatV", 1.0f);
-            makeGrid(width, depth, m, n, *mesh, repeatU, repeatV);
+        case vulk::GeoMeshDefType::Grid: {
+            makeGrid(def.grid.width, def.grid.depth, def.grid.m, def.grid.n, *mesh, def.grid.repeatU, def.grid.repeatV);
         } break;
-        case GeoMeshDefType_Axes: {
-            float length = meshJson.at("length").get<float>();
-            makeAxes(length, *mesh);
+        case vulk::GeoMeshDefType::Axes: {
+            makeAxes(def.axes.length, *mesh);
         } break;
         default:
-            VULK_THROW_FMT("Unknown GeoMesh type: {}", type);
+            VULK_THROW_FMT("Unknown GeoMesh type: {}", (int)defIn.geoMeshDefType);
         }
         return ModelDef(name, make_shared<MeshDef>(name, mesh), material);
     }
     default:
-        VULK_THROW_FMT("Unknown MeshDef type: {}", meshDefType);
+        VULK_THROW_FMT("Unknown MeshDef type: {}", (int)meshDefType);
     };
 }
 
-ActorDef ActorDef::fromJSON(const nlohmann::json& j, unordered_map<string, shared_ptr<BuiltPipelineDef>> const& pipelines,
-                            unordered_map<string, shared_ptr<ModelDef>> const& models, unordered_map<string, shared_ptr<MeshDef>> meshes,
-                            unordered_map<string, shared_ptr<MaterialDef>> materials) {
-    ActorDef a;
-    a.name = j.at("name").get<string>();
-    string pipelineName = j.at("pipeline").get<string>();
-    a.pipeline = pipelines.at(pipelineName);
+glm::vec3 toVec3(vulk::Vec3 const& v) {
+    return glm::vec3(v.x, v.y, v.z);
+}
 
-    if (j.contains("model")) {
-        assert(!j.contains("inlineModel"));
-        a.model = models.at(j.at("model").get<string>());
-    } else if (j.contains("inlineModel")) {
-        a.model = make_shared<ModelDef>(ModelDef::fromJSON(j.at("inlineModel"), meshes, materials));
+ActorDef ActorDef::fromDef(vulk::ActorDef aIn, unordered_map<string, shared_ptr<PipelineDef>> const& pipelines, unordered_map<string, shared_ptr<ModelDef>> const& models,
+                           unordered_map<string, shared_ptr<MeshDef>> meshes, unordered_map<string, shared_ptr<MaterialDef>> materials) {
+    ActorDef a;
+    a.name = aIn.name;
+    a.pipeline = pipelines.at(aIn.pipelineName);
+
+    if (aIn.modelName != "") {
+        assert(!aIn.__isset.inlineModel);
+        a.model = models.at(aIn.modelName);
+    } else if (aIn.__isset.inlineModel) {
+        a.model = make_shared<ModelDef>(ModelDef::fromDef(aIn.inlineModel, meshes, materials));
     } else {
         VULK_THROW("ActorDef must contain either a model or an inlineModel");
     }
 
     // make the transform
-    glm::mat4 xform = glm::mat4(1.0f);
-    if (j.contains("xform")) {
-        auto jx = j.at("xform");
-
-        glm::vec3 pos = jx.value("pos", glm::vec3(0));
-        glm::vec3 rot = glm::radians(jx.value("rot", glm::vec3(0)));
-        glm::vec3 scale = jx.value("scale", glm::vec3(1));
-        xform = glm::translate(glm::mat4(1.0f), pos) * glm::eulerAngleXYZ(rot.x, rot.y, rot.z) * glm::scale(glm::mat4(1.0f), scale);
+    a.xform = glm::mat4(1.0f);
+    if (aIn.__isset.xform) {
+        auto& xform = aIn.xform;
+        glm::vec3 pos = xform.__isset.pos ? toVec3(xform.pos) : glm::vec3(0);
+        glm::vec3 rot = glm::radians(xform.__isset.rot ? toVec3(xform.rot) : glm::vec3(0));
+        glm::vec3 scale = xform.__isset.scale ? toVec3(xform.scale) : glm::vec3(1);
+        a.xform = glm::translate(glm::mat4(1.0f), pos) * glm::eulerAngleXYZ(rot.x, rot.y, rot.z) * glm::scale(glm::mat4(1.0f), scale);
     }
-    a.xform = xform;
     a.validate();
     return a;
 }
 
-SceneDef SceneDef::fromJSON(const nlohmann::json& j, unordered_map<string, shared_ptr<BuiltPipelineDef>> const& pipelines,
-                            unordered_map<string, shared_ptr<ModelDef>> const& models, unordered_map<string, shared_ptr<MeshDef>> const& meshes,
-                            unordered_map<string, shared_ptr<MaterialDef>> const& materials) {
+SceneDef SceneDef::fromDef(vulk::SceneDef defIn, unordered_map<string, shared_ptr<PipelineDef>> const& pipelines, unordered_map<string, shared_ptr<ModelDef>> const& models,
+                           unordered_map<string, shared_ptr<MeshDef>> const& meshes, unordered_map<string, shared_ptr<MaterialDef>> const& materials) {
     SceneDef s;
-    assert(j.at("version").get<uint32_t>() == SCENE_JSON_VERSION);
-    s.name = j.at("name").get<string>();
+    s.name = defIn.name;
 
     // load the camera
-    auto jcam = j.at("camera");
-    if (jcam.contains("eye"))
-        s.camera.eye = jcam.at("eye").get<glm::vec3>();
-    if (jcam.contains("lookAt"))
-        s.camera.setLookAt(s.camera.eye, jcam.at("lookAt").get<glm::vec3>());
-    if (jcam.contains("nearClip"))
-        s.camera.nearClip = jcam.at("nearClip").get<float>();
-    if (jcam.contains("farClip"))
-        s.camera.farClip = jcam.at("farClip").get<float>();
+    auto& cam = defIn.camera;
+    s.camera.eye = toVec3(cam.eye);
+    s.camera.setLookAt(s.camera.eye, toVec3(cam.lookAt));
+    s.camera.nearClip = cam.nearClip;
+    s.camera.farClip = cam.farClip;
 
     // load the lights
-    for (auto const& light : j.at("lights").get<vector<json>>()) {
-        string type = light.at("type").get<string>();
-        if (type == "point") {
-            auto pos = light.at("pos").get<glm::vec3>();
-            auto color = light.at("color").get<glm::vec3>();
-            auto falloffStart = light.contains("falloffStart") ? light.at("falloffStart").get<float>() : 0.f;
-            auto falloffEnd = light.contains("falloffEnd") ? light.at("falloffEnd").get<float>() : 0.f;
+    for (auto const& light : defIn.lights) {
+        auto type = light.type;
+        switch (light.type) {
+        case vulk::LightType::Point: {
+            auto pos = toVec3(light.pos);
+            auto color = toVec3(light.color);
+            auto falloffStart = light.__isset.falloffStart ? light.falloffStart : 0.f;
+            auto falloffEnd = light.__isset.falloffEnd ? light.falloffEnd : 0.f;
             s.pointLights.push_back(make_shared<VulkPointLight>(pos, falloffStart, color, falloffEnd));
-        } else {
-            VULK_THROW("Unknown light type: " + type);
+        } break;
+        default: {
+            VULK_THROW_FMT("Unknown light type: {}", (int)type);
         }
-    };
+        }
+    }
 
     // load the actors
-    for (auto const& actor : j.at("actors").get<vector<nlohmann::json>>()) {
-        auto a = make_shared<ActorDef>(ActorDef::fromJSON(actor, pipelines, models, meshes, materials));
+    for (auto const& actor : defIn.actors) {
+        auto a = make_shared<ActorDef>(ActorDef::fromDef(actor, pipelines, models, meshes, materials));
         s.actors.push_back(a);
         assert(!s.actorMap.contains(a->name));
         s.actorMap[a->name] = a;
@@ -284,7 +268,7 @@ void findAndProcessMetadata(const fs::path path, Metadata& metadata) {
     static set<string> binExts{".pipeline.bin"};
     struct LoadInfo {
         json j;
-        fs::path path;
+        fs::path filePath;
     };
     unordered_map<string, unordered_map<string, LoadInfo>> loadInfos;
 
@@ -296,14 +280,13 @@ void findAndProcessMetadata(const fs::path path, Metadata& metadata) {
                 ifstream f(entry.path());
                 LoadInfo loadInfo;
                 loadInfo.j = nlohmann::json::parse(f, nullptr, true, true); // allow comments
-                loadInfo.path = entry.path().parent_path();
+                loadInfo.filePath = entry.path();
                 assert(loadInfo.j.at("name") == stem);
                 loadInfos[ext][loadInfo.j.at("name")] = loadInfo;
             } else if (binExts.contains(ext)) {
-                if (ext == ".pipeline.bin") {
-                    auto pipelineDef = make_shared<BuiltPipelineDef>();
-                    VulkCereal::inst()->fromFile(entry.path(), *pipelineDef);
-                    assert(!metadata.pipelines.contains(pipelineDef->name));
+                if (ext == ".pipeline") {
+                    auto pipelineDef = make_shared<PipelineDef>();
+                    readDefFromFile(entry.path().string(), *pipelineDef);
                     metadata.pipelines[pipelineDef->name] = pipelineDef;
                 } else {
                     VULK_THROW("Unknown bin extension: " + ext);
@@ -349,13 +332,17 @@ void findAndProcessMetadata(const fs::path path, Metadata& metadata) {
     }
 
     for (auto const& [name, loadInfo] : loadInfos[".model"]) {
-        auto modelDef = make_shared<ModelDef>(ModelDef::fromJSON(loadInfo.j, metadata.meshes, metadata.materials));
+        vulk::ModelDef def;
+        readDefFromFile(loadInfo.filePath, def);
+        auto modelDef = make_shared<ModelDef>(ModelDef::fromDef(def, metadata.meshes, metadata.materials));
         assert(!metadata.models.contains(modelDef->name));
         metadata.models[modelDef->name] = modelDef;
     }
 
     for (auto const& [name, loadInfo] : loadInfos[".scene"]) {
-        auto sceneDef = make_shared<SceneDef>(SceneDef::fromJSON(loadInfo.j, metadata.pipelines, metadata.models, metadata.meshes, metadata.materials));
+        vulk::SceneDef def;
+        readDefFromFile(loadInfo.filePath, def);
+        auto sceneDef = make_shared<SceneDef>(SceneDef::fromDef(def, metadata.pipelines, metadata.models, metadata.meshes, metadata.materials));
         assert(!metadata.scenes.contains(sceneDef->name));
         metadata.scenes[sceneDef->name] = sceneDef;
     }
@@ -396,3 +383,7 @@ Metadata const* getMetadata() {
 
     return &metadata;
 }
+
+#ifdef __clang__
+#    pragma clang diagnostic pop
+#endif
