@@ -35,7 +35,6 @@ enum VulkShaderBinding {
     RoughnessSampler = 18,
     PBRDebugUBO = 19,
     GlobalConstantsUBO = 20,
-    MAX = 20
 }
 
 enum VulkShaderUBOBinding {
@@ -48,8 +47,7 @@ enum VulkShaderUBOBinding {
     DebugTangents = 12,
     LightViewProjUBO = 13,
     PBRDebugUBO = 19,
-    GlobalConstantsUBO = 20
-    MAX = 20
+    GlobalConstantsUBO = 20,
 }
 
 enum VulkShaderDebugUBO {
@@ -71,8 +69,7 @@ enum VulkShaderTextureBinding {
     AmbientOcclusionSampler = 15,
     DisplacementSampler = 16,
     MetallicSampler = 17,
-    RoughnessSampler = 18
-    MAX = 18
+    RoughnessSampler = 18,
 }
 
 enum VulkLights {
@@ -194,7 +191,6 @@ enum VulkBlendOp {
     RED_EXT = 1000148043,
     GREEN_EXT = 1000148044,
     BLUE_EXT = 1000148045,
-    MAX_ENUM = 0x7FFFFFFF
 }
 
 enum LightType {

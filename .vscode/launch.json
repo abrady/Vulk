@@ -23,7 +23,7 @@
         // "${workspaceFolder}/Assets/Pipelines/PBR.pipeline"
         {
             "name": "PipelineBuilder - Debug Pipeline",
-            "program": "${workspaceFolder}/build/Source/Tools/BuildTool/Debug/BuildTool.exe",
+            "program": "${workspaceFolder}/build/Source/Tools/BuildTool/BuildTool.exe",
             "type": "cppvsdbg",
             "request": "launch",
             "cwd": "${workspaceRoot}/Build",
@@ -39,7 +39,7 @@
         },
         {
             "name": "PipelineBuilder - GenVulkShaderEnums",
-            "program": "${workspaceFolder}/build/Source/Tools/BuildTool/Debug/BuildTool.exe",
+            "program": "${workspaceFolder}/build/Source/Tools/BuildTool/BuildTool.exe",
             "type": "cppvsdbg",
             "request": "launch",
             "cwd": "${workspaceRoot}/Build",
@@ -47,14 +47,14 @@
                 "GenVulkShaderEnums",
                 "${workspaceFolder}/build/generated/Shaders/VulkShaderEnums_generated.glsl",
             ],
-            "stopAtEntry": false,
+            "stopAtEntry": true,
             "environment": [],
             "preLaunchTask": "CMake: build buildtool"
         },
         // C:\open\Github\Vulk\build\Source\Tools\BuildTool\Tests\Debug
         {
             "name": "BuildToolTests - Debug",
-            "program": "${workspaceFolder}/build/Source/Tools/BuildTool/Tests/Debug/BuildToolTests.exe",
+            "program": "${workspaceFolder}/build/Source/Tools/BuildTool/Tests/BuildToolTests.exe",
             "type": "cppvsdbg",
             "request": "launch",
             "cwd": "${workspaceRoot}/Build",

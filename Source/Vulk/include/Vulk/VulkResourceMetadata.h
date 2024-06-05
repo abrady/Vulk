@@ -1,5 +1,6 @@
 #pragma once
 #include "thrift/protocol/TJSONProtocol.h"
+#include "thrift/protocol/TSimpleJSONProtocol.h"
 #include "thrift/transport/TBufferTransports.h"
 #include <cereal/archives/binary.hpp>
 #include <cereal/archives/json.hpp>
@@ -82,7 +83,8 @@ void readDefFromFile(const fs::path& path, T& def) {
 template <typename T>
 void writeDefToFile(const fs::path& path, T& def) {
     auto buffer = std::make_shared<apache::thrift::transport::TMemoryBuffer>();
-    auto protocol = std::make_shared<apache::thrift::protocol::TJSONProtocol>(buffer);
+    // auto protocol = std::make_shared<apache::thrift::protocol::TJSONProtocol>(buffer);
+    auto protocol = std::make_shared<apache::thrift::protocol::TSimpleJSONProtocol>(buffer);
     def.write(protocol.get());
     std::ofstream ofs(path);
     ofs << buffer->getBufferAsString();

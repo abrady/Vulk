@@ -2,42 +2,15 @@
 project(GenSchemaFiles)
 
 find_package(flatbuffers CONFIG REQUIRED)
-find_package(Thrift CONFIG REQUIRED)
-
-######
-## Flatbuffer generation
-######
-set(GENERATED_HEADERS_DIR ${CMAKE_BINARY_DIR}/generated/flatbuf)
-set(FLATBUFFERS_FLATC_EXECUTABLE $<TARGET_FILE:flatbuffers::flatc>)
-make_directory(${GENERATED_HEADERS_DIR})
-file(MAKE_DIRECTORY ${GENERATED_HEADERS_DIR})
-
-# List of schema files
-file(GLOB FLATBUF_SCHEMA_FILES "${CMAKE_SOURCE_DIR}/Source/Schemas/Flatbuf/*.fbs")
-#message("schema files: ${FLATBUF_SCHEMA_FILES}")
-
-# Generate commands for each schema file
-foreach(SCHEMA_FILE IN LISTS FLATBUF_SCHEMA_FILES)
-    #message("schema file: ${SCHEMA_FILE}")
-    get_filename_component(SCHEMA_NAME ${SCHEMA_FILE} NAME_WE)
-    set(GENERATED_HEADER ${GENERATED_HEADERS_DIR}/${SCHEMA_NAME}_generated.h)
-    add_custom_command(
-        OUTPUT ${GENERATED_HEADER}
-        COMMAND ${FLATBUFFERS_FLATC_EXECUTABLE} --cpp -o ${GENERATED_HEADERS_DIR} ${SCHEMA_FILE}
-        MAIN_DEPENDENCY ${SCHEMA_FILE}
-        COMMENT "Compiling FlatBuffers schema: ${SCHEMA_FILE}"
-    )
-    list(APPEND GENERATED_HEADERS ${GENERATED_HEADER})
-endforeach()
-
-# add_custom_target(GenSchemaFiles ALL DEPENDS ${GENERATED_HEADERS} ${THRIFT_SOURCES})
+find_package(FBThrift CONFIG REQUIRED)
+set(GenSchemaFiles ALL DEPENDS ${GENERATED_HEADERS} ${THRIFT_SOURCES})
 
 ######
 ## Thrift generation
 ######
 
 # Find the Thrift compiler.
-find_program(THRIFT_COMPILER thrift)
+find_program(THRIFT_COMPILER thrift1)
 
 set(THRIFT_INCLUDE_DIR "${CMAKE_BINARY_DIR}/generated/thrift_gen")
 make_directory(${THRIFT_INCLUDE_DIR})
@@ -45,14 +18,14 @@ make_directory(${THRIFT_INCLUDE_DIR})
 set(THRIFT_CPP_FILES)
 
 # Define a function to compile Thrift files.
-function(compile_thrift_file THRIFT_FILE)
+function(generate_thrift_file THRIFT_FILE)
     get_filename_component(file_name_we ${THRIFT_FILE} NAME_WE)
     set(generated_sources 
-        "${THRIFT_INCLUDE_DIR}/${file_name_we}_types.h"
-        # "${THRIFT_INCLUDE_DIR}/${file_name_we}_types.cpp"
-        # "${THRIFT_INCLUDE_DIR}/${file_name_we}_constants.h"
-        # "${THRIFT_INCLUDE_DIR}/${file_name_we}_constants.cpp"
-        # "${THRIFT_INCLUDE_DIR}/${file_name_we}_server.skeleton.cpp"
+        "${THRIFT_INCLUDE_DIR}/gen-cpp2/${file_name_we}_types.h"
+        # "${THRIFT_INCLUDE_DIR}/gen-cpp2/${file_name_we}_types.cpp"
+        # "${THRIFT_INCLUDE_DIR}/gen-cpp2/${file_name_we}_constants.h"
+        # "${THRIFT_INCLUDE_DIR}/gen-cpp2/${file_name_we}_constants.cpp"
+        # "${THRIFT_INCLUDE_DIR}/gen-cpp2/${file_name_we}_server.skeleton.cpp"
     )
 
     # After generating your headers...
@@ -72,9 +45,9 @@ function(compile_thrift_file THRIFT_FILE)
     message("cpp files: ${CPP_FILES}")
     add_custom_command(
         OUTPUT ${generated_sources} ${CPP_FILES}
-        COMMAND ${THRIFT_COMPILER} --gen cpp -out ${THRIFT_INCLUDE_DIR} ${THRIFT_FILE}
+        COMMAND ${THRIFT_COMPILER} --gen mstch_cpp2:include_prefix=. -o ${THRIFT_INCLUDE_DIR} ${THRIFT_FILE}
         DEPENDS ${THRIFT_FILE}
-        COMMENT "Generating Thrift sources for ${THRIFT_FILE}"
+        COMMENT "Generating Thrift sources for ${THRIFT_FILE}: ${THRIFT_COMPILER} --gen mstch_cpp2:include_prefix=. -o ${THRIFT_INCLUDE_DIR} ${THRIFT_FILE}"
     )
     set_source_files_properties(${generated_sources} PROPERTIES GENERATED TRUE)
 
@@ -82,25 +55,34 @@ function(compile_thrift_file THRIFT_FILE)
     set(THRIFT_SOURCES ${THRIFT_SOURCES} ${generated_sources} PARENT_SCOPE)
 endfunction()
 
-# Compile Thrift files.
+# Gen Thrift files.
 file(GLOB THRIFT_SCHEMA_FILES "${CMAKE_SOURCE_DIR}/Source/Schemas/Thrift/*.thrift")
 message("thrift files: ${THRIFT_SCHEMA_FILES}")
 
 # Generate commands for each schema file
 foreach(SCHEMA_FILE IN LISTS THRIFT_SCHEMA_FILES)
-  compile_thrift_file(${SCHEMA_FILE})
+  generate_thrift_file(${SCHEMA_FILE})
 endforeach()
  
 # Create an INTERFACE library target
 message("thrift headers: ${THRIFT_SOURCES}")
 message("cpp files: ${THRIFT_CPP_FILES}")
+message("fbthrift: ${FBTHRIFT_CMAKE_DIR}")
+get_cmake_property(_variableNames VARIABLES)
+foreach (_variableName ${_variableNames})
+    message(STATUS "${_variableName}=${${_variableName}}")
+endforeach()
 
 add_custom_target(GenerateCppFiles DEPENDS ${THRIFT_CPP_FILES})
 add_library(GenSchemaFiles main.cpp ${THRIFT_CPP_FILES} ${GENERATED_HEADERS_DIR} ${GENERATED_HEADERS} ${THRIFT_INCLUDE_DIR} ${THRIFT_SOURCES})
+target_compile_options(GenSchemaFiles PRIVATE /wd4267)
 
 target_link_libraries(GenSchemaFiles PRIVATE flatbuffers::flatbuffers)
-target_link_libraries(GenSchemaFiles PRIVATE thrift::thrift)
+# target_link_libraries(GenSchemaFiles PRIVATE thrift::thrift)
+target_link_libraries(GenSchemaFiles PRIVATE FBThrift::async FBThrift::thrift FBThrift::compiler FBThrift::mustache)
+
 
 # Now other targets can link against MyLibrary
 # and include the headers from GENERATED_HEADERS_DIR and THRIFT_INCLUDE_DIR
-target_include_directories(GenSchemaFiles PUBLIC ${GENERATED_HEADERS_DIR} ${THRIFT_INCLUDE_DIR})
+
+target_include_directories(GenSchemaFiles PUBLIC ${GENERATED_HEADERS_DIR}/gen-cpp2 ${GENERATED_HEADERS_DIR} ${THRIFT_INCLUDE_DIR})

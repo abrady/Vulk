@@ -3,6 +3,7 @@
 #include "ClassNonCopyableNonMovable.h"
 #include "VulkDescriptorSetLayout.h"
 #include "VulkUtil.h"
+#include "gen-cpp2/VulkResourceMetadata_types.h"
 
 class VulkDescriptorSetLayoutBuilder {
     Vulk& vk;
@@ -10,7 +11,7 @@ class VulkDescriptorSetLayoutBuilder {
 public:
     VulkDescriptorSetLayoutBuilder(Vulk& vk)
         : vk(vk) {}
-    VulkDescriptorSetLayoutBuilder& addUniformBuffer(VkShaderStageFlags stageFlags, vulk::VulkShaderUBOBinding::type binding);
+    VulkDescriptorSetLayoutBuilder& addUniformBuffer(VkShaderStageFlags stageFlags, vulk::cpp2::VulkShaderUBOBinding binding);
     VulkDescriptorSetLayoutBuilder& addImageSampler(VkShaderStageFlags stageFlags, vulk::VulkShaderTextureBinding::type binding);
     VulkDescriptorSetLayoutBuilder& addStorageBuffer(VkShaderStageFlags stageFlags, vulk::VulkShaderSSBOBinding::type binding);
 

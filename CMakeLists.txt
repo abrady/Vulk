@@ -6,6 +6,8 @@ project ("VulkanRoot" CXX)
 ## project setup
 ######
 
+# note: don't forget the kits for this come from C:\Users\abrady\AppData\Local\CMakeTools\cmake-tools-kits.json
+
 include(CTest)
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -30,6 +32,7 @@ if(MSVC)
     set(CMAKE_GENERATOR_PLATFORM x64)
     add_compile_options(/W4 /MP /WX /sdl)
     add_compile_options(/EHa) # enable exception handling - this will allow SEH to be caught by catch(...) blocks
+    add_definitions(-DGLOG_USE_GLOG_EXPORT) # glog errors without this, but some sub vcproject is using it so blarg.
     # we can't do any of this as it causes linker problems :(
     # add_compile_options(/fsanitize=address)
     # add_compile_options(/fsanitize=fuzzer)

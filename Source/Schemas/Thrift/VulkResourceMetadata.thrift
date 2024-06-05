@@ -2,24 +2,19 @@ namespace cpp vulk
     
 include "VulkShaderEnums.thrift"
 
-struct ShaderDef {
-    1: string name;
-    2: string path;
-}
-
 // Define enums
 enum MeshDefType {
-    Model,
-    Mesh
+    Model = 0,
+    Mesh = 1,
 }
 
 enum GeoMeshDefType {
-    Sphere,
-    Cylinder,
-    EquilateralTriangle,
-    Quad,
-    Grid,
-    Axes
+    Sphere = 1,
+    Cylinder = 2,
+    EquilateralTriangle = 3,
+    Quad = 4,
+    Grid = 5,
+    Axes = 6
 }
 
 enum VulkCullModeFlags {
@@ -31,8 +26,8 @@ enum VulkCullModeFlags {
 
 enum VulkShaderStageFlagBits {
     Vertex = 0,
-    Fragment,
-    Geometry
+    Fragment = 1,
+    Geometry = 2,
 }
 
 
@@ -62,21 +57,21 @@ struct PipelineBlendingDef {
 }
 
 struct BuiltPipelineDef {
-    1: string name;
-    2: string vertShaderName;
-    3: string geomShaderName;
-    4: string fragShaderName;
-    5: DescriptorSetDef descriptorSetDef;
-    6: list<VulkShaderEnums.VulkShaderLocation> vertInputs;
-    7: list<PushConstantDef> pushConstants;
-    8: VulkShaderEnums.VulkPrimitiveTopology primitiveTopology;
-    9: VulkShaderEnums.VulkPolygonMode polygonMode;
-    10: bool depthTestEnabled;
-    11: bool depthWriteEnabled;
-    12: VulkShaderEnums.VulkCompareOp depthCompareOp;
-    13: i32 cullMode; // VkCullModeFlags
-    14: PipelineBlendingDef blending;
-}
+    1: i32 version;
+    2: string name;
+    3: string vertShaderName;
+    4: string geomShaderName;
+    5: string fragShaderName;
+    6: DescriptorSetDef descriptorSetDef;
+    7: list<VulkShaderEnums.VulkShaderLocation> vertInputs;
+    8: list<PushConstantDef> pushConstants;
+    9: VulkShaderEnums.VulkPrimitiveTopology primitiveTopology;
+    10: VulkShaderEnums.VulkPolygonMode polygonMode;
+    11: bool depthTestEnabled;
+    12: bool depthWriteEnabled;
+    13: VulkShaderEnums.VulkCompareOp depthCompareOp;
+    14: i32 cullMode; // VkCullModeFlags
+    15: PipelineBlendingDef blending;}
 
 struct Vec3 {
     1: double x;
@@ -175,3 +170,8 @@ struct SceneDef {
     3: list<ActorDef> actors;
     4: list<LightDef> lights;
 }
+
+// struct ShaderDef {
+//     1: string name;
+//     2: string path;
+// }

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "VulkResourceMetadata_generated.h"
-#include "VulkShaderEnums_generated.h"
-#include "VulkShaderEnums_types.h"
+// #include "VulkResourceMetadata_generated.h"
+// #include "VulkShaderEnums_generated.h"
+#include "gen-cpp2/VulkShaderEnums_types.h"
 #include <mutex>         // for std::once_flag
 #include <unordered_map> // for std::unordered_map
 

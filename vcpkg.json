@@ -22,7 +22,7 @@
         "spirv-cross",
         "spirv-headers",
         "stb",
-        "thrift",
+        "fbthrift",
         "vulkan"
     ]
 }
