@@ -6,9 +6,13 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
-#include <thrift/lib/cpp2/protocol/Serializer.h>
 #include <type_traits>
 #include <unordered_map>
+
+#pragma warning(push)
+#pragma warning(disable : 4702) // unreachable code
+#include <thrift/lib/cpp2/protocol/Serializer.h>
+#pragma warning(pop)
 
 #include "VulkCamera.h"
 #include "VulkGeo.h"

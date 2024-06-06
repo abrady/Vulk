@@ -39,10 +39,14 @@
 // #include "VulkShaderEnums_types.h"
 #pragma warning(push)
 #pragma warning(disable : 4702) // unreachable code
+#pragma warning(disable : 4267) // size_t to uint32_t conversion
+
 #include "gen-cpp2/VulkResourceMetadata_data.h"
 #include "gen-cpp2/VulkResourceMetadata_types.h"
+#include "gen-cpp2/VulkResourceMetadata_types.tcc"
 #include "gen-cpp2/VulkShaderEnums_data.h"
 #include "gen-cpp2/VulkShaderEnums_types.h"
+#include "gen-cpp2/VulkShaderEnums_types.tcc"
 #pragma warning(pop)
 
 #define VK_CALL(func)                                                                                                     \

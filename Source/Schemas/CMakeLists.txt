@@ -19,23 +19,24 @@ set(THRIFT_CPP_FILES)
 # Define a function to compile Thrift files.
 function(generate_thrift_file THRIFT_FILE)
     get_filename_component(file_name_we ${THRIFT_FILE} NAME_WE)
-    set(generated_sources 
+    set(generated_headers 
+        "${THRIFT_INCLUDE_DIR}/gen-cpp2/${file_name_we}_clients.h"
+        "${THRIFT_INCLUDE_DIR}/gen-cpp2/${file_name_we}_constants.h"
+        "${THRIFT_INCLUDE_DIR}/gen-cpp2/${file_name_we}_data.h"
+        "${THRIFT_INCLUDE_DIR}/gen-cpp2/${file_name_we}_metadata.h"
         "${THRIFT_INCLUDE_DIR}/gen-cpp2/${file_name_we}_types.h"
-        # "${THRIFT_INCLUDE_DIR}/gen-cpp2/${file_name_we}_types.cpp"
-        # "${THRIFT_INCLUDE_DIR}/gen-cpp2/${file_name_we}_constants.h"
-        # "${THRIFT_INCLUDE_DIR}/gen-cpp2/${file_name_we}_constants.cpp"
-        # "${THRIFT_INCLUDE_DIR}/gen-cpp2/${file_name_we}_server.skeleton.cpp"
+        "${THRIFT_INCLUDE_DIR}/gen-cpp2/${file_name_we}_types.tcc"
+    )
+    set (generated_cpps
+        "${THRIFT_INCLUDE_DIR}/gen-cpp2/${file_name_we}_constants.cpp"
+        "${THRIFT_INCLUDE_DIR}/gen-cpp2/${file_name_we}_data.cpp"
+        "${THRIFT_INCLUDE_DIR}/gen-cpp2/${file_name_we}_metadata.cpp"
+        "${THRIFT_INCLUDE_DIR}/gen-cpp2/${file_name_we}_types.cpp"
     )
 
     # After generating your headers...
-    foreach(HEADER_FILE ${generated_sources})
-        message("header file: ${HEADER_FILE}")
-        get_filename_component(FILE_DIR ${HEADER_FILE} PATH)
-        get_filename_component(FILE_NAME ${HEADER_FILE} NAME_WE)
-        set(FILE_PATH_WITHOUT_EXT "${FILE_DIR}/${FILE_NAME}")
-        
-        # Append .cpp extension and add it to THRIFT_CPP_FILES list
-        list(APPEND CPP_FILES "${FILE_PATH_WITHOUT_EXT}.cpp")
+    foreach(CPP_FILE ${generated_cpps})
+        list(APPEND CPP_FILES ${CPP_FILE})
     endforeach()
 
     list(APPEND THRIFT_CPP_FILES ${CPP_FILES})
@@ -43,15 +44,15 @@ function(generate_thrift_file THRIFT_FILE)
 
     message("cpp files: ${CPP_FILES}")
     add_custom_command(
-        OUTPUT ${generated_sources} ${CPP_FILES}
+        OUTPUT ${generated_headers} ${generated_cpps}
         COMMAND ${THRIFT_COMPILER} --gen mstch_cpp2:include_prefix=. -o ${THRIFT_INCLUDE_DIR} ${THRIFT_FILE}
         DEPENDS ${THRIFT_FILE}
         COMMENT "Generating Thrift sources for ${THRIFT_FILE}: ${THRIFT_COMPILER} --gen mstch_cpp2:include_prefix=. -o ${THRIFT_INCLUDE_DIR} ${THRIFT_FILE}"
     )
-    set_source_files_properties(${generated_sources} PROPERTIES GENERATED TRUE)
+    set_source_files_properties(${generated_headers} PROPERTIES GENERATED TRUE)
 
     # Include the generated files in the parent scope
-    set(THRIFT_SOURCES ${THRIFT_SOURCES} ${generated_sources} PARENT_SCOPE)
+    set(THRIFT_SOURCES ${THRIFT_SOURCES} ${generated_headers} PARENT_SCOPE)
 endfunction()
 
 # Gen Thrift files.
