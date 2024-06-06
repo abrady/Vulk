@@ -26,11 +26,11 @@ struct VulkModel {
     std::shared_ptr<VulkMaterialTextures> textures;
     std::shared_ptr<VulkUniformBuffer<VulkMaterialConstants>> materialUBO;
     uint32_t numIndices, numVertices;
-    std::unordered_map<vulk::VulkShaderLocation::type, std::shared_ptr<VulkBuffer>> bufs; // each index is VulkShaderLocation_Pos, Color, Normal, etc.;
+    std::unordered_map<vulk::cpp2::VulkShaderLocation, std::shared_ptr<VulkBuffer>> bufs; // each index is VulkShaderLocation_Pos, Color, Normal, etc.;
     std::shared_ptr<VulkBuffer> indexBuf;
 
     VulkModel(Vulk& vk, std::shared_ptr<VulkMesh> meshIn, std::shared_ptr<VulkMaterialTextures> texturesIn, std::shared_ptr<VulkUniformBuffer<VulkMaterialConstants>> materialUBO,
-              std::vector<vulk::VulkShaderLocation::type> const& inputs)
+              std::vector<vulk::cpp2::VulkShaderLocation> const& inputs)
         : vk(vk)
         , mesh(meshIn)
         , textures(texturesIn)
@@ -43,23 +43,23 @@ struct VulkModel {
                        .setUsage(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT)
                        .setProperties(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
                        .build()) {
-        for (vulk::VulkShaderLocation::type i : inputs) {
-            if (i == vulk::VulkShaderLocation::Pos || i == vulk::VulkShaderLocation::Normal || i == vulk::VulkShaderLocation::Tangent) {
+        for (vulk::cpp2::VulkShaderLocation i : inputs) {
+            if (i == vulk::cpp2::VulkShaderLocation::Pos || i == vulk::cpp2::VulkShaderLocation::Normal || i == vulk::cpp2::VulkShaderLocation::Tangent) {
                 std::vector<glm::vec3> vec3s;
                 vec3s.reserve(meshIn->vertices.size());
                 for (auto& v : meshIn->vertices) {
                     switch (i) {
-                    case vulk::VulkShaderLocation::Pos:
+                    case vulk::cpp2::VulkShaderLocation::Pos:
                         vec3s.push_back(v.pos);
                         break;
-                    case vulk::VulkShaderLocation::Normal:
+                    case vulk::cpp2::VulkShaderLocation::Normal:
                         vec3s.push_back(v.normal);
                         break;
-                    case vulk::VulkShaderLocation::Tangent:
+                    case vulk::cpp2::VulkShaderLocation::Tangent:
                         vec3s.push_back(v.tangent);
                         break;
                     default:
-                        VULK_THROW("Unhandled vulk::VulkShaderLocation::type");
+                        VULK_THROW("Unhandled vulk::cpp2::VulkShaderLocation");
                     }
                 }
                 bufs[i] = VulkBufferBuilder(vk)
@@ -68,7 +68,7 @@ struct VulkModel {
                               .setUsage(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
                               .setProperties(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
                               .build();
-            } else if (i == vulk::VulkShaderLocation::TexCoord) {
+            } else if (i == vulk::cpp2::VulkShaderLocation::TexCoord) {
                 std::vector<glm::vec2> vec2s;
                 vec2s.reserve(meshIn->vertices.size());
                 for (auto& v : meshIn->vertices) {
@@ -81,7 +81,7 @@ struct VulkModel {
                               .setProperties(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
                               .build();
             } else {
-                VULK_THROW("Unhandled vulk::VulkShaderLocation::type");
+                VULK_THROW("Unhandled vulk::cpp2::VulkShaderLocation");
             }
         }
     }
@@ -89,7 +89,7 @@ struct VulkModel {
     void bindInputBuffers(VkCommandBuffer cmdBuf) {
         for (auto& [binding, buf] : this->bufs) {
             VkDeviceSize offsets[] = {0};
-            vkCmdBindVertexBuffers(cmdBuf, binding, 1, &buf->buf, offsets);
+            vkCmdBindVertexBuffers(cmdBuf, (uint32_t)binding, 1, &buf->buf, offsets);
         }
 
         vkCmdBindIndexBuffer(cmdBuf, indexBuf->buf, 0, VK_INDEX_TYPE_UINT32);

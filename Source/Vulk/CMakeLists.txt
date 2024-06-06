@@ -9,7 +9,6 @@ project(Vulk)
 
 # packages
 find_package(assimp CONFIG REQUIRED)
-find_package(cereal CONFIG REQUIRED)
 find_package(flatbuffers CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
@@ -29,7 +28,7 @@ target_include_directories(Vulk PRIVATE private)
 target_include_directories(Vulk PRIVATE ${Stb_INCLUDE_DIR})
 
 target_include_directories(Vulk PUBLIC ${GENSCHEMAFILES_INCLUDE_DIRS})
-target_precompile_headers(Vulk PUBLIC include/Vulk/VulkPCH.h)
+# target_precompile_headers(Vulk PUBLIC include/Vulk/VulkPCH.h)
 
 target_link_libraries(Vulk PRIVATE glfw)
 target_link_libraries(Vulk PRIVATE Vulkan::Vulkan)
@@ -38,7 +37,6 @@ target_link_libraries(Vulk PRIVATE glm::glm-header-only)
 target_link_libraries(Vulk PRIVATE assimp::assimp)
 target_link_libraries(Vulk PRIVATE flatbuffers::flatbuffers)
 #target_link_libraries(Vulk PRIVATE protobuf::libprotoc protobuf::libprotobuf protobuf::libprotobuf-lite)
-target_link_libraries(Vulk PRIVATE cereal::cereal)
 target_link_libraries(Vulk PRIVATE fmt::fmt)
 target_link_libraries(Vulk PUBLIC spdlog::spdlog) # Make spdlog public so that anyone using this library can use it too due to VulkLogger.h
 target_link_libraries(Vulk PUBLIC GenSchemaFiles)

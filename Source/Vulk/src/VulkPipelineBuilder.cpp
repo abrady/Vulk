@@ -104,19 +104,20 @@ VulkPipelineBuilder& VulkPipelineBuilder::setDepthCompareOp(VkCompareOp compareO
     return *this;
 }
 
-VulkPipelineBuilder& VulkPipelineBuilder::addVertexInput(vulk::VulkShaderLocation::type location) {
-    VULK_THROW_IF(vertInputs.find(location) != vertInputs.end(), "Vertex input location already exists");
+VulkPipelineBuilder& VulkPipelineBuilder::addVertexInput(vulk::cpp2::VulkShaderLocation locationIn) {
+    VULK_THROW_IF(vertInputs.find(locationIn) != vertInputs.end(), "Vertex input location already exists");
+    uint32_t location = static_cast<uint32_t>(locationIn);
     VkFormat format;
     uint32_t stride;
 
-    switch (location) {
-    case vulk::VulkShaderLocation::Pos:
-    case vulk::VulkShaderLocation::Normal:
-    case vulk::VulkShaderLocation::Tangent:
+    switch (locationIn) {
+    case vulk::cpp2::VulkShaderLocation::Pos:
+    case vulk::cpp2::VulkShaderLocation::Normal:
+    case vulk::cpp2::VulkShaderLocation::Tangent:
         format = VK_FORMAT_R32G32B32_SFLOAT;
         stride = sizeof(glm::vec3);
         break;
-    case vulk::VulkShaderLocation::TexCoord:
+    case vulk::cpp2::VulkShaderLocation::TexCoord:
         format = VK_FORMAT_R32G32_SFLOAT;
         stride = sizeof(glm::vec2);
         break;
@@ -139,7 +140,7 @@ VulkPipelineBuilder& VulkPipelineBuilder::addVertexInput(vulk::VulkShaderLocatio
         .binding = binding,
         .attribute = attribute,
     };
-    vertInputs[location] = input;
+    vertInputs[locationIn] = input;
 
     return *this;
 }

@@ -1,9 +1,5 @@
 #pragma once
 
-#include <cereal/archives/binary.hpp>
-#include <cereal/archives/json.hpp>
-#include <cereal/types/memory.hpp>
-
 #include "VulkUtil.h"
 
 class VulkCamera {
@@ -31,9 +27,4 @@ public:
 
     void updateOrientation(float dx, float dy);
     void updatePosition(float dx, float dy, float dz);
-
-    template <class Archive>
-    void serialize(Archive& archive) {
-        archive(CEREAL_NVP(eye), CEREAL_NVP(lookAt), CEREAL_NVP(orientation));
-    }
 };

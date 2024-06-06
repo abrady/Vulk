@@ -128,7 +128,9 @@ public:
         init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
         init_info.Allocator = nullptr;
         init_info.CheckVkResultFn = imguiCheckResult;
-        ImGui_ImplVulkan_Init(&init_info, renderPass);
+        init_info.RenderPass = renderPass;
+        // ImGui_ImplVulkan_Init(&init_info, renderPass);
+        ImGui_ImplVulkan_Init(&init_info);
 
         io = &ImGui::GetIO();
         io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls

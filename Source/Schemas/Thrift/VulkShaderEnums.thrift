@@ -48,6 +48,7 @@ enum VulkShaderUBOBinding {
     LightViewProjUBO = 13,
     PBRDebugUBO = 19,
     GlobalConstantsUBO = 20,
+    MAX = 21,
 }
 
 enum VulkShaderDebugUBO {
@@ -70,6 +71,7 @@ enum VulkShaderTextureBinding {
     DisplacementSampler = 16,
     MetallicSampler = 17,
     RoughnessSampler = 18,
+    MAX = 19,
 }
 
 enum VulkLights {

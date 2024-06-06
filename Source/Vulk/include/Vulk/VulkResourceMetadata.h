@@ -1,12 +1,4 @@
 #pragma once
-#include "thrift/protocol/TJSONProtocol.h"
-#include "thrift/protocol/TSimpleJSONProtocol.h"
-#include "thrift/transport/TBufferTransports.h"
-#include <cereal/archives/binary.hpp>
-#include <cereal/archives/json.hpp>
-#include <cereal/types/memory.hpp>
-#include <cereal/types/unordered_map.hpp>
-#include <cereal/types/vector.hpp>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -14,16 +6,13 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <thrift/lib/cpp2/protocol/Serializer.h>
 #include <type_traits>
 #include <unordered_map>
 
 #include "VulkCamera.h"
-#include "VulkCereal.h"
-#include "VulkEnumMetadata.h"
 #include "VulkGeo.h"
 #include "VulkPointLight.h"
-#include "VulkResourceMetadata_generated.h"
-#include "VulkResourceMetadata_types.h"
 #include "VulkScene.h"
 #include "VulkShaderModule.h"
 
@@ -32,62 +21,30 @@ namespace fs = std::filesystem;
 
 #include <glm/vec3.hpp>
 
-#include <cereal/cereal.hpp>
-
-// #define FlatBufEnumSaveMinimal(EnumType)                                          \
-//     template <class Archive>                                                      \
-//     std::string save_minimal(Archive const&, EnumType const& type) {              \
-//         return EnumLookup<EnumType>::getStrFromEnum(type);                        \
-//     }                                                                             \
-//     template <class Archive>                                                      \
-//     void load_minimal(Archive const&, EnumType& type, std::string const& value) { \
-//         type = EnumLookup<EnumType>::getEnumFromStr(value.c_str());               \
-//     }
-
-// namespace cereal {
-// FlatBufEnumSaveMinimal(vulk::MeshDefType::type);
-// FlatBufEnumSaveMinimal(vulk::VulkShaderSSBOBinding::type);
-// FlatBufEnumSaveMinimal(vulk::VulkShaderTextureBinding::type);
-// FlatBufEnumSaveMinimal(VulkPrimitiveTopology);
-// FlatBufEnumSaveMinimal(VulkPolygonMode);
-// FlatBufEnumSaveMinimal(VulkCompareOp);
-// FlatBufEnumSaveMinimal(VulkCullModeFlags);
-
-// this doesn't resolve properly :(
-// template <class Archive, typename EnumType> std::string save_minimal(Archive const &archive, EnumType const &type) {
-//     return EnumLookup<EnumType>::getStrFromEnum(type);
-// }
-// template <class Archive, typename EnumType> void load_minimal(Archive const &archive, EnumType &type, std::string
-// const &value) {
-//     type = EnumLookup<EnumType>::getEnumFromStr(value.c_str());
-// }
-// } // namespace cereal
-
-// namespace cereal {
-// template <class Archive>
-// void serialize(Archive& ar, vulk::ShaderDef& d) {
-//     ar(CEREAL_NVP(d.name), CEREAL_NVP(d.path));
-// }
-// } // namespace cereal
-
 template <typename T>
-void readDefFromFile(const fs::path& path, T& def) {
+void readDefFromFile(const std::string& path, T& def) {
     std::ifstream ifs(path);
+    if (!ifs.is_open()) {
+        throw std::runtime_error("Could not open file for reading");
+    }
+
     std::string serializedData((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
-    auto buffer = std::make_shared<apache::thrift::transport::TMemoryBuffer>((uint8_t*)serializedData.data(), serializedData.length());
-    auto protocol = std::make_shared<apache::thrift::protocol::TJSONProtocol>(buffer);
-    def.read(protocol.get());
+
+    // Deserialize JSON to Thrift object
+    apache::thrift::SimpleJSONSerializer::deserialize(serializedData, def);
 }
 
 template <typename T>
-void writeDefToFile(const fs::path& path, T& def) {
-    auto buffer = std::make_shared<apache::thrift::transport::TMemoryBuffer>();
-    // auto protocol = std::make_shared<apache::thrift::protocol::TJSONProtocol>(buffer);
-    auto protocol = std::make_shared<apache::thrift::protocol::TSimpleJSONProtocol>(buffer);
-    def.write(protocol.get());
+void writeDefToFile(const std::string& path, const T& def) {
+    std::string serializedData;
+    apache::thrift::SimpleJSONSerializer::serialize(def, &serializedData);
+
     std::ofstream ofs(path);
-    ofs << buffer->getBufferAsString();
+    if (!ofs.is_open()) {
+        throw std::runtime_error("Could not open file for writing");
+    }
+    ofs << serializedData;
     ofs.close();
 }
 
@@ -138,291 +95,68 @@ struct MaterialDef {
         m.d = d;
         return m;
     }
-
-    template <class Archive>
-    void serialize(Archive& ar) {
-        ar(CEREAL_NVP(name), CEREAL_NVP(mapKa), CEREAL_NVP(mapKd), CEREAL_NVP(mapKs), CEREAL_NVP(mapNormal), CEREAL_NVP(Ns), CEREAL_NVP(Ni), CEREAL_NVP(d), CEREAL_NVP(Ka),
-           CEREAL_NVP(Kd), CEREAL_NVP(Ks));
-    }
 };
 
-// struct DescriptorSetDefOld {
-//     unordered_map<VkShaderStageFlagBits, vector<VulkShaderUBOBinding>> uniformBuffers;
-//     unordered_map<VkShaderStageFlagBits, vector<vulk::VulkShaderSSBOBinding::type>> storageBuffers;
-//     unordered_map<VkShaderStageFlagBits, vector<vulk::VulkShaderTextureBinding::type>> imageSamplers;
-
-//     template <class Archive>
-//     void serialize(Archive& ar) {
-//         ar(CEREAL_NVP(uniformBuffers), CEREAL_NVP(storageBuffers), CEREAL_NVP(imageSamplers));
-//     }
-
-//     uint32_t hash() const {
-//         uint32_t h = 0;
-//         for (auto const& [stage, bindings] : uniformBuffers) {
-//             h ^= stage;
-//             for (auto const& binding : bindings) {
-//                 h ^= binding;
-//             }
-//         }
-//         for (auto const& [stage, bindings] : storageBuffers) {
-//             h ^= stage;
-//             for (auto const& binding : bindings) {
-//                 h ^= binding;
-//             }
-//         }
-//         for (auto const& [stage, bindings] : imageSamplers) {
-//             h ^= stage;
-//             for (auto const& binding : bindings) {
-//                 h ^= binding;
-//             }
-//         }
-//         return h;
-//     }
-
-//     void validate() {}
-
-//     static string shaderStageToStr(VkShaderStageFlagBits stage) {
-//         static unordered_map<VkShaderStageFlagBits, string> shaderStageToStr{
-//             {VK_SHADER_STAGE_VERTEX_BIT, "vert"},
-//             {VK_SHADER_STAGE_FRAGMENT_BIT, "frag"},
-//             {VK_SHADER_STAGE_GEOMETRY_BIT, "geom"},
-//         };
-//         return shaderStageToStr.at(stage);
-//     }
-
-static VkShaderStageFlagBits getShaderStageFromStr(std::string s) {
-    static unordered_map<string, VkShaderStageFlagBits> shaderStageFromStr{
-        {"vert", VK_SHADER_STAGE_VERTEX_BIT},
-        {"frag", VK_SHADER_STAGE_FRAGMENT_BIT},
-        {"geom", VK_SHADER_STAGE_GEOMETRY_BIT},
-    };
-
-    return shaderStageFromStr.at(s);
-}
-
-//     static void parseShaderStageMap(const nlohmann::json& j, VkShaderStageFlagBits stage, vulk::DescriptorSetDef& ds) {
-//         vector<string> uniformBuffers = j.at("uniformBuffers").get<vector<string>>();
-//         for (auto const& value : uniformBuffers) {
-//             ds.uniformBuffers[stage].push_back(EnumLookup<VulkShaderUBOBinding>::getEnumFromStr(value));
-//         }
-//         if (j.contains("storageBuffers")) {
-//             vector<string> storageBuffers = j.at("storageBuffers").get<vector<string>>();
-//             for (auto const& value : storageBuffers) {
-//                 ds.storageBuffers[stage].push_back(EnumLookup<vulk::VulkShaderSSBOBinding::type>::getEnumFromStr(value));
-//             }
-//         }
-//         if (j.contains("imageSamplers")) {
-//             vector<string> imageSamplers = j.at("imageSamplers").get<vector<string>>();
-//             for (auto const& value : imageSamplers) {
-//                 ds.imageSamplers[stage].push_back(EnumLookup<vulk::VulkShaderTextureBinding::type>::getEnumFromStr(value));
-//             }
-//         }
-//     }
-
-//     static DescriptorSetDef fromJSON(const nlohmann::json& j) {
-//         DescriptorSetDef ds;
-//         for (auto const& [stage, bindings] : j.items()) {
-//             VkShaderStageFlagBits vkStage = getShaderStageFromStr(stage);
-//             parseShaderStageMap(bindings, vkStage, ds);
-//         }
-//         return ds;
-//     }
-
-//     static nlohmann::json toJSON(const DescriptorSetDef& def) {
-//         nlohmann::json j;
-//         for (auto const& [stage, bindings] : def.uniformBuffers) {
-//             std::vector<std::string> bindingStrs;
-//             for (auto const& binding : bindings) {
-//                 bindingStrs.push_back(EnumLookup<VulkShaderUBOBinding>::getStrFromEnum(binding));
-//             }
-//             j[shaderStageToStr(stage)]["uniformBuffers"] = bindingStrs;
-//         }
-//         for (auto const& [stage, bindings] : def.storageBuffers) {
-//             std::vector<std::string> bindingStrs;
-//             for (auto const& binding : bindings) {
-//                 bindingStrs.push_back(EnumLookup<vulk::VulkShaderSSBOBinding::type>::getStrFromEnum(binding));
-//             }
-//             j[shaderStageToStr(stage)]["storageBuffers"] = bindingStrs;
-//         }
-//         for (auto const& [stage, bindings] : def.imageSamplers) {
-//             std::vector<std::string> bindingStrs;
-//             for (auto const& binding : bindings) {
-//                 bindingStrs.push_back(EnumLookup<vulk::VulkShaderTextureBinding::type>::getStrFromEnum(binding));
-//             }
-//             j[shaderStageToStr(stage)]["imageSamplers"] = bindingStrs;
-//         }
-//         return j;
-//     }
-// };
-
-// namespace cereal {
-
-// template <class Archive>
-// std::string save_minimal(const Archive&, const VkShaderStageFlagBits& m) {
-//     return DescriptorSetDef::shaderStageToStr(m);
-// }
-
-// template <class Archive>
-// void load_minimal(const Archive&, VkShaderStageFlagBits& m, const std::string& value) {
-//     m = DescriptorSetDef::getShaderStageFromStr(value);
-// }
-// } // namespace cereal
-
-// represents the original pipeline declaration in the assets dir
-// struct SourcePipelineDef {
-//     string name;
-//     string vertShaderName;
-//     string geomShaderName; // optional
-//     string fragShaderName;
-
-//     VkPrimitiveTopology primitiveTopology;
-//     VkPolygonMode polygonMode;
-//     bool depthTestEnabled;
-//     bool depthWriteEnabled;
-//     VkCompareOp depthCompareOp;
-//     VkCullModeFlags cullMode = VK_CULL_MODE_BACK_BIT;
-
-//     struct Blending {
-//         bool enabled = false;
-//         string colorMask = "RGBA";
-//         VkColorComponentFlags getColorMask() {
-//             VkColorComponentFlags mask = 0;
-//             if (colorMask.find("R") != string::npos)
-//                 mask |= VK_COLOR_COMPONENT_R_BIT;
-//             if (colorMask.find("G") != string::npos)
-//                 mask |= VK_COLOR_COMPONENT_G_BIT;
-//             if (colorMask.find("B") != string::npos)
-//                 mask |= VK_COLOR_COMPONENT_B_BIT;
-//             if (colorMask.find("A") != string::npos)
-//                 mask |= VK_COLOR_COMPONENT_A_BIT;
-//             return mask;
-//         }
-
-//         static Blending fromJSON(const nlohmann::json& j) {
-//             Blending b;
-//             b.enabled = j.at("enabled").get<bool>();
-//             if (j.contains("colorMask"))
-//                 b.colorMask = j.at("colorMask").get<string>();
-//             return b;
-//         }
-//         static nlohmann::json toJSON(const Blending& b) {
-//             nlohmann::json j;
-//             j["enabled"] = b.enabled;
-//             j["colorMask"] = b.colorMask;
-//             return j;
-//         }
-
-//         template <class Archive>
-//         void serialize(Archive& ar) {
-//             ar(CEREAL_NVP(enabled), CEREAL_NVP(colorMask));
-//         }
-//     } blending;
-
-//     template <class Archive>
-//     void serialize(Archive& ar) {
-//         ar(CEREAL_NVP(name), cereal::make_nvp("vertShader", vertShaderName), cereal::make_nvp("geomShader", geomShaderName), cereal::make_nvp("fragShader", fragShaderName),
-//            CEREAL_NVP(primitiveTopology), CEREAL_NVP(polygonMode), CEREAL_NVP(depthTestEnabled), CEREAL_NVP(depthWriteEnabled), CEREAL_NVP(depthCompareOp),
-//            CEREAL_NVP(blending), CEREAL_NVP(cullMode));
-//     }
-
-//     void validate() {
-//         assert(!name.empty());
-//         assert(!vertShaderName.empty());
-//         assert(!fragShaderName.empty());
-//     }
-
-//     static SourcePipelineDef fromDef(vulk::SourcePipelineDef const& defIn) {
-//         SourcePipelineDef p;
-//         p.name = defIn.name;
-//         p.vertShaderName = defIn.vertShader.name;
-//         p.fragShaderName = j.at("fragShader").get<string>();
-//         p.geomShaderName = j.value("geomShader", "");
-//         p.primitiveTopology = (VkPrimitiveTopology)_VulkPrimitiveTopology_VALUES_TO_NAMES.at(j.value("primitiveTopology", "TriangleList"));
-//         p.polygonMode = (VkPolygonMode)EnumLookup<VulkPolygonMode>::getEnumFromStr(j.value("polygonMode", "FILL"));
-//         p.depthTestEnabled = j.value("depthTestEnabled", true);
-//         p.depthWriteEnabled = j.value("depthWriteEnabled", true);
-//         p.depthCompareOp = (VkCompareOp)EnumLookup<VulkCompareOp>::getEnumFromStr(j.value("depthCompareOp", "LESS"));
-//         if (j.contains("blending"))
-//             p.blending = Blending::fromJSON(j["blending"]);
-//         p.cullMode = (VkCullModeFlags)EnumLookup<VulkCullModeFlags>::getEnumFromStr(j.value("cullMode", "BACK"));
-//         p.validate();
-//         return p;
-//     }
-// };
-
-struct PipelineDef : public vulk::BuiltPipelineDef {
-    shared_ptr<vulk::ShaderDef> vertShader;
-    shared_ptr<vulk::ShaderDef> geomShader;
-    shared_ptr<vulk::ShaderDef> fragShader;
+struct PipelineDef {
+    vulk::cpp2::BuiltPipelineDef def;
+    shared_ptr<vulk::cpp2::ShaderDef> vertShader;
+    shared_ptr<vulk::cpp2::ShaderDef> geomShader;
+    shared_ptr<vulk::cpp2::ShaderDef> fragShader;
 
     void validate() {
         assert(vertShader);
         assert(fragShader);
     }
 
-    void fixup(unordered_map<string, shared_ptr<vulk::ShaderDef>> const& vertShaders, unordered_map<string, shared_ptr<vulk::ShaderDef>> const& geometryShaders,
-               unordered_map<string, shared_ptr<vulk::ShaderDef>> const& fragmentShaders) {
-        vertShader = vertShaders.at(vertShaderName);
-        fragShader = fragmentShaders.at(fragShaderName);
-        if (!geomShaderName.empty()) {
-            geomShader = geometryShaders.at(geomShaderName);
+    void fixup(unordered_map<string, shared_ptr<vulk::cpp2::ShaderDef>> const& vertShaders, unordered_map<string, shared_ptr<vulk::cpp2::ShaderDef>> const& geometryShaders,
+               unordered_map<string, shared_ptr<vulk::cpp2::ShaderDef>> const& fragmentShaders) {
+        vertShader = vertShaders.at(def.vertShaderName().value());
+        fragShader = fragmentShaders.at(def.fragShaderName().value());
+        if (!def.geomShaderName()->empty()) {
+            geomShader = geometryShaders.at(def.geomShaderName().value());
         }
         validate();
     }
 
-    static PipelineDef fromFile(const fs::path& path, unordered_map<string, shared_ptr<vulk::ShaderDef>> const& vertShaders,
-                                unordered_map<string, shared_ptr<vulk::ShaderDef>> const& geometryShaders,
-                                unordered_map<string, shared_ptr<vulk::ShaderDef>> const& fragmentShaders) {
-        PipelineDef def;
+    static PipelineDef fromFile(const fs::path& path, unordered_map<string, shared_ptr<vulk::cpp2::ShaderDef>> const& vertShaders,
+                                unordered_map<string, shared_ptr<vulk::cpp2::ShaderDef>> const& geometryShaders,
+                                unordered_map<string, shared_ptr<vulk::cpp2::ShaderDef>> const& fragmentShaders) {
+        PipelineDef pipe;
 
         using namespace apache::thrift;
         using namespace apache::thrift::protocol;
         using namespace apache::thrift::transport;
         // Read from file
-        readDefFromFile(path, def);
+        readDefFromFile(path.string(), pipe.def);
 
-        def.fixup(vertShaders, geometryShaders, fragmentShaders);
-        return def;
+        pipe.fixup(vertShaders, geometryShaders, fragmentShaders);
+        return pipe;
     }
 };
 
 struct ModelMeshDef {
     std::string path;
-    template <class Archive>
-    void serialize(Archive& ar) {
-        ar(CEREAL_NVP(path));
-    }
 };
 
 struct MeshDef {
     string name;
-    vulk::MeshDefType::type type;
+    vulk::cpp2::MeshDefType type;
     MeshDef() = default;
     MeshDef(string name, ModelMeshDef model)
         : name(name)
-        , type(vulk::MeshDefType::Model)
-        , model(make_shared<ModelMeshDef>(model)){};
+        , type(vulk::cpp2::MeshDefType::Model)
+        , model(make_shared<ModelMeshDef>(model)) {};
     MeshDef(string name, std::shared_ptr<VulkMesh> mesh)
         : name(name)
-        , type(vulk::MeshDefType::Mesh)
-        , mesh(mesh){};
+        , type(vulk::cpp2::MeshDefType::Mesh)
+        , mesh(mesh) {};
     shared_ptr<ModelMeshDef> getModelMeshDef() {
-        assert(type == vulk::MeshDefType::Model);
+        assert(type == vulk::cpp2::MeshDefType::Model);
         return model;
     }
     shared_ptr<VulkMesh> getMesh() {
-        assert(type == vulk::MeshDefType::Mesh);
+        assert(type == vulk::cpp2::MeshDefType::Mesh);
         return mesh;
-    }
-
-    template <class Archive>
-    void serialize(Archive& ar) {
-        ar(CEREAL_NVP(name), CEREAL_NVP(type));
-        if (type == vulk::MeshDefType::Model) {
-            ar(CEREAL_NVP(model));
-        } else {
-            ar(CEREAL_NVP(mesh));
-        }
     }
 
 private:
@@ -444,70 +178,54 @@ struct ModelDef {
         assert(mesh);
     }
 
-    static ModelDef fromDef(vulk::ModelDef const& def, unordered_map<string, shared_ptr<MeshDef>> const& meshes, unordered_map<string, shared_ptr<MaterialDef>> materials);
+    static ModelDef fromDef(vulk::cpp2::ModelDef const& def, unordered_map<string, shared_ptr<MeshDef>> const& meshes, unordered_map<string, shared_ptr<MaterialDef>> materials);
 };
 
 struct ActorDef {
-    string name;
+    vulk::cpp2::ActorDef def;
     shared_ptr<PipelineDef> pipeline;
     shared_ptr<ModelDef> model;
     glm::mat4 xform = glm::mat4(1.0f);
 
     void validate() {
-        assert(!name.empty());
+        assert(!def.get_name().empty());
         assert(pipeline);
         assert(model);
         assert(xform != glm::mat4(0.0f));
     }
 
-    static ActorDef fromDef(vulk::ActorDef defIn, unordered_map<string, shared_ptr<PipelineDef>> const& pipelines, unordered_map<string, shared_ptr<ModelDef>> const& models,
+    static ActorDef fromDef(vulk::cpp2::ActorDef defIn, unordered_map<string, shared_ptr<PipelineDef>> const& pipelines, unordered_map<string, shared_ptr<ModelDef>> const& models,
                             unordered_map<string, shared_ptr<MeshDef>> meshes, unordered_map<string, shared_ptr<MaterialDef>> materials);
-
-    template <class Archive>
-    void serialize(Archive& ar) {
-        ar(CEREAL_NVP(name), CEREAL_NVP(pipeline), CEREAL_NVP(model), CEREAL_NVP(xform));
-    }
 };
 
 #define SCENE_JSON_VERSION 1
 struct SceneDef {
-    string name;
+    vulk::cpp2::SceneDef def;
     VulkCamera camera;
     vector<shared_ptr<VulkPointLight>> pointLights;
     vector<shared_ptr<ActorDef>> actors;
     unordered_map<string, shared_ptr<ActorDef>> actorMap;
 
     void validate() {
-        assert(!name.empty());
+        assert(!def.get_name().empty());
         assert(!actors.empty());
     }
 
-    static SceneDef fromDef(vulk::SceneDef, unordered_map<string, std::shared_ptr<PipelineDef>> const& pipelines, unordered_map<string, shared_ptr<ModelDef>> const& models,
+    static SceneDef fromDef(vulk::cpp2::SceneDef, unordered_map<string, std::shared_ptr<PipelineDef>> const& pipelines, unordered_map<string, shared_ptr<ModelDef>> const& models,
                             unordered_map<string, shared_ptr<MeshDef>> const& meshes, unordered_map<string, shared_ptr<MaterialDef>> const& materials);
-
-    template <class Archive>
-    void serialize(Archive& ar) {
-        ar(CEREAL_NVP(name), CEREAL_NVP(camera), CEREAL_NVP(pointLights), CEREAL_NVP(actors), CEREAL_NVP(actorMap));
-    }
 };
 
 // The metadata is valid up to the point of loading resources, but does
 // not contain the resources themselves. The resources are loaded on demand.
 struct Metadata {
     unordered_map<string, shared_ptr<MeshDef>> meshes;
-    unordered_map<string, shared_ptr<vulk::ShaderDef>> vertShaders;
-    unordered_map<string, shared_ptr<vulk::ShaderDef>> geometryShaders;
-    unordered_map<string, shared_ptr<vulk::ShaderDef>> fragmentShaders;
+    unordered_map<string, shared_ptr<vulk::cpp2::ShaderDef>> vertShaders;
+    unordered_map<string, shared_ptr<vulk::cpp2::ShaderDef>> geometryShaders;
+    unordered_map<string, shared_ptr<vulk::cpp2::ShaderDef>> fragmentShaders;
     unordered_map<string, shared_ptr<MaterialDef>> materials;
     unordered_map<string, shared_ptr<ModelDef>> models;
     unordered_map<string, shared_ptr<PipelineDef>> pipelines;
     unordered_map<string, shared_ptr<SceneDef>> scenes;
-
-    template <class Archive>
-    void serialize(Archive& ar) {
-        ar(CEREAL_NVP(meshes), CEREAL_NVP(vertShaders), CEREAL_NVP(geometryShaders), CEREAL_NVP(fragmentShaders), CEREAL_NVP(materials), CEREAL_NVP(models), CEREAL_NVP(pipelines),
-           CEREAL_NVP(scenes));
-    }
 };
 
 extern void findAndProcessMetadata(const fs::path path, Metadata& metadata);

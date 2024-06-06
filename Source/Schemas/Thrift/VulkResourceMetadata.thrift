@@ -71,7 +71,8 @@ struct BuiltPipelineDef {
     12: bool depthWriteEnabled;
     13: VulkShaderEnums.VulkCompareOp depthCompareOp;
     14: i32 cullMode; // VkCullModeFlags
-    15: PipelineBlendingDef blending;}
+    15: PipelineBlendingDef blending;
+}
 
 struct Vec3 {
     1: double x;
@@ -171,7 +172,7 @@ struct SceneDef {
     4: list<LightDef> lights;
 }
 
-// struct ShaderDef {
-//     1: string name;
-//     2: string path;
-// }
+struct ShaderDef {
+    1: string name;
+    2: string path;
+}

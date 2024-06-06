@@ -2,7 +2,6 @@
 
 #include <iostream>
 
-#include "VulkEnumMetadata.h"
 #include <stdexcept>
 
 #pragma warning(push)

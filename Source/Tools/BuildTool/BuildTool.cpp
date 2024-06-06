@@ -1,8 +1,3 @@
-#include <cereal/archives/binary.hpp>
-#include <cereal/archives/json.hpp>
-#include <cereal/cereal.hpp>
-#include <cereal/types/memory.hpp>
-#include <cereal/types/vector.hpp>
 #include <filesystem>
 #include <iostream>
 #include <memory>
@@ -14,8 +9,6 @@
 #include "BuildPipeline.h"
 #include "Vulk/VulkLogger.h"
 #include "Vulk/VulkUtil.h"
-#include "VulkShaderEnums_generated.h"
-#include "VulkShaderEnums_types.h"
 
 namespace fs = std::filesystem;
 
@@ -82,15 +75,18 @@ void glslShaderEnumsGenerator(fs::path outFile, bool verbose) {
     // Write the UBO bindings
     out << "\n// UBO Bindings\n";
     logger->trace("// UBO Bindings");
-
-    for (auto [key, value] : vulk::_VulkShaderBinding_VALUES_TO_NAMES) {
+    for (size_t i = 0; i < apache::thrift::TEnumDataStorage<vulk::cpp2::VulkShaderBinding>::values.size(); ++i) {
+        auto value = apache::thrift::TEnumDataStorage<vulk::cpp2::VulkShaderBinding>::names[i];
+        auto key = apache::thrift::TEnumDataStorage<vulk::cpp2::VulkShaderBinding>::values[i];
         out << "const int VulkShaderBinding_" << value << " = " << (int)key << ";\n";
         logger->trace("const int VulkShaderBinding_{} = {};", value, (int)key);
     }
 
     // Write the layout locations
     out << "\n// Shader Input Locations\n";
-    for (auto [key, value] : vulk::_VulkShaderLocation_VALUES_TO_NAMES) {
+    for (size_t i = 0; i < apache::thrift::TEnumDataStorage<vulk::cpp2::VulkShaderLocation>::values.size(); ++i) {
+        auto value = apache::thrift::TEnumDataStorage<vulk::cpp2::VulkShaderLocation>::names[i];
+        auto key = apache::thrift::TEnumDataStorage<vulk::cpp2::VulkShaderLocation>::values[i];
         out << "const int VulkShaderLocation_" << value << " = " << (int)key << ";\n";
         logger->trace("const int VulkShaderLocation_{} = {};", value, (int)key);
     }
@@ -98,7 +94,9 @@ void glslShaderEnumsGenerator(fs::path outFile, bool verbose) {
     // Write the light constants
     // Write the layout locations
     out << "\n// Shader Input Locations\n";
-    for (auto [key, value] : vulk::_VulkLights_VALUES_TO_NAMES) {
+    for (size_t i = 0; i < apache::thrift::TEnumDataStorage<vulk::cpp2::VulkLights>::values.size(); ++i) {
+        auto value = apache::thrift::TEnumDataStorage<vulk::cpp2::VulkLights>::names[i];
+        auto key = apache::thrift::TEnumDataStorage<vulk::cpp2::VulkLights>::values[i];
         out << "const int VulkLights_" << value << " = " << (int)key << ";\n";
         logger->trace("const int VulkLights_{} = {};", value, (int)key);
     }
@@ -116,12 +114,12 @@ void pipelineBuilder(fs::path builtShadersDir, fs::path pipelineFileOut, fs::pat
         logger->set_level(spdlog::level::trace);
     }
 
-    vulk::BuiltPipelineDef def;
-    def.version = 1;
-    def.name = "TestPipeline";
-    def.vertShaderName = "test.vert.spv";
-    def.geomShaderName = "test.geom.spv";
-    def.fragShaderName = "test.frag.spv";
+    vulk::cpp2::BuiltPipelineDef def;
+    *def.version_ref() = 1;
+    *def.name_ref() = "TestPipeline";
+    *def.vertShaderName_ref() = "test.vert.spv";
+    *def.geomShaderName_ref() = "test.geom.spv";
+    *def.fragShaderName_ref() = "test.frag.spv";
     writeDefToFile("foo.pipeline", def);
 
     logger->info("PipelineBuilder: Building pipeline from file: {}", pipelineFileIn.string());
@@ -203,6 +201,6 @@ int main(int argc, char** argv) {
     // scene->add_flag("-v, --verbose", verbose, "be verbose");
     // scene->callback([&sceneFileIn, &sceneOutDir, &verbose]() { sceneBuilder(sceneFileIn, sceneOutDir, verbose); });
 
-    // do it
     CLI11_PARSE(app, argc, argv);
+    // do it
 }

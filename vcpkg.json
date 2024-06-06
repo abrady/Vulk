@@ -4,7 +4,6 @@
     "dependencies": [
         "assimp",
         "catch2",
-        "cereal",
         "cli11",
         "flatbuffers",
         "fmt",

@@ -1,5 +1,4 @@
 #include "Vulk/VulkResourceMetadata.h"
-#include "Vulk/VulkEnumMetadata.h"
 
 using json = nlohmann::json;
 using namespace std;
@@ -14,6 +13,8 @@ namespace fs = std::filesystem;
 #    pragma clang diagnostic ignored "-Wimplicit-float-conversion"
 #    pragma clang diagnostic ignored "-Wdouble-promotion"
 #endif
+
+#pragma warning(disable : 4244) // double to float
 
 // namespace nlohmann {
 // template <>
@@ -145,38 +146,41 @@ MaterialDef loadMaterialDef(const fs::path& file) {
     return material;
 }
 
-ModelDef ModelDef::fromDef(vulk::ModelDef const& defIn, unordered_map<string, shared_ptr<MeshDef>> const& meshes, unordered_map<string, shared_ptr<MaterialDef>> materials) {
-    auto name = defIn.name;
-    string mn = defIn.materialName;
+ModelDef ModelDef::fromDef(vulk::cpp2::ModelDef const& defIn, unordered_map<string, shared_ptr<MeshDef>> const& meshes, unordered_map<string, shared_ptr<MaterialDef>> materials) {
+    auto name = defIn.name().value();
+    string mn = defIn.materialName().value();
     auto material = materials.at(mn);
-    vulk::MeshDefType::type meshDefType = defIn.meshDefType;
+    vulk::cpp2::MeshDefType meshDefType = defIn.meshDefType().value();
     switch (meshDefType) {
-    case vulk::MeshDefType::Model:
-        return ModelDef(name, meshes.at(defIn.meshName), material);
-    case vulk::MeshDefType::Mesh: {
+    case vulk::cpp2::MeshDefType::Model:
+        return ModelDef(name, meshes.at(defIn.meshName().value()), material);
+    case vulk::cpp2::MeshDefType::Mesh: {
         shared_ptr<VulkMesh> mesh = make_shared<VulkMesh>();
-        vulk::GeoMeshDef def = defIn.geoMeshDef;
-        switch (defIn.geoMeshDefType) {
-        case vulk::GeoMeshDefType::Sphere: {
-            makeGeoSphere(def.sphere.radius, def.sphere.numSubdivisions, *mesh);
+        vulk::cpp2::GeoMeshDef def = defIn.geoMeshDef().value();
+        switch (defIn.geoMeshDefType().value()) {
+        case vulk::cpp2::GeoMeshDefType::Sphere: {
+            vulk::cpp2::GeoSphereDef const& sphere = def.get_sphere();
+            makeGeoSphere(sphere.get_radius(), sphere.get_numSubdivisions(), *mesh);
         } break;
-        case vulk::GeoMeshDefType::Cylinder: {
-            makeCylinder(def.cylinder.height, def.cylinder.bottomRadius, def.cylinder.topRadius, def.cylinder.numStacks, def.cylinder.numSlices, *mesh);
+        case vulk::cpp2::GeoMeshDefType::Cylinder: {
+            vulk::cpp2::GeoCylinderDef const& cylinder = def.get_cylinder();
+            makeCylinder(cylinder.get_height(), cylinder.get_bottomRadius(), cylinder.get_topRadius(), cylinder.get_numStacks(), cylinder.get_numSlices(), *mesh);
         } break;
-        case vulk::GeoMeshDefType::EquilateralTriangle: {
-            makeEquilateralTri(def.triangle.sideLength, def.triangle.numSubdivisions, *mesh);
+        case vulk::cpp2::GeoMeshDefType::EquilateralTriangle: {
+            makeEquilateralTri(def.get_triangle().get_sideLength(), def.get_triangle().get_numSubdivisions(), *mesh);
         } break;
-        case vulk::GeoMeshDefType::Quad: {
-            makeQuad(def.quad.w, def.quad.h, def.quad.numSubdivisions, *mesh);
+        case vulk::cpp2::GeoMeshDefType::Quad: {
+            makeQuad(def.get_quad().get_w(), def.get_quad().get_h(), def.get_quad().get_numSubdivisions(), *mesh);
         } break;
-        case vulk::GeoMeshDefType::Grid: {
-            makeGrid(def.grid.width, def.grid.depth, def.grid.m, def.grid.n, *mesh, def.grid.repeatU, def.grid.repeatV);
+        case vulk::cpp2::GeoMeshDefType::Grid: {
+            makeGrid(def.get_grid().get_width(), def.get_grid().get_depth(), def.get_grid().get_m(), def.get_grid().get_n(), *mesh, def.get_grid().get_repeatU(),
+                     def.get_grid().get_repeatV());
         } break;
-        case vulk::GeoMeshDefType::Axes: {
-            makeAxes(def.axes.length, *mesh);
+        case vulk::cpp2::GeoMeshDefType::Axes: {
+            makeAxes(def.get_axes().get_length(), *mesh);
         } break;
         default:
-            VULK_THROW_FMT("Unknown GeoMesh type: {}", (int)defIn.geoMeshDefType);
+            VULK_THROW_FMT("Unknown GeoMesh type: {}", (int)defIn.get_geoMeshDefType());
         }
         return ModelDef(name, make_shared<MeshDef>(name, mesh), material);
     }
@@ -185,59 +189,59 @@ ModelDef ModelDef::fromDef(vulk::ModelDef const& defIn, unordered_map<string, sh
     };
 }
 
-glm::vec3 toVec3(vulk::Vec3 const& v) {
-    return glm::vec3(v.x, v.y, v.z);
+glm::vec3 toVec3(vulk::cpp2::Vec3 const& v) {
+    return glm::vec3(v.get_x(), v.get_y(), v.get_z());
 }
 
-ActorDef ActorDef::fromDef(vulk::ActorDef aIn, unordered_map<string, shared_ptr<PipelineDef>> const& pipelines, unordered_map<string, shared_ptr<ModelDef>> const& models,
+ActorDef ActorDef::fromDef(vulk::cpp2::ActorDef defIn, unordered_map<string, shared_ptr<PipelineDef>> const& pipelines, unordered_map<string, shared_ptr<ModelDef>> const& models,
                            unordered_map<string, shared_ptr<MeshDef>> meshes, unordered_map<string, shared_ptr<MaterialDef>> materials) {
     ActorDef a;
-    a.name = aIn.name;
-    a.pipeline = pipelines.at(aIn.pipelineName);
+    a.def = defIn;
+    a.pipeline = pipelines.at(defIn.get_pipelineName());
 
-    if (aIn.modelName != "") {
-        assert(!aIn.__isset.inlineModel);
-        a.model = models.at(aIn.modelName);
-    } else if (aIn.__isset.inlineModel) {
-        a.model = make_shared<ModelDef>(ModelDef::fromDef(aIn.inlineModel, meshes, materials));
+    if (defIn.get_modelName() != "") {
+        assert(!defIn.inlineModel().is_set());
+        a.model = models.at(defIn.get_modelName());
+    } else if (defIn.inlineModel().is_set()) {
+        a.model = make_shared<ModelDef>(ModelDef::fromDef(defIn.get_inlineModel(), meshes, materials));
     } else {
         VULK_THROW("ActorDef must contain either a model or an inlineModel");
     }
 
     // make the transform
     a.xform = glm::mat4(1.0f);
-    if (aIn.__isset.xform) {
-        auto& xform = aIn.xform;
-        glm::vec3 pos = xform.__isset.pos ? toVec3(xform.pos) : glm::vec3(0);
-        glm::vec3 rot = glm::radians(xform.__isset.rot ? toVec3(xform.rot) : glm::vec3(0));
-        glm::vec3 scale = xform.__isset.scale ? toVec3(xform.scale) : glm::vec3(1);
+    if (defIn.xform().is_set()) {
+        auto& xform = defIn.get_xform();
+        glm::vec3 pos = xform.pos().is_set() ? toVec3(xform.get_pos()) : glm::vec3(0);
+        glm::vec3 rot = glm::radians(xform.rot().is_set() ? toVec3(xform.get_rot()) : glm::vec3(0));
+        glm::vec3 scale = xform.scale().is_set() ? toVec3(xform.get_scale()) : glm::vec3(1);
         a.xform = glm::translate(glm::mat4(1.0f), pos) * glm::eulerAngleXYZ(rot.x, rot.y, rot.z) * glm::scale(glm::mat4(1.0f), scale);
     }
     a.validate();
     return a;
 }
 
-SceneDef SceneDef::fromDef(vulk::SceneDef defIn, unordered_map<string, shared_ptr<PipelineDef>> const& pipelines, unordered_map<string, shared_ptr<ModelDef>> const& models,
+SceneDef SceneDef::fromDef(vulk::cpp2::SceneDef defIn, unordered_map<string, shared_ptr<PipelineDef>> const& pipelines, unordered_map<string, shared_ptr<ModelDef>> const& models,
                            unordered_map<string, shared_ptr<MeshDef>> const& meshes, unordered_map<string, shared_ptr<MaterialDef>> const& materials) {
     SceneDef s;
-    s.name = defIn.name;
+    s.def = defIn;
 
     // load the camera
-    auto& cam = defIn.camera;
-    s.camera.eye = toVec3(cam.eye);
-    s.camera.setLookAt(s.camera.eye, toVec3(cam.lookAt));
-    s.camera.nearClip = cam.nearClip;
-    s.camera.farClip = cam.farClip;
+    auto& cam = defIn.get_camera();
+    s.camera.eye = toVec3(cam.get_eye());
+    s.camera.setLookAt(s.camera.eye, toVec3(cam.get_lookAt()));
+    s.camera.nearClip = cam.get_nearClip();
+    s.camera.farClip = cam.get_farClip();
 
     // load the lights
-    for (auto const& light : defIn.lights) {
-        auto type = light.type;
-        switch (light.type) {
-        case vulk::LightType::Point: {
-            auto pos = toVec3(light.pos);
-            auto color = toVec3(light.color);
-            auto falloffStart = light.__isset.falloffStart ? light.falloffStart : 0.f;
-            auto falloffEnd = light.__isset.falloffEnd ? light.falloffEnd : 0.f;
+    for (auto const& light : defIn.get_lights()) {
+        auto type = light.get_type();
+        switch (type) {
+        case vulk::cpp2::LightType::Point: {
+            auto pos = toVec3(light.get_pos());
+            auto color = toVec3(light.get_color());
+            auto falloffStart = light.falloffStart().is_set() ? light.get_falloffStart() : 0.f;
+            auto falloffEnd = light.falloffEnd().is_set() ? light.get_falloffEnd() : 0.f;
             s.pointLights.push_back(make_shared<VulkPointLight>(pos, falloffStart, color, falloffEnd));
         } break;
         default: {
@@ -247,11 +251,11 @@ SceneDef SceneDef::fromDef(vulk::SceneDef defIn, unordered_map<string, shared_pt
     }
 
     // load the actors
-    for (auto const& actor : defIn.actors) {
+    for (auto const& actor : defIn.get_actors()) {
         auto a = make_shared<ActorDef>(ActorDef::fromDef(actor, pipelines, models, meshes, materials));
         s.actors.push_back(a);
-        assert(!s.actorMap.contains(a->name));
-        s.actorMap[a->name] = a;
+        assert(!s.actorMap.contains(a->def.get_name()));
+        s.actorMap[a->def.get_name()] = a;
     }
     s.validate();
     return s;
@@ -268,7 +272,7 @@ void findAndProcessMetadata(const fs::path path, Metadata& metadata) {
     static set<string> binExts{".pipeline.bin"};
     struct LoadInfo {
         json j;
-        fs::path filePath;
+        string filePath;
     };
     unordered_map<string, unordered_map<string, LoadInfo>> loadInfos;
 
@@ -280,34 +284,34 @@ void findAndProcessMetadata(const fs::path path, Metadata& metadata) {
                 ifstream f(entry.path());
                 LoadInfo loadInfo;
                 loadInfo.j = nlohmann::json::parse(f, nullptr, true, true); // allow comments
-                loadInfo.filePath = entry.path();
+                loadInfo.filePath = entry.path().string();
                 assert(loadInfo.j.at("name") == stem);
                 loadInfos[ext][loadInfo.j.at("name")] = loadInfo;
             } else if (binExts.contains(ext)) {
                 if (ext == ".pipeline") {
                     auto pipelineDef = make_shared<PipelineDef>();
-                    readDefFromFile(entry.path().string(), *pipelineDef);
-                    metadata.pipelines[pipelineDef->name] = pipelineDef;
+                    readDefFromFile(entry.path().string(), pipelineDef->def);
+                    metadata.pipelines[pipelineDef->def.get_name()] = pipelineDef;
                 } else {
                     VULK_THROW("Unknown bin extension: " + ext);
                 }
             } else if (ext == ".vertspv") {
                 assert(!metadata.vertShaders.contains(stem));
-                metadata.vertShaders[stem] = make_shared<vulk::ShaderDef>();
-                metadata.vertShaders[stem]->name = stem;
-                metadata.vertShaders[stem]->path = entry.path().string();
+                metadata.vertShaders[stem] = make_shared<vulk::cpp2::ShaderDef>();
+                metadata.vertShaders[stem]->name_ref() = stem;
+                metadata.vertShaders[stem]->path_ref() = entry.path().string();
 
             } else if (ext == ".geomspv") {
                 assert(!metadata.geometryShaders.contains(stem));
-                metadata.geometryShaders[stem] = make_shared<vulk::ShaderDef>();
-                metadata.geometryShaders[stem]->name = stem;
-                metadata.geometryShaders[stem]->path = entry.path().string();
+                metadata.geometryShaders[stem] = make_shared<vulk::cpp2::ShaderDef>();
+                metadata.geometryShaders[stem]->name_ref() = stem;
+                metadata.geometryShaders[stem]->path_ref() = entry.path().string();
 
             } else if (ext == ".fragspv") {
                 assert(!metadata.fragmentShaders.contains(stem));
-                metadata.fragmentShaders[stem] = make_shared<vulk::ShaderDef>();
-                metadata.fragmentShaders[stem]->name = stem;
-                metadata.fragmentShaders[stem]->path = entry.path().string();
+                metadata.fragmentShaders[stem] = make_shared<vulk::cpp2::ShaderDef>();
+                metadata.fragmentShaders[stem]->name_ref() = stem;
+                metadata.fragmentShaders[stem]->path_ref() = entry.path().string();
 
             } else if (ext == ".mtl") {
                 assert(!metadata.materials.contains(stem));
@@ -332,7 +336,7 @@ void findAndProcessMetadata(const fs::path path, Metadata& metadata) {
     }
 
     for (auto const& [name, loadInfo] : loadInfos[".model"]) {
-        vulk::ModelDef def;
+        vulk::cpp2::ModelDef def;
         readDefFromFile(loadInfo.filePath, def);
         auto modelDef = make_shared<ModelDef>(ModelDef::fromDef(def, metadata.meshes, metadata.materials));
         assert(!metadata.models.contains(modelDef->name));
@@ -340,11 +344,11 @@ void findAndProcessMetadata(const fs::path path, Metadata& metadata) {
     }
 
     for (auto const& [name, loadInfo] : loadInfos[".scene"]) {
-        vulk::SceneDef def;
+        vulk::cpp2::SceneDef def;
         readDefFromFile(loadInfo.filePath, def);
         auto sceneDef = make_shared<SceneDef>(SceneDef::fromDef(def, metadata.pipelines, metadata.models, metadata.meshes, metadata.materials));
-        assert(!metadata.scenes.contains(sceneDef->name));
-        metadata.scenes[sceneDef->name] = sceneDef;
+        assert(!metadata.scenes.contains(sceneDef->def.get_name()));
+        metadata.scenes[sceneDef->def.get_name()] = sceneDef;
     }
 
     if (metadata.scenes.size() == 0) {

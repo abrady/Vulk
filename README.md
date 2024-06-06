@@ -46,6 +46,9 @@ Remove VulkEnumMetadata
 remove cereal refs
 remove nlohmann::json
 
+## 6/5
+ClCompile is passing /MDd which conflicts elsewhere. for some reason its not the same...
+
 ## 6/4 cereal-b-gone
 
 How does this work end-to-end for descriptorsetdef?

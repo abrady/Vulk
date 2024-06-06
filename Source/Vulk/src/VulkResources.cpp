@@ -58,26 +58,30 @@ std::shared_ptr<VulkShaderModule> VulkResources::createShaderModule(ShaderType t
 }
 
 std::shared_ptr<VulkModel> VulkResources::getModel(ModelDef const& modelDef, PipelineDef const& pipelineDef) {
-    string key = modelDef.name + ":" + pipelineDef.name;
+    string key = modelDef.name + ":" + pipelineDef.def.name().value();
     if (pipelineModels.contains(key)) {
         return pipelineModels.at(key);
     }
     shared_ptr<VulkMaterialTextures> textures = getMaterialTextures(modelDef.material->name);
-    auto p = make_shared<VulkModel>(vk, getMesh(*modelDef.mesh), textures, getMaterial(modelDef.material->name), pipelineDef.vertInputs);
+    //     VulkModel(Vulk& vk, std::shared_ptr<VulkMesh> meshIn, std::shared_ptr<VulkMaterialTextures> texturesIn, std::shared_ptr<VulkUniformBuffer<VulkMaterialConstants>>
+    //     materialUBO,
+    //          std::vector<vulk::cpp2::VulkShaderLocation> const& inputs)
+
+    auto p = make_shared<VulkModel>(vk, getMesh(*modelDef.mesh), textures, getMaterial(modelDef.material->name), pipelineDef.def.get_vertInputs());
     pipelineModels[key] = p;
     return p;
 }
 
 // these map to the same values
-VkPrimitiveTopology toVkPrimitiveTopology(vulk::VulkPrimitiveTopology::type primitiveTopology) {
+VkPrimitiveTopology toVkPrimitiveTopology(vulk::cpp2::VulkPrimitiveTopology primitiveTopology) {
     return static_cast<VkPrimitiveTopology>(primitiveTopology);
 }
 
-VkCompareOp toVkCompareOp(vulk::VulkCompareOp::type compareOp) {
+VkCompareOp toVkCompareOp(vulk::cpp2::VulkCompareOp compareOp) {
     return static_cast<VkCompareOp>(compareOp);
 }
 
-VkPolygonMode toVkPolygonMode(vulk::VulkPolygonMode::type polygonMode) {
+VkPolygonMode toVkPolygonMode(vulk::cpp2::VulkPolygonMode polygonMode) {
     return static_cast<VkPolygonMode>(polygonMode);
 }
 
@@ -89,53 +93,53 @@ std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(VkRenderPass renderPas
     shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout;
     // TODO: possible bug here. I should just use the name.
     // uint32_t dsHash = def.descriptorSet.hash();
-    if (descriptorSetLayoutCache.contains(def.descriptorSetDef.name)) {
-        descriptorSetLayout = descriptorSetLayoutCache[def.descriptorSetDef.name];
+    if (descriptorSetLayoutCache.contains(def.def.get_descriptorSetDef().get_name())) {
+        descriptorSetLayout = descriptorSetLayoutCache[def.def.get_descriptorSetDef().get_name()];
     } else {
         VulkDescriptorSetLayoutBuilder dslb(vk);
-        for (auto& [stage, bindings] : def.descriptorSetDef.uniformBuffers) {
+        for (auto& [stage, bindings] : def.def.get_descriptorSetDef().get_uniformBuffers()) {
             for (auto& binding : bindings) {
-                vulk::VulkShaderUBOBinding::type& bindingRef = binding;
+                vulk::cpp2::VulkShaderUBOBinding const& bindingRef = binding;
                 dslb.addUniformBuffer(stage, bindingRef);
             }
         }
-        for (auto& [stage, bindings] : def.descriptorSetDef.storageBuffers) {
+        for (auto& [stage, bindings] : def.def.get_descriptorSetDef().get_storageBuffers()) {
             for (auto& binding : bindings) {
                 dslb.addStorageBuffer(stage, binding);
             }
         }
-        for (auto& [stage, bindings] : def.descriptorSetDef.imageSamplers) {
+        for (auto& [stage, bindings] : def.def.get_descriptorSetDef().get_imageSamplers()) {
             for (auto& binding : bindings) {
                 dslb.addImageSampler(stage, binding);
             }
         }
         descriptorSetLayout = dslb.build();
-        descriptorSetLayoutCache[def.descriptorSetDef.name] = descriptorSetLayout;
+        descriptorSetLayoutCache[def.def.get_descriptorSetDef().get_name()] = descriptorSetLayout;
     }
 
     VulkPipelineBuilder pb(vk);
-    for (auto& pc : def.pushConstants) {
-        pb.addPushConstantRange(pc.stageFlags, pc.size);
+    for (auto& pc : def.def.get_pushConstants()) {
+        pb.addPushConstantRange(pc.get_stageFlags(), pc.get_size());
     }
-    pb.addvertShaderStage(getvertShader(def.vertShader->name))
-        .addFragmentShaderStage(getFragmentShader(def.fragShader->name))
-        .setDepthTestEnabled(def.depthTestEnabled)
-        .setDepthWriteEnabled(def.depthWriteEnabled)
-        .setDepthCompareOp(toVkCompareOp(def.depthCompareOp))
-        .setPrimitiveTopology(toVkPrimitiveTopology(def.primitiveTopology))
-        .setPolygonMode(toVkPolygonMode(def.polygonMode))
+    pb.addvertShaderStage(getvertShader(def.vertShader->get_name()))
+        .addFragmentShaderStage(getFragmentShader(def.fragShader->get_name()))
+        .setDepthTestEnabled(def.def.get_depthTestEnabled())
+        .setDepthWriteEnabled(def.def.get_depthWriteEnabled())
+        .setDepthCompareOp(toVkCompareOp(def.def.get_depthCompareOp()))
+        .setPrimitiveTopology(toVkPrimitiveTopology(def.def.get_primitiveTopology()))
+        .setPolygonMode(toVkPolygonMode(def.def.get_polygonMode()))
         .setLineWidth(1.0f)
         .setScissor(extent)
         .setViewport(extent)
-        .setCullMode(def.cullMode)
+        .setCullMode(def.def.get_cullMode())
         .setDepthCompareOp(VK_COMPARE_OP_LESS)
         .setStencilTestEnabled(false)
-        .setBlending(def.blending.enabled, getColorMask(def.blending.colorWriteMask));
+        .setBlending(def.def.get_blending().get_enabled(), getColorMask(def.def.get_blending().get_colorWriteMask()));
     if (def.geomShader) {
-        pb.addGeometryShaderStage(getGeometryShader(def.geomShader->name));
+        pb.addGeometryShaderStage(getGeometryShader(def.geomShader->get_name()));
     }
 
-    for (auto input : def.vertInputs) {
+    for (auto input : def.def.get_vertInputs()) {
         pb.addVertexInput(input);
     }
 
@@ -145,55 +149,55 @@ std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(VkRenderPass renderPas
 }
 
 std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const& actorDef, shared_ptr<PipelineDef> pipelineDef, shared_ptr<VulkScene> scene) {
-    auto const& dsDef = pipelineDef->descriptorSetDef;
+    auto const& dsDef = pipelineDef->def.get_descriptorSetDef();
     VulkDescriptorSetBuilder builder(vk);
     shared_ptr<VulkModel> model = getModel(*actorDef.model, *pipelineDef);
     shared_ptr<VulkFrameUBOs<glm::mat4>> xformUBOs;
-    if (descriptorSetLayoutCache.contains(pipelineDef->descriptorSetDef.name)) {
-        builder.setDescriptorSetLayout(descriptorSetLayoutCache[pipelineDef->descriptorSetDef.name]);
+    if (descriptorSetLayoutCache.contains(pipelineDef->def.get_descriptorSetDef().get_name())) {
+        builder.setDescriptorSetLayout(descriptorSetLayoutCache[pipelineDef->def.get_descriptorSetDef().get_name()]);
     }
-    for (auto& iter : dsDef.uniformBuffers) {
+    for (auto& iter : dsDef.get_uniformBuffers()) {
         VkShaderStageFlagBits stage = (VkShaderStageFlagBits)iter.first;
-        for (vulk::VulkShaderUBOBinding::type binding : iter.second) {
+        for (vulk::cpp2::VulkShaderUBOBinding binding : iter.second) {
             switch (binding) {
-            case vulk::VulkShaderUBOBinding::Xforms:
+            case vulk::cpp2::VulkShaderUBOBinding::Xforms:
                 builder.addFrameUBOs(scene->sceneUBOs.xforms, stage, binding);
                 break;
-            case vulk::VulkShaderUBOBinding::MaterialUBO:
+            case vulk::cpp2::VulkShaderUBOBinding::MaterialUBO:
                 builder.addUniformBuffer(*model->materialUBO, stage, binding);
                 break;
-            case vulk::VulkShaderUBOBinding::Lights:
+            case vulk::cpp2::VulkShaderUBOBinding::Lights:
                 builder.addUniformBuffer(scene->sceneUBOs.pointLight, stage, binding);
                 break;
-            case vulk::VulkShaderUBOBinding::EyePos:
+            case vulk::cpp2::VulkShaderUBOBinding::EyePos:
                 builder.addFrameUBOs(scene->sceneUBOs.eyePos, stage, binding);
                 break;
-            case vulk::VulkShaderUBOBinding::ModelXform:
+            case vulk::cpp2::VulkShaderUBOBinding::ModelXform:
                 if (!xformUBOs)
                     xformUBOs = make_shared<VulkFrameUBOs<glm::mat4>>(vk, actorDef.xform);
                 builder.addFrameUBOs(*xformUBOs, stage, binding);
                 break;
-            case vulk::VulkShaderUBOBinding::DebugNormals:
+            case vulk::cpp2::VulkShaderUBOBinding::DebugNormals:
                 if (scene->debugNormalsUBO == nullptr)
                     scene->debugNormalsUBO = make_shared<VulkUniformBuffer<VulkDebugNormalsUBO>>(vk);
                 builder.addUniformBuffer(*scene->debugNormalsUBO, stage, binding);
                 break;
-            case vulk::VulkShaderUBOBinding::DebugTangents:
+            case vulk::cpp2::VulkShaderUBOBinding::DebugTangents:
                 if (scene->debugTangentsUBO == nullptr)
                     scene->debugTangentsUBO = make_shared<VulkUniformBuffer<VulkDebugTangentsUBO>>(vk);
                 builder.addUniformBuffer(*scene->debugTangentsUBO, stage, binding);
                 break;
-            case vulk::VulkShaderUBOBinding::LightViewProjUBO:
+            case vulk::cpp2::VulkShaderUBOBinding::LightViewProjUBO:
                 if (scene->lightViewProjUBO == nullptr)
                     scene->lightViewProjUBO = make_shared<VulkUniformBuffer<VulkLightViewProjUBO>>(vk);
                 builder.addUniformBuffer(*scene->lightViewProjUBO, stage, binding);
                 break;
-            case vulk::VulkShaderUBOBinding::PBRDebugUBO:
+            case vulk::cpp2::VulkShaderUBOBinding::PBRDebugUBO:
                 if (scene->pbrDebugUBO == nullptr)
                     scene->pbrDebugUBO = make_shared<VulkUniformBuffer<VulkPBRDebugUBO>>(vk);
                 builder.addUniformBuffer(*scene->pbrDebugUBO, stage, binding);
                 break;
-            case vulk::VulkShaderUBOBinding::GlobalConstantsUBO:
+            case vulk::cpp2::VulkShaderUBOBinding::GlobalConstantsUBO:
                 if (scene->globalConstantsUBO == nullptr)
                     scene->globalConstantsUBO = make_shared<VulkUniformBuffer<VulkGlobalConstantsUBO>>(vk);
                 builder.addUniformBuffer(*scene->globalConstantsUBO, stage, binding);
@@ -201,46 +205,46 @@ std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const
             default:
                 VULK_THROW("Invalid UBO binding");
             }
-            static_assert(vulk::VulkShaderUBOBinding::type::MAX == vulk::VulkShaderUBOBinding::type::GlobalConstantsUBO);
+            static_assert((int)vulk::cpp2::VulkShaderUBOBinding::MAX == 21);
         }
     }
     // for (auto &[stage, ssbos] : dsDef.storageBuffers)
     // {
-    //     for (vulk::VulkShaderSSBOBinding::type binding : ssbos)
+    //     for (vulk::cpp2::VulkShaderSSBOBinding binding : ssbos)
     //     {
     //         switch (binding)
     //         {
-    //         case vulk::VulkShaderSSBOBinding::type_MaxBindingID:
+    //         case vulk::cpp2::VulkShaderSSBOBinding::type_MaxBindingID:
     //         default:
     //             VULK_THROW("Invalid SSBO binding");
     //         }
     //     }
     // }
-    static_assert(vulk::VulkShaderSSBOBinding::type::MaxBindingID == 0);
-    for (auto& [stage, samplers] : dsDef.imageSamplers) {
-        for (vulk::VulkShaderTextureBinding::type binding : samplers) {
+    static_assert((int)vulk::cpp2::VulkShaderSSBOBinding::MaxBindingID == 0);
+    for (auto& [stage, samplers] : dsDef.get_imageSamplers()) {
+        for (vulk::cpp2::VulkShaderTextureBinding binding : samplers) {
             switch (binding) {
-            case vulk::VulkShaderTextureBinding::type::TextureSampler:
+            case vulk::cpp2::VulkShaderTextureBinding::TextureSampler:
                 builder.addBothFramesImageSampler(stage, binding, model->textures->diffuseView, textureSampler);
                 break;
-            case vulk::VulkShaderTextureBinding::type::NormalSampler:
+            case vulk::cpp2::VulkShaderTextureBinding::NormalSampler:
                 builder.addBothFramesImageSampler(stage, binding, model->textures->normalView, textureSampler);
                 break;
-            case vulk::VulkShaderTextureBinding::type::ShadowMapSampler:
+            case vulk::cpp2::VulkShaderTextureBinding::ShadowMapSampler:
                 for (uint32_t i = 0; i < scene->shadowMapViews.size(); i++) {
                     builder.addFrameImageSampler(i, stage, binding, scene->shadowMapViews[i]->depthView, shadowMapSampler);
                 }
                 break;
-            case vulk::VulkShaderTextureBinding::type::AmbientOcclusionSampler:
+            case vulk::cpp2::VulkShaderTextureBinding::AmbientOcclusionSampler:
                 builder.addBothFramesImageSampler(stage, binding, model->textures->ambientOcclusionView, textureSampler);
                 break;
-            case vulk::VulkShaderTextureBinding::type::DisplacementSampler:
+            case vulk::cpp2::VulkShaderTextureBinding::DisplacementSampler:
                 builder.addBothFramesImageSampler(stage, binding, model->textures->displacementView, textureSampler);
                 break;
-            case vulk::VulkShaderTextureBinding::type::MetallicSampler:
+            case vulk::cpp2::VulkShaderTextureBinding::MetallicSampler:
                 builder.addBothFramesImageSampler(stage, binding, model->textures->metallicView, textureSampler);
                 break;
-            case vulk::VulkShaderTextureBinding::type::RoughnessSampler:
+            case vulk::cpp2::VulkShaderTextureBinding::RoughnessSampler:
                 builder.addBothFramesImageSampler(stage, binding, model->textures->roughnessView, textureSampler);
                 break;
             default:
@@ -249,9 +253,9 @@ std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const
         }
     }
     std::shared_ptr<VulkDescriptorSetInfo> info = builder.build();
-    descriptorSetLayoutCache[pipelineDef->descriptorSetDef.name] = info->descriptorSetLayout;
-    return make_shared<VulkActor>(vk, model, xformUBOs, info, getPipeline(pipelineDef->name));
-    static_assert(vulk::VulkShaderTextureBinding::type::MAX == vulk::VulkShaderTextureBinding::type::RoughnessSampler);
+    descriptorSetLayoutCache[pipelineDef->def.get_descriptorSetDef().get_name()] = info->descriptorSetLayout;
+    return make_shared<VulkActor>(vk, model, xformUBOs, info, getPipeline(pipelineDef->def.get_name()));
+    static_assert((int)vulk::cpp2::VulkShaderTextureBinding::MAX == 19);
 }
 
 std::shared_ptr<VulkScene> VulkResources::loadScene(VkRenderPass renderPass, std::string name, std::array<std::shared_ptr<VulkDepthView>, MAX_FRAMES_IN_FLIGHT> shadowMapViews) {
@@ -266,7 +270,7 @@ std::shared_ptr<VulkScene> VulkResources::loadScene(VkRenderPass renderPass, std
     *scene->sceneUBOs.pointLight.mappedUBO = *sceneDef.pointLights[0]; // just one light for now
 
     for (auto& actorDef : sceneDef.actors) {
-        loadPipeline(renderPass, vk.swapChainExtent, actorDef->pipeline->name);
+        loadPipeline(renderPass, vk.swapChainExtent, actorDef->pipeline->def.get_name());
         scene->actors.push_back(createActorFromPipeline(*actorDef, actorDef->pipeline, scene));
     }
     return scenes[name] = scene;
@@ -286,10 +290,10 @@ shared_ptr<VulkMesh> VulkResources::getMesh(MeshDef& meshDef) {
     }
     shared_ptr<VulkMesh> m;
     switch (meshDef.type) {
-    case vulk::MeshDefType::Model:
+    case vulk::cpp2::MeshDefType::Model:
         m = make_shared<VulkMesh>(VulkMesh::loadFromPath(meshDef.getModelMeshDef()->path, name));
         break;
-    case vulk::MeshDefType::Mesh: {
+    case vulk::cpp2::MeshDefType::Mesh: {
         m = meshDef.getMesh();
     } break;
     default:
@@ -309,7 +313,7 @@ shared_ptr<VulkMaterialTextures> VulkResources::getMaterialTextures(string const
         materialTextures[name]->displacementView = !def.disp.empty() ? make_unique<VulkImageView>(vk, def.disp, true) : nullptr;
         materialTextures[name]->metallicView = !def.mapPm.empty() ? make_unique<VulkImageView>(vk, def.mapPm, true) : nullptr;
         materialTextures[name]->roughnessView = !def.mapPr.empty() ? make_unique<VulkImageView>(vk, def.mapPr, true) : nullptr;
-        static_assert(vulk::VulkShaderTextureBinding::type::MAX == vulk::VulkShaderTextureBinding::type::RoughnessSampler);
+        static_assert((int)vulk::cpp2::VulkShaderTextureBinding::MAX == 19);
     }
 
     return materialTextures[name];

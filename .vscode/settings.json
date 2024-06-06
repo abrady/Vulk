@@ -115,15 +115,18 @@
         "shared_mutex": "cpp",
         "strstream": "cpp",
         "*.tcc": "cpp",
-        "string_view": "cpp"
+        "string_view": "cpp",
+        "latch": "cpp",
+        "memory_resource": "cpp",
+        "scoped_allocator": "cpp"
     },
     "files.eol": "\n",
     "cmake.configureArgs": [
         // "-DVCPKG_MANIFEST_INSTALL=OFF",
-        "-DVCPKG_TARGET_TRIPLET=x64-windows-static",
-        "-DCMAKE_TOOLCHAIN_FILE=${workspaceFolder}/vcpkg/scripts/buildsystems/vcpkg.cmake",
-        "--profiling-output=${workspaceFolder}/build/configure_profile.json",
-        "--profiling-format=google-trace"
+        //"-DVCPKG_TARGET_TRIPLET=x64-windows-static",
+        //"-DCMAKE_TOOLCHAIN_FILE=${workspaceFolder}/vcpkg/scripts/buildsystems/vcpkg.cmake",
+        //"--profiling-output=${workspaceFolder}/build/configure_profile.json",
+        //"--profiling-format=google-trace"
     ],
     "cmake.buildArgs": []
 }

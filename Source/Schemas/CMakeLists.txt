@@ -1,7 +1,6 @@
 
 project(GenSchemaFiles)
 
-find_package(flatbuffers CONFIG REQUIRED)
 find_package(FBThrift CONFIG REQUIRED)
 set(GenSchemaFiles ALL DEPENDS ${GENERATED_HEADERS} ${THRIFT_SOURCES})
 
@@ -76,8 +75,8 @@ endforeach()
 add_custom_target(GenerateCppFiles DEPENDS ${THRIFT_CPP_FILES})
 add_library(GenSchemaFiles main.cpp ${THRIFT_CPP_FILES} ${GENERATED_HEADERS_DIR} ${GENERATED_HEADERS} ${THRIFT_INCLUDE_DIR} ${THRIFT_SOURCES})
 target_compile_options(GenSchemaFiles PRIVATE /wd4267)
+set_target_properties(GenSchemaFiles PROPERTIES LINK_FLAGS "/NODEFAULTLIB:library")
 
-target_link_libraries(GenSchemaFiles PRIVATE flatbuffers::flatbuffers)
 # target_link_libraries(GenSchemaFiles PRIVATE thrift::thrift)
 target_link_libraries(GenSchemaFiles PRIVATE FBThrift::async FBThrift::thrift FBThrift::compiler FBThrift::mustache)
 

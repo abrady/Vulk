@@ -1,11 +1,6 @@
 #pragma once
 
 #include "spirv_cross/spirv_glsl.hpp"
-#include <cereal/archives/binary.hpp>
-#include <cereal/archives/json.hpp>
-#include <cereal/cereal.hpp>
-#include <cereal/types/memory.hpp>
-#include <cereal/types/vector.hpp>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -13,20 +8,18 @@
 #include <vector>
 
 #include "Vulk/VulkResourceMetadata.h"
-#include "VulkShaderEnums_generated.h"
-#include "VulkShaderEnums_types.h"
 
 #include <nlohmann/json.hpp>
 
 struct ShaderInfo {
     std::string name;
     std::string entryPoint;
-    std::unordered_map<vulk::VulkShaderUBOBinding::type, std::string> uboBindings;
-    std::unordered_map<vulk::VulkShaderSSBOBinding::type, std::string> sboBindings;
-    std::unordered_map<vulk::VulkShaderTextureBinding::type, std::string> samplerBindings;
-    std::unordered_map<vulk::VulkShaderLocation::type, std::string> inputLocations;
-    std::unordered_map<vulk::VulkShaderLocation::type, std::string> outputLocations;
-    std::vector<uint32_t> pushConstants; // bitfield of vulk::VulkShaderStage
+    std::unordered_map<vulk::cpp2::VulkShaderUBOBinding, std::string> uboBindings;
+    std::unordered_map<vulk::cpp2::VulkShaderSSBOBinding, std::string> sboBindings;
+    std::unordered_map<vulk::cpp2::VulkShaderTextureBinding, std::string> samplerBindings;
+    std::unordered_map<vulk::cpp2::VulkShaderLocation, std::string> inputLocations;
+    std::unordered_map<vulk::cpp2::VulkShaderLocation, std::string> outputLocations;
+    std::vector<uint32_t> pushConstants; // bitfield of vulk::cpp2::VulkShaderStage
 };
 
 class PipelineBuilder {
@@ -54,7 +47,7 @@ public:
         parsedShader.name = shaderPath.stem().string();
         parsedShader.entryPoint = glsl.get_entry_points_and_stages()[0].name;
 
-        // vulk::VulkShaderStage shaderStage;
+        // vulk::cpp2::VulkShaderStage shaderStage;
         // switch (glsl.get_execution_model()) {
         // case spv::ExecutionModelVertex:
         //     logger()->trace("Vertex Shader");
@@ -87,37 +80,33 @@ public:
         // For UBOs
         for (const spirv_cross::Resource& resource : resources.uniform_buffers) {
             // unsigned set = glsl.get_decoration(resource.id, spv::DecorationDescriptorSet);
-            vulk::VulkShaderUBOBinding::type binding = (vulk::VulkShaderUBOBinding::type)glsl.get_decoration(resource.id, spv::DecorationBinding);
-            VULK_ASSERT(vulk::_VulkShaderUBOBinding_VALUES_TO_NAMES.contains(binding), "Invalid UBO binding " + vulk::to_string(binding) + " in shader " + parsedShader.name);
+            vulk::cpp2::VulkShaderUBOBinding binding = (vulk::cpp2::VulkShaderUBOBinding)glsl.get_decoration(resource.id, spv::DecorationBinding);
             parsedShader.uboBindings[binding] = resource.name;
         }
 
         // For SBOs
         for (const spirv_cross::Resource& resource : resources.storage_buffers) {
             // unsigned set = glsl.get_decoration(resource.id, spv::DecorationDescriptorSet);
-            vulk::VulkShaderSSBOBinding::type binding = (vulk::VulkShaderSSBOBinding::type)glsl.get_decoration(resource.id, spv::DecorationBinding);
-            VULK_ASSERT(vulk::_VulkShaderSSBOBinding_VALUES_TO_NAMES.contains(binding), "Invalid SBO binding " + vulk::to_string(binding) + " in shader " + parsedShader.name);
+            vulk::cpp2::VulkShaderSSBOBinding binding = (vulk::cpp2::VulkShaderSSBOBinding)glsl.get_decoration(resource.id, spv::DecorationBinding);
             parsedShader.sboBindings[binding] = resource.name;
         }
 
         // For Samplers
         for (const spirv_cross::Resource& resource : resources.sampled_images) {
             // unsigned set = glsl.get_decoration(resource.id, spv::DecorationDescriptorSet);
-            vulk::VulkShaderTextureBinding::type binding = (vulk::VulkShaderTextureBinding::type)glsl.get_decoration(resource.id, spv::DecorationBinding);
-            VULK_ASSERT(vulk::_VulkShaderTextureBinding_VALUES_TO_NAMES.contains(binding),
-                        "Invalid sampler binding " + vulk::to_string(binding) + " in shader " + parsedShader.name);
+            vulk::cpp2::VulkShaderTextureBinding binding = (vulk::cpp2::VulkShaderTextureBinding)glsl.get_decoration(resource.id, spv::DecorationBinding);
             parsedShader.samplerBindings[binding] = resource.name;
         }
 
         // Inputs
         for (const spirv_cross::Resource& resource : resources.stage_inputs) {
-            vulk::VulkShaderLocation::type location = (vulk::VulkShaderLocation::type)glsl.get_decoration(resource.id, spv::DecorationLocation);
+            vulk::cpp2::VulkShaderLocation location = (vulk::cpp2::VulkShaderLocation)glsl.get_decoration(resource.id, spv::DecorationLocation);
             parsedShader.inputLocations[location] = resource.name;
         }
 
         // Outputs
         for (const spirv_cross::Resource& resource : resources.stage_outputs) {
-            vulk::VulkShaderLocation::type location = (vulk::VulkShaderLocation::type)glsl.get_decoration(resource.id, spv::DecorationLocation);
+            vulk::cpp2::VulkShaderLocation location = (vulk::cpp2::VulkShaderLocation)glsl.get_decoration(resource.id, spv::DecorationLocation);
             parsedShader.outputLocations[location] = resource.name;
         }
 
@@ -162,62 +151,77 @@ public:
         return getShaderInfo(shadersDir / type / (name + "." + type + "spv"));
     }
 
+    static VkShaderStageFlagBits getShaderStageFromStr(std::string s) {
+        static unordered_map<string, VkShaderStageFlagBits> shaderStageFromStr{
+            {"vert", VK_SHADER_STAGE_VERTEX_BIT},
+            {"frag", VK_SHADER_STAGE_FRAGMENT_BIT},
+            {"geom", VK_SHADER_STAGE_GEOMETRY_BIT},
+        };
+
+        return shaderStageFromStr.at(s);
+    }
+
     // e.g. the "vert" or "frag" part of the descriptor set
-    static void updateBuiltPipelineDef(ShaderInfo info, std::string stage, vulk::BuiltPipelineDef& bp) {
-        vulk::DescriptorSetDef& def = bp.descriptorSetDef;
-        VkShaderStageFlagBits stageFlag = getShaderStageFromStr(stage);
-        for (auto& ubo : info.uboBindings) {
-            def.uniformBuffers[stageFlag].push_back(ubo.first);
-        }
-        for (auto& sbo : info.sboBindings) {
-            def.storageBuffers[stageFlag].push_back(sbo.first);
-        }
+    static void updateBuiltPipelineDef(ShaderInfo info, std::string stage, vulk::cpp2::BuiltPipelineDef& bp) {
+        vulk::cpp2::DescriptorSetDef& def = *bp.descriptorSetDef_ref();
+        int32_t stageFlag = (int)getShaderStageFromStr(stage);
+        // for (auto& ubo : info.uboBindings) {
+        //     auto& v = def.uniformBuffers_ref()[stageFlag];
+        //     v.push_back((vulk::cpp2::VulkShaderUBOBinding)ubo.first);
+        // }
+        // for (auto& sbo : info.sboBindings) {
+        //     def.storageBuffers_ref()[stageFlag].push_back((vulk::cpp2::VulkShaderSSBOBinding)sbo.first);
+        // }
         for (auto& sampler : info.samplerBindings) {
-            def.imageSamplers[stageFlag].push_back(sampler.first);
+            auto imageSamplersRef = def.imageSamplers_ref(); // Get the field_ref
+            std::map<std::int32_t, std::vector<::vulk::cpp2::VulkShaderTextureBinding>>& samplers = *imageSamplersRef;
+            samplers[stageFlag].push_back((vulk::cpp2::VulkShaderTextureBinding)sampler.first);
+            // def.imageSamplers_ref()[stageFlag].push_back((vulk::cpp2::VulkShaderBinding)sampler.first);
         }
 
         for (uint32_t i = 0; i < info.pushConstants.size(); i++) {
-            if (i >= bp.pushConstants.size()) {
-                bp.pushConstants.resize(i + 1);
-                vulk::PushConstantDef pc = {};
-                pc.stageFlags = (uint32_t)stageFlag;
-                pc.size = info.pushConstants[i];
-                bp.pushConstants[i] = pc;
+            if (i >= bp.get_pushConstants().size()) {
+                bp.pushConstants_ref()->resize(i + 1);
+                vulk::cpp2::PushConstantDef pc = {};
+                pc.stageFlags_ref() = (uint32_t)stageFlag;
+                pc.size_ref() = info.pushConstants[i];
+                bp.pushConstants_ref()[i] = pc;
             } else {
-                VULK_ASSERT(bp.pushConstants[i].size == (int)info.pushConstants[i], "Push constant size mismatch");
-                uint32_t flags = bp.pushConstants[i].stageFlags;
+                auto const& m = bp.get_pushConstants();
+                VULK_ASSERT(m[i].get_size() == (int)info.pushConstants[i], "Push constant size mismatch");
+                uint32_t flags = (*bp.pushConstants_ref())[i].get_stageFlags();
                 flags |= (uint32_t)stageFlag;
-                bp.pushConstants[i].stageFlags = flags;
+                (*bp.pushConstants_ref())[i].stageFlags_ref() = flags;
             }
         }
     }
 
-    static vulk::BuiltPipelineDef buildPipeline(vulk::BuiltPipelineDef pipelineIn, std::filesystem::path builtShadersDir) {
+    static vulk::cpp2::BuiltPipelineDef buildPipeline(vulk::cpp2::BuiltPipelineDef pipelineIn, std::filesystem::path builtShadersDir) {
         if (!std::filesystem::exists(builtShadersDir)) {
             std::cerr << "Shaders directory does not exist: " << builtShadersDir << std::endl;
             VULK_THROW("PipelineBuilder: Shaders directory does not exist");
         }
 
-        vulk::BuiltPipelineDef pipelineOut(pipelineIn);
+        vulk::cpp2::BuiltPipelineDef pipelineOut(pipelineIn);
 
         std::vector<ShaderInfo> shaderInfos;
-        ShaderInfo vertShaderInfo = infoFromShader(pipelineIn.vertShaderName, "vert", builtShadersDir);
+        ShaderInfo vertShaderInfo = infoFromShader(pipelineIn.get_vertShaderName(), "vert", builtShadersDir);
         shaderInfos.push_back(vertShaderInfo);
         updateBuiltPipelineDef(vertShaderInfo, "vert", pipelineOut);
 
-        if (!pipelineIn.geomShaderName.empty()) {
-            ShaderInfo info = infoFromShader(pipelineIn.geomShaderName, "geom", builtShadersDir);
+        if (!pipelineIn.get_geomShaderName().empty()) {
+            ShaderInfo info = infoFromShader(pipelineIn.get_geomShaderName(), "geom", builtShadersDir);
             shaderInfos.push_back(info);
             updateBuiltPipelineDef(info, "geom", pipelineOut);
         }
-        if (!pipelineIn.fragShaderName.empty()) {
-            ShaderInfo info = infoFromShader(pipelineIn.fragShaderName, "frag", builtShadersDir);
+        if (!pipelineIn.get_fragShaderName().empty()) {
+            ShaderInfo info = infoFromShader(pipelineIn.get_fragShaderName(), "frag", builtShadersDir);
             shaderInfos.push_back(info);
             updateBuiltPipelineDef(info, "frag", pipelineOut);
         }
 
         for (auto& [location, name] : vertShaderInfo.inputLocations) {
-            pipelineOut.vertInputs.push_back(location);
+            pipelineOut.vertInputs_ref()->push_back(location);
         }
 
         std::string errMsgOut;
@@ -235,7 +239,7 @@ public:
         return pipelineOut;
     }
 
-    static void buildPipelineFile(vulk::BuiltPipelineDef pipelineIn, std::filesystem::path builtShadersDir, std::filesystem::path pipelineFileOut) {
+    static void buildPipelineFile(vulk::cpp2::BuiltPipelineDef pipelineIn, std::filesystem::path builtShadersDir, std::filesystem::path pipelineFileOut) {
         if (!std::filesystem::exists(builtShadersDir)) {
             std::cerr << "Shaders directory does not exist: " << builtShadersDir << std::endl;
             VULK_THROW("PipelineBuilder: Shaders directory does not exist");
@@ -245,8 +249,8 @@ public:
             VULK_THROW("PipelineBuilder: Output directory does not exist");
         }
 
-        vulk::BuiltPipelineDef pipelineOut = buildPipeline(pipelineIn, builtShadersDir);
-        writeDefToFile(pipelineFileOut, pipelineOut);
+        vulk::cpp2::BuiltPipelineDef pipelineOut = buildPipeline(pipelineIn, builtShadersDir);
+        writeDefToFile(pipelineFileOut.string(), pipelineOut);
     }
 
     static void buildPipelineFromFile(std::filesystem::path builtShadersDir, std::filesystem::path pipelineFileOut, fs::path pipelineFileSrc) {
@@ -263,8 +267,8 @@ public:
             VULK_THROW("PipelineBuilder: Output directory does not exist");
         }
 
-        vulk::BuiltPipelineDef def;
-        readDefFromFile(pipelineFileSrc, def);
+        vulk::cpp2::BuiltPipelineDef def;
+        readDefFromFile(pipelineFileSrc.string(), def);
         buildPipelineFile(def, builtShadersDir, pipelineFileOut);
     }
 

@@ -47,8 +47,8 @@ class VulkDescriptorSetBuilder {
     };
 
     struct PerFrameInfo {
-        std::unordered_map<vulk::VulkShaderUBOBinding::type, BufSetUpdaterInfo> uniformSetInfos;
-        std::unordered_map<vulk::VulkShaderSSBOBinding::type, BufSetUpdaterInfo> ssboSetInfos;
+        std::unordered_map<vulk::cpp2::VulkShaderUBOBinding, BufSetUpdaterInfo> uniformSetInfos;
+        std::unordered_map<vulk::cpp2::VulkShaderSSBOBinding, BufSetUpdaterInfo> ssboSetInfos;
     };
     std::array<PerFrameInfo, MAX_FRAMES_IN_FLIGHT> perFrameInfos;
 
@@ -56,7 +56,7 @@ class VulkDescriptorSetBuilder {
         std::shared_ptr<VulkImageView> imageView;
         std::shared_ptr<VulkSampler> sampler;
     };
-    std::array<std::unordered_map<vulk::VulkShaderTextureBinding::type, SamplerSetUpdaterInfo>, MAX_FRAMES_IN_FLIGHT> perFrameSamplerSetInfos;
+    std::array<std::unordered_map<vulk::cpp2::VulkShaderTextureBinding, SamplerSetUpdaterInfo>, MAX_FRAMES_IN_FLIGHT> perFrameSamplerSetInfos;
 
 public:
     VulkDescriptorSetBuilder(Vulk& vk)
@@ -71,7 +71,7 @@ public:
     }
 
     template <typename T>
-    VulkDescriptorSetBuilder& addFrameUBOs(VulkFrameUBOs<T> const& ubos, VkShaderStageFlagBits stageFlags, vulk::VulkShaderUBOBinding::type bindingID) {
+    VulkDescriptorSetBuilder& addFrameUBOs(VulkFrameUBOs<T> const& ubos, VkShaderStageFlagBits stageFlags, vulk::cpp2::VulkShaderUBOBinding bindingID) {
         layoutBuilder.addUniformBuffer(stageFlags, bindingID);
         poolBuilder.addUniformBufferCount(MAX_FRAMES_IN_FLIGHT);
         for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
@@ -82,7 +82,7 @@ public:
 
     // for non-mutable uniform buffers
     template <typename T>
-    VulkDescriptorSetBuilder& addUniformBuffer(VulkUniformBuffer<T> const& uniformBuffer, VkShaderStageFlagBits stageFlags, vulk::VulkShaderUBOBinding::type bindingID) {
+    VulkDescriptorSetBuilder& addUniformBuffer(VulkUniformBuffer<T> const& uniformBuffer, VkShaderStageFlagBits stageFlags, vulk::cpp2::VulkShaderUBOBinding bindingID) {
         layoutBuilder.addUniformBuffer(stageFlags, bindingID);
         poolBuilder.addUniformBufferCount(MAX_FRAMES_IN_FLIGHT);
         for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
@@ -92,7 +92,7 @@ public:
     }
 
     // for non-mutable image views that are the same for both frames.
-    VulkDescriptorSetBuilder& addBothFramesImageSampler(VkShaderStageFlags stageFlags, vulk::VulkShaderTextureBinding::type bindingID, std::shared_ptr<VulkImageView> imageView,
+    VulkDescriptorSetBuilder& addBothFramesImageSampler(VkShaderStageFlags stageFlags, vulk::cpp2::VulkShaderTextureBinding bindingID, std::shared_ptr<VulkImageView> imageView,
                                                         std::shared_ptr<VulkSampler> sampler) {
         layoutBuilder.addImageSampler(stageFlags, bindingID);
         poolBuilder.addCombinedImageSamplerCount(MAX_FRAMES_IN_FLIGHT);
@@ -101,7 +101,7 @@ public:
         return *this;
     }
 
-    VulkDescriptorSetBuilder& addFrameImageSampler(uint32_t frame, VkShaderStageFlags stageFlags, vulk::VulkShaderTextureBinding::type bindingID,
+    VulkDescriptorSetBuilder& addFrameImageSampler(uint32_t frame, VkShaderStageFlags stageFlags, vulk::cpp2::VulkShaderTextureBinding bindingID,
                                                    std::shared_ptr<VulkImageView> imageView, std::shared_ptr<VulkSampler> sampler) {
         layoutBuilder.addImageSampler(stageFlags, bindingID);
         poolBuilder.addCombinedImageSamplerCount(1);

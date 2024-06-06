@@ -8,12 +8,6 @@
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/string_cast.hpp>
 
-#include <cereal/archives/binary.hpp>
-#include <cereal/archives/json.hpp>
-#include <cereal/types/memory.hpp>
-#include <cereal/types/unordered_map.hpp>
-#include <cereal/types/vector.hpp>
-
 #include <stb_image.h>
 
 #ifdef _MSC_VER
@@ -42,8 +36,14 @@
 
 #include "VulkException.h"
 #include "VulkLogger.h"
-// #include "VulkShaderEnums_generated.h"
+// #include "VulkShaderEnums_types.h"
+#pragma warning(push)
+#pragma warning(disable : 4702) // unreachable code
+#include "gen-cpp2/VulkResourceMetadata_data.h"
+#include "gen-cpp2/VulkResourceMetadata_types.h"
+#include "gen-cpp2/VulkShaderEnums_data.h"
 #include "gen-cpp2/VulkShaderEnums_types.h"
+#pragma warning(pop)
 
 #define VK_CALL(func)                                                                                                     \
     do {                                                                                                                  \

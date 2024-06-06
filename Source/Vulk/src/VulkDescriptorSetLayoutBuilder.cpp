@@ -2,7 +2,8 @@
 #include "Vulk/Vulk.h"
 #include "Vulk/VulkUtil.h"
 
-VulkDescriptorSetLayoutBuilder& VulkDescriptorSetLayoutBuilder::addUniformBuffer(VkShaderStageFlags stageFlags, vulk::VulkShaderUBOBinding::type binding) {
+VulkDescriptorSetLayoutBuilder& VulkDescriptorSetLayoutBuilder::addUniformBuffer(VkShaderStageFlags stageFlags, vulk::cpp2::VulkShaderUBOBinding bindingIn) {
+    uint32_t binding = (uint32_t)bindingIn;
     if (!layoutBindingsMap.contains(binding)) {
         VkDescriptorSetLayoutBinding layoutBinding{};
         layoutBinding.binding = binding;
@@ -16,7 +17,8 @@ VulkDescriptorSetLayoutBuilder& VulkDescriptorSetLayoutBuilder::addUniformBuffer
     return *this;
 }
 
-VulkDescriptorSetLayoutBuilder& VulkDescriptorSetLayoutBuilder::addImageSampler(VkShaderStageFlags stageFlags, vulk::VulkShaderTextureBinding::type binding) {
+VulkDescriptorSetLayoutBuilder& VulkDescriptorSetLayoutBuilder::addImageSampler(VkShaderStageFlags stageFlags, vulk::cpp2::VulkShaderTextureBinding bindingIn) {
+    uint32_t binding = (uint32_t)bindingIn;
     if (!layoutBindingsMap.contains(binding)) {
         VkDescriptorSetLayoutBinding layoutBinding{};
         layoutBinding.binding = binding;
@@ -30,7 +32,8 @@ VulkDescriptorSetLayoutBuilder& VulkDescriptorSetLayoutBuilder::addImageSampler(
     return *this;
 }
 
-VulkDescriptorSetLayoutBuilder& VulkDescriptorSetLayoutBuilder::addStorageBuffer(VkShaderStageFlags stageFlags, vulk::VulkShaderSSBOBinding::type binding) {
+VulkDescriptorSetLayoutBuilder& VulkDescriptorSetLayoutBuilder::addStorageBuffer(VkShaderStageFlags stageFlags, vulk::cpp2::VulkShaderSSBOBinding bindingIn) {
+    uint32_t binding = (uint32_t)bindingIn;
     if (!layoutBindingsMap.contains(binding)) {
         VkDescriptorSetLayoutBinding layoutBinding{};
         layoutBinding.binding = binding;
