@@ -1,4 +1,5 @@
 cmake_minimum_required (VERSION 3.13)
+cmake_policy(SET CMP0091 NEW) # enable MSVC_RUNTIME_LIBRARY
 
 project ("VulkanRoot" CXX)
 
@@ -27,9 +28,12 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # this basically did nothing to build times, but keeping it
 if(MSVC)
     message("Using MSVC")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /INCREMENTAL")
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /INCREMENTAL")
-    set(CMAKE_GENERATOR_PLATFORM x64)
+    #set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDebug")
+    #set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>") # /MDd or /MD
+    #message("CMAKE_MSVC_RUNTIME_LIBRARY: ${CMAKE_MSVC_RUNTIME_LIBRARY}")
+    #et(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /INCREMENTAL")
+    #set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /INCREMENTAL")
+    #set(CMAKE_GENERATOR_PLATFORM x64)
     add_compile_options(/W4 /MP /WX /sdl)
     add_compile_options(/EHa) # enable exception handling - this will allow SEH to be caught by catch(...) blocks
     add_definitions(-DGLOG_USE_GLOG_EXPORT) # glog errors without this, but some sub vcproject is using it so blarg.
@@ -70,9 +74,6 @@ else()
         # somehow some define for min and max is being set, we don't want it
         -DNOMINMAX
     )
-endif()
-
-if(WIN32)
 endif()
 
 # message(STATUS "Using vcpkg toolchain file: ${CMAKE_TOOLCHAIN_FILE}")

@@ -17,11 +17,8 @@ find_package(CLI11 CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 
 # Add an executable
-file(GLOB SOURCES "*.cpp")
-add_executable(BuildTool 
-    ${SOURCES}
-)
-# add_dependencies(BuildTool CompileShadersTarget)
+message("BuildTool: CMAKE_MSVC_RUNTIME_LIBRARY is ${CMAKE_MSVC_RUNTIME_LIBRARY}")
+add_executable(BuildTool BuildTool.cpp)
 
 target_include_directories(BuildTool PRIVATE ${GENSCHEMAFILES_INCLUDE_DIRS})
 
