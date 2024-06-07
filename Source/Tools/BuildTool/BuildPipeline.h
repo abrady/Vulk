@@ -163,15 +163,15 @@ public:
 
     // e.g. the "vert" or "frag" part of the descriptor set
     static void updateBuiltPipelineDef(ShaderInfo info, std::string stage, vulk::cpp2::BuiltPipelineDef& bp) {
-        vulk::cpp2::DescriptorSetDef& def = *bp.descriptorSetDef_ref();
+        vulk::cpp2::DescriptorSetDef& def = bp.descriptorSetDef_ref().value();
         int32_t stageFlag = (int)getShaderStageFromStr(stage);
-        // for (auto& ubo : info.uboBindings) {
-        //     auto& v = def.uniformBuffers_ref()[stageFlag];
-        //     v.push_back((vulk::cpp2::VulkShaderUBOBinding)ubo.first);
-        // }
-        // for (auto& sbo : info.sboBindings) {
-        //     def.storageBuffers_ref()[stageFlag].push_back((vulk::cpp2::VulkShaderSSBOBinding)sbo.first);
-        // }
+        for (auto& ubo : info.uboBindings) {
+            auto& v = def.uniformBuffers_ref()[stageFlag];
+            v.push_back((vulk::cpp2::VulkShaderUBOBinding)ubo.first);
+        }
+        for (auto& sbo : info.sboBindings) {
+            def.storageBuffers_ref()[stageFlag].push_back((vulk::cpp2::VulkShaderSSBOBinding)sbo.first);
+        }
         for (auto& sampler : info.samplerBindings) {
             auto imageSamplersRef = def.imageSamplers_ref(); // Get the field_ref
             std::map<std::int32_t, std::vector<::vulk::cpp2::VulkShaderTextureBinding>>& samplers = *imageSamplersRef;

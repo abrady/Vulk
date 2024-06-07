@@ -9,8 +9,6 @@ project ("VulkanRoot" CXX)
 
 # note: don't forget the kits for this come from C:\Users\abrady\AppData\Local\CMakeTools\cmake-tools-kits.json
 
-include(CTest)
-
 if(NOT CMAKE_BUILD_TYPE)
     message("CMAKE_BUILD_TYPE not set, defaulting to Debug")
     set(CMAKE_BUILD_TYPE Debug)
@@ -118,22 +116,10 @@ file(WRITE ${ASSETS_OUTPUT_FILE} "")
 ## testing
 ######
 
-# Add a custom target that builds only the tests, so we can build them all at once in our github workflow
-# NOTE: used by subprojects to add their tests to the custom target
-add_custom_target(build_tests)
+include(CTest)
 
 # this has to be before we include any subdirectories
 enable_testing()
-
-
-# Define a function to add tests and accumulate them into a custom target so we can
-# build them all at once in our github workflow
-function(vulk_add_and_remember_test target)
-  # Register the test with CTest
-  add_test(NAME ${target} COMMAND ${target})
-  # Add the test to the custom target
-  add_dependencies(build_tests ${target})
-endfunction()
 
 ######
 ## subdirectory CMakeLists.txt

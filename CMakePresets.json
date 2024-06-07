@@ -22,5 +22,21 @@
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install"
             }
         }
+    ],
+    "testPresets": [
+        {
+            "name": "debug",
+            "description": "",
+            "displayName": "",
+            "configurePreset": "debug-x64",
+            "output": {
+                "outputOnFailure": true
+            },
+            "filter": {
+                "include": {
+                    "name": ".*"
+                }
+            }
+        }
     ]
 }

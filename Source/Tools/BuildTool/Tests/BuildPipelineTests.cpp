@@ -87,10 +87,10 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
 
         auto loc2 = std::vector<vulk::cpp2::VulkShaderUBOBinding>{vulk::cpp2::VulkShaderUBOBinding::Xforms, vulk::cpp2::VulkShaderUBOBinding::ModelXform,
                                                                   vulk::cpp2::VulkShaderUBOBinding::DebugNormals};
-        CHECK(res.get_descriptorSetDef().get_uniformBuffers().at(VK_SHADER_STAGE_VERTEX_BIT) == loc2);
-        CHECK(res.get_descriptorSetDef().get_uniformBuffers().at(VK_SHADER_STAGE_GEOMETRY_BIT) == std::vector<vulk::cpp2::VulkShaderUBOBinding>{});
-        CHECK(res.get_descriptorSetDef().get_uniformBuffers().at(VK_SHADER_STAGE_FRAGMENT_BIT) ==
-              std::vector<vulk::cpp2::VulkShaderUBOBinding>{vulk::cpp2::VulkShaderUBOBinding::EyePos});
+        auto ub = res.get_descriptorSetDef().get_uniformBuffers();
+        CHECK(ub.at(VK_SHADER_STAGE_VERTEX_BIT) == loc2);
+        CHECK(ub.count(VK_SHADER_STAGE_GEOMETRY_BIT) == 0);
+        CHECK(ub.at(VK_SHADER_STAGE_FRAGMENT_BIT) == std::vector<vulk::cpp2::VulkShaderUBOBinding>{vulk::cpp2::VulkShaderUBOBinding::EyePos});
     }
 
     SECTION("buildPipelineFile") {
@@ -128,8 +128,8 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
         CHECK(builtDef.get_pushConstants()[0].get_stageFlags() == (VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_GEOMETRY_BIT));
         CHECK(builtDef.get_pushConstants()[0].get_size() == 4);
 
-        REQUIRE(sizeof(def) == 232);      // reminder to add new fields to the test
-        REQUIRE(sizeof(builtDef) == 584); // reminder to add new fields to the test
+        REQUIRE(sizeof(def) == 472);      // reminder to add new fields to the test
+        REQUIRE(sizeof(builtDef) == 472); // reminder to add new fields to the test
         // I would do a static assert here but it doesn't print out the sizes.
         auto v2 = std::vector<vulk::cpp2::VulkShaderUBOBinding>{vulk::cpp2::VulkShaderUBOBinding::Xforms, vulk::cpp2::VulkShaderUBOBinding::ModelXform,
                                                                 vulk::cpp2::VulkShaderUBOBinding::DebugNormals};

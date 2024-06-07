@@ -128,5 +128,10 @@
         //"--profiling-output=${workspaceFolder}/build/configure_profile.json",
         //"--profiling-format=google-trace"
     ],
-    "cmake.buildArgs": []
+    "cmake.buildArgs": [],
+    "cmake.ctestArgs": [
+        "-C",
+        "Debug"
+    ],
+    "cmake.allowCommentsInPresetsFile": true
 }

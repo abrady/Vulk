@@ -114,14 +114,6 @@ void pipelineBuilder(fs::path builtShadersDir, fs::path pipelineFileOut, fs::pat
         logger->set_level(spdlog::level::trace);
     }
 
-    vulk::cpp2::BuiltPipelineDef def;
-    *def.version_ref() = 1;
-    *def.name_ref() = "TestPipeline";
-    *def.vertShaderName_ref() = "test.vert.spv";
-    *def.geomShaderName_ref() = "test.geom.spv";
-    *def.fragShaderName_ref() = "test.frag.spv";
-    writeDefToFile("foo.pipeline", def);
-
     logger->info("PipelineBuilder: Building pipeline from file: {}", pipelineFileIn.string());
     if (!fs::exists(builtShadersDir)) {
         logger->error("Shaders directory does not exist: {}", builtShadersDir.string());
