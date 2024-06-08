@@ -8,36 +8,44 @@
 class DebugMouseEventHandler : public MouseEventHandler {
 public:
     void onClick(double xpos, double ypos, MouseEventContext const& ctxt) override {
-        std::cout << "Click at: (" << xpos << ", " << ypos << ")" << " Shift: " << ctxt.shift << " Control: " << ctxt.control << " Alt: " << ctxt.alt << std::endl;
+        std::cout << "Click at: (" << xpos << ", " << ypos << ")"
+                  << " Shift: " << ctxt.shift << " Control: " << ctxt.control << " Alt: " << ctxt.alt << std::endl;
     }
 
     void onDoubleClick(double xpos, double ypos, MouseEventContext const& ctxt) override {
-        std::cout << "Double Click at: (" << xpos << ", " << ypos << ")" << " Shift: " << ctxt.shift << " Control: " << ctxt.control << " Alt: " << ctxt.alt << std::endl;
+        std::cout << "Double Click at: (" << xpos << ", " << ypos << ")"
+                  << " Shift: " << ctxt.shift << " Control: " << ctxt.control << " Alt: " << ctxt.alt << std::endl;
     }
 
     void onMouseDown(double xpos, double ypos, MouseEventContext const& ctxt) override {
-        std::cout << "Mouse Down at: (" << xpos << ", " << ypos << ")" << " Shift: " << ctxt.shift << " Control: " << ctxt.control << " Alt: " << ctxt.alt << std::endl;
+        std::cout << "Mouse Down at: (" << xpos << ", " << ypos << ")"
+                  << " Shift: " << ctxt.shift << " Control: " << ctxt.control << " Alt: " << ctxt.alt << std::endl;
     }
 
     void onMouseMove(double xpos, double ypos, MouseEventContext const& ctxt) override {
-        std::cout << "Mouse Move to: (" << xpos << ", " << ypos << ")" << " Shift: " << ctxt.shift << " Control: " << ctxt.control << " Alt: " << ctxt.alt << std::endl;
+        std::cout << "Mouse Move to: (" << xpos << ", " << ypos << ")"
+                  << " Shift: " << ctxt.shift << " Control: " << ctxt.control << " Alt: " << ctxt.alt << std::endl;
     }
 
     void onMouseUp(double xpos, double ypos, MouseEventContext const& ctxt) override {
-        std::cout << "Mouse Up at: (" << xpos << ", " << ypos << ")" << " Shift: " << ctxt.shift << " Control: " << ctxt.control << " Alt: " << ctxt.alt << std::endl;
+        std::cout << "Mouse Up at: (" << xpos << ", " << ypos << ")"
+                  << " Shift: " << ctxt.shift << " Control: " << ctxt.control << " Alt: " << ctxt.alt << std::endl;
     }
 
     void onDrag(double xpos, double ypos, MouseDragContext const& drag, MouseEventContext const& ctxt) override {
-        std::cout << "Dragging at: (" << xpos << ", " << ypos << ")" << " Shift: " << ctxt.shift << "is dragging: " << ctxt.isDragging << " Control: " << ctxt.control
-                  << " Alt: " << ctxt.alt << " Drag start: (" << drag.dragStartX << ", " << drag.dragStartY << ")" << std::endl;
+        std::cout << "Dragging at: (" << xpos << ", " << ypos << ")"
+                  << " Shift: " << ctxt.shift << "is dragging: " << ctxt.isDragging << " Control: " << ctxt.control << " Alt: " << ctxt.alt << " Drag start: (" << drag.dragStartX
+                  << ", " << drag.dragStartY << ")" << std::endl;
     }
 
     void onDragStart(double xpos, double ypos, MouseEventContext const& ctxt) override {
-        std::cout << "Drag Start at: (" << xpos << ", " << ypos << ")" << " Shift: " << ctxt.shift << " Control: " << ctxt.control << " Alt: " << ctxt.alt << std::endl;
+        std::cout << "Drag Start at: (" << xpos << ", " << ypos << ")"
+                  << " Shift: " << ctxt.shift << " Control: " << ctxt.control << " Alt: " << ctxt.alt << std::endl;
     }
 
     void onDragEnd(double xpos, double ypos, MouseEventContext const& ctxt) override {
-        std::cout << "Drag End at: (" << xpos << ", " << ypos << ")" << " Shift: " << ctxt.shift << " Control: " << ctxt.control << " Alt: " << ctxt.alt << std::endl;
+        std::cout << "Drag End at: (" << xpos << ", " << ypos << ")"
+                  << " Shift: " << ctxt.shift << " Control: " << ctxt.control << " Alt: " << ctxt.alt << std::endl;
     }
 };
 
@@ -976,7 +984,7 @@ void Vulk::transitionImageLayout(VkCommandBuffer commandBuffer, VkImage image, V
         destinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
         aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     } else {
-        VULK_THROW("unsupported layout transition : " + std::to_string(oldLayout) + " -> " + std::to_string(newLayout));
+        VULK_THROW("unsupported layout transition : {} -> {}", std::to_string(oldLayout), std::to_string(newLayout));
     }
 
     barrier.subresourceRange.aspectMask = aspectMask;

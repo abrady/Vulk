@@ -5,6 +5,8 @@ cmake_minimum_required(VERSION 3.10)
 
 project(Assets)
 
+message("Building Assets")
+
 # define a function to copy assets from the source directory to the build directory
 function(copy_assets DIR_NAME GLOBAL_ASSETS_VAR)
     set(ASSETS_TO_BUILD ${${GLOBAL_ASSETS_VAR}}) # get the list of assets from parent scope
@@ -55,6 +57,7 @@ endforeach()
 # to the build tool, so that the build tool can know what kind of asset it is
 # not my favorite approach but fine for now.
 function(build_assets DIR_NAME GLOBAL_ASSETS_VAR)
+    message("building assets in ${DIR_NAME}")
     set(ASSETS_TO_BUILD ${${GLOBAL_ASSETS_VAR}}) # get the list of assets from parent scope
     set(SOURCE_DIR "${CMAKE_SOURCE_DIR}/Assets/${DIR_NAME}")
     set(DEST_DIR "${BUILT_RESOURCES_TARGET_DIR}/Assets/${DIR_NAME}") 
@@ -64,6 +67,7 @@ function(build_assets DIR_NAME GLOBAL_ASSETS_VAR)
     foreach(ASSET_FILE ${ASSETS})
         file(RELATIVE_PATH REL_PATH "${SOURCE_DIR}" "${ASSET_FILE}")
         set(DEST "${DEST_DIR}/${REL_PATH}")
+        message("adding a build of ${ASSET_FILE} to ${DEST}")
         get_filename_component(DEST_FILE_DIR "${DEST}" DIRECTORY)
         file(MAKE_DIRECTORY "${DEST_FILE_DIR}")
         add_custom_command(
@@ -108,7 +112,7 @@ file(GLOB_RECURSE PIPELINE_SRC_FILES CONFIGURE_DEPENDS "${PIPELINES_SOURCE_DIR}/
 # removed BuildTool dependency
 foreach(FILE ${PIPELINE_SRC_FILES})
     get_filename_component(FILE_NAME ${FILE} NAME)
-    set(ASSETS_OUTPUT_FILE "${PIPELINES_DEST_DIR}/${FILE_NAME}.bin")
+    set(ASSETS_OUTPUT_FILE "${PIPELINES_DEST_DIR}/${FILE_NAME}")
     add_custom_command(
         OUTPUT ${ASSETS_OUTPUT_FILE}
         COMMAND $<TARGET_FILE:BuildTool> pipeline ${SHADER_DEST_DIR} ${ASSETS_OUTPUT_FILE} ${FILE}

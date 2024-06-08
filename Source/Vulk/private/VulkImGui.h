@@ -143,7 +143,7 @@ public:
 public:
     // make your ImGui:: type calls between the begin and end
     void beginFrame() {
-        VULK_ASSERT(!drawData, "drawData is not null, did you forget to call render?");
+        VULK_ASSERT_FMT(!drawData, "drawData is not null, did you forget to call render?");
         // has to happen before any ImGUI calls
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -151,13 +151,13 @@ public:
     }
 
     void endFrame() {
-        VULK_ASSERT(!drawData, "drawData is not null, did you forget to call render?");
+        VULK_ASSERT_FMT(!drawData, "drawData is not null, did you forget to call render?");
         ImGui::Render();
         drawData = ImGui::GetDrawData();
     }
 
     void renderFrame(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
-        VULK_ASSERT(drawData, "drawData is null, did you forget to call endFrame?");
+        VULK_ASSERT_FMT(drawData, "drawData is null, did you forget to call endFrame?");
         // render the UI
         VkRenderPassBeginInfo info = {};
         info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;

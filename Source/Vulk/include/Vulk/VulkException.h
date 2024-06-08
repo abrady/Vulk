@@ -72,17 +72,17 @@ public:
 #    define VULKEXCEPTION(msg) VulkException(__FILE__, __LINE__, msg)
 #endif
 
-#define VULK_THROW(msg) throw VULKEXCEPTION(msg)
+#define VULK_THROW(...) throw VULKEXCEPTION(fmt::format(__VA_ARGS__))
 #define VULK_THROW_FMT(format_str, ...) throw VULKEXCEPTION(fmt::format(format_str, __VA_ARGS__))
-#define VULK_ASSERT(cond, msg) \
-    do {                       \
-        if (!(cond)) {         \
-            VULK_THROW(msg);   \
-        }                      \
+#define VULK_ASSERT_FMT(cond, ...)                         \
+    do {                                                   \
+        if (!(cond)) {                                     \
+            throw VULKEXCEPTION(fmt::format(__VA_ARGS__)); \
+        }                                                  \
     } while (0)
-#define VULK_THROW_IF(cond, msg) \
-    do {                         \
-        if (cond) {              \
-            VULK_THROW(msg);     \
-        }                        \
+#define VULK_ASSERT(cond)               \
+    do {                                \
+        if (!(cond)) {                  \
+            throw VULKEXCEPTION(#cond); \
+        }                               \
     } while (0)

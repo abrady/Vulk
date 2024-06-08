@@ -26,6 +26,7 @@ static vulk::cpp2::SrcPipelineDef makeTestPipelineDeclDef() {
     def.cullMode_ref().value() = "BACK";
     def.blending_ref()->enabled_ref() = true;
     def.blending_ref()->colorWriteMask_ref() = "RB";
+    def.cullMode_ref() = "BACK";
     return def;
 }
 

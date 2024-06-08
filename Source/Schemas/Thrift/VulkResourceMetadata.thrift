@@ -150,8 +150,8 @@ union GeoMeshDef {
 
 struct ModelDef {
     1: string name;
-    2: string meshName;
-    3: string materialName;
+    2: string mesh;
+    3: string material;
     4: MeshDefType meshDefType;
     5: GeoMeshDefType geoMeshDefType;
     6: GeoMeshDef geoMeshDef;

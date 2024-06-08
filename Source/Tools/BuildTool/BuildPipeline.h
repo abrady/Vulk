@@ -122,7 +122,7 @@ public:
                 location = glsl.get_decoration(resource.id, spv::DecorationLocation);
             }
             logger()->trace("Push constant buffer: name={}, size={}, location={}", resource.name, size, location);
-            VULK_ASSERT(location < 32, "Push constant location is too large"); // no idea what the max may eventually be but this isn't crazy
+            VULK_ASSERT_FMT(location < 32, "Push constant location is too large"); // no idea what the max may eventually be but this isn't crazy
             if (parsedShader.pushConstants.size() <= location) {
                 parsedShader.pushConstants.resize(location + 1);
             }
@@ -189,7 +189,7 @@ public:
                 bp.pushConstants_ref()[i] = pc;
             } else {
                 auto const& m = bp.get_pushConstants();
-                VULK_ASSERT(m[i].get_size() == (int)info.pushConstants[i], "Push constant size mismatch");
+                VULK_ASSERT_FMT(m[i].get_size() == (int)info.pushConstants[i], "Push constant size mismatch");
                 uint32_t flags = (*bp.pushConstants_ref())[i].get_stageFlags();
                 flags |= (uint32_t)stageFlag;
                 (*bp.pushConstants_ref())[i].stageFlags_ref() = flags;
@@ -225,9 +225,17 @@ public:
         apache::thrift::util::tryParseEnum(pipelineIn.get_primitiveTopology(), &pipelineOut.primitiveTopology_ref().value());
         pipelineOut.depthTestEnabled_ref() = pipelineIn.get_depthTestEnabled();
         pipelineOut.depthWriteEnabled_ref() = pipelineIn.get_depthWriteEnabled();
-        apache::thrift::util::tryParseEnum(pipelineIn.get_depthCompareOp(), &pipelineOut.depthCompareOp_ref().value());
-        apache::thrift::util::tryParseEnum(pipelineIn.get_polygonMode(), &pipelineOut.polygonMode_ref().value());
-        pipelineOut.cullMode_ref() = (int)apache::thrift::util::enumValueOrThrow<vulk::cpp2::VulkCullModeFlags>(pipelineIn.get_cullMode());
+        if (pipelineIn.depthCompareOp().is_set()) {
+            VULK_ASSERT_FMT(apache::thrift::util::tryParseEnum(pipelineIn.get_depthCompareOp(), &pipelineOut.depthCompareOp_ref().value()), "Invalid depthCompareOp value {}",
+                            pipelineIn.get_depthCompareOp());
+        }
+        if (pipelineIn.polygonMode().is_set()) {
+            VULK_ASSERT_FMT(apache::thrift::util::tryParseEnum(pipelineIn.get_polygonMode(), &pipelineOut.polygonMode_ref().value()), "Invalid polygonMode value {}",
+                            pipelineIn.get_polygonMode());
+        }
+        if (pipelineIn.cullMode().is_set()) {
+            pipelineOut.cullMode_ref() = (int)apache::thrift::util::enumValueOrThrow<vulk::cpp2::VulkCullModeFlags>(pipelineIn.get_cullMode());
+        }
         pipelineOut.blending_ref() = pipelineIn.get_blending();
         static_assert(sizeof(pipelineIn) == 432);
 
@@ -260,7 +268,7 @@ public:
             }
         }
         if (!errMsgOut.empty()) {
-            VULK_THROW(errMsgOut);
+            VULK_THROW("{}", errMsgOut);
         }
 
         return pipelineOut;
@@ -304,7 +312,7 @@ private:
         std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
         if (!file.is_open()) {
-            VULK_THROW("Failed to open file " + filename.string());
+            VULK_THROW("Failed to open file {}", filename.string());
         }
 
         size_t fileSize = (size_t)file.tellg();

@@ -105,7 +105,7 @@ VulkPipelineBuilder& VulkPipelineBuilder::setDepthCompareOp(VkCompareOp compareO
 }
 
 VulkPipelineBuilder& VulkPipelineBuilder::addVertexInput(vulk::cpp2::VulkShaderLocation locationIn) {
-    VULK_THROW_IF(vertInputs.find(locationIn) != vertInputs.end(), "Vertex input location already exists");
+    VULK_ASSERT_FMT(vertInputs.find(locationIn) == vertInputs.end(), "Vertex input location already exists");
     uint32_t location = static_cast<uint32_t>(locationIn);
     VkFormat format;
     uint32_t stride;

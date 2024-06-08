@@ -33,12 +33,12 @@ namespace fs = std::filesystem;
 
 MaterialDef loadMaterialDef(const fs::path& file) {
     if (!fs::exists(file)) {
-        VULK_THROW("Material file does not exist: " + file.string());
+        VULK_THROW("Material file does not exist: {}", file.string());
     }
 
     std::ifstream mtlFile(file);
     if (!mtlFile.is_open()) {
-        VULK_THROW("Failed to open material file: " + file.string());
+        VULK_THROW("Failed to open material file: {}", file.string());
     }
 
     // Ka: Ambient reflectivity
@@ -83,7 +83,7 @@ MaterialDef loadMaterialDef(const fs::path& file) {
         auto processPath = [&](const std::string& relativePath) -> std::string {
             fs::path absPath = fs::absolute(basePath / relativePath);
             if (!fs::exists(absPath)) {
-                VULK_THROW("Referenced file does not exist: " + absPath.string());
+                VULK_THROW("Referenced file does not exist: {}", absPath.string());
             }
             return absPath.string();
         };
@@ -148,12 +148,12 @@ MaterialDef loadMaterialDef(const fs::path& file) {
 
 ModelDef ModelDef::fromDef(vulk::cpp2::ModelDef const& defIn, unordered_map<string, shared_ptr<MeshDef>> const& meshes, unordered_map<string, shared_ptr<MaterialDef>> materials) {
     auto name = defIn.name().value();
-    string mn = defIn.materialName().value();
+    string mn = defIn.get_material();
     auto material = materials.at(mn);
     vulk::cpp2::MeshDefType meshDefType = defIn.meshDefType().value();
     switch (meshDefType) {
     case vulk::cpp2::MeshDefType::Model:
-        return ModelDef(name, meshes.at(defIn.meshName().value()), material);
+        return ModelDef(name, meshes.at(defIn.get_mesh()), material);
     case vulk::cpp2::MeshDefType::Mesh: {
         shared_ptr<VulkMesh> mesh = make_shared<VulkMesh>();
         vulk::cpp2::GeoMeshDef def = defIn.geoMeshDef().value();
@@ -293,7 +293,7 @@ void findAndProcessMetadata(const fs::path path, Metadata& metadata) {
                     readDefFromFile(entry.path().string(), pipelineDef->def);
                     metadata.pipelines[pipelineDef->def.get_name()] = pipelineDef;
                 } else {
-                    VULK_THROW("Unknown bin extension: " + ext);
+                    VULK_THROW("Unknown bin extension: {}", ext);
                 }
             } else if (ext == ".vertspv") {
                 assert(!metadata.vertShaders.contains(stem));
@@ -353,7 +353,7 @@ void findAndProcessMetadata(const fs::path path, Metadata& metadata) {
 
     if (metadata.scenes.size() == 0) {
         cerr << "No scenes found in " << path << " something is probably wrong\n";
-        VULK_THROW("No scenes found in " + path.string());
+        VULK_THROW("No scenes found in {}", path.string());
     }
 }
 
@@ -362,7 +362,7 @@ std::filesystem::path getResourcesDir() {
     static once_flag flag;
     call_once(flag, [&]() {
         std::filesystem::path config_path = fs::current_path();
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 6; i++) {
             if (fs::exists(config_path / "config.json")) {
                 break;
             }
