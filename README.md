@@ -46,7 +46,13 @@ Remove VulkEnumMetadata
 remove cereal refs
 remove nlohmann::json
 
+## 6/7
+
+load source json files with enum strings.
+convert cull mode from string
+
 ## 6/5
+
 ClCompile is passing /MDd which conflicts elsewhere. for some reason its not the same...
 
 ## 6/4 cereal-b-gone

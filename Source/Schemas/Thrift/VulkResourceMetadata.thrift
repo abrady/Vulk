@@ -67,7 +67,7 @@ struct SrcPipelineDef {
     8: bool depthWriteEnabled;
     9: string depthCompareOp; // VulkShaderEnums.VulkCompareOp
     10: string polygonMode; // VulkShaderEnums.VulkPolygonMode
-    11: i32 cullMode; // VkCullModeFlags
+    11: string cullMode; // VulkShaderEnums.VulkCullModeFlag/VkCullModeFlags
     12: PipelineBlendingDef blending;
 }
 

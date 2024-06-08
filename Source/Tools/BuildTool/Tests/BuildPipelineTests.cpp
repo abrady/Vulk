@@ -23,7 +23,7 @@ static vulk::cpp2::SrcPipelineDef makeTestPipelineDeclDef() {
     def.depthTestEnabled_ref() = true;
     def.depthWriteEnabled_ref() = true;
     def.depthCompareOp_ref() = "NOT_EQUAL";
-    def.cullMode_ref() = VK_CULL_MODE_BACK_BIT;
+    def.cullMode_ref().value() = "BACK";
     def.blending_ref()->enabled_ref() = true;
     def.blending_ref()->colorWriteMask_ref() = "RB";
     return def;
@@ -121,7 +121,7 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
         CHECK(builtDef.get_depthCompareOp() == apache::thrift::util::enumValueOrThrow<decltype(builtDef.get_depthCompareOp())>(def.get_depthCompareOp()));
         CHECK(builtDef.get_blending().get_enabled() == def.get_blending().get_enabled());
         CHECK(builtDef.get_blending().get_colorWriteMask() == def.get_blending().get_colorWriteMask());
-        CHECK(builtDef.get_cullMode() == def.get_cullMode());
+        CHECK(builtDef.get_cullMode() == (int)apache::thrift::util::enumValueOrThrow<vulk::cpp2::VulkCullModeFlags>(def.get_cullMode()));
         auto v = std::vector<vulk::cpp2::VulkShaderLocation>{vulk::cpp2::VulkShaderLocation::Pos, vulk::cpp2::VulkShaderLocation::Normal, vulk::cpp2::VulkShaderLocation::Tangent,
                                                              vulk::cpp2::VulkShaderLocation::TexCoord};
         CHECK(builtDef.get_vertInputs() == v);
@@ -129,7 +129,7 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
         CHECK(builtDef.get_pushConstants()[0].get_stageFlags() == (VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_GEOMETRY_BIT));
         CHECK(builtDef.get_pushConstants()[0].get_size() == 4);
 
-        REQUIRE(sizeof(def) == 400);      // reminder to add new fields to the test
+        REQUIRE(sizeof(def) == 432);      // reminder to add new fields to the test
         REQUIRE(sizeof(builtDef) == 472); // reminder to add new fields to the test
         // I would do a static assert here but it doesn't print out the sizes.
         auto v2 = std::vector<vulk::cpp2::VulkShaderUBOBinding>{vulk::cpp2::VulkShaderUBOBinding::Xforms, vulk::cpp2::VulkShaderUBOBinding::ModelXform,

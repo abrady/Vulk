@@ -227,9 +227,9 @@ public:
         pipelineOut.depthWriteEnabled_ref() = pipelineIn.get_depthWriteEnabled();
         apache::thrift::util::tryParseEnum(pipelineIn.get_depthCompareOp(), &pipelineOut.depthCompareOp_ref().value());
         apache::thrift::util::tryParseEnum(pipelineIn.get_polygonMode(), &pipelineOut.polygonMode_ref().value());
-        pipelineOut.cullMode_ref() = pipelineIn.get_cullMode();
+        pipelineOut.cullMode_ref() = (int)apache::thrift::util::enumValueOrThrow<vulk::cpp2::VulkCullModeFlags>(pipelineIn.get_cullMode());
         pipelineOut.blending_ref() = pipelineIn.get_blending();
-        static_assert(sizeof(pipelineIn) == 400);
+        static_assert(sizeof(pipelineIn) == 432);
 
         std::vector<ShaderInfo> shaderInfos;
         ShaderInfo vertShaderInfo = infoFromShader(pipelineIn.get_vertShader(), "vert", builtShadersDir);
