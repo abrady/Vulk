@@ -21,6 +21,7 @@
         // [BuildTool.exe pipeline C:/open/Github/Vulk/build/Resources/Source/Shaders C:/open/Github/Vulk/build/Resources/Assets/Pipelines/PBR.pipeline.bin C:/open/Github/Vulk/Assets/Pipelines/PBR.pipeline 
         // BuildTool.exe GenVulkShaderEnums C:/open/Github/Vulk/build/generated/Shaders/VulkShaderEnums_generated.glsl 
         // "${workspaceFolder}/Assets/Pipelines/PBR.pipeline"
+        // C:/open/Github/Vulk/build/Resources/Assets/Pipelines/DebugNormals.pipeline.bin C:/open/Github/Vulk/Assets/Pipelines/DebugNormals.pipeline 
         {
             "name": "PipelineBuilder - Debug Pipeline",
             "program": "${workspaceFolder}/build/Source/Tools/BuildTool/Debug/BuildTool.exe",
@@ -30,8 +31,8 @@
             "args": [
                 "pipeline",
                 "${workspaceFolder}/build/Resources/Source/Shaders",
-                "${workspaceFolder}/build/Resources/Assets/Pipelines/Pick.pipeline.bin",
-                "${workspaceFolder}/Assets/Pipelines/Pick.pipeline"
+                "${workspaceFolder}/build/Resources/Assets/Pipelines/DebugNormals.pipeline.bin",
+                "${workspaceFolder}/Assets/Pipelines/DebugNormals.pipeline"
             ],
             "stopAtEntry": false,
             "environment": [],

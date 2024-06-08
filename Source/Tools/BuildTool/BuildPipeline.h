@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <thrift/lib/cpp/util/EnumUtils.h>
 #include <unordered_map>
 #include <vector>
 
@@ -162,7 +163,7 @@ public:
     }
 
     // e.g. the "vert" or "frag" part of the descriptor set
-    static void updateBuiltPipelineDef(ShaderInfo info, std::string stage, vulk::cpp2::BuiltPipelineDef& bp) {
+    static void updatePipelineDef(ShaderInfo info, std::string stage, vulk::cpp2::PipelineDef& bp) {
         vulk::cpp2::DescriptorSetDef& def = bp.descriptorSetDef_ref().value();
         int32_t stageFlag = (int)getShaderStageFromStr(stage);
         for (auto& ubo : info.uboBindings) {
@@ -196,28 +197,54 @@ public:
         }
     }
 
-    static vulk::cpp2::BuiltPipelineDef buildPipeline(vulk::cpp2::BuiltPipelineDef pipelineIn, std::filesystem::path builtShadersDir) {
+    static vulk::cpp2::PipelineDef buildPipeline(vulk::cpp2::SrcPipelineDef pipelineIn, std::filesystem::path builtShadersDir) {
         if (!std::filesystem::exists(builtShadersDir)) {
             std::cerr << "Shaders directory does not exist: " << builtShadersDir << std::endl;
             VULK_THROW("PipelineBuilder: Shaders directory does not exist");
         }
 
-        vulk::cpp2::BuiltPipelineDef pipelineOut(pipelineIn);
+        vulk::cpp2::PipelineDef pipelineOut;
+        // 1: i32 version;
+        // 2: string name;
+        // 3: string vertShader;
+        // 4: string geomShader;
+        // 5: string fragShader;
+        // 6: string primitiveTopology; // VulkShaderEnums.VulkPrimitiveTopology
+        // 7: bool depthTestEnabled;
+        // 8: bool depthWriteEnabled;
+        // 9: string depthCompareOp; // VulkShaderEnums.VulkCompareOp
+        // 10: string polygonMode; // VulkShaderEnums.VulkPolygonMode
+        // 11: i32 cullMode; // VkCullModeFlags
+        // 12: PipelineBlendingDef blending;
+
+        pipelineOut.version_ref() = 1;
+        pipelineOut.name_ref() = pipelineIn.get_name();
+        pipelineOut.vertShader_ref() = pipelineIn.get_vertShader();
+        pipelineOut.geomShader_ref() = pipelineIn.get_geomShader();
+        pipelineOut.fragShader_ref() = pipelineIn.get_fragShader();
+        apache::thrift::util::tryParseEnum(pipelineIn.get_primitiveTopology(), &pipelineOut.primitiveTopology_ref().value());
+        pipelineOut.depthTestEnabled_ref() = pipelineIn.get_depthTestEnabled();
+        pipelineOut.depthWriteEnabled_ref() = pipelineIn.get_depthWriteEnabled();
+        apache::thrift::util::tryParseEnum(pipelineIn.get_depthCompareOp(), &pipelineOut.depthCompareOp_ref().value());
+        apache::thrift::util::tryParseEnum(pipelineIn.get_polygonMode(), &pipelineOut.polygonMode_ref().value());
+        pipelineOut.cullMode_ref() = pipelineIn.get_cullMode();
+        pipelineOut.blending_ref() = pipelineIn.get_blending();
+        static_assert(sizeof(pipelineIn) == 400);
 
         std::vector<ShaderInfo> shaderInfos;
-        ShaderInfo vertShaderInfo = infoFromShader(pipelineIn.get_vertShaderName(), "vert", builtShadersDir);
+        ShaderInfo vertShaderInfo = infoFromShader(pipelineIn.get_vertShader(), "vert", builtShadersDir);
         shaderInfos.push_back(vertShaderInfo);
-        updateBuiltPipelineDef(vertShaderInfo, "vert", pipelineOut);
+        updatePipelineDef(vertShaderInfo, "vert", pipelineOut);
 
-        if (!pipelineIn.get_geomShaderName().empty()) {
-            ShaderInfo info = infoFromShader(pipelineIn.get_geomShaderName(), "geom", builtShadersDir);
+        if (!pipelineIn.get_geomShader().empty()) {
+            ShaderInfo info = infoFromShader(pipelineIn.get_geomShader(), "geom", builtShadersDir);
             shaderInfos.push_back(info);
-            updateBuiltPipelineDef(info, "geom", pipelineOut);
+            updatePipelineDef(info, "geom", pipelineOut);
         }
-        if (!pipelineIn.get_fragShaderName().empty()) {
-            ShaderInfo info = infoFromShader(pipelineIn.get_fragShaderName(), "frag", builtShadersDir);
+        if (!pipelineIn.get_fragShader().empty()) {
+            ShaderInfo info = infoFromShader(pipelineIn.get_fragShader(), "frag", builtShadersDir);
             shaderInfos.push_back(info);
-            updateBuiltPipelineDef(info, "frag", pipelineOut);
+            updatePipelineDef(info, "frag", pipelineOut);
         }
 
         for (auto& [location, name] : vertShaderInfo.inputLocations) {
@@ -239,7 +266,7 @@ public:
         return pipelineOut;
     }
 
-    static void buildPipelineFile(vulk::cpp2::BuiltPipelineDef pipelineIn, std::filesystem::path builtShadersDir, std::filesystem::path pipelineFileOut) {
+    static void buildPipelineFile(vulk::cpp2::SrcPipelineDef pipelineIn, std::filesystem::path builtShadersDir, std::filesystem::path pipelineFileOut) {
         if (!std::filesystem::exists(builtShadersDir)) {
             std::cerr << "Shaders directory does not exist: " << builtShadersDir << std::endl;
             VULK_THROW("PipelineBuilder: Shaders directory does not exist");
@@ -249,7 +276,7 @@ public:
             VULK_THROW("PipelineBuilder: Output directory does not exist");
         }
 
-        vulk::cpp2::BuiltPipelineDef pipelineOut = buildPipeline(pipelineIn, builtShadersDir);
+        vulk::cpp2::PipelineDef pipelineOut = buildPipeline(pipelineIn, builtShadersDir);
         writeDefToFile(pipelineFileOut.string(), pipelineOut);
     }
 
@@ -267,7 +294,7 @@ public:
             VULK_THROW("PipelineBuilder: Output directory does not exist");
         }
 
-        vulk::cpp2::BuiltPipelineDef def;
+        vulk::cpp2::SrcPipelineDef def;
         readDefFromFile(pipelineFileSrc.string(), def);
         buildPipelineFile(def, builtShadersDir, pipelineFileOut);
     }

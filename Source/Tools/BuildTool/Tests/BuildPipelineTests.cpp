@@ -12,17 +12,17 @@
 
 namespace fs = std::filesystem;
 
-static vulk::cpp2::BuiltPipelineDef makeTestPipelineDeclDef() {
-    vulk::cpp2::BuiltPipelineDef def;
+static vulk::cpp2::SrcPipelineDef makeTestPipelineDeclDef() {
+    vulk::cpp2::SrcPipelineDef def;
     def.name_ref() = "TestPipeline";
-    def.vertShaderName_ref() = "DebugNormals";
-    def.geomShaderName_ref() = "DebugNormals";
-    def.fragShaderName_ref() = "DebugNormals";
-    def.primitiveTopology_ref() = vulk::cpp2::VulkPrimitiveTopology::TriangleFan;
-    def.polygonMode_ref() = vulk::cpp2::VulkPolygonMode::FILL;
+    def.vertShader_ref() = "DebugNormals";
+    def.geomShader_ref() = "DebugNormals";
+    def.fragShader_ref() = "DebugNormals";
+    def.primitiveTopology_ref() = "TriangleFan";
+    def.polygonMode_ref() = "FILL";
     def.depthTestEnabled_ref() = true;
     def.depthWriteEnabled_ref() = true;
-    def.depthCompareOp_ref() = vulk::cpp2::VulkCompareOp::NOT_EQUAL;
+    def.depthCompareOp_ref() = "NOT_EQUAL";
     def.cullMode_ref() = VK_CULL_MODE_BACK_BIT;
     def.blending_ref()->enabled_ref() = true;
     def.blending_ref()->colorWriteMask_ref() = "RB";
@@ -33,6 +33,8 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
     fs::path builtShadersDir = fs::path(__FILE__).parent_path() / "shaders";
 
     SECTION("Test Basics") {
+        // int size = sizeof(vulk::cpp2::SrcPipelineDef);
+        // std::cout << "Size of SrcPipelineDef: " << size << std::endl;
         ShaderInfo info = PipelineBuilder::getShaderInfo(builtShadersDir / "vert" / "DebugNormals.vertspv");
         CHECK(info.uboBindings[vulk::cpp2::VulkShaderUBOBinding::Xforms] == "UniformBufferObject");
         CHECK(info.uboBindings[vulk::cpp2::VulkShaderUBOBinding::ModelXform] == "ModelXformUBO");
@@ -69,12 +71,12 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
         CHECK(PipelineBuilder::checkConnections(info2, info3, errMsg) == true);
     }
     SECTION("Test Pipeline Generation") {
-        vulk::cpp2::BuiltPipelineDef def = makeTestPipelineDeclDef();
-        vulk::cpp2::BuiltPipelineDef res = PipelineBuilder::buildPipeline(def, builtShadersDir);
+        vulk::cpp2::SrcPipelineDef def = makeTestPipelineDeclDef();
+        vulk::cpp2::PipelineDef res = PipelineBuilder::buildPipeline(def, builtShadersDir);
         CHECK(res.get_name() == "TestPipeline");
-        CHECK(res.get_vertShaderName() == "DebugNormals");
-        CHECK(res.get_geomShaderName() == "DebugNormals");
-        CHECK(res.get_fragShaderName() == "DebugNormals");
+        CHECK(res.get_vertShader() == "DebugNormals");
+        CHECK(res.get_geomShader() == "DebugNormals");
+        CHECK(res.get_fragShader() == "DebugNormals");
         CHECK(res.get_primitiveTopology() == vulk::cpp2::VulkPrimitiveTopology::TriangleFan);
         CHECK(res.get_polygonMode() == vulk::cpp2::VulkPolygonMode::FILL);
         CHECK(res.get_depthTestEnabled() == true);
@@ -101,23 +103,22 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
             CHECK(!ec);
         }
         CHECK(fs::create_directories(builtPipelinesDir));
-        vulk::cpp2::BuiltPipelineDef def = makeTestPipelineDeclDef();
+        vulk::cpp2::SrcPipelineDef def = makeTestPipelineDeclDef();
         fs::path builtPipeline = builtPipelinesDir / "TestPipeline.pipeline";
         PipelineBuilder::buildPipelineFile(def, builtShadersDir, builtPipeline);
         CHECK(fs::exists(builtPipeline));
         nlohmann::json j;
-        vulk::cpp2::BuiltPipelineDef builtDef;
+        vulk::cpp2::PipelineDef builtDef;
         readDefFromFile(builtPipeline.string(), builtDef);
         CHECK(builtDef.get_name() == def.get_name());
-        CHECK(builtDef.get_vertShaderName() == def.get_vertShaderName());
-        CHECK(builtDef.get_geomShaderName() == def.get_geomShaderName());
-        CHECK(builtDef.get_fragShaderName() == def.get_fragShaderName());
-        CHECK(builtDef.get_primitiveTopology() == def.get_primitiveTopology());
-        CHECK(builtDef.get_polygonMode() == def.get_polygonMode());
-        CHECK(builtDef.get_polygonMode() == def.get_polygonMode());
+        CHECK(builtDef.get_vertShader() == def.get_vertShader());
+        CHECK(builtDef.get_geomShader() == def.get_geomShader());
+        CHECK(builtDef.get_fragShader() == def.get_fragShader());
+        CHECK(builtDef.get_primitiveTopology() == apache::thrift::util::enumValueOrThrow<decltype(builtDef.get_primitiveTopology())>(def.get_primitiveTopology()));
+        CHECK(builtDef.get_polygonMode() == apache::thrift::util::enumValueOrThrow<decltype(builtDef.get_polygonMode())>(def.get_polygonMode()));
         CHECK(builtDef.get_depthTestEnabled() == def.get_depthTestEnabled());
         CHECK(builtDef.get_depthWriteEnabled() == def.get_depthWriteEnabled());
-        CHECK(builtDef.get_depthCompareOp() == def.get_depthCompareOp());
+        CHECK(builtDef.get_depthCompareOp() == apache::thrift::util::enumValueOrThrow<decltype(builtDef.get_depthCompareOp())>(def.get_depthCompareOp()));
         CHECK(builtDef.get_blending().get_enabled() == def.get_blending().get_enabled());
         CHECK(builtDef.get_blending().get_colorWriteMask() == def.get_blending().get_colorWriteMask());
         CHECK(builtDef.get_cullMode() == def.get_cullMode());
@@ -128,7 +129,7 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
         CHECK(builtDef.get_pushConstants()[0].get_stageFlags() == (VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_GEOMETRY_BIT));
         CHECK(builtDef.get_pushConstants()[0].get_size() == 4);
 
-        REQUIRE(sizeof(def) == 472);      // reminder to add new fields to the test
+        REQUIRE(sizeof(def) == 400);      // reminder to add new fields to the test
         REQUIRE(sizeof(builtDef) == 472); // reminder to add new fields to the test
         // I would do a static assert here but it doesn't print out the sizes.
         auto v2 = std::vector<vulk::cpp2::VulkShaderUBOBinding>{vulk::cpp2::VulkShaderUBOBinding::Xforms, vulk::cpp2::VulkShaderUBOBinding::ModelXform,

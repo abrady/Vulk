@@ -102,7 +102,7 @@ struct MaterialDef {
 };
 
 struct PipelineDef {
-    vulk::cpp2::BuiltPipelineDef def;
+    vulk::cpp2::PipelineDef def;
     shared_ptr<vulk::cpp2::ShaderDef> vertShader;
     shared_ptr<vulk::cpp2::ShaderDef> geomShader;
     shared_ptr<vulk::cpp2::ShaderDef> fragShader;
@@ -114,10 +114,10 @@ struct PipelineDef {
 
     void fixup(unordered_map<string, shared_ptr<vulk::cpp2::ShaderDef>> const& vertShaders, unordered_map<string, shared_ptr<vulk::cpp2::ShaderDef>> const& geometryShaders,
                unordered_map<string, shared_ptr<vulk::cpp2::ShaderDef>> const& fragmentShaders) {
-        vertShader = vertShaders.at(def.vertShaderName().value());
-        fragShader = fragmentShaders.at(def.fragShaderName().value());
-        if (!def.geomShaderName()->empty()) {
-            geomShader = geometryShaders.at(def.geomShaderName().value());
+        vertShader = vertShaders.at(def.vertShader().value());
+        fragShader = fragmentShaders.at(def.fragShader().value());
+        if (!def.geomShader()->empty()) {
+            geomShader = geometryShaders.at(def.geomShader().value());
         }
         validate();
     }

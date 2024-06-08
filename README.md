@@ -64,7 +64,7 @@ so:
 
 why don't I write it as a separate file and just load that?
 
-* remove it from BuiltPipelineDef
+* remove it from PipelineDef
 * load it in VulkResources
 * connect the two
 

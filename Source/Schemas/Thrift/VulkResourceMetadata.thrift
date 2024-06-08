@@ -56,12 +56,27 @@ struct PipelineBlendingDef {
     8: string colorWriteMask; // some set of RBGA
 }
 
-struct BuiltPipelineDef {
+struct SrcPipelineDef {
     1: i32 version;
     2: string name;
-    3: string vertShaderName;
-    4: string geomShaderName;
-    5: string fragShaderName;
+    3: string vertShader;
+    4: string geomShader;
+    5: string fragShader;
+    6: string primitiveTopology; // VulkShaderEnums.VulkPrimitiveTopology
+    7: bool depthTestEnabled;
+    8: bool depthWriteEnabled;
+    9: string depthCompareOp; // VulkShaderEnums.VulkCompareOp
+    10: string polygonMode; // VulkShaderEnums.VulkPolygonMode
+    11: i32 cullMode; // VkCullModeFlags
+    12: PipelineBlendingDef blending;
+}
+
+struct PipelineDef {
+    1: i32 version;
+    2: string name;
+    3: string vertShader;
+    4: string geomShader;
+    5: string fragShader;
     6: DescriptorSetDef descriptorSetDef;
     7: list<VulkShaderEnums.VulkShaderLocation> vertInputs;
     8: list<PushConstantDef> pushConstants;
