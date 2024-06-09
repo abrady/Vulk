@@ -42,9 +42,12 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
-Remove VulkEnumMetadata
-remove cereal refs
 remove nlohmann::json
+
+# 6/8
+
+* Remove VulkEnumMetadata DONE
+* remove cereal refs DONE
 
 ## 6/7
 

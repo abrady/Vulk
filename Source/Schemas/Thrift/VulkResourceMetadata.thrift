@@ -8,15 +8,6 @@ enum MeshDefType {
     Mesh = 1,
 }
 
-enum GeoMeshDefType {
-    Sphere = 1,
-    Cylinder = 2,
-    EquilateralTriangle = 3,
-    Quad = 4,
-    Grid = 5,
-    Axes = 6
-}
-
 enum VulkCullModeFlags {
     NONE = 0,
     FRONT = 1,
@@ -159,7 +150,6 @@ struct ModelDef {
     2: string mesh;
     3: string material;
     4: MeshDefType meshDefType;
-    5: GeoMeshDefType geoMeshDefType;
     6: GeoMeshDef geoMesh;
     7: XformDef xform;
 }
@@ -198,4 +188,8 @@ struct SceneDef {
 struct ShaderDef {
     1: string name;
     2: string path;
+}
+
+struct ResourceConfig {
+    1: string ResourcesDir;
 }

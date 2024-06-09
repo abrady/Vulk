@@ -108,7 +108,6 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
         fs::path builtPipeline = builtPipelinesDir / "TestPipeline.pipeline";
         PipelineBuilder::buildPipelineFile(def, builtShadersDir, builtPipeline);
         CHECK(fs::exists(builtPipeline));
-        nlohmann::json j;
         vulk::cpp2::PipelineDef builtDef;
         readDefFromFile(builtPipeline.string(), builtDef);
         CHECK(builtDef.get_name() == def.get_name());

@@ -91,7 +91,6 @@ TEST_CASE("misc serialization test") {
         def.mesh_ref() = "TestMesh";
         def.material_ref() = "TestMaterial";
         def.meshDefType_ref() = vulk::cpp2::MeshDefType::Mesh;
-        def.geoMeshDefType_ref() = vulk::cpp2::GeoMeshDefType::Sphere;
         vulk::cpp2::GeoSphereDef& sphere = def.geoMesh_ref()->set_sphere();
         sphere.radius_ref() = 1.0;
         sphere.numSubdivisions_ref() = 3;

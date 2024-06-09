@@ -16,7 +16,6 @@
                 "vulkan-binding"
             ]
         },
-        "nlohmann-json",
         "spdlog",
         "spirv-cross",
         "spirv-headers",

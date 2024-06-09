@@ -1,6 +1,5 @@
 #include "Vulk/VulkResourceMetadata.h"
 
-using json = nlohmann::json;
 using namespace std;
 
 namespace fs = std::filesystem;
@@ -152,35 +151,40 @@ ModelDef ModelDef::fromDef(vulk::cpp2::ModelDef const& defIn, unordered_map<stri
     auto material = materials.at(mn);
     vulk::cpp2::MeshDefType meshDefType = defIn.meshDefType().value();
     switch (meshDefType) {
-    case vulk::cpp2::MeshDefType::Model:
-        return ModelDef(name, meshes.at(defIn.get_mesh()), material);
+    case vulk::cpp2::MeshDefType::Model: {
+        std::string meshName = defIn.get_mesh();
+        return ModelDef(name, meshes.at(meshName), material);
+    }
     case vulk::cpp2::MeshDefType::Mesh: {
         shared_ptr<VulkMesh> mesh = make_shared<VulkMesh>();
         vulk::cpp2::GeoMeshDef def = defIn.geoMesh().value();
-        switch (defIn.geoMeshDefType().value()) {
-        case vulk::cpp2::GeoMeshDefType::Sphere: {
+
+        auto geoMeshType = defIn.get_geoMesh().getType();
+        switch (geoMeshType) {
+        case vulk::cpp2::GeoMeshDef::Type::sphere: {
             vulk::cpp2::GeoSphereDef const& sphere = def.get_sphere();
             makeGeoSphere(sphere.get_radius(), sphere.get_numSubdivisions(), *mesh);
         } break;
-        case vulk::cpp2::GeoMeshDefType::Cylinder: {
+        case vulk::cpp2::GeoMeshDef::Type::cylinder: {
             vulk::cpp2::GeoCylinderDef const& cylinder = def.get_cylinder();
             makeCylinder(cylinder.get_height(), cylinder.get_bottomRadius(), cylinder.get_topRadius(), cylinder.get_numStacks(), cylinder.get_numSlices(), *mesh);
         } break;
-        case vulk::cpp2::GeoMeshDefType::EquilateralTriangle: {
+        case vulk::cpp2::GeoMeshDef::Type::triangle: {
             makeEquilateralTri(def.get_triangle().get_sideLength(), def.get_triangle().get_numSubdivisions(), *mesh);
         } break;
-        case vulk::cpp2::GeoMeshDefType::Quad: {
+        case vulk::cpp2::GeoMeshDef::Type::quad: {
             makeQuad(def.get_quad().get_w(), def.get_quad().get_h(), def.get_quad().get_numSubdivisions(), *mesh);
         } break;
-        case vulk::cpp2::GeoMeshDefType::Grid: {
+        case vulk::cpp2::GeoMeshDef::Type::grid: {
             makeGrid(def.get_grid().get_width(), def.get_grid().get_depth(), def.get_grid().get_m(), def.get_grid().get_n(), *mesh, def.get_grid().get_repeatU(),
                      def.get_grid().get_repeatV());
         } break;
-        case vulk::cpp2::GeoMeshDefType::Axes: {
+        case vulk::cpp2::GeoMeshDef::Type::axes: {
             makeAxes(def.get_axes().get_length(), *mesh);
         } break;
-        default:
-            VULK_THROW_FMT("Unknown GeoMesh type: {}", (int)defIn.get_geoMeshDefType());
+        default: {
+            VULK_THROW_FMT("Unhandled/known GeoMesh type: {}", (int)geoMeshType);
+        }
         }
         return ModelDef(name, make_shared<MeshDef>(name, mesh), material);
     }
@@ -268,70 +272,65 @@ void findAndProcessMetadata(const fs::path path, Metadata& metadata) {
     // The metadata is stored in JSON files with the following extensions
     // other extensions need special handling or no handling (e.g. .mtl files are handled by
     // loadMaterialDef, and .obj and .spv files are handled directly)
-    static set<string> jsonExts{".model", ".scene"};
-    static set<string> binExts{".pipeline.bin"};
+    static set<string> fixupExts{".model", ".scene", ".pipeline"};
     struct LoadInfo {
-        json j;
         string filePath;
     };
     unordered_map<string, unordered_map<string, LoadInfo>> loadInfos;
 
+    // for non leaf resources:
+    // we gather everything up first because we load and fixup defs at the same time
+    // vs. loading all the defs and then doing a fixup pass so each resource
+    // is complete when it is loaded.
     for (const auto& entry : fs::recursive_directory_iterator(path)) {
-        if (entry.is_regular_file()) {
-            string stem = entry.path().stem().string();
-            string ext = entry.path().stem().extension().string() + entry.path().extension().string(); // get 'bar' from foo.bar and 'bar.bin' from foo.bar.bin
-            if (jsonExts.contains(ext)) {
-                ifstream f(entry.path());
-                LoadInfo loadInfo;
-                loadInfo.j = nlohmann::json::parse(f, nullptr, true, true); // allow comments
-                loadInfo.filePath = entry.path().string();
-                assert(loadInfo.j.at("name") == stem);
-                loadInfos[ext][loadInfo.j.at("name")] = loadInfo;
-            } else if (binExts.contains(ext)) {
-                if (ext == ".pipeline") {
-                    auto pipelineDef = make_shared<PipelineDef>();
-                    readDefFromFile(entry.path().string(), pipelineDef->def);
-                    metadata.pipelines[pipelineDef->def.get_name()] = pipelineDef;
-                } else {
-                    VULK_THROW("Unknown bin extension: {}", ext);
-                }
-            } else if (ext == ".vertspv") {
-                assert(!metadata.vertShaders.contains(stem));
-                metadata.vertShaders[stem] = make_shared<vulk::cpp2::ShaderDef>();
-                metadata.vertShaders[stem]->name_ref() = stem;
-                metadata.vertShaders[stem]->path_ref() = entry.path().string();
+        if (!entry.is_regular_file()) {
+            continue;
+        }
+        string stem = entry.path().stem().string();
+        string ext = entry.path().stem().extension().string() + entry.path().extension().string(); // get 'bar' from foo.bar and 'bar.bin' from foo.bar.bin
+        if (fixupExts.contains(ext)) {
+            LoadInfo loadInfo;
+            loadInfo.filePath = entry.path().string();
+            loadInfos[ext][loadInfo.filePath] = loadInfo;
+        } else if (ext == ".vertspv") {
+            assert(!metadata.vertShaders.contains(stem));
+            metadata.vertShaders[stem] = make_shared<vulk::cpp2::ShaderDef>();
+            metadata.vertShaders[stem]->name_ref() = stem;
+            metadata.vertShaders[stem]->path_ref() = entry.path().string();
 
-            } else if (ext == ".geomspv") {
-                assert(!metadata.geometryShaders.contains(stem));
-                metadata.geometryShaders[stem] = make_shared<vulk::cpp2::ShaderDef>();
-                metadata.geometryShaders[stem]->name_ref() = stem;
-                metadata.geometryShaders[stem]->path_ref() = entry.path().string();
+        } else if (ext == ".geomspv") {
+            assert(!metadata.geometryShaders.contains(stem));
+            metadata.geometryShaders[stem] = make_shared<vulk::cpp2::ShaderDef>();
+            metadata.geometryShaders[stem]->name_ref() = stem;
+            metadata.geometryShaders[stem]->path_ref() = entry.path().string();
 
-            } else if (ext == ".fragspv") {
-                assert(!metadata.fragmentShaders.contains(stem));
-                metadata.fragmentShaders[stem] = make_shared<vulk::cpp2::ShaderDef>();
-                metadata.fragmentShaders[stem]->name_ref() = stem;
-                metadata.fragmentShaders[stem]->path_ref() = entry.path().string();
+        } else if (ext == ".fragspv") {
+            assert(!metadata.fragmentShaders.contains(stem));
+            metadata.fragmentShaders[stem] = make_shared<vulk::cpp2::ShaderDef>();
+            metadata.fragmentShaders[stem]->name_ref() = stem;
+            metadata.fragmentShaders[stem]->path_ref() = entry.path().string();
 
-            } else if (ext == ".mtl") {
-                assert(!metadata.materials.contains(stem));
-                auto material = make_shared<MaterialDef>(loadMaterialDef(entry.path().string()));
-                metadata.materials[material->name] = material;
-            } else if (ext == ".obj") {
-                if (metadata.meshes.contains(stem)) {
-                    cerr << "Mesh already exists: " << stem << endl;
-                }
-                assert(!metadata.meshes.contains(stem));
-                ModelMeshDef mmd{entry.path().string()};
-                metadata.meshes[stem] = make_shared<MeshDef>(stem, mmd);
+        } else if (ext == ".mtl") {
+            assert(!metadata.materials.contains(stem));
+            auto material = make_shared<MaterialDef>(loadMaterialDef(entry.path().string()));
+            metadata.materials[material->name] = material;
+        } else if (ext == ".obj") {
+            if (metadata.meshes.contains(stem)) {
+                cerr << "Mesh already exists: " << stem << endl;
             }
+            assert(!metadata.meshes.contains(stem));
+            ModelMeshDef mmd{entry.path().string()};
+            metadata.meshes[stem] = make_shared<MeshDef>(stem, mmd);
         }
     }
 
     // The order matters here: models depend on meshes and materials, actors depend on models and pipelines
     // and the scene depends on actors
 
-    for (auto const& [name, pipeline] : metadata.pipelines) {
+    for (auto const& [name, loadInfo] : loadInfos[".pipeline"]) {
+        auto pipeline = make_shared<PipelineDef>();
+        readDefFromFile(loadInfo.filePath, pipeline->def);
+        metadata.pipelines[pipeline->def.get_name()] = pipeline;
         pipeline->fixup(metadata.vertShaders, metadata.geometryShaders, metadata.fragmentShaders);
     }
 
@@ -358,9 +357,10 @@ void findAndProcessMetadata(const fs::path path, Metadata& metadata) {
 }
 
 std::filesystem::path getResourcesDir() {
-    static std::filesystem::path path;
+    static vulk::cpp2::ResourceConfig config;
     static once_flag flag;
     call_once(flag, [&]() {
+        // as part of our cmake build process we write this out under the build directory.
         std::filesystem::path config_path = fs::current_path();
         for (int i = 0; i < 6; i++) {
             if (fs::exists(config_path / "config.json")) {
@@ -369,12 +369,9 @@ std::filesystem::path getResourcesDir() {
             config_path = config_path.parent_path();
         }
         cout << "loading config for config_path " << config_path << endl;
-        ifstream config_ifstream(config_path / "config.json");
-        assert(config_ifstream.is_open() && "Failed to open config.json");
-        auto config = nlohmann::json::parse(config_ifstream, nullptr, true, true); // allow comments
-        path = config.at("ResourcesDir").get<string>();
+        readDefFromFile((config_path / "config.json").string(), config);
     });
-    return path;
+    return config.get_ResourcesDir();
 }
 
 Metadata const* getMetadata() {

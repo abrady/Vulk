@@ -2,23 +2,23 @@
     "version": 1,
     "name": "PBR2",
     "camera": {
-        "nearClip": 0.1,
-        "farClip": 20,
         "eye": {
             "x": 1,
             "y": 2,
             "z": 3
         },
-        "target": {
+        "lookAt": {
             "x": 0,
             "y": 0,
             "z": 0
         },
+        "nearClip": 0.1,
+        "farClip": 20
     },
     "lights": [
         {
             "name": "Light1",
-            "type": "point",
+            "type": 0,
             "pos": {
                 "x": 0,
                 "y": -4,
@@ -38,11 +38,13 @@
             "inlineModel": {
                 "version": 1,
                 "name": "SphereModel1",
-                "type": 1,
+                "meshDefType": 1,
                 "geoMesh": {
-                    "type": 1,
-                    "radius": 1,
-                    "numSubdivisions": 3
+                    "sphere": {
+                        "type": 1,
+                        "radius": 1,
+                        "numSubdivisions": 3
+                    }
                 },
                 "material": "herringbone-flooring-bl"
             },

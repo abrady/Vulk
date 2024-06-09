@@ -10,8 +10,6 @@
 
 #include "Vulk/VulkResourceMetadata.h"
 
-#include <nlohmann/json.hpp>
-
 struct ShaderInfo {
     std::string name;
     std::string entryPoint;
