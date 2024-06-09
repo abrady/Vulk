@@ -36,14 +36,14 @@ struct DescriptorSetDef {
 }
 
 struct PipelineBlendingDef {
-    1: bool enabled;
-    2: VulkShaderEnums.VulkBlendFactor srcColorBlendFactor;
-    3: VulkShaderEnums.VulkBlendFactor dstColorBlendFactor;
-    4: VulkShaderEnums.VulkBlendOp colorBlendOp;
-    5: VulkShaderEnums.VulkBlendFactor srcAlphaBlendFactor;
-    6: VulkShaderEnums.VulkBlendFactor dstAlphaBlendFactor;
-    7: VulkShaderEnums.VulkBlendOp alphaBlendOp;
-    8: string colorWriteMask; // some set of RBGA
+    1: bool enabled = false;
+    2: VulkShaderEnums.VulkBlendFactor srcColorBlendFactor = VulkShaderEnums.VulkBlendFactor.ONE;
+    3: VulkShaderEnums.VulkBlendFactor dstColorBlendFactor = VulkShaderEnums.VulkBlendFactor.ZERO;
+    4: VulkShaderEnums.VulkBlendOp colorBlendOp = VulkShaderEnums.VulkBlendOp.ADD;
+    5: VulkShaderEnums.VulkBlendFactor srcAlphaBlendFactor = VulkShaderEnums.VulkBlendFactor.ONE;
+    6: VulkShaderEnums.VulkBlendFactor dstAlphaBlendFactor = VulkShaderEnums.VulkBlendFactor.ZERO;
+    7: VulkShaderEnums.VulkBlendOp alphaBlendOp = VulkShaderEnums.VulkBlendOp.ADD;
+    8: string colorWriteMask = "RGBA"; // some set of RBGA
 }
 
 struct SrcPipelineDef {

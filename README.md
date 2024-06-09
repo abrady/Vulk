@@ -58,6 +58,8 @@ descriptorSetLayoutCache isn't necessary: the pipeline and the layout have a 1-1
 
 but createActorFromPipeline takes a PipelineDef and not a Pipeline? eh, seems fine.
 
+rendering is busted, let's renderdoc it: blending was incorrect. fixed
+
 ## 6/7
 
 load source json files with enum strings.

@@ -115,7 +115,6 @@ std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(VkRenderPass renderPas
     for (auto& pc : def->def.get_pushConstants()) {
         pb.addPushConstantRange(pc.get_stageFlags(), pc.get_size());
     }
-    vulk::cpp2::PipelineDef const& pd = def->def;
     pb.addvertShaderStage(getvertShader(def->vertShader->get_name()))
         .setLineWidth(1.0f)
         .setScissor(extent)
@@ -125,6 +124,7 @@ std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(VkRenderPass renderPas
 
     if (def->fragShader)
         pb.addFragmentShaderStage(getFragmentShader(def->fragShader->get_name()));
+    vulk::cpp2::PipelineDef const& pd = def->def;
     if (pd.depthTestEnabled().is_set())
         pb.setDepthTestEnabled(pd.get_depthTestEnabled());
     if (pd.depthWriteEnabled().is_set())
