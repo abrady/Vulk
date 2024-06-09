@@ -15,7 +15,7 @@ file(MAKE_DIRECTORY ${SHADER_GENERATED_HEADER_DIR})
 add_custom_command(
     OUTPUT ${SHADER_GENERATED_HEADER_FILE}
     COMMAND $<TARGET_FILE:BuildTool> GenVulkShaderEnums ${SHADER_GENERATED_HEADER_FILE}
-    DEPENDS BuildTool "${CMAKE_SOURCE_DIR}/Source/Schemas/Flatbuf/VulkShaderEnums.fbs"
+    DEPENDS BuildTool "${CMAKE_SOURCE_DIR}/Source/Schemas/thrift/VulkShaderEnums.thrift"
     COMMENT "Generating shader includes header from ${SHADER_GENERATED_HEADER_FILE}"
 )
 

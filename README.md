@@ -42,6 +42,13 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
+# 6/9
+
+since I've been doing nothing but procrastinate, maybe I'll take another shot at compile times.
+
+* baseline pbr compile: ~13s
+* fucking god damn, what a waste of time.
+
 # 6/8
 
 * remove .fbs files DONE

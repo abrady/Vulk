@@ -1,3 +1,5 @@
+// cmake --list-presets
+// cmake --preset debug-x64-ninja
 {
     "version": 2,
     "cmakeMinimumRequired": {
@@ -21,14 +23,54 @@
                 "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreadedDebug",
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install"
             }
+        },
+        // Every time I try ninja I get errors:
+        // ninja doesn't support x64?
+        //         [cmake]   does not support platform specification, but platform
+        // [cmake]     x64 was specified
+        // FIX: make sure to call vcvarsall.bat x64
+        // [cmake]   Could not find a configuration file for package "fmt" that is compatible
+        // [cmake]   with requested version "".
+        // FIX: no idea, giving up                
+        {
+            "name": "debug-x64-ninja",
+            "displayName": "Ninja Debug - x64 Doesn't Work",
+            "description": "Use this preset for Windows Debug builds with Ninja",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "VCPKG_TARGET_TRIPLET": "x64-windows-static",
+                "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreadedDebug",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install",
+                "CMAKE_C_COMPILER": "cl",
+                "CMAKE_CXX_COMPILER": "cl"
+                // "CMAKE_C_COMPILER": "clang",
+                // "CMAKE_CXX_COMPILER": "clang"
+            }
         }
     ],
     "testPresets": [
         {
-            "name": "debug",
+            "name": "debug-x64",
             "description": "",
             "displayName": "",
             "configurePreset": "debug-x64",
+            "output": {
+                "outputOnFailure": true
+            },
+            "filter": {
+                "include": {
+                    "name": ".*"
+                }
+            }
+        },
+        {
+            "name": "debug-ninja",
+            "description": "",
+            "displayName": "",
+            "configurePreset": "debug-x64-ninja",
             "output": {
                 "outputOnFailure": true
             },

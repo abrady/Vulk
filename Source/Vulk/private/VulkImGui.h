@@ -121,7 +121,6 @@ public:
         init_info.Queue = vk.graphicsQueue;
         init_info.PipelineCache = nullptr;
         init_info.DescriptorPool = imguiDescriptorPool;
-        // init_info.RenderPass = wd->RenderPass; hmmm
         init_info.Subpass = 0;
         init_info.MinImageCount = 2;
         init_info.ImageCount = (uint32_t)vk.swapChainImages.size();
