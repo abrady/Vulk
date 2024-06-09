@@ -42,11 +42,9 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
-remove nlohmann::json
-remove .fbs files
-
 # 6/8
 
+* remove .fbs files DONE
 * Remove VulkEnumMetadata DONE
 * remove cereal refs DONE
 * remove nlohmann refs DONE
