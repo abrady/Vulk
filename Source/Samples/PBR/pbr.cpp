@@ -12,7 +12,6 @@ public:
     std::shared_ptr<VulkPipeline> shadowMapPipeline;
     std::shared_ptr<VulkFence> shadowMapFence;
 
-    std::shared_ptr<VulkPipeline> debugNormalsPipeline;
     std::vector<std::shared_ptr<VulkActor>> debugTangentsActors;
     std::vector<std::shared_ptr<VulkActor>> debugNormalsActors;
 
@@ -47,17 +46,16 @@ public:
         for (size_t i = 0; i < scene->actors.size(); ++i) {
             auto actor = scene->actors[i];
             auto actorDef = sceneDef.actors[i];
-            std::shared_ptr<VulkActor> shadowMapActor = resources.createActorFromPipeline(*actorDef, shadowMapPipelineDef, scene);
+            std::shared_ptr<VulkActor> shadowMapActor = resources.createActorFromPipeline(*actorDef, shadowMapPipeline, scene);
             shadowMapActors.push_back(shadowMapActor);
         }
 
         pickRenderpass = std::make_shared<VulkPickRenderpass>(vk);
         pickPipeline = resources.loadPipeline(pickRenderpass->renderPass, vk.swapChainExtent, "Pick");
-        auto pickPipelineDef = resources.metadata.pipelines.at("Pick");
         for (size_t i = 0; i < scene->actors.size(); ++i) {
             auto actor = scene->actors[i];
             auto actorDef = sceneDef.actors[i];
-            std::shared_ptr<VulkActor> pickActor = resources.createActorFromPipeline(*actorDef, pickPipelineDef, scene);
+            std::shared_ptr<VulkActor> pickActor = resources.createActorFromPipeline(*actorDef, pickPipeline, scene);
             pickActors.push_back(pickActor);
         }
 
@@ -71,29 +69,26 @@ public:
         pbrDebugUBO.specular = 1;
 
         wireframePipeline = resources.loadPipeline(vk.renderPass, vk.swapChainExtent, "Wireframe");
-        auto wireframePipelineDef = resources.metadata.pipelines.at("Wireframe");
         for (size_t i = 0; i < scene->actors.size(); ++i) {
             auto actor = scene->actors[i];
             auto actorDef = sceneDef.actors[i];
-            std::shared_ptr<VulkActor> wireframeActor = resources.createActorFromPipeline(*actorDef, wireframePipelineDef, scene);
+            std::shared_ptr<VulkActor> wireframeActor = resources.createActorFromPipeline(*actorDef, wireframePipeline, scene);
             // scene->actors[i]->pipeline = wireframeActor->pipeline;
             debugWireframeActors.push_back(wireframeActor);
         }
 
         // always create the debug actors/pipeline so we can render them on command.
-        debugNormalsPipeline = resources.loadPipeline(vk.renderPass, vk.swapChainExtent, "DebugNormals");
-        resources.loadPipeline(vk.renderPass, vk.swapChainExtent,
-                               "DebugTangents"); // TODO: does this even need to be a separate pipeline?
-        auto debugNormalsPipelineDef = resources.metadata.pipelines.at("DebugNormals");
-        auto debugTangentsPipelineDef = resources.metadata.pipelines.at("DebugTangents");
+        std::shared_ptr<VulkPipeline> debugNormalsPipeline = resources.loadPipeline(vk.renderPass, vk.swapChainExtent, "DebugNormals");
+        std::shared_ptr<VulkPipeline> debugTangentsPipeline = resources.loadPipeline(vk.renderPass, vk.swapChainExtent,
+                                                                                     "DebugTangents"); // TODO: does this even need to be a separate pipeline?
 
         // could probably defer this until we actually want to render the debug normals, eh.
         for (size_t i = 0; i < scene->actors.size(); ++i) {
             auto actor = scene->actors[i];
             auto actorDef = sceneDef.actors[i];
-            std::shared_ptr<VulkActor> debugNormalsActor = resources.createActorFromPipeline(*actorDef, debugNormalsPipelineDef, scene);
+            std::shared_ptr<VulkActor> debugNormalsActor = resources.createActorFromPipeline(*actorDef, debugNormalsPipeline, scene);
             debugNormalsActors.push_back(debugNormalsActor);
-            std::shared_ptr<VulkActor> debugTangentsActor = resources.createActorFromPipeline(*actorDef, debugTangentsPipelineDef, scene);
+            std::shared_ptr<VulkActor> debugTangentsActor = resources.createActorFromPipeline(*actorDef, debugTangentsPipeline, scene);
             debugTangentsActors.push_back(debugTangentsActor);
         }
     }

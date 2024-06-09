@@ -5,8 +5,11 @@
 #include "VulkShaderModule.h"
 #include <vulkan/vulkan.h>
 
+struct PipelineDef;
+
 class VulkPipelineBuilder {
     Vulk& vk;
+    std::shared_ptr<PipelineDef> def;
 
     struct VertInput {
         VkVertexInputBindingDescription binding = {};
@@ -33,7 +36,7 @@ class VulkPipelineBuilder {
     VulkPipelineBuilder& addShaderStage(VkShaderStageFlagBits stage, std::shared_ptr<VulkShaderModule> shaderModule);
 
 public:
-    VulkPipelineBuilder(Vulk& vk);
+    VulkPipelineBuilder(Vulk& vk, std::shared_ptr<PipelineDef> def);
 
     VulkPipelineBuilder& addvertShaderStage(std::shared_ptr<VulkShaderModule> shaderModule) {
         return addShaderStage(VK_SHADER_STAGE_VERTEX_BIT, shaderModule);
@@ -86,10 +89,5 @@ public:
     VulkPipelineBuilder& addPushConstantRange(VkShaderStageFlags stageFlags, uint32_t size);
 
     void build(VkRenderPass renderPass, std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout, VkPipelineLayout* pipelineLayout, VkPipeline* graphicsPipeline);
-    std::shared_ptr<VulkPipeline> build(VkRenderPass renderPass, std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout) {
-        VkPipelineLayout pipelineLayout;
-        VkPipeline graphicsPipeline;
-        build(renderPass, descriptorSetLayout, &pipelineLayout, &graphicsPipeline);
-        return std::make_shared<VulkPipeline>(vk, graphicsPipeline, pipelineLayout, descriptorSetLayout, shaderModules);
-    }
+    std::shared_ptr<VulkPipeline> build(VkRenderPass renderPass, std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout);
 };

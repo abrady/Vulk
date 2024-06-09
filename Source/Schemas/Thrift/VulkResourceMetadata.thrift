@@ -29,8 +29,7 @@ struct PushConstantDef {
 
 // Define complex structures
 struct DescriptorSetDef {
-    1: string name;
-    // VkShaderStageFlagBits
+    // the keys are VkShaderStageFlagBits
     2: map<i32, list<VulkShaderEnums.VulkShaderUBOBinding>> uniformBuffers; 
     3: map<i32, list<VulkShaderEnums.VulkShaderSSBOBinding>> storageBuffers;
     4: map<i32, list<VulkShaderEnums.VulkShaderTextureBinding>> imageSamplers;
@@ -71,12 +70,12 @@ struct PipelineDef {
     6: DescriptorSetDef descriptorSetDef;
     7: list<VulkShaderEnums.VulkShaderLocation> vertInputs;
     8: list<PushConstantDef> pushConstants;
-    9: VulkShaderEnums.VulkPrimitiveTopology primitiveTopology;
-    10: VulkShaderEnums.VulkPolygonMode polygonMode;
-    11: bool depthTestEnabled;
-    12: bool depthWriteEnabled;
-    13: VulkShaderEnums.VulkCompareOp depthCompareOp;
-    14: i32 cullMode; // VkCullModeFlags
+    9: VulkShaderEnums.VulkPrimitiveTopology primitiveTopology = VulkShaderEnums.VulkPrimitiveTopology.TriangleList;
+    10: VulkShaderEnums.VulkPolygonMode polygonMode = VulkShaderEnums.VulkPolygonMode.FILL;
+    11: bool depthTestEnabled = true;
+    12: bool depthWriteEnabled = true;
+    13: VulkShaderEnums.VulkCompareOp depthCompareOp = VulkShaderEnums.VulkCompareOp.LESS;
+    14: VulkCullModeFlags cullMode = VulkCullModeFlags.BACK; // VkCullModeFlags
     15: PipelineBlendingDef blending;
 }
 

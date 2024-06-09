@@ -45,8 +45,6 @@ private:
     std::shared_ptr<VulkMaterialTextures> getMaterialTextures(std::string const& name);
     std::shared_ptr<VulkModel> getModel(ModelDef const& modelDef, PipelineDef const& pipelineDef);
 
-    std::unordered_map<std::string, std::shared_ptr<VulkDescriptorSetLayout>> descriptorSetLayoutCache;
-
 public:
     std::unordered_map<std::string, std::shared_ptr<VulkMaterialTextures>> materialTextures;
     std::unordered_map<std::string, std::shared_ptr<VulkUniformBuffer<VulkMaterialConstants>>> materialUBOs;
@@ -77,7 +75,7 @@ public:
         return fragShaders.at(name);
     }
 
-    std::shared_ptr<VulkActor> createActorFromPipeline(ActorDef const& actorDef, std::shared_ptr<PipelineDef> pipelineDef, std::shared_ptr<VulkScene> scene);
+    std::shared_ptr<VulkActor> createActorFromPipeline(ActorDef const& actorDef, std::shared_ptr<VulkPipeline> pipeline, std::shared_ptr<VulkScene> scene);
 
     std::shared_ptr<VulkPipeline> loadPipeline(VkRenderPass renderPass, VkExtent2D extent, std::string const& name);
     std::shared_ptr<VulkPipeline> getPipeline(std::string const& name) {

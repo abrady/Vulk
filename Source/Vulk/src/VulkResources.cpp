@@ -88,57 +88,61 @@ std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(VkRenderPass renderPas
     if (pipelines.contains(name)) {
         return pipelines[name];
     }
-    PipelineDef& def = *metadata.pipelines.at(name);
-    shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout;
-    // TODO: possible bug here. I should just use the name.
-    // uint32_t dsHash = def.descriptorSet.hash();
-    if (descriptorSetLayoutCache.contains(def.def.get_descriptorSetDef().get_name())) {
-        descriptorSetLayout = descriptorSetLayoutCache[def.def.get_descriptorSetDef().get_name()];
-    } else {
-        VulkDescriptorSetLayoutBuilder dslb(vk);
-        for (auto& [stage, bindings] : def.def.get_descriptorSetDef().get_uniformBuffers()) {
-            for (auto& binding : bindings) {
-                vulk::cpp2::VulkShaderUBOBinding const& bindingRef = binding;
-                dslb.addUniformBuffer(stage, bindingRef);
-            }
-        }
-        for (auto& [stage, bindings] : def.def.get_descriptorSetDef().get_storageBuffers()) {
-            for (auto& binding : bindings) {
-                dslb.addStorageBuffer(stage, binding);
-            }
-        }
-        for (auto& [stage, bindings] : def.def.get_descriptorSetDef().get_imageSamplers()) {
-            for (auto& binding : bindings) {
-                dslb.addImageSampler(stage, binding);
-            }
-        }
-        descriptorSetLayout = dslb.build();
-        descriptorSetLayoutCache[def.def.get_descriptorSetDef().get_name()] = descriptorSetLayout;
-    }
+    std::shared_ptr<PipelineDef> def = metadata.pipelines.at(name);
 
-    VulkPipelineBuilder pb(vk);
-    for (auto& pc : def.def.get_pushConstants()) {
+    // build the descriptor set layout
+    VulkDescriptorSetLayoutBuilder dslb(vk);
+    for (auto& [stage, bindings] : def->def.get_descriptorSetDef().get_uniformBuffers()) {
+        for (auto& binding : bindings) {
+            vulk::cpp2::VulkShaderUBOBinding const& bindingRef = binding;
+            dslb.addUniformBuffer(stage, bindingRef);
+        }
+    }
+    for (auto& [stage, bindings] : def->def.get_descriptorSetDef().get_storageBuffers()) {
+        for (auto& binding : bindings) {
+            dslb.addStorageBuffer(stage, binding);
+        }
+    }
+    for (auto& [stage, bindings] : def->def.get_descriptorSetDef().get_imageSamplers()) {
+        for (auto& binding : bindings) {
+            dslb.addImageSampler(stage, binding);
+        }
+    }
+    shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout = dslb.build();
+
+    // make the pipeline itself
+    VulkPipelineBuilder pb(vk, def);
+    for (auto& pc : def->def.get_pushConstants()) {
         pb.addPushConstantRange(pc.get_stageFlags(), pc.get_size());
     }
-    pb.addvertShaderStage(getvertShader(def.vertShader->get_name()))
-        .addFragmentShaderStage(getFragmentShader(def.fragShader->get_name()))
-        .setDepthTestEnabled(def.def.get_depthTestEnabled())
-        .setDepthWriteEnabled(def.def.get_depthWriteEnabled())
-        .setDepthCompareOp(toVkCompareOp(def.def.get_depthCompareOp()))
-        .setPrimitiveTopology(toVkPrimitiveTopology(def.def.get_primitiveTopology()))
-        .setPolygonMode(toVkPolygonMode(def.def.get_polygonMode()))
+    vulk::cpp2::PipelineDef const& pd = def->def;
+    pb.addvertShaderStage(getvertShader(def->vertShader->get_name()))
         .setLineWidth(1.0f)
         .setScissor(extent)
         .setViewport(extent)
-        .setCullMode(def.def.get_cullMode())
         .setDepthCompareOp(VK_COMPARE_OP_LESS)
-        .setStencilTestEnabled(false)
-        .setBlending(def.def.get_blending().get_enabled(), getColorMask(def.def.get_blending().get_colorWriteMask()));
-    if (def.geomShader) {
-        pb.addGeometryShaderStage(getGeometryShader(def.geomShader->get_name()));
-    }
+        .setStencilTestEnabled(false);
 
-    for (auto input : def.def.get_vertInputs()) {
+    if (def->fragShader)
+        pb.addFragmentShaderStage(getFragmentShader(def->fragShader->get_name()));
+    if (pd.depthTestEnabled().is_set())
+        pb.setDepthTestEnabled(pd.get_depthTestEnabled());
+    if (pd.depthWriteEnabled().is_set())
+        pb.setDepthWriteEnabled(pd.get_depthWriteEnabled());
+    if (pd.depthCompareOp().is_set())
+        pb.setDepthCompareOp(toVkCompareOp(pd.get_depthCompareOp()));
+    if (pd.primitiveTopology().is_set())
+        pb.setPrimitiveTopology(toVkPrimitiveTopology(pd.get_primitiveTopology()));
+    if (pd.polygonMode().is_set())
+        pb.setPolygonMode(toVkPolygonMode(pd.get_polygonMode()));
+    if (pd.cullMode().is_set())
+        pb.setCullMode((VkCullModeFlags)pd.get_cullMode());
+    if (pd.blending().is_set())
+        pb.setBlending(pd.get_blending().get_enabled(), getColorMask(pd.get_blending().get_colorWriteMask()));
+    if (def->geomShader)
+        pb.addGeometryShaderStage(getGeometryShader(def->geomShader->get_name()));
+
+    for (auto input : def->def.get_vertInputs()) {
         pb.addVertexInput(input);
     }
 
@@ -147,14 +151,13 @@ std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(VkRenderPass renderPas
     return p;
 }
 
-std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const& actorDef, shared_ptr<PipelineDef> pipelineDef, shared_ptr<VulkScene> scene) {
-    auto const& dsDef = pipelineDef->def.get_descriptorSetDef();
+std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const& actorDef, shared_ptr<VulkPipeline> pipeline, shared_ptr<VulkScene> scene) {
+    vulk::cpp2::DescriptorSetDef const& dsDef = pipeline->def->def.get_descriptorSetDef();
     VulkDescriptorSetBuilder builder(vk);
-    shared_ptr<VulkModel> model = getModel(*actorDef.model, *pipelineDef);
+    PipelineDef const& pd = *pipeline->def;
+    shared_ptr<VulkModel> model = getModel(*actorDef.model, pd);
     shared_ptr<VulkFrameUBOs<glm::mat4>> xformUBOs;
-    if (descriptorSetLayoutCache.contains(pipelineDef->def.get_descriptorSetDef().get_name())) {
-        builder.setDescriptorSetLayout(descriptorSetLayoutCache[pipelineDef->def.get_descriptorSetDef().get_name()]);
-    }
+    builder.setDescriptorSetLayout(pipeline->descriptorSetLayout);
     for (auto& iter : dsDef.get_uniformBuffers()) {
         VkShaderStageFlagBits stage = (VkShaderStageFlagBits)iter.first;
         for (vulk::cpp2::VulkShaderUBOBinding binding : iter.second) {
@@ -252,8 +255,7 @@ std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const
         }
     }
     std::shared_ptr<VulkDescriptorSetInfo> info = builder.build();
-    descriptorSetLayoutCache[pipelineDef->def.get_descriptorSetDef().get_name()] = info->descriptorSetLayout;
-    return make_shared<VulkActor>(vk, model, xformUBOs, info, getPipeline(pipelineDef->def.get_name()));
+    return make_shared<VulkActor>(vk, model, xformUBOs, info, pipeline);
     static_assert((int)vulk::cpp2::VulkShaderTextureBinding::MAX == 19);
 }
 
@@ -269,8 +271,8 @@ std::shared_ptr<VulkScene> VulkResources::loadScene(VkRenderPass renderPass, std
     *scene->sceneUBOs.pointLight.mappedUBO = *sceneDef.pointLights[0]; // just one light for now
 
     for (auto& actorDef : sceneDef.actors) {
-        loadPipeline(renderPass, vk.swapChainExtent, actorDef->pipeline->def.get_name());
-        scene->actors.push_back(createActorFromPipeline(*actorDef, actorDef->pipeline, scene));
+        auto pipeline = loadPipeline(renderPass, vk.swapChainExtent, actorDef->pipeline->def.get_name());
+        scene->actors.push_back(createActorFromPipeline(*actorDef, pipeline, scene));
     }
     return scenes[name] = scene;
 }

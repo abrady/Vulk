@@ -43,11 +43,22 @@ My goal for this project is to transition from the hand-coded samples I was doin
 # Log
 
 remove nlohmann::json
+remove .fbs files
 
 # 6/8
 
 * Remove VulkEnumMetadata DONE
 * remove cereal refs DONE
+* remove nlohmann refs DONE
+
+okay, just noticed something funny with resource loading
+
+* when we load the pipeline we make a VulkDescriptorSetLayoutBuilder from the pipeline
+* when we load an actor for the scene we use a VulkDescriptorSetBuilder which we use to bind scene resources to the
+
+descriptorSetLayoutCache isn't necessary: the pipeline and the layout have a 1-1 relationship. let's remove it.
+
+but createActorFromPipeline takes a PipelineDef and not a Pipeline? eh, seems fine.
 
 ## 6/7
 

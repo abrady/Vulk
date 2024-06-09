@@ -2,8 +2,10 @@
 #include "Vulk/Vulk.h"
 #include "Vulk/VulkUtil.h"
 
-VulkPipelineBuilder::VulkPipelineBuilder(Vulk& vk)
-    : vk(vk) {
+VulkPipelineBuilder::VulkPipelineBuilder(Vulk& vk, std::shared_ptr<PipelineDef> def)
+    : vk(vk)
+    , def(def) {
+
     rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     rasterizer.depthClampEnable = VK_FALSE;
     rasterizer.rasterizerDiscardEnable = VK_FALSE;
@@ -212,6 +214,13 @@ void VulkPipelineBuilder::build(VkRenderPass renderPass, std::shared_ptr<VulkDes
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
     VK_CALL(vkCreateGraphicsPipelines(vk.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, graphicsPipeline));
+}
+
+std::shared_ptr<VulkPipeline> VulkPipelineBuilder::build(VkRenderPass renderPass, std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout) {
+    VkPipelineLayout pipelineLayout;
+    VkPipeline graphicsPipeline;
+    build(renderPass, descriptorSetLayout, &pipelineLayout, &graphicsPipeline);
+    return std::make_shared<VulkPipeline>(vk, def, graphicsPipeline, pipelineLayout, descriptorSetLayout, shaderModules);
 }
 
 VulkPipelineBuilder& VulkPipelineBuilder::setStencilTestEnabled(bool enabled) {

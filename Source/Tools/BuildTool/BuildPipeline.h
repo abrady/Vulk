@@ -232,7 +232,7 @@ public:
                             pipelineIn.get_polygonMode());
         }
         if (pipelineIn.cullMode().is_set()) {
-            pipelineOut.cullMode_ref() = (int)apache::thrift::util::enumValueOrThrow<vulk::cpp2::VulkCullModeFlags>(pipelineIn.get_cullMode());
+            pipelineOut.cullMode_ref() = apache::thrift::util::enumValueOrThrow<vulk::cpp2::VulkCullModeFlags>(pipelineIn.get_cullMode());
         }
         pipelineOut.blending_ref() = pipelineIn.get_blending();
         static_assert(sizeof(pipelineIn) == 432);

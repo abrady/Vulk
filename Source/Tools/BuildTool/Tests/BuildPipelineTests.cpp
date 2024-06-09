@@ -121,7 +121,7 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
         CHECK(builtDef.get_depthCompareOp() == apache::thrift::util::enumValueOrThrow<decltype(builtDef.get_depthCompareOp())>(def.get_depthCompareOp()));
         CHECK(builtDef.get_blending().get_enabled() == def.get_blending().get_enabled());
         CHECK(builtDef.get_blending().get_colorWriteMask() == def.get_blending().get_colorWriteMask());
-        CHECK(builtDef.get_cullMode() == (int)apache::thrift::util::enumValueOrThrow<vulk::cpp2::VulkCullModeFlags>(def.get_cullMode()));
+        CHECK(builtDef.get_cullMode() == apache::thrift::util::enumValueOrThrow<vulk::cpp2::VulkCullModeFlags>(def.get_cullMode()));
         auto v = std::vector<vulk::cpp2::VulkShaderLocation>{vulk::cpp2::VulkShaderLocation::Pos, vulk::cpp2::VulkShaderLocation::Normal, vulk::cpp2::VulkShaderLocation::Tangent,
                                                              vulk::cpp2::VulkShaderLocation::TexCoord};
         CHECK(builtDef.get_vertInputs() == v);
