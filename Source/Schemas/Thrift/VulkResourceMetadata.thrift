@@ -148,18 +148,25 @@ union GeoMeshDef {
 }
 
 
+struct XformDef {
+    1: Vec3 pos;
+    2: Vec3 rot;
+    3: Vec3 scale;
+}
+
 struct ModelDef {
     1: string name;
     2: string mesh;
     3: string material;
     4: MeshDefType meshDefType;
     5: GeoMeshDefType geoMeshDefType;
-    6: GeoMeshDef geoMeshDef;
+    6: GeoMeshDef geoMesh;
+    7: XformDef xform;
 }
 
 struct ActorDef {
     1: string name;
-    2: string pipelineName;
+    2: string pipeline;
     3: string modelName;
     4: ModelDef inlineModel; // mutually exclusive with modelName
     5: Xform xform;
@@ -178,6 +185,7 @@ struct LightDef {
     3: Vec3 color;
     4: double falloffStart;
     5: double falloffEnd;
+    6: string name;
 }
 
 struct SceneDef {

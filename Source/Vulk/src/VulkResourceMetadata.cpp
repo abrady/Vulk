@@ -156,7 +156,7 @@ ModelDef ModelDef::fromDef(vulk::cpp2::ModelDef const& defIn, unordered_map<stri
         return ModelDef(name, meshes.at(defIn.get_mesh()), material);
     case vulk::cpp2::MeshDefType::Mesh: {
         shared_ptr<VulkMesh> mesh = make_shared<VulkMesh>();
-        vulk::cpp2::GeoMeshDef def = defIn.geoMeshDef().value();
+        vulk::cpp2::GeoMeshDef def = defIn.geoMesh().value();
         switch (defIn.geoMeshDefType().value()) {
         case vulk::cpp2::GeoMeshDefType::Sphere: {
             vulk::cpp2::GeoSphereDef const& sphere = def.get_sphere();
@@ -197,7 +197,7 @@ ActorDef ActorDef::fromDef(vulk::cpp2::ActorDef defIn, unordered_map<string, sha
                            unordered_map<string, shared_ptr<MeshDef>> meshes, unordered_map<string, shared_ptr<MaterialDef>> materials) {
     ActorDef a;
     a.def = defIn;
-    a.pipeline = pipelines.at(defIn.get_pipelineName());
+    a.pipeline = pipelines.at(defIn.get_pipeline());
 
     if (defIn.get_modelName() != "") {
         assert(!defIn.inlineModel().is_set());

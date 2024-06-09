@@ -1,3 +1,122 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:58529ebefb7b2cedf5ead273b27330b6e9054da3410367a47f3c58004e846e33
-size 3086
+{
+    "version": 1,
+    "name": "ShadowMap",
+    "camera": {
+        "eye": {
+            "x": 0,
+            "y": 0,
+            "z": 10
+        }
+    },
+    "lights": [
+        {
+            "name": "Light1",
+            "type": "point",
+            "pos": {
+                "x": 5,
+                "y": 0,
+                "z": 8
+            },
+            "color": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+            }
+        }
+    ],
+    "actors": [
+        {
+            "name": "Sphere1",
+            "pipeline": "LitShadowMappedModel",
+            "inlineModel": {
+                "version": 1,
+                "name": "SphereModel1",
+                "type": 1,
+                "geoMesh": {
+                    "type": 1,
+                    "radius": 1,
+                    "numSubdivisions": 3
+                },
+                "material": "Porcelain001"
+            },
+            "xform": {
+                "pos": {
+                    "x": 0,
+                    "y": 0,
+                    "z": -3
+                }
+            }
+        },
+        {
+            "name": "Sphere2",
+            "pipeline": "LitShadowMappedModel",
+            "inlineModel": {
+                "version": 1,
+                "name": "SphereModel2",
+                "type": 1,
+                "geoMesh": {
+                    "type": 1,
+                    "radius": 0.3,
+                    "numSubdivisions": 3
+                },
+                "material": "Porcelain001"
+            },
+            "xform": {
+                "pos": {
+                    "x": 2,
+                    "y": 0.3,
+                    "z": 1
+                }
+            }
+        },
+        {
+            "name": "Sphere3",
+            "pipeline": "LitShadowMappedModel",
+            "inlineModel": {
+                "version": 1,
+                "name": "SphereModel3",
+                "type": 1,
+                "geoMesh": {
+                    "type": 1,
+                    "radius": 0.6,
+                    "numSubdivisions": 3
+                },
+                "material": "Porcelain001"
+            },
+            "xform": {
+                "pos": {
+                    "x": 1,
+                    "y": 0.3,
+                    "z": 1
+                }
+            }
+        },
+        {
+            "name": "Quad1",
+            "pipeline": "LitShadowMappedModel",
+            "inlineModel": {
+                "version": 1,
+                "name": "QuadModel1",
+                "type": 1,
+                "geoMesh": {
+                    "type": 4,
+                    "width": 20,
+                    "height": 20
+                },
+                "material": "Porcelain001"
+            },
+            "xform": {
+                "pos": {
+                    "x": 0,
+                    "y": 0,
+                    "z": -10
+                },
+                "rot": {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                }
+            }
+        }
+    ]
+}
