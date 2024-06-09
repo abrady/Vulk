@@ -15,21 +15,6 @@ namespace fs = std::filesystem;
 
 #pragma warning(disable : 4244) // double to float
 
-// namespace nlohmann {
-// template <>
-// struct adl_serializer<glm::vec3> {
-//     static void to_json(json& j, const glm::vec3& v) {
-//         j = json{v.x, v.y, v.z};
-//     }
-
-//     static void from_json(const json& j, glm::vec3& v) {
-//         v.x = j.at(0).get<float>();
-//         v.y = j.at(1).get<float>();
-//         v.z = j.at(2).get<float>();
-//     }
-// };
-// } // namespace nlohmann
-
 MaterialDef loadMaterialDef(const fs::path& file) {
     if (!fs::exists(file)) {
         VULK_THROW("Material file does not exist: {}", file.string());
