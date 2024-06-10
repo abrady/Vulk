@@ -5,6 +5,7 @@
         "assimp",
         "catch2",
         "cli11",
+        "fbthrift",
         "flatbuffers",
         "fmt",
         "glfw3",
@@ -20,7 +21,6 @@
         "spirv-cross",
         "spirv-headers",
         "stb",
-        "fbthrift",
         "vulkan"
     ]
 }

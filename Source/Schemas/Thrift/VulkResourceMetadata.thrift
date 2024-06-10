@@ -15,13 +15,6 @@ enum VulkCullModeFlags {
     FRONT_AND_BACK = 3
 }
 
-enum VulkShaderStageFlagBits {
-    Vertex = 0,
-    Fragment = 1,
-    Geometry = 2,
-}
-
-
 struct PushConstantDef {
     1: i32 stageFlags; // or-ed together
     2: i32 size;
@@ -191,4 +184,17 @@ struct ShaderDef {
 
 struct ResourceConfig {
     1: string ResourcesDir;
+}
+
+struct SrcProjectDef {
+    1: string name;
+    3: list<string> sceneNames;
+}
+
+struct ProjectDef {
+    1: string name;
+    2: string rootDir;
+    3: map<string, SceneDef> scenes;
+    4: map<string, PipelineDef> pipelines;
+    5: map<string, ModelDef> models;
 }

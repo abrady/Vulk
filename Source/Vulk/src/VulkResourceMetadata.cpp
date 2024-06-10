@@ -1,4 +1,5 @@
 #include "Vulk/VulkResourceMetadata.h"
+#include <cstdlib>
 
 using namespace std;
 
@@ -282,7 +283,6 @@ void findAndProcessMetadata(const fs::path path, Metadata& metadata) {
             metadata.vertShaders[stem] = make_shared<vulk::cpp2::ShaderDef>();
             metadata.vertShaders[stem]->name_ref() = stem;
             metadata.vertShaders[stem]->path_ref() = entry.path().string();
-
         } else if (ext == ".geomspv") {
             assert(!metadata.geometryShaders.contains(stem));
             metadata.geometryShaders[stem] = make_shared<vulk::cpp2::ShaderDef>();
@@ -294,7 +294,6 @@ void findAndProcessMetadata(const fs::path path, Metadata& metadata) {
             metadata.fragmentShaders[stem] = make_shared<vulk::cpp2::ShaderDef>();
             metadata.fragmentShaders[stem]->name_ref() = stem;
             metadata.fragmentShaders[stem]->path_ref() = entry.path().string();
-
         } else if (ext == ".mtl") {
             assert(!metadata.materials.contains(stem));
             auto material = make_shared<MaterialDef>(loadMaterialDef(entry.path().string()));

@@ -24,7 +24,22 @@
         // C:/open/Github/Vulk/build/Resources/Assets/Pipelines/DebugNormals.pipeline.bin C:/open/Github/Vulk/Assets/Pipelines/DebugNormals.pipeline 
         // C:/open/Github/Vulk/build/Resources/Assets/Pipelines/ShadowMap.pipeline.bin C:/open/Github/Vulk/Assets/Pipelines/ShadowMap.pipeline 
         {
-            "name": "PipelineBuilder - Debug Pipeline",
+            "name": "ProjectBuilder - Debug",
+            "program": "${workspaceFolder}/build/Source/Tools/BuildTool/Debug/BuildTool.exe",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "cwd": "${workspaceRoot}/Build",
+            "args": [
+                "project",
+                "${workspaceFolder}\\Source\\Tools\\BuildTool\\Tests\\TestProjDir\\test.proj",
+                "${workspaceFolder}\\Source\\Tools\\BuildTool\\Tests\\TestProjBuildDir"
+            ],
+            "stopAtEntry": false,
+            "environment": [],
+            "preLaunchTask": "CMake: build buildtool"
+        },
+        {
+            "name": "PipelineBuilder - Debug",
             "program": "${workspaceFolder}/build/Source/Tools/BuildTool/Debug/BuildTool.exe",
             "type": "cppvsdbg",
             "request": "launch",
@@ -36,11 +51,10 @@
                 "${workspaceFolder}/Assets/Pipelines/ShadowMap.pipeline"
             ],
             "stopAtEntry": false,
-            "environment": [],
-            "preLaunchTask": "CMake: build buildtool"
+            "environment": []
         },
         {
-            "name": "PipelineBuilder - GenVulkShaderEnums",
+            "name": "GenVulkShaderEnums - Debug",
             "program": "${workspaceFolder}/build/Source/Tools/BuildTool/Debug/BuildTool.exe",
             "type": "cppvsdbg",
             "request": "launch",

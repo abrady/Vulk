@@ -17,7 +17,7 @@ find_package(spdlog CONFIG REQUIRED)
 
 # Add an executable
 message("BuildTool: CMAKE_MSVC_RUNTIME_LIBRARY is ${CMAKE_MSVC_RUNTIME_LIBRARY}")
-add_executable(BuildTool BuildTool.cpp)
+add_executable(BuildTool BuildTool.cpp BuildProject.cpp)
 
 target_include_directories(BuildTool PRIVATE ${GENSCHEMAFILES_INCLUDE_DIRS})
 

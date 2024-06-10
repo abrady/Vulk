@@ -100,6 +100,32 @@ TEST_CASE("misc serialization test") {
         readDefFromFile("test.model", def2);
         REQUIRE(def == def2);
     }
+
+    SECTION("ProjectDef") {
+        vulk::cpp2::ProjectDef def;
+        def.name_ref() = "TestProject";
+        def.rootDir_ref() = "C:/TestProject";
+        vulk::cpp2::SceneDef sceneDef;
+        sceneDef.name_ref() = "TestScene";
+        // sceneDef.camera_ref()->eye_ref().emplace = {1.0, 2.0, 3.0};
+        vulk::cpp2::Vec3& cam = sceneDef.camera_ref()->eye_ref().value();
+        cam.x_ref() = 1.0;
+        cam.y_ref() = 2.0;
+        cam.z_ref() = 3.0;
+        vulk::cpp2::Vec3& lookAt = sceneDef.camera_ref()->lookAt_ref().value();
+        lookAt.x_ref() = 4.1;
+        lookAt.y_ref() = 5.2;
+        lookAt.z_ref() = 6.3;
+        sceneDef.camera_ref()->nearClip_ref() = 0.1;
+        sceneDef.camera_ref()->farClip_ref() = 100.0;
+        def.scenes_ref()["TestScene"] = sceneDef;
+
+        writeDefToFile("test.project", def);
+
+        vulk::cpp2::ProjectDef def2;
+        readDefFromFile("test.project", def2);
+        REQUIRE(def == def2);
+    }
 }
 
 TEST_CASE("make sure our json definitions still work") {

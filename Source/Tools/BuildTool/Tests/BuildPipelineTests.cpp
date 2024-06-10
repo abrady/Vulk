@@ -130,7 +130,7 @@ TEST_CASE("PipelineBuilder Tests") { // Define your tests here
         CHECK(builtDef.get_pushConstants()[0].get_size() == 4);
 
         REQUIRE(sizeof(def) == 432);      // reminder to add new fields to the test
-        REQUIRE(sizeof(builtDef) == 472); // reminder to add new fields to the test
+        REQUIRE(sizeof(builtDef) == 432); // reminder to add new fields to the test
         // I would do a static assert here but it doesn't print out the sizes.
         auto v2 = std::vector<vulk::cpp2::VulkShaderUBOBinding>{vulk::cpp2::VulkShaderUBOBinding::Xforms, vulk::cpp2::VulkShaderUBOBinding::ModelXform,
                                                                 vulk::cpp2::VulkShaderUBOBinding::DebugNormals};

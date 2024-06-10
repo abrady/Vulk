@@ -12,101 +12,8 @@
 
 namespace fs = std::filesystem;
 
-// #include <DbgHelp.h>
-// #include <dbghelp.h>
-// #include <windows.h>
-// #pragma comment(lib, "DbgHelp.lib")
-
-// void printStackTrace(CONTEXT *context) {
-//     STACKFRAME64 stackframe = {};
-//     stackframe.AddrPC.Offset = context->Rip;
-//     stackframe.AddrPC.Mode = AddrModeFlat;
-//     stackframe.AddrFrame.Offset = context->Rbp;
-//     stackframe.AddrFrame.Mode = AddrModeFlat;
-//     stackframe.AddrStack.Offset = context->Rsp;
-//     stackframe.AddrStack.Mode = AddrModeFlat;
-
-//     HANDLE process = GetCurrentProcess();
-//     HANDLE thread = GetCurrentThread();
-
-//     SymInitialize(process, NULL, TRUE);
-
-//     while (StackWalk64(IMAGE_FILE_MACHINE_I386, process, thread, &stackframe, context, NULL, SymFunctionTableAccess64, SymGetModuleBase64, NULL)) {
-//         DWORD64 displacement = 0;
-//         char buffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR)];
-//         PSYMBOL_INFO symbol = (PSYMBOL_INFO)buffer;
-//         symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
-//         symbol->MaxNameLen = MAX_SYM_NAME;
-
-//         if (SymFromAddr(process, stackframe.AddrPC.Offset, &displacement, symbol)) {
-//             std::cout << symbol->Name << std::endl;
-//         }
-//     }
-
-//     SymCleanup(process);
-// }
-
-// LONG WINAPI exceptionFilter(struct _EXCEPTION_POINTERS *exceptionPointers) {
-//     std::cout << "Access violation at address: " << exceptionPointers->ExceptionRecord->ExceptionAddress << std::endl;
-//     printStackTrace(exceptionPointers->ContextRecord);
-//     return EXCEPTION_EXECUTE_HANDLER;
-// }
-
-void glslShaderEnumsGenerator(fs::path outFile, bool verbose) {
-    auto logger = VulkLogger::CreateLogger("Buildtool:ShaderEnumsGenerator");
-    logger->info("GLSLIncludesGenerator: Generating GLSL includes for enum values to: {}", outFile.string());
-    auto parent_dir = outFile.parent_path();
-    if (!fs::exists(parent_dir)) {
-        logger->error("Output directory does not exist: {}", parent_dir.string());
-        throw CLI::ValidationError("Output directory does not exist: " + parent_dir.string());
-    }
-
-    if (verbose) {
-        logger->set_level(spdlog::level::trace);
-    }
-    // logger->set_level(spdlog::level::trace);
-
-    std::ofstream out(outFile);
-    out << R"(
-// Generated header file for enum values coming from our headers
-// e.g. UBO bindings, or layout locations
-)";
-
-    // Write the UBO bindings
-    out << "\n// UBO Bindings\n";
-    logger->trace("// UBO Bindings");
-    for (size_t i = 0; i < apache::thrift::TEnumDataStorage<vulk::cpp2::VulkShaderBinding>::values.size(); ++i) {
-        auto value = apache::thrift::TEnumDataStorage<vulk::cpp2::VulkShaderBinding>::names[i];
-        auto key = apache::thrift::TEnumDataStorage<vulk::cpp2::VulkShaderBinding>::values[i];
-        out << "const int VulkShaderBinding_" << value << " = " << (int)key << ";\n";
-        logger->trace("const int VulkShaderBinding_{} = {};", value, (int)key);
-    }
-
-    // Write the layout locations
-    out << "\n// Shader Input Locations\n";
-    for (size_t i = 0; i < apache::thrift::TEnumDataStorage<vulk::cpp2::VulkShaderLocation>::values.size(); ++i) {
-        auto value = apache::thrift::TEnumDataStorage<vulk::cpp2::VulkShaderLocation>::names[i];
-        auto key = apache::thrift::TEnumDataStorage<vulk::cpp2::VulkShaderLocation>::values[i];
-        out << "const int VulkShaderLocation_" << value << " = " << (int)key << ";\n";
-        logger->trace("const int VulkShaderLocation_{} = {};", value, (int)key);
-    }
-
-    // Write the light constants
-    // Write the layout locations
-    out << "\n// Shader Input Locations\n";
-    for (size_t i = 0; i < apache::thrift::TEnumDataStorage<vulk::cpp2::VulkLights>::values.size(); ++i) {
-        auto value = apache::thrift::TEnumDataStorage<vulk::cpp2::VulkLights>::names[i];
-        auto key = apache::thrift::TEnumDataStorage<vulk::cpp2::VulkLights>::values[i];
-        out << "const int VulkLights_" << value << " = " << (int)key << ";\n";
-        logger->trace("const int VulkLights_{} = {};", value, (int)key);
-    }
-
-    out << "\n";
-
-    out.close();
-
-    // // throw CLI::Success(); // not really necessary
-}
+extern void glslShaderEnumsGenerator(fs::path outFile, bool verbose);
+extern void buildProjectDef(const fs::path project_file_path, fs::path buildDir);
 
 void pipelineBuilder(fs::path builtShadersDir, fs::path pipelineFileOut, fs::path pipelineFileIn, bool verbose) {
     auto logger = VulkLogger::CreateLogger("PipelineBuilder");
@@ -183,6 +90,16 @@ int main(int argc, char** argv) {
     glsl->callback([&outFile, verbose]() {
         outFile.make_preferred();
         glslShaderEnumsGenerator(outFile, verbose);
+    });
+
+    // buildProjectDef(const fs::path project_file_path, fs::path buildDir, fs::path generatedHeaderDir)
+    CLI::App* project = app.add_subcommand("project", "build the project file");
+    fs::path projectFileIn;
+    project->add_option("projectFileIn", projectFileIn, "Project file to build.");
+    fs::path projectOutDir;
+    project->add_option("projectOutDir", projectOutDir, "Directory where the projects are built to.");
+    project->callback([&projectFileIn, &projectOutDir]() {
+        buildProjectDef(projectFileIn, projectOutDir);
     });
 
     // CLI::App *scene = app.add_subcommand("scene", "build the scene file");
