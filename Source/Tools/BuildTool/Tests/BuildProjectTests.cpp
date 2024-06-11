@@ -69,4 +69,5 @@ Mode                 LastWriteTime         Length Name
     REQUIRE(fs::exists(buildDir / "Assets" / "Shaders" / "frag" / "test.fragspv"));
     REQUIRE(fs::exists(buildDir / "Assets" / "Shaders" / "Pipelines" / "test"));
     REQUIRE(fs::exists(buildDir / "Assets" / "Shaders" / "vert" / "test.vertspv"));
+    REQUIRE(fs::exists(buildDir / "Assets" / "Materials" / "test" / "test.mtl"));
 }

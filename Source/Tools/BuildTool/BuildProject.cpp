@@ -145,8 +145,37 @@ static bool shouldCopyFile(fs::path src, fs::path dst) {
 // also creates the parent directory if it doesn't exist
 static void copyFileIfShould(fs::path src, fs::path dst) {
     if (shouldCopyFile(src, dst)) {
+        logger->info("Copying file: {} to {}", src.string(), dst.string());
         VULK_ASSERT(fs::exists(dst.parent_path()) || fs::create_directories(dst.parent_path()));
         fs::copy_file(src, dst, fs::copy_options::overwrite_existing);
+    } else {
+        logger->info("Skipping file copy: {} to {}", src.string(), dst.string());
+    }
+}
+
+static void copyDirIfShould(fs::path src, fs::path dst) {
+    // Check if source directory exists
+    assert(fs::exists(src) && fs::is_directory(src));
+
+    // Create destination directory if it does not exist
+    if (!fs::exists(dst)) {
+        fs::create_directories(dst);
+    }
+    // Iterate through the source directory
+    std::unordered_set<std::string> sourceFiles;
+    for (const auto& entry : fs::directory_iterator(src)) {
+        // Assert if a subdirectory is found, just handle files in leaf directories for now
+        VULK_ASSERT(!fs::is_directory(entry.path()));
+        std::string filename = entry.path().filename().string();
+        sourceFiles.insert(filename);
+        fs::path dest_path = dst / filename;
+        copyFileIfShould(entry.path(), dest_path);
+    }
+    // Check for files in dst that are not in src
+    for (const auto& entry : fs::directory_iterator(dst)) {
+        VULK_ASSERT(!fs::is_directory(entry.path()));
+        std::string filename = entry.path().filename().string();
+        VULK_ASSERT_FMT(sourceFiles.contains(filename), "File in destination not in source: {}", filename);
     }
 }
 
@@ -258,10 +287,22 @@ void buildProjectDef(const fs::path project_file_path, fs::path buildDir) {
             }
 
             std::string modelName = actorDef.get_modelName();
-            if (modelName != "" && !projectOut.get_models().contains(modelName)) {
-                fs::path modelPath = (projectDir / (actorDef.get_modelName() + ".model"));
-                copyFileIfShould(metadata.models.at(modelName), assetsDir / "Models" / metadata.models.at(modelName).filename());
-                readDefFromFile(modelPath.string(), projectOut.models_ref()[modelName]);
+            vulk::cpp2::ModelDef* modelDef = nullptr;
+            if (modelName != "") {
+                if (!projectOut.get_models().contains(modelName)) {
+                    fs::path modelPath = (projectDir / (actorDef.get_modelName() + ".model"));
+                    copyFileIfShould(metadata.models.at(modelName), assetsDir / "Models" / metadata.models.at(modelName).filename());
+                    modelDef = &projectOut.models_ref()[modelName];
+                    readDefFromFile(modelPath.string(), *modelDef);
+                }
+            } else {
+                // inline model
+                modelDef = &actorDef.inlineModel_ref().value();
+            }
+            if (modelDef) {
+                // copy materials
+                fs::path materialPath = metadata.materials.at(modelDef->get_material());
+                copyDirIfShould(materialPath.parent_path(), assetsDir / "Materials" / materialPath.parent_path().filename());
             }
         }
     }
