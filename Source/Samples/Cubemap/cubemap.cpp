@@ -31,31 +31,34 @@ public:
     std::shared_ptr<spdlog::logger> logger = VulkLogger::CreateLogger("World");
 
 public:
-    World(Vulk& vk, std::string sceneName)
+    World(Vulk& vk, std::string projFile)
         : vk(vk) {
         shadowMapRenderpass = std::make_shared<VulkDepthRenderpass>(vk);
         shadowMapFence = std::make_shared<VulkFence>(vk);
 
-        VulkResources resources(vk);
-        resources.loadScene(vk.renderPass, sceneName, shadowMapRenderpass->depthViews);
-        SceneDef& sceneDef = *resources.metadata.scenes.at(sceneName);
-        scene = resources.scenes[sceneName];
+        vulk::cpp2::ProjectDef projDef;
+        readDefFromFile(projFile, projDef);
+        std::string sceneName = projDef.get_startingScene();
+        std::shared_ptr<VulkResources> resources = VulkResources::loadFromProject(vk, projFile);
+        resources->loadScene(vk.renderPass, sceneName, shadowMapRenderpass->depthViews);
+        SceneDef& sceneDef = *resources->metadata->scenes.at(sceneName);
+        scene = resources->scenes[sceneName];
 
-        shadowMapPipeline = resources.loadPipeline(shadowMapRenderpass->renderPass, shadowMapRenderpass->extent, "ShadowMap");
-        auto shadowMapPipelineDef = resources.metadata.pipelines.at("ShadowMap");
+        shadowMapPipeline = resources->loadPipeline(shadowMapRenderpass->renderPass, shadowMapRenderpass->extent, "ShadowMap");
+        auto shadowMapPipelineDef = resources->metadata->pipelines.at("ShadowMap");
         for (size_t i = 0; i < scene->actors.size(); ++i) {
             auto actor = scene->actors[i];
             auto actorDef = sceneDef.actors[i];
-            std::shared_ptr<VulkActor> shadowMapActor = resources.createActorFromPipeline(*actorDef, shadowMapPipeline, scene);
+            std::shared_ptr<VulkActor> shadowMapActor = resources->createActorFromPipeline(*actorDef, shadowMapPipeline, scene);
             shadowMapActors.push_back(shadowMapActor);
         }
 
         pickRenderpass = std::make_shared<VulkPickRenderpass>(vk);
-        pickPipeline = resources.loadPipeline(pickRenderpass->renderPass, vk.swapChainExtent, "Pick");
+        pickPipeline = resources->loadPipeline(pickRenderpass->renderPass, vk.swapChainExtent, "Pick");
         for (size_t i = 0; i < scene->actors.size(); ++i) {
             auto actor = scene->actors[i];
             auto actorDef = sceneDef.actors[i];
-            std::shared_ptr<VulkActor> pickActor = resources.createActorFromPipeline(*actorDef, pickPipeline, scene);
+            std::shared_ptr<VulkActor> pickActor = resources->createActorFromPipeline(*actorDef, pickPipeline, scene);
             pickActors.push_back(pickActor);
         }
 
@@ -68,27 +71,27 @@ public:
         pbrDebugUBO.diffuse = 1;
         pbrDebugUBO.specular = 1;
 
-        wireframePipeline = resources.loadPipeline(vk.renderPass, vk.swapChainExtent, "Wireframe");
+        wireframePipeline = resources->loadPipeline(vk.renderPass, vk.swapChainExtent, "Wireframe");
         for (size_t i = 0; i < scene->actors.size(); ++i) {
             auto actor = scene->actors[i];
             auto actorDef = sceneDef.actors[i];
-            std::shared_ptr<VulkActor> wireframeActor = resources.createActorFromPipeline(*actorDef, wireframePipeline, scene);
+            std::shared_ptr<VulkActor> wireframeActor = resources->createActorFromPipeline(*actorDef, wireframePipeline, scene);
             // scene->actors[i]->pipeline = wireframeActor->pipeline;
             debugWireframeActors.push_back(wireframeActor);
         }
 
         // always create the debug actors/pipeline so we can render them on command.
-        std::shared_ptr<VulkPipeline> debugNormalsPipeline = resources.loadPipeline(vk.renderPass, vk.swapChainExtent, "DebugNormals");
-        std::shared_ptr<VulkPipeline> debugTangentsPipeline = resources.loadPipeline(vk.renderPass, vk.swapChainExtent,
-                                                                                     "DebugTangents"); // TODO: does this even need to be a separate pipeline?
+        std::shared_ptr<VulkPipeline> debugNormalsPipeline = resources->loadPipeline(vk.renderPass, vk.swapChainExtent, "DebugNormals");
+        std::shared_ptr<VulkPipeline> debugTangentsPipeline = resources->loadPipeline(vk.renderPass, vk.swapChainExtent,
+                                                                                      "DebugTangents"); // TODO: does this even need to be a separate pipeline?
 
         // could probably defer this until we actually want to render the debug normals, eh.
         for (size_t i = 0; i < scene->actors.size(); ++i) {
             auto actor = scene->actors[i];
             auto actorDef = sceneDef.actors[i];
-            std::shared_ptr<VulkActor> debugNormalsActor = resources.createActorFromPipeline(*actorDef, debugNormalsPipeline, scene);
+            std::shared_ptr<VulkActor> debugNormalsActor = resources->createActorFromPipeline(*actorDef, debugNormalsPipeline, scene);
             debugNormalsActors.push_back(debugNormalsActor);
-            std::shared_ptr<VulkActor> debugTangentsActor = resources.createActorFromPipeline(*actorDef, debugTangentsPipeline, scene);
+            std::shared_ptr<VulkActor> debugTangentsActor = resources->createActorFromPipeline(*actorDef, debugTangentsPipeline, scene);
             debugTangentsActors.push_back(debugTangentsActor);
         }
     }
@@ -443,7 +446,7 @@ public:
 
 int main() {
     Vulk app;
-    app.renderable = std::make_shared<World>(app, "PBR2");
+    app.renderable = std::make_shared<World>(app, "Cubemap.proj");
     app.run();
     return 0;
 }

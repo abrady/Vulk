@@ -19,9 +19,22 @@ namespace fs = filesystem;
 
 VulkResources::VulkResources(Vulk& vk)
     : vk(vk)
-    , metadata(*getMetadata()) {
+    , metadata(getMetadata()) {
     textureSampler = VulkSampler::createImageSampler(vk);
     shadowMapSampler = VulkSampler::createShadowSampler(vk);
+}
+
+VulkResources::VulkResources(Vulk& vk, std::shared_ptr<Metadata> metadata)
+    : vk(vk)
+    , metadata(metadata) {
+    textureSampler = VulkSampler::createImageSampler(vk);
+    shadowMapSampler = VulkSampler::createShadowSampler(vk);
+}
+
+std::shared_ptr<VulkResources> VulkResources::loadFromProject(Vulk& vk, std::filesystem::path projectFile) {
+    std::shared_ptr<Metadata> metadata = std::make_shared<Metadata>();
+    findAndProcessMetadata(projectFile.parent_path() / "Assets", *metadata);
+    return std::make_shared<VulkResources>(vk, metadata);
 }
 
 std::shared_ptr<VulkShaderModule> VulkResources::createShaderModule(ShaderType type, string const& name) {
@@ -48,7 +61,7 @@ std::shared_ptr<VulkShaderModule> VulkResources::createShaderModule(ShaderType t
         VULK_THROW("Invalid shader type");
     };
 
-    fs::path path = getResourcesDir() / "Source" / "Shaders" / subdir / (name + suffix);
+    fs::path path = metadata->assetsDir / "Shaders" / subdir / (name + suffix);
     auto shaderCode = readFileIntoMem(path.string());
     VkShaderModule shaderModule = vk.createShaderModule(shaderCode);
     auto sm = make_shared<VulkShaderModule>(vk, shaderModule);
@@ -88,7 +101,7 @@ std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(VkRenderPass renderPas
     if (pipelines.contains(name)) {
         return pipelines[name];
     }
-    std::shared_ptr<PipelineDef> def = metadata.pipelines.at(name);
+    std::shared_ptr<PipelineDef> def = metadata->pipelines.at(name);
 
     // build the descriptor set layout
     VulkDescriptorSetLayoutBuilder dslb(vk);
@@ -263,7 +276,7 @@ std::shared_ptr<VulkScene> VulkResources::loadScene(VkRenderPass renderPass, std
     if (scenes.contains(name)) {
         return scenes[name];
     }
-    SceneDef& sceneDef = *metadata.scenes.at(name);
+    SceneDef& sceneDef = *metadata->scenes.at(name);
     shared_ptr<VulkScene> scene = make_shared<VulkScene>(vk);
 
     scene->shadowMapViews = shadowMapViews;
@@ -279,7 +292,7 @@ std::shared_ptr<VulkScene> VulkResources::loadScene(VkRenderPass renderPass, std
 
 shared_ptr<VulkUniformBuffer<VulkMaterialConstants>> VulkResources::getMaterial(string const& name) {
     if (!materialUBOs.contains(name)) {
-        materialUBOs[name] = make_shared<VulkUniformBuffer<VulkMaterialConstants>>(vk, metadata.materials.at(name)->toVulkMaterialConstants());
+        materialUBOs[name] = make_shared<VulkUniformBuffer<VulkMaterialConstants>>(vk, metadata->materials.at(name)->toVulkMaterialConstants());
     }
     return materialUBOs[name];
 }
@@ -306,7 +319,7 @@ shared_ptr<VulkMesh> VulkResources::getMesh(MeshDef& meshDef) {
 
 shared_ptr<VulkMaterialTextures> VulkResources::getMaterialTextures(string const& name) {
     if (!materialTextures.contains(name)) {
-        MaterialDef const& def = *metadata.materials.at(name);
+        MaterialDef const& def = *metadata->materials.at(name);
         materialTextures[name] = make_shared<VulkMaterialTextures>();
         materialTextures[name]->diffuseView = !def.mapKd.empty() ? make_unique<VulkImageView>(vk, def.mapKd, false) : nullptr;
         materialTextures[name]->normalView = !def.mapNormal.empty() ? make_unique<VulkImageView>(vk, def.mapNormal, true) : nullptr;

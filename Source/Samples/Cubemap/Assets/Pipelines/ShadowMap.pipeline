@@ -1,0 +1,11 @@
+{
+    "version": 1,
+    "name": "ShadowMap",
+    "vertShader": "PosPassthru",
+    "fragShader": "ShadowMap",
+    "cullMode": "FRONT",
+    "blending": {
+        "enabled": false,
+        "colorMask": ""
+    }
+}

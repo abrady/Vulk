@@ -1,6 +1,6 @@
 {
     "version": 1,
-    "name": "cubemap",
+    "name": "Cubemap",
     "camera": {
         "eye": {
             "x": 1,

@@ -33,7 +33,11 @@ struct Metadata;
 class VulkResources {
 public:
     Vulk& vk;
-    Metadata const& metadata;
+    std::shared_ptr<Metadata const> metadata;
+
+    VulkResources(Vulk& vk);
+    VulkResources(Vulk& vk, std::shared_ptr<Metadata> metadata);
+    static std::shared_ptr<VulkResources> loadFromProject(Vulk& vk, std::filesystem::path projectDir);
 
 private:
     enum ShaderType { Vert, Geom, Frag };
@@ -56,7 +60,6 @@ public:
     std::unordered_map<std::string, std::shared_ptr<VulkShaderModule>> vertShaders, geomShaders, fragShaders;
     std::shared_ptr<VulkSampler> textureSampler, shadowMapSampler;
 
-    VulkResources(Vulk& vk);
     std::shared_ptr<VulkScene> loadScene(VkRenderPass renderPass, std::string name, std::array<std::shared_ptr<VulkDepthView>, MAX_FRAMES_IN_FLIGHT> shadowMapViews);
 
     std::shared_ptr<VulkShaderModule> getvertShader(std::string const& name) {

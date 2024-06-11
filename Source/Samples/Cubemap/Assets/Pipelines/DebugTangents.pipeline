@@ -1,0 +1,10 @@
+{
+    "version": 1,
+    "name": "DebugTangents",
+    "vertShader": "DebugTangents",
+    "geomShader": "DebugNormals",
+    "fragShader": "DebugNormals",
+    "primitiveTopology": "PointList",
+    "depthWriteEnabled": false,
+    "depthCompareOp": "LESS_OR_EQUAL"
+}

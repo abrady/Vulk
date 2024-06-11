@@ -254,6 +254,7 @@ SceneDef SceneDef::fromDef(vulk::cpp2::SceneDef defIn, unordered_map<string, sha
 void findAndProcessMetadata(const fs::path path, Metadata& metadata) {
     cout << "Finding and processing metadata in " << path << endl;
     assert(fs::exists(path) && fs::is_directory(path));
+    metadata.assetsDir = path;
 
     // The metadata is stored in JSON files with the following extensions
     // other extensions need special handling or no handling (e.g. .mtl files are handled by
@@ -358,15 +359,16 @@ std::filesystem::path getResourcesDir() {
     return config.get_ResourcesDir();
 }
 
-Metadata const* getMetadata() {
-    static Metadata metadata;
+std::shared_ptr<const Metadata> getMetadata() {
+    static std::shared_ptr<Metadata> metadata;
     static once_flag flag;
     call_once(flag, [&]() {
         fs::path path = getResourcesDir();
-        findAndProcessMetadata(path, metadata);
+        metadata = make_shared<Metadata>();
+        findAndProcessMetadata(path, *metadata);
     });
 
-    return &metadata;
+    return metadata;
 }
 
 #ifdef __clang__

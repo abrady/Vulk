@@ -1,6 +1,7 @@
 {
     "name": "Cubemap",
+    "startingScene": "Cubemap",
     "sceneNames": [
-        "cubemap"
+        "Cubemap"
     ]
 }

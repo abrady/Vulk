@@ -188,6 +188,7 @@ struct ResourceConfig {
 
 struct SrcProjectDef {
     1: string name;
+    2: string startingScene;
     3: list<string> sceneNames;
 }
 
@@ -196,4 +197,5 @@ struct ProjectDef {
     2: map<string, SceneDef> scenes;
     3: map<string, PipelineDef> pipelines;
     4: map<string, ModelDef> models;
+    5: string startingScene;
 }

@@ -221,6 +221,7 @@ struct SceneDef {
 // The metadata is valid up to the point of loading resources, but does
 // not contain the resources themselves. The resources are loaded on demand.
 struct Metadata {
+    std::filesystem::path assetsDir;
     unordered_map<string, shared_ptr<MeshDef>> meshes;
     unordered_map<string, shared_ptr<vulk::cpp2::ShaderDef>> vertShaders;
     unordered_map<string, shared_ptr<vulk::cpp2::ShaderDef>> geometryShaders;
@@ -232,5 +233,5 @@ struct Metadata {
 };
 
 extern void findAndProcessMetadata(const fs::path path, Metadata& metadata);
-extern Metadata const* getMetadata();
-extern std::filesystem::path getResourcesDir();
+extern std::shared_ptr<const Metadata> getMetadata();
+// extern std::filesystem::path getResourcesDir();
