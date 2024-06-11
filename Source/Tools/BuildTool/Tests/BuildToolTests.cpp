@@ -104,7 +104,6 @@ TEST_CASE("misc serialization test") {
     SECTION("ProjectDef") {
         vulk::cpp2::ProjectDef def;
         def.name_ref() = "TestProject";
-        def.rootDir_ref() = "C:/TestProject";
         vulk::cpp2::SceneDef sceneDef;
         sceneDef.name_ref() = "TestScene";
         // sceneDef.camera_ref()->eye_ref().emplace = {1.0, 2.0, 3.0};

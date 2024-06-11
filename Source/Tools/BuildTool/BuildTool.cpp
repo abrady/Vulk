@@ -7,13 +7,11 @@
 #include <filesystem>
 
 #include "BuildPipeline.h"
+#include "BuildProject.h"
 #include "Vulk/VulkLogger.h"
 #include "Vulk/VulkUtil.h"
 
 namespace fs = std::filesystem;
-
-extern void glslShaderEnumsGenerator(fs::path outFile, bool verbose);
-extern void buildProjectDef(const fs::path project_file_path, fs::path buildDir);
 
 void pipelineBuilder(fs::path builtShadersDir, fs::path pipelineFileOut, fs::path pipelineFileIn, bool verbose) {
     auto logger = VulkLogger::CreateLogger("PipelineBuilder");

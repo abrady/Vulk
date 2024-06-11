@@ -2,21 +2,27 @@
 #include <iostream>
 #include <memory>
 
-#include "CLI/CLI.hpp"
-
 #include <filesystem>
 
 #include "BuildPipeline.h"
 #include "Vulk/VulkLogger.h"
 #include "Vulk/VulkUtil.h"
 
+static std::shared_ptr<spdlog::logger> logger = VulkLogger::CreateLogger("BuildProject");
+
+static void makeDir(fs::path dir) {
+    if (!fs::exists(dir)) {
+        VULK_ASSERT(fs::create_directories(dir));
+    }
+    VULK_ASSERT(fs::is_directory(dir));
+}
+
 void glslShaderEnumsGenerator(fs::path outFile, bool verbose) {
-    auto logger = VulkLogger::CreateLogger("Buildtool:ShaderEnumsGenerator");
     logger->info("GLSLIncludesGenerator: Generating GLSL includes for enum values to: {}", outFile.string());
     auto parent_dir = outFile.parent_path();
     if (!fs::exists(parent_dir)) {
         logger->error("Output directory does not exist: {}", parent_dir.string());
-        throw CLI::ValidationError("Output directory does not exist: " + parent_dir.string());
+        VULK_THROW("Output directory does not exist: {}", parent_dir.string());
     }
 
     if (verbose) {
@@ -79,7 +85,6 @@ struct SrcMetadata {
 };
 
 void findSrcMetadata(const fs::path path, SrcMetadata& metadata) {
-    auto logger = VulkLogger::CreateLogger("findSrcMetadata");
     logger->info("Finding src metadata in {}", path.string());
     assert(fs::exists(path) && fs::is_directory(path));
 
@@ -90,50 +95,90 @@ void findSrcMetadata(const fs::path path, SrcMetadata& metadata) {
         string stem = entry.path().stem().string();
         string ext = entry.path().stem().extension().string() + entry.path().extension().string(); // get 'bar' from foo.bar and 'bar.bin' from foo.bar.bin
         if (ext == ".glsl") {
+            VULK_ASSERT_FMT(!metadata.shaderIncludes.contains(stem), "Duplicate shader include found: {}", stem);
             metadata.shaderIncludes[stem] = entry.path();
         } else if (ext == ".vert") {
+            VULK_ASSERT_FMT(!metadata.vertShaders.contains(stem), "Duplicate vertex shader found: {}", stem);
             metadata.vertShaders[stem] = entry.path();
         } else if (ext == ".geom") {
+            VULK_ASSERT_FMT(!metadata.geometryShaders.contains(stem), "Duplicate geometry shader found: {}", stem);
             metadata.geometryShaders[stem] = entry.path();
         } else if (ext == ".frag") {
+            VULK_ASSERT_FMT(!metadata.fragmentShaders.contains(stem), "Duplicate fragment shader found: {}", stem);
             metadata.fragmentShaders[stem] = entry.path();
         } else if (ext == ".mtl") {
+            VULK_ASSERT_FMT(!metadata.materials.contains(stem), "Duplicate material found: {}", stem);
             metadata.materials[stem] = entry.path();
         } else if (ext == ".obj") {
+            VULK_ASSERT_FMT(!metadata.meshes.contains(stem), "Duplicate model found: {}", stem);
             metadata.meshes[stem] = entry.path();
         } else if (ext == ".model") {
+            VULK_ASSERT_FMT(!metadata.models.contains(stem), "Duplicate model found: {}", stem);
             metadata.models[stem] = entry.path();
         } else if (ext == ".pipeline") {
+            VULK_ASSERT_FMT(!metadata.pipelines.contains(stem), "Duplicate pipeline found: {}", stem);
             metadata.pipelines[stem] = entry.path();
         } else if (ext == ".scene") {
+            VULK_ASSERT_FMT(!metadata.scenes.contains(stem), "Duplicate scene found: {}", stem);
             metadata.scenes[stem] = entry.path();
         }
     }
     VULK_ASSERT_FMT(metadata.scenes.size() > 0, "No scenes found in {}", path.string());
 }
 
+static bool shouldCopyFile(fs::path src, fs::path dst) {
+    // Check if both files exist
+    VULK_ASSERT_FMT(fs::exists(src) && fs::is_regular_file(src), "src File {} does not exist", src.string());
+    if (!fs::exists(dst)) {
+        logger->trace("dst File {} does not exist", dst.string());
+        return true;
+    }
+    VULK_ASSERT_FMT(fs::is_regular_file(dst), "dst File {} is not a regular file", dst.string());
+    // Get the last modification time of the source and destination files
+    auto srcTime = fs::last_write_time(src);
+    auto dstTime = fs::last_write_time(dst);
+    // Return true if the source file is newer than the destination file
+    return srcTime > dstTime;
+}
+
+// copies a file if it should be copied
+// also creates the parent directory if it doesn't exist
+static void copyFileIfShould(fs::path src, fs::path dst) {
+    if (shouldCopyFile(src, dst)) {
+        VULK_ASSERT(fs::exists(dst.parent_path()) || fs::create_directories(dst.parent_path()));
+        fs::copy_file(src, dst, fs::copy_options::overwrite_existing);
+    }
+}
+
 // builds the shader in the build directory so it can be loaded by the pipeline
 // TODO: compare timestamps and only rebuild if necessary
-vulk::cpp2::ShaderDef buildShaderDef(fs::path srcShaderPath, fs::path buildDir, fs::path generatedHeaderDir) {
+static vulk::cpp2::ShaderDef buildShaderDef(fs::path srcShaderPath, fs::path buildDir, fs::path generatedHeaderDir) {
     VULK_ASSERT(fs::exists(srcShaderPath) && fs::is_regular_file(srcShaderPath));
-    VULK_ASSERT(fs::exists(buildDir) && fs::is_directory(buildDir));
 
     fs::path commonDir = srcShaderPath.parent_path().parent_path() / "Common";
+    makeDir(commonDir);
+
     VULK_ASSERT(fs::exists(commonDir) && fs::is_directory(commonDir));
 
     std::string shaderDir = srcShaderPath.extension().string().substr(1);
     if (!fs::exists(buildDir / shaderDir)) {
-        VULK_ASSERT_FMT(fs::create_directory(buildDir / shaderDir), "Failed to create directory: {}", (buildDir / shaderDir).string());
+        makeDir(buildDir / shaderDir);
     }
     fs::path dstShaderPath = buildDir / shaderDir / (srcShaderPath.filename().string() + "spv");
-    std::string cmd = "glslc -g --target-env=vulkan1.3";
+
+    if (shouldCopyFile(srcShaderPath, dstShaderPath)) {
+        logger->info("Building shader: {}", srcShaderPath.string());
+        std::string cmd = "glslc -g --target-env=vulkan1.3";
 #ifdef DEBUG
-    cmd += " -O0";
+        cmd += " -O0";
 #endif
-    cmd += " -I" + generatedHeaderDir.string() + " -I" + commonDir.string();
-    cmd += " -o " + dstShaderPath.string() + " " + srcShaderPath.string();
-    int result = std::system(cmd.c_str());
-    VULK_ASSERT_FMT(result == 0, "Failed to compile shader: {}", cmd);
+        cmd += " -I" + generatedHeaderDir.string() + " -I" + commonDir.string();
+        cmd += " -o " + dstShaderPath.string() + " " + srcShaderPath.string();
+        int result = std::system(cmd.c_str());
+        VULK_ASSERT_FMT(result == 0, "Failed to compile shader: {}", cmd);
+    } else {
+        logger->info("Shader already built: {}", srcShaderPath.string());
+    }
 
     vulk::cpp2::ShaderDef shaderOut;
     shaderOut.name_ref() = srcShaderPath.stem().string();
@@ -141,37 +186,40 @@ vulk::cpp2::ShaderDef buildShaderDef(fs::path srcShaderPath, fs::path buildDir, 
     return shaderOut;
 }
 
-vulk::cpp2::PipelineDef buildPipelineAndShaders(const SrcMetadata& metadata, vulk::cpp2::SrcPipelineDef srcPipelineDef, fs::path buildDir, fs::path generatedHeaderDir) {
+void buildPipelineAndShaders(const SrcMetadata& metadata, vulk::cpp2::SrcPipelineDef srcPipelineDef, fs::path shadersBuildDir, fs::path generatedHeaderDir) {
     vulk::cpp2::PipelineDef pipelineDef;
     pipelineDef.name_ref() = srcPipelineDef.get_name();
 
     // first build the shaders so we can reference them when we build the descriptor sets etc.
-
     if (srcPipelineDef.get_vertShader() != "") {
         fs::path path = metadata.vertShaders.at(srcPipelineDef.get_vertShader());
-        buildShaderDef(path, buildDir, generatedHeaderDir);
+        buildShaderDef(path, shadersBuildDir, generatedHeaderDir);
     }
     if (srcPipelineDef.get_geomShader() != "") {
-        buildShaderDef(metadata.geometryShaders.at(srcPipelineDef.get_geomShader()), buildDir, generatedHeaderDir);
+        buildShaderDef(metadata.geometryShaders.at(srcPipelineDef.get_geomShader()), shadersBuildDir, generatedHeaderDir);
     }
     if (srcPipelineDef.get_fragShader() != "") {
-        buildShaderDef(metadata.fragmentShaders.at(srcPipelineDef.get_fragShader()), buildDir, generatedHeaderDir);
+        buildShaderDef(metadata.fragmentShaders.at(srcPipelineDef.get_fragShader()), shadersBuildDir, generatedHeaderDir);
     }
 
     // build the pipeline with the built shaders
-    return PipelineBuilder::buildPipeline(srcPipelineDef, buildDir);
+    PipelineBuilder::buildPipelineFile(srcPipelineDef, shadersBuildDir, shadersBuildDir / "Pipelines" / srcPipelineDef.get_name());
 }
 
 // This is the main entry point for building a project definition from a project file.
 // it searches the assets in the passed in directory and builds only those referenced
 // by the project itself.
 void buildProjectDef(const fs::path project_file_path, fs::path buildDir) {
-    auto logger = VulkLogger::CreateLogger("buildProjectDef");
     fs::path projectDir = project_file_path.parent_path();
     logger->info("Building project from {}", project_file_path.string());
     VULK_ASSERT(fs::exists(project_file_path));
     VULK_ASSERT(fs::exists(projectDir) && fs::is_directory(projectDir));
-    VULK_ASSERT(fs::exists(buildDir) && fs::is_directory(buildDir));
+
+    // due to the complexities of not being able to get the build diredctory until
+    // generation time in cmake we can't get the build directory 'generation' time
+    // which means we can't mkdir it during configuration time. So we have to do it here.
+    fs::path assetsDir = buildDir / "Assets";
+    makeDir(assetsDir);
 
     // first load everything in the project directory
     SrcMetadata metadata = {};
@@ -182,7 +230,7 @@ void buildProjectDef(const fs::path project_file_path, fs::path buildDir) {
     readDefFromFile(project_file_path.string(), projectIn);
 
     // build the shader includes
-    fs::path commonShaderHeadersDir = buildDir / "common";
+    fs::path commonShaderHeadersDir = assetsDir / "common";
     if (!fs::exists(commonShaderHeadersDir)) {
         VULK_ASSERT(fs::create_directory(commonShaderHeadersDir));
     }
@@ -195,19 +243,25 @@ void buildProjectDef(const fs::path project_file_path, fs::path buildDir) {
     // build the shaders, pipelines and models
     vulk::cpp2::ProjectDef projectOut;
     for (string sceneName : projectIn.get_sceneNames()) {
-        readDefFromFile(metadata.scenes.at(sceneName).string(), projectOut.scenes_ref()[sceneName]);
+        fs::path scenePath = metadata.scenes.at(sceneName);
+        copyFileIfShould(scenePath, assetsDir / "Scenes" / scenePath.filename());
+        readDefFromFile(scenePath.string(), projectOut.scenes_ref()[sceneName]);
         auto& scene = projectOut.scenes_ref()[sceneName];
         for (auto& actorDef : scene.actors_ref().value()) {
             std::string pipelineName = actorDef.get_pipeline();
             if (!projectOut.get_pipelines().contains(pipelineName)) {
                 vulk::cpp2::SrcPipelineDef srcPipelineDef;
-                readDefFromFile(metadata.pipelines.at(pipelineName).string(), srcPipelineDef);
-                projectOut.pipelines_ref()[pipelineName] = buildPipelineAndShaders(metadata, srcPipelineDef, buildDir, commonShaderHeadersDir);
+                fs::path pipelinePath = metadata.pipelines.at(pipelineName);
+                copyFileIfShould(pipelinePath, assetsDir / "Pipelines" / pipelinePath.filename());
+                readDefFromFile(pipelinePath.string(), srcPipelineDef);
+                buildPipelineAndShaders(metadata, srcPipelineDef, assetsDir / "Shaders", commonShaderHeadersDir);
             }
 
             std::string modelName = actorDef.get_modelName();
             if (modelName != "" && !projectOut.get_models().contains(modelName)) {
-                readDefFromFile((projectDir / actorDef.get_modelName()).string(), projectOut.models_ref()[modelName]);
+                fs::path modelPath = (projectDir / (actorDef.get_modelName() + ".model"));
+                copyFileIfShould(metadata.models.at(modelName), assetsDir / "Models" / metadata.models.at(modelName).filename());
+                readDefFromFile(modelPath.string(), projectOut.models_ref()[modelName]);
             }
         }
     }
@@ -217,5 +271,6 @@ void buildProjectDef(const fs::path project_file_path, fs::path buildDir) {
         VULK_THROW("No scenes found in {}", project_file_path.string());
     }
 
+    projectOut.name_ref() = projectIn.get_name();
     writeDefToFile((buildDir / project_file_path.filename()).string(), projectOut);
 }

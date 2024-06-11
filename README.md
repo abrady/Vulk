@@ -12,6 +12,12 @@ My goal for this project is to transition from the hand-coded samples I was doin
 * <https://blog.selfshadow.com/> - blog on graphics
 * <https://iquilezles.org/>
 * <https://www.shadertoy.com/view/4sSfzK> - pbr shadertoy
+* <https://research.ncl.ac.uk/game/mastersdegree/graphicsforgames/deferredrendering/Tutorial%2015%20-%20Deferred%20Rendering.pdf>
+* <https://learnopengl.com/Advanced-OpenGL/Cubemaps>
+
+3D resources:
+
+* <https://polyhaven.com/a/symmetrical_garden_02>
 
 # Setup
 
@@ -39,8 +45,79 @@ My goal for this project is to transition from the hand-coded samples I was doin
   * <https://blog.selfshadow.com/publications/s2014-shading-course/>
 * <https://www.unrealengine.com/en-US/blog/physically-based-shading-on-mobile>
 * <https://blog.selfshadow.com/publications/s2013-shading-course/>
+* some basics I haven't done yet
+  * mipmaps
+  * spheremap
 
 # Log
+
+# 6/10 cube maps
+
+I just realized I haven't done these yet, let's see what vulkan has:
+
+* <https://learnopengl.com/Advanced-OpenGL/Cubemaps>
+
+What do we need to do for Vulkan:
+
+* VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT : `specifies that the image can be used to create a VkImageView of type VK_IMAGE_VIEW_TYPE_CUBE or VK_IMAGE_VIEW_TYPE_CUBE_ARRAY.`
+* , cubeMapImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresourceRange);
+
+As usual for me, getting resources is the hardest part.
+
+Steps:
+
+* get a cubemap:
+  * I found this <https://opengameart.org/content/cubemap-for-calibrate-skybox> : cubetable512.dds
+* load it : stb can do that
+* make the image/view/accessible in a shader
+* sample it properly: let's use a sphere.
+
+# 6/10
+
+Build process now:
+
+* compile exe
+* launch project builder
+  * which copies the necessary files over to the directory where the exe is built (abouts)
+* runtime:
+  * load this built project file
+
+# 6/9
+
+Switching over to project fils or something:
+
+* let's put everything we need in subdirectories of the project
+* buildtool can recursively scan these things and build a single .proj file out of it
+* when the exe runs it just loads this file
+
+a project:
+
+* has scenes
+  * actors
+    * pipelines
+      * vert
+      * frag
+
+As we process a scene it seems like we want to slurp everything into our big project file...
+
+* why don't we compile the shaders into files, slurp those into a shaderdef and then write the shaderdef to the destination dir and write the path out too...
+* philosophically we keep the metadata small and atomic and reference the big data in a way that is fast to update...
+
+So:
+
+* metadata includes things like actors, pipelines, etc.
+* datadata refers to bigger things: compiled shaders, meshes, textures
+
+How do we update these?
+
+1. leverage cmake
+2. compare times ourselves
+3. ...
+
+so we do this:
+
+* recursively scan the directories for all the resources
+*
 
 # 6/9
 

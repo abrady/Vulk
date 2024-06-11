@@ -278,8 +278,7 @@ public:
             VULK_THROW("PipelineBuilder: Shaders directory does not exist");
         }
         if (!std::filesystem::exists(pipelineFileOut.parent_path())) {
-            std::cerr << "Output directory does not exist: " << pipelineFileOut.parent_path() << std::endl;
-            VULK_THROW("PipelineBuilder: Output directory does not exist");
+            VULK_ASSERT(fs::create_directories(pipelineFileOut.parent_path()));
         }
 
         vulk::cpp2::PipelineDef pipelineOut = buildPipeline(pipelineIn, builtShadersDir);

@@ -112,6 +112,26 @@ vulk_add_config_json("${CMAKE_BINARY_DIR}/Source/Samples")
 set(ASSETS_OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/assets.txt")
 file(WRITE ${ASSETS_OUTPUT_FILE} "")
 
+set(SAMPLES_BUILD_DIR_ROOT "${CMAKE_CURRENT_BINARY_DIR}/Source/Samples")
+
+# Define a function that takes a target name and calls an external build tool.
+function(build_project target_name project_filename)
+  # Ensure the target exists.
+  if(NOT TARGET ${target_name})
+    message(FATAL_ERROR "Specified target does not exist: ${target_name}")
+  endif()
+
+  # Use add_custom_command to invoke the external tool during the build phase.
+  # the TARGET ... POST_BUILD is necessary because things like $<TARGET_FILE_DIR:${target_name}> don't work 
+  # until the target is built
+  add_custom_command(
+    TARGET ${target_name} POST_BUILD
+    COMMAND $<TARGET_FILE:BuildTool> project $<TARGET_PROPERTY:${target_name},SOURCE_DIR>/${project_filename} $<TARGET_FILE_DIR:${target_name}> 
+    COMMENT "build_project: $<TARGET_FILE:BuildTool> project $<TARGET_PROPERTY:${target_name},SOURCE_DIR>/${project_filename} $<TARGET_FILE_DIR:${target_name}> "
+  )
+endfunction()
+
+
 ######
 ## testing
 ######
@@ -125,11 +145,9 @@ enable_testing()
 ## subdirectory CMakeLists.txt
 ######
 
-add_subdirectory("${CMAKE_SOURCE_DIR}/Source/Schemas")
-add_subdirectory("${CMAKE_SOURCE_DIR}/Source/Vulk")
-add_subdirectory("${CMAKE_SOURCE_DIR}/Source/Samples")
-add_subdirectory("${CMAKE_SOURCE_DIR}/Source/Samples/imguiVulkan")
-add_subdirectory("${CMAKE_SOURCE_DIR}/Source/Samples/PBR")
+add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Schemas)
+add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Vulk)
+add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Samples)
 add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Tools/BuildTool)
 add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Shaders)
 add_subdirectory(${CMAKE_SOURCE_DIR}/Assets)

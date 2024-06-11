@@ -193,8 +193,7 @@ struct SrcProjectDef {
 
 struct ProjectDef {
     1: string name;
-    2: string rootDir;
-    3: map<string, SceneDef> scenes;
-    4: map<string, PipelineDef> pipelines;
-    5: map<string, ModelDef> models;
+    2: map<string, SceneDef> scenes;
+    3: map<string, PipelineDef> pipelines;
+    4: map<string, ModelDef> models;
 }

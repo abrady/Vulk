@@ -1,5 +1,5 @@
 # Add an executable for the tests
-add_executable(BuildToolTests BuildPipelineTests.cpp BuildToolTests.cpp)
+add_executable(BuildToolTests BuildPipelineTests.cpp BuildToolTests.cpp BuildProjectTests.cpp ../BuildProject.cpp)
 
 find_package(spirv_cross_reflect CONFIG REQUIRED)
 find_package(spirv_cross_core CONFIG REQUIRED)

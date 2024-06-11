@@ -1,0 +1,65 @@
+{
+    "version": 1,
+    "name": "cubemap",
+    "camera": {
+        "eye": {
+            "x": 1,
+            "y": 2,
+            "z": 3
+        },
+        "lookAt": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "nearClip": 0.1,
+        "farClip": 20
+    },
+    "lights": [
+        {
+            "name": "Light1",
+            "type": 0,
+            "pos": {
+                "x": 0,
+                "y": -4,
+                "z": 0
+            },
+            "color": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+            }
+        }
+    ],
+    "actors": [
+        {
+            "name": "SphereActor",
+            "pipeline": "cubemap",
+            "inlineModel": {
+                "version": 1,
+                "name": "SphereModel1",
+                "meshDefType": 1,
+                "geoMesh": {
+                    "sphere": {
+                        "type": 1,
+                        "radius": 1,
+                        "numSubdivisions": 3
+                    }
+                },
+                "material": "herringbone-flooring-bl"
+            },
+            "xform": {
+                "pos": {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                },
+                "rot": {
+                    "x": 0,
+                    "y": 180,
+                    "z": 0
+                }
+            }
+        }
+    ]
+}
