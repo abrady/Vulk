@@ -65,9 +65,15 @@ Mode                 LastWriteTime         Length Name
     REQUIRE(fs::exists(buildDir / "Assets" / "common" / "common.glsl"));
     REQUIRE(fs::exists(buildDir / "Assets" / "common" / "VulkShaderEnums_generated.glsl"));
     REQUIRE(fs::exists(buildDir / "Assets" / "Pipelines" / "test.pipeline"));
+    REQUIRE(fs::exists(buildDir / "Assets" / "Pipelines" / "DebugNormals.pipeline"));
     REQUIRE(fs::exists(buildDir / "Assets" / "Scenes" / "test.scene"));
     REQUIRE(fs::exists(buildDir / "Assets" / "Shaders" / "frag" / "test.fragspv"));
-    REQUIRE(fs::exists(buildDir / "Assets" / "Shaders" / "Pipelines" / "test"));
     REQUIRE(fs::exists(buildDir / "Assets" / "Shaders" / "vert" / "test.vertspv"));
     REQUIRE(fs::exists(buildDir / "Assets" / "Materials" / "test" / "test.mtl"));
+
+    vulk::cpp2::PipelineDef pipelineDef;
+    readDefFromFile((buildDir / "Assets" / "Pipelines" / "test.pipeline").string(), pipelineDef);
+    REQUIRE(pipelineDef.get_name() == "test");
+    vulk::cpp2::DescriptorSetDef descriptorSetDef = pipelineDef.get_descriptorSetDef();
+    REQUIRE(descriptorSetDef.get_uniformBuffers().size() == 2);
 }

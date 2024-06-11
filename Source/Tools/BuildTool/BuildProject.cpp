@@ -232,7 +232,7 @@ void buildPipelineAndShaders(const SrcMetadata& metadata, vulk::cpp2::SrcPipelin
     }
 
     // build the pipeline with the built shaders
-    PipelineBuilder::buildPipelineFile(srcPipelineDef, shadersBuildDir, shadersBuildDir / "Pipelines" / srcPipelineDef.get_name());
+    PipelineBuilder::buildPipelineFile(srcPipelineDef, shadersBuildDir, shadersBuildDir.parent_path() / "Pipelines" / (srcPipelineDef.get_name() + ".pipeline"));
 }
 
 // This is the main entry point for building a project definition from a project file.
@@ -277,15 +277,6 @@ void buildProjectDef(const fs::path project_file_path, fs::path buildDir) {
         readDefFromFile(scenePath.string(), projectOut.scenes_ref()[sceneName]);
         auto& scene = projectOut.scenes_ref()[sceneName];
         for (auto& actorDef : scene.actors_ref().value()) {
-            std::string pipelineName = actorDef.get_pipeline();
-            if (!projectOut.get_pipelines().contains(pipelineName)) {
-                vulk::cpp2::SrcPipelineDef srcPipelineDef;
-                fs::path pipelinePath = metadata.pipelines.at(pipelineName);
-                copyFileIfShould(pipelinePath, assetsDir / "Pipelines" / pipelinePath.filename());
-                readDefFromFile(pipelinePath.string(), srcPipelineDef);
-                buildPipelineAndShaders(metadata, srcPipelineDef, assetsDir / "Shaders", commonShaderHeadersDir);
-            }
-
             std::string modelName = actorDef.get_modelName();
             vulk::cpp2::ModelDef* modelDef = nullptr;
             if (modelName != "") {
@@ -307,11 +298,22 @@ void buildProjectDef(const fs::path project_file_path, fs::path buildDir) {
         }
     }
 
+    // build all the pipelines, some aren't referenced by the project so we need to build them all
+    for (auto [pipelineName, pipelinePath] : metadata.pipelines) {
+        if (!projectOut.get_pipelines().contains(pipelineName)) {
+            vulk::cpp2::SrcPipelineDef srcPipelineDef;
+            copyFileIfShould(pipelinePath, assetsDir / "Pipelines" / pipelinePath.filename());
+            readDefFromFile(pipelinePath.string(), srcPipelineDef);
+            buildPipelineAndShaders(metadata, srcPipelineDef, assetsDir / "Shaders", commonShaderHeadersDir);
+        }
+    }
+
     if (projectOut.get_scenes().size() == 0) {
         logger->error("No scenes found in {}", project_file_path.string());
         VULK_THROW("No scenes found in {}", project_file_path.string());
     }
 
     projectOut.name_ref() = projectIn.get_name();
+    projectOut.startingScene_ref() = projectIn.get_startingScene();
     writeDefToFile((buildDir / project_file_path.filename()).string(), projectOut);
 }
