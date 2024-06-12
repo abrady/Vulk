@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 
 #include "VulkImGui.h"
+#include "dds.hpp"
 #include <iostream>
 
 class DebugMouseEventHandler : public MouseEventHandler {

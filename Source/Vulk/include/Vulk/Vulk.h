@@ -184,6 +184,10 @@ public:
 
     static void framebufferResizeCallback(GLFWwindow* window, int /*width*/, int /*height*/);
 
+    VkCommandBuffer beginSingleTimeCommands();
+    void endSingleTimeCommands(VkCommandBuffer commandBuffer);
+    void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
+
 private:
     void initWindow();
     void initVulkan();
@@ -206,9 +210,6 @@ private:
     void createCommandBuffers();
     void createDepthResources();
     bool hasStencilComponent(VkFormat format);
-    void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
-    VkCommandBuffer beginSingleTimeCommands();
-    void endSingleTimeCommands(VkCommandBuffer commandBuffer);
     void createSyncObjects();
     void render();
     VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);

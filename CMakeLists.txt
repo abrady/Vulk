@@ -145,11 +145,12 @@ enable_testing()
 ## subdirectory CMakeLists.txt
 ######
 
+add_subdirectory(${CMAKE_SOURCE_DIR}/Source/ThirdParty/dds_image)
 add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Schemas)
 add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Vulk)
 add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Samples)
-add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Tools/BuildTool)
 add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Shaders)
+add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Tools/BuildTool)
 add_subdirectory(${CMAKE_SOURCE_DIR}/Assets)
 
 add_dependencies(Vulk GenSchemaFiles)

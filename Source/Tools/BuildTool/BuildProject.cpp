@@ -18,7 +18,7 @@ static void makeDir(fs::path dir) {
 }
 
 void glslShaderEnumsGenerator(fs::path outFile, bool verbose) {
-    logger->info("GLSLIncludesGenerator: Generating GLSL includes for enum values to: {}", outFile.string());
+    logger->trace("GLSLIncludesGenerator: Generating GLSL includes for enum values to: {}", outFile.string());
     auto parent_dir = outFile.parent_path();
     if (!fs::exists(parent_dir)) {
         logger->error("Output directory does not exist: {}", parent_dir.string());
@@ -85,7 +85,7 @@ struct SrcMetadata {
 };
 
 void findSrcMetadata(const fs::path path, SrcMetadata& metadata) {
-    logger->info("Finding src metadata in {}", path.string());
+    logger->trace("Finding src metadata in {}", path.string());
     assert(fs::exists(path) && fs::is_directory(path));
 
     for (const auto& entry : fs::recursive_directory_iterator(path)) {
@@ -149,7 +149,7 @@ static void copyFileIfShould(fs::path src, fs::path dst) {
         VULK_ASSERT(fs::exists(dst.parent_path()) || fs::create_directories(dst.parent_path()));
         fs::copy_file(src, dst, fs::copy_options::overwrite_existing);
     } else {
-        logger->info("Skipping file copy: {} to {}", src.string(), dst.string());
+        logger->trace("Skipping file copy: {} to {}", src.string(), dst.string());
     }
 }
 
@@ -206,7 +206,7 @@ static vulk::cpp2::ShaderDef buildShaderDef(fs::path srcShaderPath, fs::path bui
         int result = std::system(cmd.c_str());
         VULK_ASSERT_FMT(result == 0, "Failed to compile shader: {}", cmd);
     } else {
-        logger->info("Shader already built: {}", srcShaderPath.string());
+        logger->trace("Skipping shader already built: {}", srcShaderPath.string());
     }
 
     vulk::cpp2::ShaderDef shaderOut;
@@ -240,7 +240,7 @@ void buildPipelineAndShaders(const SrcMetadata& metadata, vulk::cpp2::SrcPipelin
 // by the project itself.
 void buildProjectDef(const fs::path project_file_path, fs::path buildDir) {
     fs::path projectDir = project_file_path.parent_path();
-    logger->info("Building project from {}", project_file_path.string());
+    logger->trace("Building project from {}", project_file_path.string());
     VULK_ASSERT(fs::exists(project_file_path));
     VULK_ASSERT(fs::exists(projectDir) && fs::is_directory(projectDir));
 

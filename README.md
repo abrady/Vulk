@@ -51,7 +51,7 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
-# 6/10 cube maps
+# 6/11 cube maps
 
 I just realized I haven't done these yet, let's see what vulkan has:
 
@@ -82,9 +82,9 @@ Build process now:
 * runtime:
   * load this built project file
 
-# 6/9
+# 6/9 asdf
 
-Switching over to project fils or something:
+Switching over to project files or something:
 
 * let's put everything we need in subdirectories of the project
 * buildtool can recursively scan these things and build a single .proj file out of it
@@ -119,7 +119,7 @@ so we do this:
 * recursively scan the directories for all the resources
 *
 
-# 6/9
+# 6/9 compilation
 
 since I've been doing nothing but procrastinate, maybe I'll take another shot at compile times.
 
@@ -249,13 +249,13 @@ Now, if I look around for VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL I see it in VulkP
 
 So can I skip this? what format does it need to go back into?
 
-1. I notice when I make the renderpass that I specify finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL in VkAttachmentDescription, maybe I don't need to do the transition?
+### 1. I notice when I make the renderpass that I specify finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL in VkAttachmentDescription, maybe I don't need to do the transition?
 
 Okay, so comment out the transition code, let's see what happens:
 
 VkBuffer should have VK_BUFFER_USAGE_TRANSFER_SRC_BIT set during creation. The Vulkan spec states: srcBuffer must have been created with VK_BUFFER_USAGE_TRANSFER_SRC_BIT usage flag (<https://vulkan.lunarg.com/doc/view/1.3.250.1/windows/1.3-extensions/vkspec.html#VUID-vkCmdCopyBuffer-srcBuffer-00118>)
 
-2. progress? looks like we need the buffer to have this bit set, fine.
+### 2. progress? looks like we need the buffer to have this bit set, fine
 
 Vulk: ERROR: 2 message: Validation Error: [ VUID-vkCmdCopyImageToBuffer-dstBuffer-00191 ] Object 0: handle = 0x189c4a64360, type = VK_OBJECT_TYPE_COMMAND_BUFFER; Object 1: handle = 0x80f3660000000110, type = VK_OBJECT_TYPE_BUFFER; | MessageID = 0x9936f2bd | Invalid usage flag for VkBuffer 0x80f3660000000110[] used by vkCmdCopyImageToBuffer. In this case, VkBuffer should have VK_BUFFER_USAGE_TRANSFER_DST_BIT set during creation. The Vulkan spec states: dstBuffer must have been created with VK_BUFFER_USAGE_TRANSFER_DST_BIT usage flag (<https://vulkan.lunarg.com/doc/view/1.3.250.1/windows/1.3-extensions/vkspec.html#VUID-vkCmdCopyImageToBuffer-dstBuffer-00191>)
 
@@ -263,11 +263,11 @@ so....
 vkCmdCopyImageToBuffer fails because stagingBuffer doesn't have the DST bit set
 but if I set the src bit I can't copy from it ...
 
-3. can I set both?
+### 3. can I set both?
 
 Invalid usage flag for VkBuffer 0x27a9e40000000112[] used by vkCmdCopyBuffer. In this case, VkBuffer should have VK_BUFFER_USAGE_TRANSFER_DST_BIT set during creation.
 
-4. that worked, yay.
+### 4. that worked, yay
 
 God damn, what did I learn?
 
