@@ -60,6 +60,8 @@ layout(binding = VulkShaderBinding_AmbientOcclusionSampler) uniform sampler2D ao
 layout(binding = VulkShaderBinding_NormalSampler) uniform sampler2D normalMap;
 layout(binding = VulkShaderBinding_MetallicSampler) uniform sampler2D metallicMap;
 layout(binding = VulkShaderBinding_ShadowMapSampler) uniform sampler2D shadowSampler;
+layout(binding = VulkShaderBinding_CubemapSampler) uniform samplerCube cubemapSampler;
+
 
 layout(binding = VulkShaderBinding_EyePos) uniform EyePos { 
     vec3 eyePos; 
@@ -86,22 +88,24 @@ layout(location = VulkShaderLocation_Normal) in vec3 inNormal;
 layout(location = VulkShaderLocation_Tangent) in vec3 inTangent;
 layout(location = VulkShaderLocation_Bitangent) in vec3 inBitangent;
 layout(location = VulkShaderLocation_TexCoord) in vec2 inTexCoord;
+layout(location = VulkShaderLocation_CubemapCoord) in vec3 inCubemapCoord;
 
 layout(location = 0) out vec4 outColor;
 
 void main() {
-    vec3 albedo = texture(albedoMap, inTexCoord).rgb;
-    float metallic = texture(metallicMap, inTexCoord).r;
-    float roughness = texture(roughnessMap, inTexCoord).r;
-    float ao = texture(aoMap, inTexCoord).r;
-	vec3 N = sampleNormalMap(normalMap, inTexCoord, inNormal, inTangent, inBitangent);
+    // vec3 albedo = texture(albedoMap, inTexCoord).rgb;
+    // float metallic = texture(metallicMap, inTexCoord).r;
+    // float roughness = texture(roughnessMap, inTexCoord).r;
+    // float ao = texture(aoMap, inTexCoord).r;
+	// vec3 N = sampleNormalMap(normalMap, inTexCoord, inNormal, inTangent, inBitangent);
 
-	vec3 color = vec3(0.0);
-	for (int i = 0; i < VulkLights_NumLights; i++) {
-		color += PBRForLight(lightsBuf.lights[i], eyePosUBO.eyePos, inPos, albedo, metallic, roughness, N);
-	}
+	// vec3 color = vec3(0.0);
+	// for (int i = 0; i < VulkLights_NumLights; i++) {
+	// 	color += PBRForLight(lightsBuf.lights[i], eyePosUBO.eyePos, inPos, albedo, metallic, roughness, N);
+	// }
 
-	vec3 ambientLightColor = vec3(0.1); // TODO: get this from somewhere
-	vec3 ambient = ao * albedo * ambientLightColor;
-	outColor = vec4(color + ambient, 1.0);
+	// vec3 ambientLightColor = vec3(0.1); // TODO: get this from somewhere
+	// vec3 ambient = ao * albedo * ambientLightColor;
+	// outColor = vec4(color + ambient, 1.0);
+	outColor = texture(cubemapSampler, inCubemapCoord).rgba;
 }

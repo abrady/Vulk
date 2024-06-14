@@ -34,7 +34,7 @@
                 //"${workspaceFolder}\\Source\\Tools\\BuildTool\\Tests\\TestProjDir\\test.proj",
                 //"${workspaceFolder}\\Source\\Tools\\BuildTool\\Tests\\TestProjBuildDir"
                 "C:/open/Github/Vulk/Source/Samples/Cubemap/cubemap.proj",
-                "C:/open/Github/Vulk/build/Source/Samples/Cubemap/Debug/Assets"
+                "C:/open/Github/Vulk/build/Source/Samples/Cubemap/Debug"
             ],
             "stopAtEntry": false,
             "environment": [],

@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 
 project(BuildTool)
 
+find_package(Boost REQUIRED COMPONENTS process)
 find_package(spirv_cross_core CONFIG REQUIRED)
 find_package(spirv_cross_reflect CONFIG REQUIRED)
 find_package(spirv_cross_glsl CONFIG REQUIRED)
@@ -21,6 +22,7 @@ add_executable(BuildTool BuildTool.cpp BuildProject.cpp)
 
 target_include_directories(BuildTool PRIVATE ${GENSCHEMAFILES_INCLUDE_DIRS})
 
+target_link_libraries(BuildTool PRIVATE Boost::process)
 target_link_libraries(BuildTool PRIVATE Vulk)
 target_link_libraries(BuildTool PRIVATE)
 target_link_libraries(BuildTool PRIVATE CLI11::CLI11)

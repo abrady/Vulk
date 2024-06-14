@@ -1,14 +1,31 @@
+#define _WIN32_WINNT 0x0A00 // for boost
+#include <boost/filesystem.hpp>
+#include <boost/process.hpp>
 #include <filesystem>
 #include <iostream>
 #include <memory>
-
-#include <filesystem>
 
 #include "BuildPipeline.h"
 #include "Vulk/VulkLogger.h"
 #include "Vulk/VulkUtil.h"
 
 static std::shared_ptr<spdlog::logger> logger = VulkLogger::CreateLogger("BuildProject");
+
+namespace bp = boost::process;
+static int runProcess(const string cmd, std::string& out) {
+    // Stream to capture output and error
+    boost::process::ipstream combinedStream;
+    boost::process::child c(cmd, boost::process::std_out > combinedStream, boost::process::std_err > combinedStream);
+    // Read the output
+    std::string line;
+    while (c.running() && std::getline(combinedStream, line) && !line.empty()) {
+        out += line + "\n";
+    }
+    // Wait for the process to finish and collect the exit code
+    c.wait();
+    // Return the exit code of the process
+    return c.exit_code();
+}
 
 static void makeDir(fs::path dir) {
     if (!fs::exists(dir)) {
@@ -203,8 +220,9 @@ static vulk::cpp2::ShaderDef buildShaderDef(fs::path srcShaderPath, fs::path bui
 #endif
         cmd += " -I" + generatedHeaderDir.string() + " -I" + commonDir.string();
         cmd += " -o " + dstShaderPath.string() + " " + srcShaderPath.string();
-        int result = std::system(cmd.c_str());
-        VULK_ASSERT_FMT(result == 0, "Failed to compile shader: {}", cmd);
+        std::string out;
+        int result = runProcess(cmd, out);
+        VULK_ASSERT_FMT(result == 0, "Failed to compile shader: {}, output:\n{}", cmd, out);
     } else {
         logger->trace("Skipping shader already built: {}", srcShaderPath.string());
     }

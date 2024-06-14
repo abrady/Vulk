@@ -3,6 +3,7 @@
     "version-string": "0.1.0",
     "dependencies": [
         "assimp",
+        "boost-process",
         "catch2",
         "cli11",
         "fbthrift",

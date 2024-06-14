@@ -109,5 +109,20 @@ int main(int argc, char** argv) {
     // scene->callback([&sceneFileIn, &sceneOutDir, &verbose]() { sceneBuilder(sceneFileIn, sceneOutDir, verbose); });
 
     // do it
-    CLI11_PARSE(app, argc, argv);
+    try {
+        // app.require_subcommand(1);
+        // CLI11_PARSE(app, argc, argv);
+        app.parse(argc, argv);
+        return 0;
+    } catch (CLI::RequiredError& e) {
+        logger->error("No subcommand given: {}", e.what());
+    } catch (CLI::Error& e) {
+        logger->error("CLI Error: {}", e.what());
+    } catch (std::exception& e) {
+        logger->error("Error: {}", e.what());
+    } catch (...) {
+        VulkException e("Unknown error while processing");
+        logger->error("Unknown error while processing {}", e.what());
+    }
+    return 1;
 }

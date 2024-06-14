@@ -11,6 +11,7 @@ enum VulkShaderLocation {
     Pos2 = 6,
     PosLightSpace = 7,
     Bitangent = 8
+    CubemapCoord = 9
 }
 
 enum VulkShaderBinding {
