@@ -25,7 +25,7 @@ public:
 
     VulkImageView(Vulk& vkIn)
         : vk(vkIn) {}
-    static std::shared_ptr<VulkImageView> createCubemapView(Vulk& vk, std::filesystem::path const& ddsFile);
+    static std::shared_ptr<VulkImageView> createCubemapView(Vulk& vk, std::array<std::string, 6> const& cubemapImgs);
 
 private:
     void loadTextureView(char const* texturePath, bool isUNORM);

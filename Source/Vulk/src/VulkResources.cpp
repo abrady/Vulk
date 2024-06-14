@@ -330,7 +330,7 @@ shared_ptr<VulkMaterialTextures> VulkResources::getMaterialTextures(string const
         materialTextures[name]->displacementView = !def.disp.empty() ? make_unique<VulkImageView>(vk, def.disp, true) : nullptr;
         materialTextures[name]->metallicView = !def.mapPm.empty() ? make_unique<VulkImageView>(vk, def.mapPm, true) : nullptr;
         materialTextures[name]->roughnessView = !def.mapPr.empty() ? make_unique<VulkImageView>(vk, def.mapPr, true) : nullptr;
-        materialTextures[name]->cubemapView = !def.cubemap.empty() ? make_unique<VulkImageView>(vk, def.cubemap, false) : nullptr;
+        materialTextures[name]->cubemapView = !def.cubemapImgs.empty() ? VulkImageView::createCubemapView(vk, def.cubemapImgs) : nullptr;
         static_assert((int)vulk::cpp2::VulkShaderTextureBinding::MAX == 19);
     }
 

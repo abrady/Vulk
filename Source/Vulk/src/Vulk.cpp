@@ -922,6 +922,7 @@ void Vulk::createImage(uint32_t width, uint32_t height, VkFormat format, VkImage
     imageInfo.usage = usage;
     imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
     imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    imageInfo.flags = 0; // Optional
 
     VK_CALL(vkCreateImage(device, &imageInfo, nullptr, &image));
 

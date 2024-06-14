@@ -5,6 +5,8 @@ using namespace std;
 
 namespace fs = std::filesystem;
 
+static std::shared_ptr<spdlog::logger> logger = VulkLogger::CreateLogger("VulkResourceMetadata");
+
 // since we're loading data from files and because thrift only supports
 // double just convert quietly in this file only so we can load the data
 // without warnings
@@ -112,8 +114,10 @@ MaterialDef loadMaterialDef(const fs::path& file) {
             material.disp = processPath(relativePath); // displacement map texture
         } else if (prefix == "cubemap") {
             std::string relativePath;
-            lineStream >> relativePath;
-            material.cubemap = processPath(relativePath); // cubemap map texture
+            for (int i = 0; i < 6; i++) {
+                lineStream >> relativePath;
+                material.cubemapImgs[i] = processPath(relativePath); // cubemap texture
+            }
         } else if (prefix == "Ns") {
             lineStream >> material.Ns; // specular exponent
         } else if (prefix == "Ni") {
@@ -256,7 +260,7 @@ SceneDef SceneDef::fromDef(vulk::cpp2::SceneDef defIn, unordered_map<string, sha
 }
 
 void findAndProcessMetadata(const fs::path path, Metadata& metadata) {
-    cout << "Finding and processing metadata in " << path << endl;
+    logger->info("Finding and processing metadata in {}", std::filesystem::absolute(path).string());
     assert(fs::exists(path) && fs::is_directory(path));
     metadata.assetsDir = path;
 

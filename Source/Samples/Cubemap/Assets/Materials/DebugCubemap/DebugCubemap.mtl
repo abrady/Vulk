@@ -1,2 +1,2 @@
 newmtl DebugCubemap
-	cubemap cubetable512.dds
+	cubemap positive-x.tga negative-x.tga positive-y.tga negative-y.tga positive-z.tga negative-z.tga

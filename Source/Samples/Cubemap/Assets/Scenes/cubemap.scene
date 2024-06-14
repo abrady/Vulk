@@ -46,7 +46,7 @@
                         "numSubdivisions": 3
                     }
                 },
-                "material": "herringbone-flooring-bl"
+                "material": "DebugCubemap"
             },
             "xform": {
                 "pos": {

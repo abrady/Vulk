@@ -66,20 +66,20 @@ inline VkColorComponentFlags getColorMask(std::string colorMask) {
 
 struct MaterialDef {
     string name;
-    std::string mapKa;     // Ambient texture map
-    std::string mapKd;     // Diffuse texture map
-    std::string mapKs;     // Specular texture map
-    std::string mapNormal; // Normal map (specified as 'bump' in the file)
-    std::string mapPm;     // Metallic map
-    std::string mapPr;     // Roughness map
-    std::string disp;      // Displacement map
-    std::string cubemap;   // Cubemap
-    float Ns;              // Specular exponent (shininess)
-    float Ni;              // Optical density (index of refraction)
-    float d;               // Transparency (dissolve)
-    glm::vec3 Ka;          // Ambient color
-    glm::vec3 Kd;          // Diffuse color
-    glm::vec3 Ks;          // Specular color
+    std::string mapKa;                      // Ambient texture map
+    std::string mapKd;                      // Diffuse texture map
+    std::string mapKs;                      // Specular texture map
+    std::string mapNormal;                  // Normal map (specified as 'bump' in the file)
+    std::string mapPm;                      // Metallic map
+    std::string mapPr;                      // Roughness map
+    std::string disp;                       // Displacement map
+    std::array<std::string, 6> cubemapImgs; // Cubemap: pos-x, neg-x, pos-y, neg-y, pos-z, neg-z
+    float Ns;                               // Specular exponent (shininess)
+    float Ni;                               // Optical density (index of refraction)
+    float d;                                // Transparency (dissolve)
+    glm::vec3 Ka;                           // Ambient color
+    glm::vec3 Kd;                           // Diffuse color
+    glm::vec3 Ks;                           // Specular color
     // Initialize with default values
     MaterialDef()
         : Ns(0.0f)

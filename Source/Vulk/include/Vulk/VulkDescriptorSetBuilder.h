@@ -66,6 +66,7 @@ public:
 
     // if we have this cached and it matches the current layout just use it. make sure you know what you're doing
     VulkDescriptorSetBuilder& setDescriptorSetLayout(std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout) {
+        VULK_ASSERT(descriptorSetLayout);
         this->descriptorSetLayoutOverride = descriptorSetLayout;
         return *this;
     }
@@ -94,6 +95,7 @@ public:
     // for non-mutable image views that are the same for both frames.
     VulkDescriptorSetBuilder& addBothFramesImageSampler(VkShaderStageFlags stageFlags, vulk::cpp2::VulkShaderTextureBinding bindingID, std::shared_ptr<VulkImageView> imageView,
                                                         std::shared_ptr<VulkSampler> sampler) {
+        VULK_ASSERT(imageView && sampler);
         layoutBuilder.addImageSampler(stageFlags, bindingID);
         poolBuilder.addCombinedImageSamplerCount(MAX_FRAMES_IN_FLIGHT);
         perFrameSamplerSetInfos[0][bindingID] = {imageView, sampler};
@@ -103,6 +105,7 @@ public:
 
     VulkDescriptorSetBuilder& addFrameImageSampler(uint32_t frame, VkShaderStageFlags stageFlags, vulk::cpp2::VulkShaderTextureBinding bindingID,
                                                    std::shared_ptr<VulkImageView> imageView, std::shared_ptr<VulkSampler> sampler) {
+        VULK_ASSERT(imageView && sampler);
         layoutBuilder.addImageSampler(stageFlags, bindingID);
         poolBuilder.addCombinedImageSamplerCount(1);
         perFrameSamplerSetInfos[frame][bindingID] = {imageView, sampler};
