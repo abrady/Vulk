@@ -28,7 +28,7 @@ jobs:
         cd ${{github.workspace}}
         vcpkg\bootstrap-vcpkg.bat
         vcpkg\vcpkg.exe integrate install
-        vcpkg\vcpkg.exe install        
+        vcpkg\vcpkg.exe install --triplet x64-windows-static       
     - name: Prepare Vulkan SDK
       uses: humbletim/setup-vulkan-sdk@v1.2.0
       with:
