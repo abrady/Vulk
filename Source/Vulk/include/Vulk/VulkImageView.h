@@ -23,6 +23,10 @@ public:
         , imageView(depthImageView) {}
     ~VulkImageView();
 
+    VulkImageView(Vulk& vkIn)
+        : vk(vkIn) {}
+    static std::shared_ptr<VulkImageView> createCubemapView(Vulk& vk, std::filesystem::path const& ddsFile);
+
 private:
     void loadTextureView(char const* texturePath, bool isUNORM);
 };

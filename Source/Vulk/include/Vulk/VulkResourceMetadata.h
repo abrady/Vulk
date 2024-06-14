@@ -73,6 +73,7 @@ struct MaterialDef {
     std::string mapPm;     // Metallic map
     std::string mapPr;     // Roughness map
     std::string disp;      // Displacement map
+    std::string cubemap;   // Cubemap
     float Ns;              // Specular exponent (shininess)
     float Ni;              // Optical density (index of refraction)
     float d;               // Transparency (dissolve)

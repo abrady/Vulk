@@ -35,6 +35,7 @@ enum VulkShaderBinding {
     RoughnessSampler = 18,
     PBRDebugUBO = 19,
     GlobalConstantsUBO = 20,
+    CubemapSampler = 21,
 }
 
 enum VulkShaderUBOBinding {
@@ -71,6 +72,7 @@ enum VulkShaderTextureBinding {
     DisplacementSampler = 16,
     MetallicSampler = 17,
     RoughnessSampler = 18,
+    CubemapSampler = 21,
     MAX = 19,
 }
 

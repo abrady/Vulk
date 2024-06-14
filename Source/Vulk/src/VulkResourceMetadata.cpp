@@ -110,6 +110,10 @@ MaterialDef loadMaterialDef(const fs::path& file) {
             std::string relativePath;
             lineStream >> relativePath;
             material.disp = processPath(relativePath); // displacement map texture
+        } else if (prefix == "cubemap") {
+            std::string relativePath;
+            lineStream >> relativePath;
+            material.cubemap = processPath(relativePath); // cubemap map texture
         } else if (prefix == "Ns") {
             lineStream >> material.Ns; // specular exponent
         } else if (prefix == "Ni") {

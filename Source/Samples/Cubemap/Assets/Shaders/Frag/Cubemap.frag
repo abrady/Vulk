@@ -77,7 +77,7 @@ layout (std140, binding = VulkShaderBinding_PBRDebugUBO) uniform PBRDebugUBO {
 } PBRDebug;
 
 layout (std140, binding = VulkShaderBinding_GlobalConstantsUBO) uniform GlobalConstantsUBO {
-	vec2 iResolution;
+	vec2 iResolution; // unused...
 } globalConstants;
 
 

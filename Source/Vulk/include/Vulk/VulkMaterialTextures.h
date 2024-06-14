@@ -10,4 +10,5 @@ struct VulkMaterialTextures {
     std::shared_ptr<VulkImageView> displacementView;
     std::shared_ptr<VulkImageView> metallicView;
     std::shared_ptr<VulkImageView> roughnessView;
+    std::shared_ptr<VulkImageView> cubemapView;
 };

@@ -12,4 +12,5 @@ newmtl herringbone-flooring-bl
 	norm herringbone-flooring_normal-ogl.png
 	map_Pm herringbone-flooring_metallic.png
 	map_Pr herringbone-flooring_roughness.png
+	cubemap 
 

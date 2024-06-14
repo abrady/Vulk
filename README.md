@@ -51,6 +51,23 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
+# 6/12 cubemaps again
+
+How do textures get loaded again?
+
+* each pipeline has a descriptorset def
+* and each descriptor set has a set of texture bindings:
+  * TextureSampler,
+  * ...
+  * RoughnessSampler
+* VulkResourcesMetadata: parses .mtl files which specify these fields (e.g. rougness, specular, etc.)
+* VulkResources then creates a VulkMaterialTextures object in VulkResources::getMaterialTextures
+  * this is where the GPU resources get allocated in vulkan
+* VulkModel takes a VulkMaterialTextures parameter for binding and holds it so it isn't deallocated
+* VulkActor
+* a scene holds the actors
+  * each actor
+
 # 6/11 cube maps
 
 I just realized I haven't done these yet, let's see what vulkan has:
