@@ -130,7 +130,7 @@ public: // utilities
                      VkDeviceMemory& imageMemory);
 
     // e.g. convert a created buffer to a texture buffer or when you transition a depth buffer to a shader readable format
-    void transitionImageLayout(VkCommandBuffer commandBuffer, VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout);
+    void transitionImageLayout(VkCommandBuffer commandBuffer, VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels = 1, uint32_t layerCount = 1);
 
     uint32_t currentFrame = 0; // index of the current frame in flight, always between 0 and MAX_FRAMES_IN_FLIGHT
     uint32_t lastFrame = UINT32_MAX;

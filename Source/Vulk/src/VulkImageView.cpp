@@ -72,12 +72,14 @@ std::shared_ptr<VulkImageView> VulkImageView::createCubemapView(Vulk& vk, std::a
     imageInfo.arrayLayers = 6; // Six faces of the cubemap
     imageInfo.format = format;
     imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-    imageInfo.initialLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
     imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
     imageInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT; // Flag to create a cubemap
     VK_CALL(vkCreateImage(vk.device, &imageInfo, nullptr, &cubemap->image));
+
+    vk.transitionImageLayout(cubemap->image, format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, 6);
 
     VkMemoryRequirements memRequirements;
     vkGetImageMemoryRequirements(vk.device, cubemap->image, &memRequirements);
