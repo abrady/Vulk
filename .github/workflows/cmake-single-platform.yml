@@ -8,6 +8,7 @@ on:
 
 env:
   BUILD_TYPE: Debug
+  VCPKG_DEFAULT_TRIPLET: x64-windows-static
 
 jobs:
   build:
