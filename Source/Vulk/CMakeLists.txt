@@ -38,7 +38,6 @@ target_link_libraries(Vulk PRIVATE flatbuffers::flatbuffers)
 target_link_libraries(Vulk PRIVATE fmt::fmt)
 target_link_libraries(Vulk PUBLIC spdlog::spdlog) # Make spdlog public so that anyone using this library can use it too due to VulkLogger.h
 target_link_libraries(Vulk PUBLIC GenSchemaFiles)
-target_link_libraries(Vulk PRIVATE dds_image)
 
 target_include_directories(Vulk PUBLIC ${THRIFT_INCLUDE_DIR})
 target_sources(Vulk PUBLIC ${THRIFT_SOURCES})
