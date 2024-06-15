@@ -168,7 +168,7 @@ std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const
     VulkDescriptorSetBuilder dsBuilder(vk);
     PipelineDef const& pd = *pipeline->def;
     shared_ptr<VulkModel> model = getModel(*actorDef.model, pd);
-    shared_ptr<VulkFrameUBOs<glm::mat4>> xformUBOs;
+    shared_ptr<VulkFrameUBOs<glm::mat4>> modelXformUBOs;
     dsBuilder.setDescriptorSetLayout(pipeline->descriptorSetLayout);
     for (auto& iter : dsDef.get_uniformBuffers()) {
         VkShaderStageFlagBits stage = (VkShaderStageFlagBits)iter.first;
@@ -187,9 +187,9 @@ std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const
                 dsBuilder.addFrameUBOs(scene->sceneUBOs.eyePos, stage, binding);
                 break;
             case vulk::cpp2::VulkShaderUBOBinding::ModelXform:
-                if (!xformUBOs)
-                    xformUBOs = make_shared<VulkFrameUBOs<glm::mat4>>(vk, actorDef.xform);
-                dsBuilder.addFrameUBOs(*xformUBOs, stage, binding);
+                if (!modelXformUBOs)
+                    modelXformUBOs = make_shared<VulkFrameUBOs<glm::mat4>>(vk, actorDef.xform);
+                dsBuilder.addFrameUBOs(*modelXformUBOs, stage, binding);
                 break;
             case vulk::cpp2::VulkShaderUBOBinding::DebugNormals:
                 if (scene->debugNormalsUBO == nullptr)
@@ -272,7 +272,7 @@ std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const
     static_assert(apache::thrift::TEnumTraits<::vulk::cpp2::VulkShaderTextureBinding>::max() == vulk::cpp2::VulkShaderTextureBinding::CubemapSampler);
 
     std::shared_ptr<VulkDescriptorSetInfo> info = dsBuilder.build();
-    return make_shared<VulkActor>(vk, model, xformUBOs, info, pipeline);
+    return make_shared<VulkActor>(vk, model, modelXformUBOs, info, pipeline);
 }
 
 std::shared_ptr<VulkScene> VulkResources::loadScene(VkRenderPass renderPass, std::string name, std::array<std::shared_ptr<VulkDepthView>, MAX_FRAMES_IN_FLIGHT> shadowMapViews) {

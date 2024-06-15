@@ -79,8 +79,6 @@ std::shared_ptr<VulkImageView> VulkImageView::createCubemapView(Vulk& vk, std::a
     imageInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT; // Flag to create a cubemap
     VK_CALL(vkCreateImage(vk.device, &imageInfo, nullptr, &cubemap->image));
 
-    vk.transitionImageLayout(cubemap->image, format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, 6);
-
     VkMemoryRequirements memRequirements;
     vkGetImageMemoryRequirements(vk.device, cubemap->image, &memRequirements);
 
@@ -92,10 +90,14 @@ std::shared_ptr<VulkImageView> VulkImageView::createCubemapView(Vulk& vk, std::a
     VK_CALL(vkAllocateMemory(vk.device, &allocInfo, nullptr, &cubemap->imageMemory));
     VK_CALL(vkBindImageMemory(vk.device, cubemap->image, cubemap->imageMemory, 0));
 
+    VkCommandBuffer commandBuffer = vk.beginSingleTimeCommands();
+    vk.transitionImageLayout(commandBuffer, cubemap->image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, 6);
+    vk.endSingleTimeCommands(commandBuffer);
+
     // ===========================================
     // 4. Copy the data from the staging buffer to the image
 
-    VkCommandBuffer commandBuffer = vk.beginSingleTimeCommands();
+    commandBuffer = vk.beginSingleTimeCommands();
     VkBufferImageCopy bufferCopyRegions[6];
     for (int face = 0; face < 6; ++face) {
         bufferCopyRegions[face].bufferOffset = imageSize * face;

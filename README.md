@@ -49,7 +49,7 @@ My goal for this project is to transition from the hand-coded samples I was doin
   * mipmaps
   * spheremap
   * cubemap
-  * need to check models in a scene have the textures they reference.
+  * need to check that the materials models ref in a scene actually exist.
 
 # Log
 
@@ -63,14 +63,24 @@ quick refresher on getting images into GPU mem:
 * every image really needs an image and imageMemory (and the shader takes an imageView)
 * VkImages can have 'layers' which are really images within a VkImage. the layers are used for two things:
   * array textures: a set of 2D images with the same properties (width/height/depth, format - VK_FORMAT_R8G8B8A8_SRGB, miplevel etc.). useful for sprite sheets
-  * cubemaps: a special case of array textures. 
+  * cubemaps: a special case of array textures.
 
 to get an image from disk into a format the shader can access you have to:
+
 1. load the images into cpu mem
 2. make a staging buffer and copy the data to that
 3. allocate an image and bind it to device mem
 4. copy the data from the staging buffer to the image
 5. transition the image to a shader readable format
+
+okay, now I've got a dsdef expecting certain shaders on the model but they don't exist...
+
+![](Assets/Screenshots/cubemap_v0.png)
+
+First cubemap. is this right? I should be seeing Y up
+
+Let's draw some axes:
+![](Assets/Screenshots/spheremap_w_axes_draw.png)
 
 # 6/12 cubemaps again
 

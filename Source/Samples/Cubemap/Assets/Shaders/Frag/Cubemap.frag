@@ -53,13 +53,13 @@ vec3 PBRForLight(PointLight light, vec3 eyePos, vec3 pos, vec3 albedo, float met
     return (diffuse + specular) * light.color * ndotl;
 }
 
-layout(binding = VulkShaderBinding_TextureSampler) uniform sampler2D albedoMap;
-layout(binding = VulkShaderBinding_DisplacementSampler) uniform sampler2D displacementMap; // TODO: Implement displacement mapping
-layout(binding = VulkShaderBinding_RoughnessSampler) uniform sampler2D roughnessMap;
-layout(binding = VulkShaderBinding_AmbientOcclusionSampler) uniform sampler2D aoMap; //TODO: double check we're sampling this correctly
-layout(binding = VulkShaderBinding_NormalSampler) uniform sampler2D normalMap;
-layout(binding = VulkShaderBinding_MetallicSampler) uniform sampler2D metallicMap;
-layout(binding = VulkShaderBinding_ShadowMapSampler) uniform sampler2D shadowSampler;
+// layout(binding = VulkShaderBinding_TextureSampler) uniform sampler2D albedoMap;
+// layout(binding = VulkShaderBinding_DisplacementSampler) uniform sampler2D displacementMap; // TODO: Implement displacement mapping
+// layout(binding = VulkShaderBinding_RoughnessSampler) uniform sampler2D roughnessMap;
+// layout(binding = VulkShaderBinding_AmbientOcclusionSampler) uniform sampler2D aoMap; //TODO: double check we're sampling this correctly
+// layout(binding = VulkShaderBinding_NormalSampler) uniform sampler2D normalMap;
+// layout(binding = VulkShaderBinding_MetallicSampler) uniform sampler2D metallicMap;
+// layout(binding = VulkShaderBinding_ShadowMapSampler) uniform sampler2D shadowSampler;
 layout(binding = VulkShaderBinding_CubemapSampler) uniform samplerCube cubemapSampler;
 
 

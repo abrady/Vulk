@@ -14,10 +14,10 @@
 #include "VulkMesh.h"
 #include "VulkPipeline.h"
 
-// a model is the minimal set of things needed to render something in a visually interesting way. it consists of:
+// a model is the minimal set of things needed to render something in a visually interesting way. it consists of a subset of the following:
 // * a mesh
-// * a set of textures (normal, diffuse, etc.   )
-// * a material (specular, shininess, etc.)
+// * material textures (normal, diffuse, etc.   )
+// * a material (specular, shininess, etc.) - assuming this isn't coming from a texture
 // * how these things are bound to the pipeline (the descriptor set info)
 // * a set of vertex and index buffers
 struct VulkModel {

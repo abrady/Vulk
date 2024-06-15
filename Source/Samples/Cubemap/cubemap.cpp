@@ -22,6 +22,9 @@ public:
     std::vector<std::shared_ptr<VulkActor>> pickActors;
     std::shared_ptr<VulkPipeline> pickPipeline;
 
+    std::shared_ptr<VulkActor> axesActor;
+    std::shared_ptr<VulkPipeline> axesPipeline;
+
     struct Debug {
         bool renderNormals = false;
         bool renderTangents = false;
@@ -80,20 +83,35 @@ public:
             debugWireframeActors.push_back(wireframeActor);
         }
 
-        // always create the debug actors/pipeline so we can render them on command.
-        std::shared_ptr<VulkPipeline> debugNormalsPipeline = resources->loadPipeline(vk.renderPass, vk.swapChainExtent, "DebugNormals");
-        std::shared_ptr<VulkPipeline> debugTangentsPipeline = resources->loadPipeline(vk.renderPass, vk.swapChainExtent,
-                                                                                      "DebugTangents"); // TODO: does this even need to be a separate pipeline?
+        // show the axes of world coordinates
+        std::shared_ptr<VulkMesh> axesMesh = std::make_shared<VulkMesh>();
+        makeAxes(1.0f, *axesMesh);
+        // VulkSceneUBOs::XformsUBO& axesUBO = *scene->sceneUBOs.xforms;
+        axesPipeline = resources->loadPipeline(vk.renderPass, vk.swapChainExtent, "DebugAxes");
 
-        // could probably defer this until we actually want to render the debug normals, eh.
-        for (size_t i = 0; i < scene->actors.size(); ++i) {
-            auto actor = scene->actors[i];
-            auto actorDef = sceneDef.actors[i];
-            std::shared_ptr<VulkActor> debugNormalsActor = resources->createActorFromPipeline(*actorDef, debugNormalsPipeline, scene);
-            debugNormalsActors.push_back(debugNormalsActor);
-            std::shared_ptr<VulkActor> debugTangentsActor = resources->createActorFromPipeline(*actorDef, debugTangentsPipeline, scene);
-            debugTangentsActors.push_back(debugTangentsActor);
-        }
+        std::vector<vulk::cpp2::VulkShaderLocation> const axesInputs = {vulk::cpp2::VulkShaderLocation::Pos};
+        std::shared_ptr<VulkModel> axesModel = std::make_shared<VulkModel>(vk, axesMesh, nullptr, nullptr, axesInputs);
+
+        VulkDescriptorSetBuilder dsBuilder(vk);
+        dsBuilder.addFrameUBOs(scene->sceneUBOs.xforms, VK_SHADER_STAGE_VERTEX_BIT, vulk::cpp2::VulkShaderUBOBinding::Xforms);
+        std::shared_ptr<VulkDescriptorSetInfo> axesDSInfo = dsBuilder.build();
+        axesActor = make_shared<VulkActor>(vk, axesModel, nullptr, axesDSInfo, axesPipeline);
+
+        // always create the debug actors/pipeline so we can render them on command.
+        // our cubemap sphere doesn't have a normal map, so this errors. we could use vert normals... eh commenting out for now.
+        // std::shared_ptr<VulkPipeline> debugNormalsPipeline = resources->loadPipeline(vk.renderPass, vk.swapChainExtent, "DebugNormals");
+        // std::shared_ptr<VulkPipeline> debugTangentsPipeline = resources->loadPipeline(vk.renderPass, vk.swapChainExtent,
+        //                                                                               "DebugTangents"); // TODO: does this even need to be a separate pipeline?
+
+        // // could probably defer this until we actually want to render the debug normals, eh.
+        // for (size_t i = 0; i < scene->actors.size(); ++i) {
+        //     auto actor = scene->actors[i];
+        //     auto actorDef = sceneDef.actors[i];
+        //     std::shared_ptr<VulkActor> debugNormalsActor = resources->createActorFromPipeline(*actorDef, debugNormalsPipeline, scene);
+        //     debugNormalsActors.push_back(debugNormalsActor);
+        //     std::shared_ptr<VulkActor> debugTangentsActor = resources->createActorFromPipeline(*actorDef, debugTangentsPipeline, scene);
+        //     debugTangentsActors.push_back(debugTangentsActor);
+        // }
     }
 
     struct Menu {
@@ -390,6 +408,14 @@ public:
                 vkCmdDraw(commandBuffer, model->numVertices, 1, 0, 0);
             }
         }
+
+        // draw the axes
+        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, axesPipeline->pipeline);
+        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, axesPipeline->pipelineLayout, 0, 1,
+                                &axesActor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet, 0, nullptr);
+
+        axesActor->model->bindInputBuffers(commandBuffer);
+        vkCmdDrawIndexed(commandBuffer, axesActor->model->numIndices, 1, 0, 0, 0);
     }
 
     // TODO: re-wire this up
