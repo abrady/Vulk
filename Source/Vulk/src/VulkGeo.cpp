@@ -395,6 +395,14 @@ void makeAxes(float length, VulkMesh& meshData) {
     makeCylinder(length, 0.01f, 0.01f, 10, 10, y);
     makeCylinder(length, 0.01f, 0.01f, 10, 10, z);
 
+    // pack the color information into the uvs
+    // we do an interpolation in the shader: 0 = red, .5 = green, 1 = blue
+    for (int i = 0; i < x.vertices.size(); ++i) {
+        x.vertices[i].uv = vec2(0.0f, 0.0f);
+        y.vertices[i].uv = vec2(0.5f, 0.0f);
+        z.vertices[i].uv = vec2(1.0f, 0.0f);
+    }
+
     mat4 rotX = rotate(mat4(1.0f), pi<float>() / 2.0f, vec3(0.0f, 0.0f, 1.0f));
     mat4 rotAndTranslateX = translate(mat4(1.0f), vec3(length / 2.0f, 0.0f, 0.0f)) * rotX;
     x.xform(rotAndTranslateX);

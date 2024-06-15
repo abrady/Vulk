@@ -12,12 +12,15 @@ XFORMS_UBO(xformUBO);
 // } pc;
 
 layout(location = VulkShaderLocation_Pos) in vec3 inPosition;
+layout(location = VulkShaderLocation_TexCoord) in vec2 inTexCoord;
 
 // layout(location = VulkShaderLocation_Pos) out vec3 outWorldPos;
 // layout(location = VulkShaderLocation_Normal) out vec3 outWorldNorm;
 // layout(location = VulkShaderLocation_Pos2) out vec4 outProjPos; // the offset for the normal
+layout(location = VulkShaderLocation_TexCoord) out vec2 outTexCoord;
 
 void main() {
     // outWorldPos = (xformUBO.world * vec4(inPosition, 1.0)).xyz;
     gl_Position = xformUBO.proj * xformUBO.view * xformUBO.world * vec4(inPosition, 1.0);
+    outTexCoord = inTexCoord;
 }

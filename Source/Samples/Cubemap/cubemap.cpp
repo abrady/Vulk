@@ -89,7 +89,10 @@ public:
         // VulkSceneUBOs::XformsUBO& axesUBO = *scene->sceneUBOs.xforms;
         axesPipeline = resources->loadPipeline(vk.renderPass, vk.swapChainExtent, "DebugAxes");
 
-        std::vector<vulk::cpp2::VulkShaderLocation> const axesInputs = {vulk::cpp2::VulkShaderLocation::Pos};
+        std::vector<vulk::cpp2::VulkShaderLocation> const axesInputs = {
+            vulk::cpp2::VulkShaderLocation::Pos,
+            vulk::cpp2::VulkShaderLocation::TexCoord,
+        };
         std::shared_ptr<VulkModel> axesModel = std::make_shared<VulkModel>(vk, axesMesh, nullptr, nullptr, axesInputs);
 
         VulkDescriptorSetBuilder dsBuilder(vk);

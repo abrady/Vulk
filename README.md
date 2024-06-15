@@ -53,6 +53,17 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
+# 6/15
+
+why isn't up up? need to figure that out.
+would also be nice to have labels/color on the axes
+
+adding coloring for the axes: feeling lazy, let's pack coloring info in the uvs:
+
+* x - red, y - green, z - blue
+
+let's just use a 0-1 to map from red,green,blue
+
 # 6/24 cubemaps part 3
 
 *sigh* that dds library I found clearly doesn't work and is just copied from some MS example. let's just
