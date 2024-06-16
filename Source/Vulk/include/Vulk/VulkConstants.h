@@ -17,7 +17,7 @@
 constexpr bool IS_RIGHT_HANDED = true;
 
 // Winding Order
-constexpr VkFrontFace DEFAULT_FRONT_FACE_WINDING_ORDER = VK_FRONT_FACE_CLOCKWISE;
+constexpr VkFrontFace DEFAULT_FRONT_FACE_WINDING_ORDER = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 
 // Vulkan uses a right hand coordinate system with positive z pointing away from the viewer
 constexpr glm::vec3 VIEWSPACE_FORWARD_VEC = glm::vec3(0.0f, 0.0f, 1.0f);

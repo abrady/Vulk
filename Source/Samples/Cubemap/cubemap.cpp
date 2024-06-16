@@ -174,6 +174,20 @@ public:
             camUpdated = true;
         }
 
+        float speed = 0.1f; // Adjust speed as necessary
+        if (io.KeysDown[GLFW_KEY_W]) {
+            scene->camera.updatePosition(0.0f, 0.0f, speed); // Move forward
+        }
+        if (io.KeysDown[GLFW_KEY_A]) {
+            scene->camera.updatePosition(-speed, 0.0f, 0.0f); // Move left
+        }
+        if (io.KeysDown[GLFW_KEY_S]) {
+            scene->camera.updatePosition(0.0f, 0.0f, -speed); // Move backward
+        }
+        if (io.KeysDown[GLFW_KEY_D]) {
+            scene->camera.updatePosition(speed, 0.0f, 0.0f); // Move right
+        }
+
         if (camUpdated) {
             glm::vec3 eulers = scene->camera.getEulers();
             logger->trace("dx: {:.2f} dy: {:.2f} camera yaw: {:.2f} pitch: {:.2f}", dx, dy, eulers.y, eulers.x);
@@ -261,7 +275,11 @@ public:
         ubo.world = glm::rotate(glm::mat4(1.0f), rotationTime * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         // ubo.view = glm::lookAt(scene->camera.eye, lookAt, up);
         ubo.view = scene->camera.getViewMat();
-        ubo.proj = glm::perspective(DEFAULT_FOV_RADS, viewport.width / (float)viewport.height, nearClip, farClip);
+        glm::mat4 clip(1.0f);
+        clip[1][1] = -1; // flip the Y axis
+        ubo.proj = clip * glm::perspective(DEFAULT_FOV_RADS, viewport.width / (float)viewport.height, nearClip, farClip);
+
+        // Vulkan clip space has inverted Y
 
         // set up the light view proj
         VulkPointLight& light = *scene->sceneUBOs.pointLight.mappedUBO;

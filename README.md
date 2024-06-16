@@ -53,7 +53,33 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
-# 6/15
+# 6/15 fixing our projection?
+
+![](Assets/Screenshots/axes_wrong.png)
+
+As you can see from this our axis should go right, up, and away from the cam. Instead
+we have right down and towards. this is technically correct except that the world needs
+to be rotated by 180 degrees around the x axis.
+
+Spaces refresher:
+
+From <https://johannesugb.github.io/gpu-programming/setting-up-a-proper-vulkan-projection-matrix/>
+
+![](Assets/Screenshots/common_rendering_spaces.png)
+
+* world space - the 3d space your objects live in. e.g. my axes which have the 3d coordinates such that they meet at 0,0,0 and extend to (1,0,0), (0,1,0), and (0,0,1) respectively
+* view space - the transformation that moves what is visible into a cube from -w to w
+* clip space: (-w,-w,0) to (w,w,w) - this is the first fixed-function stages.
+* normalized device coordinates: post divide by w, (-1,-1,0) to (1,1,1)
+* framebuffer space: 2d pixels x - right, y - down
+
+![](Assets/Screenshots/rendering_space_axes.png)
+
+You can see here that by the time you're in clip space. let's just try flipping clip space:
+
+![](Assets/Screenshots/flipped_clip_correctmaybe.png)
+
+# 6/15 fixing the axes
 
 why isn't up up? need to figure that out.
 would also be nice to have labels/color on the axes
