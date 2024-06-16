@@ -53,7 +53,14 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
-# 6/15 fixing our projection?
+# 6/15 OpenXR
+
+* <https://developer.oculus.com/documentation/native/android/book-intro/>
+* <https://developer.oculus.com/documentation/native/android/book-native/>
+* <https://developer.oculus.com/documentation/native/android/mobile-openxr>
+* <https://developer.oculus.com/documentation/native/android/mobile-openxr-instance-session/>
+
+# 6/15 fixing our projection
 
 ![](Assets/Screenshots/axes_wrong.png)
 
