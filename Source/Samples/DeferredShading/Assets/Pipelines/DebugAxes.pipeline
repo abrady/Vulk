@@ -1,0 +1,7 @@
+{
+    "version": 1,
+    "name": "DebugAxes",
+    "vertShader": "DebugAxes",
+    "fragShader": "DebugAxes",
+    "depthWriteEnabled": false
+}

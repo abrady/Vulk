@@ -1,0 +1,7 @@
+{
+    "name": "DeferredShading",
+    "startingScene": "DeferredShading",
+    "sceneNames": [
+        "DeferredShading"
+    ]
+}

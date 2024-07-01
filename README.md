@@ -53,14 +53,119 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
-# 6/15 OpenXR
+# 6/29 Deferred Shading Cont
+
+Ugh. work be taking too much of my time.
+
+* create the buffers:
+  * Albedo Buffer (VK_FORMAT_R8G8B8A8_UNORM): Stores the base color (diffuse reflectance) of the surfaces.
+  * Normal Buffer (VK_FORMAT_R16G16B16A16_SFLOAT): Stores the surface normals, which are used for lighting calculations.
+  * Depth Buffer (VK_FORMAT_D32_SFLOAT): Stores the depth information (z-values) of the scene, used to reconstruct positions.
+  * Specular Buffer (VK_FORMAT_R8G8B8A8_UNORM): Stores specular reflectance properties, such as intensity and shininess.
+  * Material Properties Buffer (VK_FORMAT_R8G8B8A8_UNORM): pack some of these in a special material buf: metallic, roughness, ao
+* make a render pass with a framebuffer that has these images as a target to be rendered to
+  *
+* do the geometry pass
+  * just copy these values into the buffers
+* do the lighting pass
+  * render a fullscreen quad.
+  * extract the pos from the depth buffer
+  * pass the lights
+  * write the PBR shader using this data.
+
+refresher: VulkPickView and renderpass/render frames/images
+
+The picker we wrote does exactly what we want: renders to a target and then we get the data back. how did it work again?
+
+* creating the objects for it:
+  * image: VkDeviceMemory, VkImage, VkImageView
+  * render target: VkFrameBuffer
+  * render pass: render target/imageview/descriptorset
+  * pipeline: pick shaders, descriptor sets, renderpass.
+* rendering:
+  * before: transition the current image to an optimized state to receive the rendered actors
+  * during: render actors normally using the VkImageView/VkFrameBuffer and a push buffer for the actor id. the shaders render the id into the imageview
+  * after: transition the image back to something the CPU can read, and makes it available in CPU land.
+
+A little deeper on the renderpass:
+
+* VkRenderPass
+  * VkAttachmentDescription: a set of attachment formats and operations during render (load/store/device optimal)
+    "If the attachment uses a color format, then loadOp and storeOp are used, and stencilLoadOp and stencilStoreOp are ignored. If the format has depth and/or stencil components, loadOp and storeOp apply only to the depth data, while stencilLoadOp and stencilStoreOp define how the stencil data is handled"
+  * VkSubpassDescription:
+* VkAttachmentDescription : specifies what happens at various stages in the rp to the attachmemt:
+  * loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;   // Clear  at the start of the render pass
+  * storeOp = VK_ATTACHMENT_STORE_OP_STORE; // Store the  information after rendering
+  * finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+* VkAttachmentReference
+  * attachment: what attachment index this refers to
+  * layout: what the layout will be transitioned to during a subpass.
+
+both VkAttachmentDescription and VkAttachmentReference spacify a layout. initialLayout is a check for what
+the layout should be at the start of a renderpass. see this diagram:
+
+Render Pass
+  ├─ Initial Layout Transition (initialLayout)
+  │   ├─ Subpass 1
+  │   │   ├─ VkAttachmentReference::layout (for Subpass 1)
+  │   ├─ Subpass 2
+  │   │   ├─ VkAttachmentReference::layout (for Subpass 2)
+  ├─ Final Layout Transition (finalLayout)
+
+# 6/25 Deferred Rendering
+
+* <https://developer.nvidia.com/gpugems/gpugems3/part-iii-rendering/chapter-19-deferred-shading-tabula-rasa>
+* Realtime Rendering 4th edition
+
+Nutshell:
+
+* in forward lighting if you have N objects and M lights you potentially have an NxM computational cost
+* with deferred you process all the geometry first, then do the lighting per pixel, so
+  * you get an N + M cost instead of a combinatorial one
+  * you remove unnecessary computation in the case of overdraw
+  * at the cost of more memory
+  * it also doesn't work well with transparent objects - these are often done forward
+
+Okay so to do this I need to:
+
+* prep
+  * we need screen-space buffers for:
+    * material properties: albedo, normal, specular, metallic, roughness, ambient occlusion
+      * note: may want to pack some of these in a special material buf: metallic, roughness, ao
+* do the geometry pass
+  * just copy these values into the buffers
+* do the lighting pass
+  * render a fullscreen quad.
+  * extract the pos from the depth buffer
+  * pass the lights
+  * write the PBR shader using this data.
+
+## 6/16 OpenXR
 
 * <https://developer.oculus.com/documentation/native/android/book-intro/>
 * <https://developer.oculus.com/documentation/native/android/book-native/>
 * <https://developer.oculus.com/documentation/native/android/mobile-openxr>
 * <https://developer.oculus.com/documentation/native/android/mobile-openxr-instance-session/>
 
-# 6/15 fixing our projection
+Building:
+
+* picked C:\open\openxr\ovr_openxr_mobile_sdk_65.0\Samples\XrSamples\XrColorSpaceFB\ as it looked simple
+* for cmake presets:
+  * I first made a ninja/clang one, all sorts of errors
+  * made a cl based one, worked just fine.
+* config'd and compiled fine
+* C:\open\openxr\ovr_openxr_mobile_sdk_65.0\Samples\out\build\cl_x64\XrSamples\XrColorSpaceFB\Debug
+
+Failing on startup, let's see:
+
+* XrApp::Init (in C:\open\openxr\ovr_openxr_mobile_sdk_65.0\Samples\SampleXrFramework\Src\XrApp.cpp)
+  * calls xrGetSystem(Instance, &systemGetInfo, &systemId) (in C:\open\openxr\ovr_openxr_mobile_sdk_65.0\Samples\3rdParty\openxr\src\loader\xr_generated_loader.cpp)
+    * loader_instance = ActiveLoaderInstance::Get(&loader_instance, "xrGetSystem") (C:\open\openxr\ovr_openxr_mobile_sdk_65.0\Samples\3rdParty\openxr\src\loader\loader_instance.cpp)
+      * std::unique_ptr<LoaderInstance>& GetSetCurrentLoaderInstance()
+        * LoaderInstance (C:\open\openxr\ovr_openxr_mobile_sdk_65.0\Samples\3rdParty\openxr\src\loader\loader_instance.hpp)
+    * loader_instance->DispatchTable()->GetSystem(instance, getInfo, systemId);
+
+## 6/15 fixing our projection
 
 ![](Assets/Screenshots/axes_wrong.png)
 
@@ -86,7 +191,7 @@ You can see here that by the time you're in clip space. let's just try flipping 
 
 ![](Assets/Screenshots/flipped_clip_correctmaybe.png)
 
-# 6/15 fixing the axes
+## 6/15 fixing the axes
 
 why isn't up up? need to figure that out.
 would also be nice to have labels/color on the axes
@@ -97,7 +202,7 @@ adding coloring for the axes: feeling lazy, let's pack coloring info in the uvs:
 
 let's just use a 0-1 to map from red,green,blue
 
-# 6/24 cubemaps part 3
+## 6/24 cubemaps part 3
 
 *sigh* that dds library I found clearly doesn't work and is just copied from some MS example. let's just
 load the images from six files
@@ -126,7 +231,7 @@ First cubemap. is this right? I should be seeing Y up
 Let's draw some axes:
 ![](Assets/Screenshots/spheremap_w_axes_draw.png)
 
-# 6/12 cubemaps again
+## 6/12 cubemaps again
 
 How do textures get loaded again?
 
@@ -143,7 +248,7 @@ How do textures get loaded again?
 * a scene holds the actors
   * each actor
 
-# 6/11 cube maps
+## 6/11 cube maps
 
 I just realized I haven't done these yet, let's see what vulkan has:
 
@@ -164,7 +269,7 @@ Steps:
 * make the image/view/accessible in a shader
 * sample it properly: let's use a sphere.
 
-# 6/10
+## 6/10
 
 Build process now:
 
@@ -174,7 +279,7 @@ Build process now:
 * runtime:
   * load this built project file
 
-# 6/9 asdf
+## 6/9 asdf
 
 Switching over to project files or something:
 
@@ -211,14 +316,14 @@ so we do this:
 * recursively scan the directories for all the resources
 *
 
-# 6/9 compilation
+## 6/9 compilation
 
 since I've been doing nothing but procrastinate, maybe I'll take another shot at compile times.
 
 * baseline pbr compile: ~13s
 * fucking god damn, what a waste of time.
 
-# 6/8
+## 6/8
 
 * remove .fbs files DONE
 * Remove VulkEnumMetadata DONE

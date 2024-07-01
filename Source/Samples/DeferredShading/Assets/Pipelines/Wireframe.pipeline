@@ -1,0 +1,8 @@
+{
+    "version": 1,
+    "name": "Wireframe",
+    "vertShader": "Wireframe",
+    "fragShader": "Wireframe",
+    "polygonMode": "LINE",
+    "depthWriteEnabled": false
+}

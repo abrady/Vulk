@@ -1,6 +1,7 @@
 // Define enums
 namespace cpp vulk
 
+
 enum VulkShaderLocation {
     Color = 0,
     Pos = 1,
@@ -37,6 +38,17 @@ enum VulkShaderBinding {
     PBRDebugUBO = 19,
     GlobalConstantsUBO = 20,
     CubemapSampler = 21,
+    GBufNormal = 22,
+    GBufPos = 23,
+    GBufAlbedo = 24,
+    GBufMaterial = 25,
+    GBufDepth = 26,
+    GBufLight = 27,
+    GBufLightAccum = 28,
+    GBufLightAccum2 = 29,
+    GBufLightAccum3 = 30,
+    GBufLightAccum4 = 31,
+    
 }
 
 enum VulkShaderUBOBinding {

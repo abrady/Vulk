@@ -1,0 +1,9 @@
+{
+    "version": 1,
+    "name": "DebugNormals",
+    "vertShader": "DebugNormals",
+    "geomShader": "DebugNormals",
+    "fragShader": "DebugNormals",
+    "primitiveTopology": "PointList",
+    "depthWriteEnabled": false
+}

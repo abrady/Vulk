@@ -259,8 +259,8 @@ void buildPipelineAndShaders(const SrcMetadata& metadata, vulk::cpp2::SrcPipelin
 void buildProjectDef(const fs::path project_file_path, fs::path buildDir) {
     fs::path projectDir = project_file_path.parent_path();
     logger->trace("Building project from {}", project_file_path.string());
-    VULK_ASSERT(fs::exists(project_file_path));
-    VULK_ASSERT(fs::exists(projectDir) && fs::is_directory(projectDir));
+    VULK_ASSERT_FMT(fs::exists(project_file_path), "Project file does not exist: {}", project_file_path.string());
+    VULK_ASSERT_FMT(fs::exists(projectDir) && fs::is_directory(projectDir), "Project directory does not exist: {}", projectDir.string());
 
     // due to the complexities of not being able to get the build diredctory until
     // generation time in cmake we can't get the build directory 'generation' time
@@ -290,6 +290,10 @@ void buildProjectDef(const fs::path project_file_path, fs::path buildDir) {
     // build the shaders, pipelines and models
     vulk::cpp2::ProjectDef projectOut;
     for (string sceneName : projectIn.get_sceneNames()) {
+        if (!metadata.scenes.contains(sceneName)) {
+            logger->error("Scene {} in {} doesn't exist. missing scene file?", sceneName, project_file_path.string());
+            VULK_THROW("Scene {} in {} doesn't exist. missing scene file?", sceneName, project_file_path.string());
+        }
         fs::path scenePath = metadata.scenes.at(sceneName);
         copyFileIfShould(scenePath, assetsDir / "Scenes" / scenePath.filename());
         readDefFromFile(scenePath.string(), projectOut.scenes_ref()[sceneName]);

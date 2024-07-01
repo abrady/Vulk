@@ -1,0 +1,6 @@
+{
+    "version": 1,
+    "name": "DeferredShadingLighting",
+    "vertShader": "DeferredShadingLighting",
+    "fragShader": "DeferredShadingLighting"
+}

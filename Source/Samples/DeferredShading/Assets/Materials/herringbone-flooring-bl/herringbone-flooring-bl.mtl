@@ -1,0 +1,15 @@
+# https://freepbr.com/materials/herringbone-flooring-pbr/ 
+newmtl herringbone-flooring-bl
+	Ns 26.000000
+	Ni 1.500000
+	d 1.000000
+	Ka 0.000000 0.000000 0.000000
+	Kd 0.588000 0.588000 0.588000
+	Ks 0.207000 0.207000 0.207000
+	map_Ka herringbone-flooring_ao.png
+	map_Kd herringbone-flooring_albedo.png
+	disp herringbone-flooring_height.png
+	norm herringbone-flooring_normal-ogl.png
+	map_Pm herringbone-flooring_metallic.png
+	map_Pr herringbone-flooring_roughness.png
+
