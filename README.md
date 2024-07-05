@@ -51,7 +51,28 @@ My goal for this project is to transition from the hand-coded samples I was doin
   * cubemap
   * need to check that the materials models ref in a scene actually exist.
 
+# Diagrams
+
+## Renderpass Components
+
+![](Assets/Screenshots/renderpass_components.png)
+
 # Log
+
+# 7/1 man I'm feeling slow
+
+* let's do an end-to-end gbuf by hand and see if we want a generic VulRenderpass after that.
+* Albedo attachment
+* geo subpass
+* lighting subpass
+* make the renderpass and framebuffers
+
+VulkRenderpass:
+
+* addColorAttachment(VulkShaderBinding, VkFormat, VkImageLayout?, ) : this would add one of:
+  * VkAttachmentDescription
+  * VkAttachmentReference
+  * VkImageView (and mem etc.)
 
 # 6/29 Deferred Shading Cont
 
@@ -161,7 +182,7 @@ Failing on startup, let's see:
 * XrApp::Init (in C:\open\openxr\ovr_openxr_mobile_sdk_65.0\Samples\SampleXrFramework\Src\XrApp.cpp)
   * calls xrGetSystem(Instance, &systemGetInfo, &systemId) (in C:\open\openxr\ovr_openxr_mobile_sdk_65.0\Samples\3rdParty\openxr\src\loader\xr_generated_loader.cpp)
     * loader_instance = ActiveLoaderInstance::Get(&loader_instance, "xrGetSystem") (C:\open\openxr\ovr_openxr_mobile_sdk_65.0\Samples\3rdParty\openxr\src\loader\loader_instance.cpp)
-      * std::unique_ptr<LoaderInstance>& GetSetCurrentLoaderInstance()
+      * std::unique_ptr LoaderInstance & GetSetCurrentLoaderInstance()
         * LoaderInstance (C:\open\openxr\ovr_openxr_mobile_sdk_65.0\Samples\3rdParty\openxr\src\loader\loader_instance.hpp)
     * loader_instance->DispatchTable()->GetSystem(instance, getInfo, systemId);
 

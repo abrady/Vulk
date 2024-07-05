@@ -1,6 +1,7 @@
 #pragma once
 
 #include <spdlog/spdlog.h>
+#include <filesystem>
 
 #include "spdlog/sinks/basic_file_sink.h"
 // #include <spdlog/sinks/rotating_file_sink.h>
@@ -8,12 +9,13 @@
 #include <spdlog/sinks/stdout_sinks.h>
 
 class VulkLogger {
-public:
+   public:
     static std::shared_ptr<spdlog::logger> CreateLogger(std::string name) {
         auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
         // garr, on windows we get a periodic log rename error, thanks to windows file locks.
         // just do a single log file for now.
-        // auto file_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(name + "_logfile.log", 1024 * 1024 * 5, 30, false);
+        // auto file_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(name + "_logfile.log", 1024 * 1024 *
+        // 5, 30, false);
         auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(name + "_logfile.log", /*truncate=*/false);
         spdlog::sinks_init_list sink_list = {file_sink, console_sink};
         auto p = std::make_shared<spdlog::logger>(name, sink_list.begin(), sink_list.end());
@@ -38,6 +40,10 @@ public:
         return logger;
     }
 };
+
+#define DECLARE_FILE_LOGGER()                       \
+    static std::shared_ptr<spdlog::logger> logger = \
+        VulkLogger::CreateLogger(std::filesystem::path(__FILE__).stem().string())
 
 #define VULK_SET_LOG_LEVEL(level) VulkLogger::GetLogger()->set_level(level)
 #define VULK_SET_TRACE_LOG_LEVEL() VULK_SET_LOG_LEVEL(spdlog::level::trace)

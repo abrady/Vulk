@@ -34,7 +34,7 @@
     "actors": [
         {
             "name": "SphereActor",
-            "pipeline": "DeferredShading",
+            "pipeline": "DeferredRenderGeo",
             "inlineModel": {
                 "version": 1,
                 "name": "SphereModel1",

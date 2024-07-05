@@ -1,11 +1,18 @@
-#include "Vulk/VulkPCH.h"
-#include "imgui.h"
 #include <memory>
 
+#include "Vulk/VulkDeferredRenderpass.h"
+#include "Vulk/VulkPCH.h"
+#include "imgui.h"
+
 class World final : public VulkRenderable {
-public:
+   public:
     Vulk& vk;
     std::shared_ptr<VulkScene> scene;
+
+    std::shared_ptr<VulkDeferredRenderpass> deferredRenderpass;
+    std::vector<std::shared_ptr<VulkActor>> deferredActors;
+    std::shared_ptr<VulkPipeline> deferredPipeline;
+    std::shared_ptr<VulkFence> deferredFence;
 
     std::shared_ptr<VulkDepthRenderpass> shadowMapRenderpass;
     std::vector<std::shared_ptr<VulkActor>> shadowMapActors;
@@ -31,28 +38,43 @@ public:
         bool renderWireframe = false;
     } debug;
 
-    std::shared_ptr<spdlog::logger> logger = VulkLogger::CreateLogger("World");
+    std::shared_ptr<spdlog::logger> logger;
 
-public:
-    World(Vulk& vk, std::string projFile)
-        : vk(vk) {
-        shadowMapRenderpass = std::make_shared<VulkDepthRenderpass>(vk);
-        shadowMapFence = std::make_shared<VulkFence>(vk);
-
+   public:
+    World(Vulk& vk, std::string projFile) : vk(vk) {
+        logger = VulkLogger::CreateLogger(std::filesystem::path(projFile).stem().string());
         vulk::cpp2::ProjectDef projDef;
+        logger->info("loading project file: {}", projFile);
         readDefFromFile(projFile, projDef);
         std::string sceneName = projDef.get_startingScene();
         std::shared_ptr<VulkResources> resources = VulkResources::loadFromProject(vk, projFile);
+        shadowMapRenderpass = std::make_shared<VulkDepthRenderpass>(vk);
         resources->loadScene(vk.renderPass, sceneName, shadowMapRenderpass->depthViews);
         SceneDef& sceneDef = *resources->metadata->scenes.at(sceneName);
         scene = resources->scenes[sceneName];
 
-        shadowMapPipeline = resources->loadPipeline(shadowMapRenderpass->renderPass, shadowMapRenderpass->extent, "ShadowMap");
+        deferredRenderpass = std::make_shared<VulkDeferredRenderpass>(vk);
+        deferredFence = std::make_shared<VulkFence>(vk);
+        deferredPipeline =
+            resources->loadPipeline(deferredRenderpass->renderPass, vk.swapChainExtent, "DeferredRenderGeo");
+        auto deferredPipelineDef = resources->metadata->pipelines.at("DeferredRenderGeo");
+        for (size_t i = 0; i < scene->actors.size(); ++i) {
+            auto actor = scene->actors[i];
+            auto actorDef = sceneDef.actors[i];
+            std::shared_ptr<VulkActor> deferredActor =
+                resources->createActorFromPipeline(*actorDef, deferredPipeline, scene);
+            deferredActors.push_back(deferredActor);
+        }
+
+        shadowMapFence = std::make_shared<VulkFence>(vk);
+        shadowMapPipeline =
+            resources->loadPipeline(shadowMapRenderpass->renderPass, shadowMapRenderpass->extent, "ShadowMap");
         auto shadowMapPipelineDef = resources->metadata->pipelines.at("ShadowMap");
         for (size_t i = 0; i < scene->actors.size(); ++i) {
             auto actor = scene->actors[i];
             auto actorDef = sceneDef.actors[i];
-            std::shared_ptr<VulkActor> shadowMapActor = resources->createActorFromPipeline(*actorDef, shadowMapPipeline, scene);
+            std::shared_ptr<VulkActor> shadowMapActor =
+                resources->createActorFromPipeline(*actorDef, shadowMapPipeline, scene);
             shadowMapActors.push_back(shadowMapActor);
         }
 
@@ -78,7 +100,8 @@ public:
         for (size_t i = 0; i < scene->actors.size(); ++i) {
             auto actor = scene->actors[i];
             auto actorDef = sceneDef.actors[i];
-            std::shared_ptr<VulkActor> wireframeActor = resources->createActorFromPipeline(*actorDef, wireframePipeline, scene);
+            std::shared_ptr<VulkActor> wireframeActor =
+                resources->createActorFromPipeline(*actorDef, wireframePipeline, scene);
             // scene->actors[i]->pipeline = wireframeActor->pipeline;
             debugWireframeActors.push_back(wireframeActor);
         }
@@ -96,25 +119,10 @@ public:
         std::shared_ptr<VulkModel> axesModel = std::make_shared<VulkModel>(vk, axesMesh, nullptr, nullptr, axesInputs);
 
         VulkDescriptorSetBuilder dsBuilder(vk);
-        dsBuilder.addFrameUBOs(scene->sceneUBOs.xforms, VK_SHADER_STAGE_VERTEX_BIT, vulk::cpp2::VulkShaderUBOBinding::Xforms);
+        dsBuilder.addFrameUBOs(scene->sceneUBOs.xforms, VK_SHADER_STAGE_VERTEX_BIT,
+                               vulk::cpp2::VulkShaderUBOBinding::Xforms);
         std::shared_ptr<VulkDescriptorSetInfo> axesDSInfo = dsBuilder.build();
         axesActor = make_shared<VulkActor>(vk, axesModel, nullptr, axesDSInfo, axesPipeline);
-
-        // always create the debug actors/pipeline so we can render them on command.
-        // our cubemap sphere doesn't have a normal map, so this errors. we could use vert normals... eh commenting out for now.
-        // std::shared_ptr<VulkPipeline> debugNormalsPipeline = resources->loadPipeline(vk.renderPass, vk.swapChainExtent, "DebugNormals");
-        // std::shared_ptr<VulkPipeline> debugTangentsPipeline = resources->loadPipeline(vk.renderPass, vk.swapChainExtent,
-        //                                                                               "DebugTangents"); // TODO: does this even need to be a separate pipeline?
-
-        // // could probably defer this until we actually want to render the debug normals, eh.
-        // for (size_t i = 0; i < scene->actors.size(); ++i) {
-        //     auto actor = scene->actors[i];
-        //     auto actorDef = sceneDef.actors[i];
-        //     std::shared_ptr<VulkActor> debugNormalsActor = resources->createActorFromPipeline(*actorDef, debugNormalsPipeline, scene);
-        //     debugNormalsActors.push_back(debugNormalsActor);
-        //     std::shared_ptr<VulkActor> debugTangentsActor = resources->createActorFromPipeline(*actorDef, debugTangentsPipeline, scene);
-        //     debugTangentsActors.push_back(debugTangentsActor);
-        // }
     }
 
     VulkPauseableTimer rotateWorldTimer;
@@ -136,7 +144,7 @@ public:
         scene->globalConstantsUBO->mappedUBO->viewportWidth = viewport.width;
         scene->globalConstantsUBO->mappedUBO->viewportHeight = viewport.height;
 
-        float rotationTime = rotateWorldTimer.getElapsedTime(); // make sure this stays the same for the entire frame
+        float rotationTime = rotateWorldTimer.getElapsedTime();  // make sure this stays the same for the entire frame
         float nearClip = scene->camera.nearClip;
         float farClip = scene->camera.farClip;
 
@@ -149,15 +157,17 @@ public:
         // ubo.view = glm::lookAt(scene->camera.eye, lookAt, up);
         ubo.view = scene->camera.getViewMat();
         glm::mat4 clip(1.0f);
-        clip[1][1] = -1; // flip the Y axis
-        ubo.proj = clip * glm::perspective(DEFAULT_FOV_RADS, viewport.width / (float)viewport.height, nearClip, farClip);
+        clip[1][1] = -1;  // flip the Y axis
+        ubo.proj =
+            clip * glm::perspective(DEFAULT_FOV_RADS, viewport.width / (float)viewport.height, nearClip, farClip);
 
         // Vulkan clip space has inverted Y
 
         // set up the light view proj
         VulkPointLight& light = *scene->sceneUBOs.pointLight.mappedUBO;
         glm::mat4 lightView = glm::lookAt(light.pos, glm::vec3(0.0f, 0.0f, 0.0f), VIEWSPACE_UP_VEC);
-        glm::mat4 lightProj = glm::perspective(DEFAULT_FOV_RADS, viewport.width / (float)viewport.height, nearClip, farClip);
+        glm::mat4 lightProj =
+            glm::perspective(DEFAULT_FOV_RADS, viewport.width / (float)viewport.height, nearClip, farClip);
         glm::mat4 viewProj = lightProj * lightView;
         if (scene->lightViewProjUBO) {
             scene->lightViewProjUBO->mappedUBO->viewProj = viewProj;
@@ -167,9 +177,11 @@ public:
 
         renderPickBuffer(commandBuffer);
         renderShadowMapImageForLight(commandBuffer);
-        vk.transitionImageLayout(commandBuffer, depthView->image, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        vk.transitionImageLayout(commandBuffer, depthView->image, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+                                 VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         drawMainStuff(commandBuffer, frameBuffer);
-        vk.transitionImageLayout(commandBuffer, depthView->image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+        vk.transitionImageLayout(commandBuffer, depthView->image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                 VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
     }
 
     void renderPickBuffer(VkCommandBuffer commandBuffer) {
@@ -193,7 +205,8 @@ public:
             auto& model = actor->model;
             uint32_t data = i + 1;
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pickPipeline->pipeline);
-            vkCmdPushConstants(commandBuffer, pickPipeline->pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(data), &data);
+            vkCmdPushConstants(commandBuffer, pickPipeline->pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0,
+                               sizeof(data), &data);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pickPipeline->pipelineLayout, 0, 1,
                                     &actor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet, 0, nullptr);
             model->bindInputBuffers(commandBuffer);
@@ -203,9 +216,7 @@ public:
         vkCmdEndRenderPass(commandBuffer);
     }
 
-    void onBeforeRender() override {
-        pickRenderpass->updatePickDataFromBuffer(vk.lastFrame);
-    }
+    void onBeforeRender() override { pickRenderpass->updatePickDataFromBuffer(vk.lastFrame); }
 
     void renderShadowMapImageForLight(VkCommandBuffer commandBuffer) {
         VkClearValue clearValue;
@@ -225,8 +236,8 @@ public:
         for (auto& actor : shadowMapActors) {
             auto model = actor->model;
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipeline);
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout, 0, 1,
-                                    &actor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet, 0, nullptr);
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout, 0,
+                                    1, &actor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet, 0, nullptr);
             model->bindInputBuffers(commandBuffer);
             vkCmdDrawIndexed(commandBuffer, model->numIndices, 1, 0, 0, 0);
         }
@@ -259,17 +270,18 @@ public:
             for (auto& actor : debugWireframeActors) {
                 auto model = actor->model;
                 vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, wireframePipeline->pipeline);
-                vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, wireframePipeline->pipelineLayout, 0, 1,
+                vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                        wireframePipeline->pipelineLayout, 0, 1,
                                         &actor->dsInfo->descriptorSets[currentFrame]->descriptorSet, 0, nullptr);
                 model->bindInputBuffers(commandBuffer);
                 vkCmdDrawIndexed(commandBuffer, model->numIndices, 1, 0, 0, 0);
             }
         } else {
-            for (auto& actor : scene->actors) {
+            for (auto& actor : deferredActors) {
                 auto model = actor->model;
                 vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipeline);
-                vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout, 0, 1,
-                                        &actor->dsInfo->descriptorSets[currentFrame]->descriptorSet, 0, nullptr);
+                vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout,
+                                        0, 1, &actor->dsInfo->descriptorSets[currentFrame]->descriptorSet, 0, nullptr);
                 model->bindInputBuffers(commandBuffer);
                 vkCmdDrawIndexed(commandBuffer, model->numIndices, 1, 0, 0, 0);
             }
@@ -281,8 +293,8 @@ public:
             for (auto& actor : debugNormalsActors) {
                 auto model = actor->model;
                 vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipeline);
-                vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout, 0, 1,
-                                        &actor->dsInfo->descriptorSets[currentFrame]->descriptorSet, 0, nullptr);
+                vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout,
+                                        0, 1, &actor->dsInfo->descriptorSets[currentFrame]->descriptorSet, 0, nullptr);
 
                 model->bindInputBuffers(commandBuffer);
                 vkCmdDraw(commandBuffer, model->numVertices, 1, 0, 0);
@@ -295,8 +307,8 @@ public:
             for (auto& actor : debugTangentsActors) {
                 auto model = actor->model;
                 vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipeline);
-                vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout, 0, 1,
-                                        &actor->dsInfo->descriptorSets[currentFrame]->descriptorSet, 0, nullptr);
+                vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout,
+                                        0, 1, &actor->dsInfo->descriptorSets[currentFrame]->descriptorSet, 0, nullptr);
 
                 model->bindInputBuffers(commandBuffer);
                 vkCmdDraw(commandBuffer, model->numVertices, 1, 0, 0);
@@ -369,18 +381,18 @@ public:
             camUpdated = true;
         }
 
-        float speed = 0.1f; // Adjust speed as necessary
+        float speed = 0.1f;  // Adjust speed as necessary
         if (io.KeysDown[GLFW_KEY_W]) {
-            scene->camera.updatePosition(0.0f, 0.0f, speed); // Move forward
+            scene->camera.updatePosition(0.0f, 0.0f, speed);  // Move forward
         }
         if (io.KeysDown[GLFW_KEY_A]) {
-            scene->camera.updatePosition(-speed, 0.0f, 0.0f); // Move left
+            scene->camera.updatePosition(-speed, 0.0f, 0.0f);  // Move left
         }
         if (io.KeysDown[GLFW_KEY_S]) {
-            scene->camera.updatePosition(0.0f, 0.0f, -speed); // Move backward
+            scene->camera.updatePosition(0.0f, 0.0f, -speed);  // Move backward
         }
         if (io.KeysDown[GLFW_KEY_D]) {
-            scene->camera.updatePosition(speed, 0.0f, 0.0f); // Move right
+            scene->camera.updatePosition(speed, 0.0f, 0.0f);  // Move right
         }
 
         if (camUpdated) {
@@ -442,7 +454,7 @@ public:
 
 int main() {
     Vulk app;
-    app.renderable = std::make_shared<World>(app, "Cubemap.proj");
+    app.renderable = std::make_shared<World>(app, "deferredshading.proj");
     app.run();
     return 0;
 }

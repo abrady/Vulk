@@ -19,7 +19,10 @@ find_package(Vulkan REQUIRED)
 
 # Add all the source files to a library
 file(GLOB SOURCES "src/*.cpp")
-add_library(Vulk ${SOURCES})
+file(GLOB MODULES "modules/*.ixx") # getting compiler errors doing this for now.
+#message(STATUS "MODULES: ${MODULES}")
+
+add_library(Vulk ${SOURCES} ${MODULES})
 target_include_directories(Vulk PUBLIC include) # Make the include directory public
 target_include_directories(Vulk PRIVATE private)
 

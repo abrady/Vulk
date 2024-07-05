@@ -7,6 +7,8 @@ find_package(imgui CONFIG REQUIRED)
 
 # Add an executable
 add_executable(DeferredShading deferredshading.cpp)
+add_dependencies(DeferredShading Vulk GenSchemaFiles BuildAssetsTarget)
+
 # Link the Vulk library to your executable
 target_link_libraries(DeferredShading PRIVATE Vulk)
 target_link_libraries(DeferredShading PRIVATE glfw)

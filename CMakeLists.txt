@@ -147,10 +147,10 @@ enable_testing()
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Schemas)
 add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Vulk)
-add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Samples)
 add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Shaders)
 add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Tools/BuildTool)
 add_subdirectory(${CMAKE_SOURCE_DIR}/Assets)
+add_subdirectory(${CMAKE_SOURCE_DIR}/Source/Samples)
 
 add_dependencies(Vulk GenSchemaFiles)
 add_dependencies(BuildTool GenSchemaFiles)

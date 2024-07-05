@@ -62,18 +62,6 @@ const int MAX_FRAMES_IN_FLIGHT = 2;
 const uint32_t WINDOW_WIDTH = 2880;
 const uint32_t WINDOW_HEIGHT = 1800;
 
-enum VulkTextureType {
-    VulkTextureType_Diffuse,
-    VulkTextureType_Normal,
-    VulkTextureType_Specular,
-    VulkTextureType_Emissive,
-    VulkTextureType_AmbientOcclusion,
-    VulkTextureType_Roughness,
-    VulkTextureType_Metallic,
-    VulkTextureType_Height,
-    VulkTextureType_MaxTextureTypes
-};
-
 class VulkRenderable {
 public:
     virtual ~VulkRenderable() = default;

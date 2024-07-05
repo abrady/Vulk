@@ -1,4 +1,4 @@
-#define _WIN32_WINNT 0x0A00 // for boost
+#define _WIN32_WINNT 0x0A00  // for boost
 #include <boost/filesystem.hpp>
 #include <boost/process.hpp>
 #include <filesystem>
@@ -110,7 +110,8 @@ void findSrcMetadata(const fs::path path, SrcMetadata& metadata) {
             continue;
         }
         string stem = entry.path().stem().string();
-        string ext = entry.path().stem().extension().string() + entry.path().extension().string(); // get 'bar' from foo.bar and 'bar.bin' from foo.bar.bin
+        string ext = entry.path().stem().extension().string() +
+                     entry.path().extension().string();  // get 'bar' from foo.bar and 'bar.bin' from foo.bar.bin
         if (ext == ".glsl") {
             VULK_ASSERT_FMT(!metadata.shaderIncludes.contains(stem), "Duplicate shader include found: {}", stem);
             metadata.shaderIncludes[stem] = entry.path();
@@ -233,24 +234,37 @@ static vulk::cpp2::ShaderDef buildShaderDef(fs::path srcShaderPath, fs::path bui
     return shaderOut;
 }
 
-void buildPipelineAndShaders(const SrcMetadata& metadata, vulk::cpp2::SrcPipelineDef srcPipelineDef, fs::path shadersBuildDir, fs::path generatedHeaderDir) {
+void buildPipelineAndShaders(const SrcMetadata& metadata,
+                             vulk::cpp2::SrcPipelineDef srcPipelineDef,
+                             fs::path shadersBuildDir,
+                             fs::path generatedHeaderDir) {
     vulk::cpp2::PipelineDef pipelineDef;
     pipelineDef.name_ref() = srcPipelineDef.get_name();
 
     // first build the shaders so we can reference them when we build the descriptor sets etc.
     if (srcPipelineDef.get_vertShader() != "") {
+        VULK_ASSERT_FMT(metadata.vertShaders.contains(srcPipelineDef.get_vertShader()), "Vertex shader {} not found",
+                        srcPipelineDef.get_vertShader());
         fs::path path = metadata.vertShaders.at(srcPipelineDef.get_vertShader());
         buildShaderDef(path, shadersBuildDir, generatedHeaderDir);
     }
     if (srcPipelineDef.get_geomShader() != "") {
-        buildShaderDef(metadata.geometryShaders.at(srcPipelineDef.get_geomShader()), shadersBuildDir, generatedHeaderDir);
+        VULK_ASSERT_FMT(metadata.geometryShaders.contains(srcPipelineDef.get_geomShader()),
+                        "Geometry shader {} not found", srcPipelineDef.get_geomShader());
+        buildShaderDef(metadata.geometryShaders.at(srcPipelineDef.get_geomShader()), shadersBuildDir,
+                       generatedHeaderDir);
     }
     if (srcPipelineDef.get_fragShader() != "") {
-        buildShaderDef(metadata.fragmentShaders.at(srcPipelineDef.get_fragShader()), shadersBuildDir, generatedHeaderDir);
+        VULK_ASSERT_FMT(metadata.fragmentShaders.contains(srcPipelineDef.get_fragShader()),
+                        "Fragment shader {} not found", srcPipelineDef.get_fragShader());
+        buildShaderDef(metadata.fragmentShaders.at(srcPipelineDef.get_fragShader()), shadersBuildDir,
+                       generatedHeaderDir);
     }
 
     // build the pipeline with the built shaders
-    PipelineBuilder::buildPipelineFile(srcPipelineDef, shadersBuildDir, shadersBuildDir.parent_path() / "Pipelines" / (srcPipelineDef.get_name() + ".pipeline"));
+    PipelineBuilder::buildPipelineFile(
+        srcPipelineDef, shadersBuildDir,
+        shadersBuildDir.parent_path() / "Pipelines" / (srcPipelineDef.get_name() + ".pipeline"));
 }
 
 // This is the main entry point for building a project definition from a project file.
@@ -260,7 +274,8 @@ void buildProjectDef(const fs::path project_file_path, fs::path buildDir) {
     fs::path projectDir = project_file_path.parent_path();
     logger->trace("Building project from {}", project_file_path.string());
     VULK_ASSERT_FMT(fs::exists(project_file_path), "Project file does not exist: {}", project_file_path.string());
-    VULK_ASSERT_FMT(fs::exists(projectDir) && fs::is_directory(projectDir), "Project directory does not exist: {}", projectDir.string());
+    VULK_ASSERT_FMT(fs::exists(projectDir) && fs::is_directory(projectDir), "Project directory does not exist: {}",
+                    projectDir.string());
 
     // due to the complexities of not being able to get the build diredctory until
     // generation time in cmake we can't get the build directory 'generation' time
@@ -304,7 +319,9 @@ void buildProjectDef(const fs::path project_file_path, fs::path buildDir) {
             if (modelName != "") {
                 if (!projectOut.get_models().contains(modelName)) {
                     fs::path modelPath = (projectDir / (actorDef.get_modelName() + ".model"));
-                    copyFileIfShould(metadata.models.at(modelName), assetsDir / "Models" / metadata.models.at(modelName).filename());
+                    VULK_ASSERT_FMT(metadata.models.contains(modelName), "Model {} not found", modelName);
+                    copyFileIfShould(metadata.models.at(modelName),
+                                     assetsDir / "Models" / metadata.models.at(modelName).filename());
                     modelDef = &projectOut.models_ref()[modelName];
                     readDefFromFile(modelPath.string(), *modelDef);
                 }
@@ -314,8 +331,11 @@ void buildProjectDef(const fs::path project_file_path, fs::path buildDir) {
             }
             if (modelDef) {
                 // copy materials
+                VULK_ASSERT_FMT(metadata.materials.contains(modelDef->get_material()), "Material {} not found",
+                                modelDef->get_material());
                 fs::path materialPath = metadata.materials.at(modelDef->get_material());
-                copyDirIfShould(materialPath.parent_path(), assetsDir / "Materials" / materialPath.parent_path().filename());
+                copyDirIfShould(materialPath.parent_path(),
+                                assetsDir / "Materials" / materialPath.parent_path().filename());
             }
         }
     }

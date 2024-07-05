@@ -9,7 +9,7 @@
 #include <unordered_map>
 
 #pragma warning(push)
-#pragma warning(disable : 4702) // unreachable code
+#pragma warning(disable : 4702)  // unreachable code
 #include <thrift/lib/cpp2/protocol/Serializer.h>
 #pragma warning(pop)
 
@@ -27,9 +27,7 @@ namespace fs = std::filesystem;
 template <typename T>
 void readDefFromFile(const std::string& path, T& def) {
     std::ifstream ifs(path);
-    if (!ifs.is_open()) {
-        throw std::runtime_error("Could not open file for reading");
-    }
+    VULK_ASSERT_FMT(ifs.is_open(), "Could not open file for reading: %s", path.c_str());
 
     std::string serializedData((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
@@ -66,28 +64,22 @@ inline VkColorComponentFlags getColorMask(std::string colorMask) {
 
 struct MaterialDef {
     string name;
-    std::string mapKa;                      // Ambient texture map
-    std::string mapKd;                      // Diffuse texture map
-    std::string mapKs;                      // Specular texture map
-    std::string mapNormal;                  // Normal map (specified as 'bump' in the file)
-    std::string mapPm;                      // Metallic map
-    std::string mapPr;                      // Roughness map
-    std::string disp;                       // Displacement map
-    std::array<std::string, 6> cubemapImgs; // Cubemap: pos-x, neg-x, pos-y, neg-y, pos-z, neg-z
-    float Ns;                               // Specular exponent (shininess)
-    float Ni;                               // Optical density (index of refraction)
-    float d;                                // Transparency (dissolve)
-    glm::vec3 Ka;                           // Ambient color
-    glm::vec3 Kd;                           // Diffuse color
-    glm::vec3 Ks;                           // Specular color
+    std::string mapKa;                       // Ambient texture map
+    std::string mapKd;                       // Diffuse texture map
+    std::string mapKs;                       // Specular texture map
+    std::string mapNormal;                   // Normal map (specified as 'bump' in the file)
+    std::string mapPm;                       // Metallic map
+    std::string mapPr;                       // Roughness map
+    std::string disp;                        // Displacement map
+    std::array<std::string, 6> cubemapImgs;  // Cubemap: pos-x, neg-x, pos-y, neg-y, pos-z, neg-z
+    float Ns;                                // Specular exponent (shininess)
+    float Ni;                                // Optical density (index of refraction)
+    float d;                                 // Transparency (dissolve)
+    glm::vec3 Ka;                            // Ambient color
+    glm::vec3 Kd;                            // Diffuse color
+    glm::vec3 Ks;                            // Specular color
     // Initialize with default values
-    MaterialDef()
-        : Ns(0.0f)
-        , Ni(1.0f)
-        , d(1.0f)
-        , Ka{0.0f, 0.0f, 0.0f}
-        , Kd{0.0f, 0.0f, 0.0f}
-        , Ks{0.0f, 0.0f, 0.0f} {}
+    MaterialDef() : Ns(0.0f), Ni(1.0f), d(1.0f), Ka{0.0f, 0.0f, 0.0f}, Kd{0.0f, 0.0f, 0.0f}, Ks{0.0f, 0.0f, 0.0f} {}
 
     VulkMaterialConstants toVulkMaterialConstants() {
         VulkMaterialConstants m;
@@ -112,7 +104,8 @@ struct PipelineDef {
         assert(fragShader);
     }
 
-    void fixup(unordered_map<string, shared_ptr<vulk::cpp2::ShaderDef>> const& vertShaders, unordered_map<string, shared_ptr<vulk::cpp2::ShaderDef>> const& geometryShaders,
+    void fixup(unordered_map<string, shared_ptr<vulk::cpp2::ShaderDef>> const& vertShaders,
+               unordered_map<string, shared_ptr<vulk::cpp2::ShaderDef>> const& geometryShaders,
                unordered_map<string, shared_ptr<vulk::cpp2::ShaderDef>> const& fragmentShaders) {
         vertShader = vertShaders.at(def.vertShader().value());
         fragShader = fragmentShaders.at(def.fragShader().value());
@@ -122,7 +115,8 @@ struct PipelineDef {
         validate();
     }
 
-    static PipelineDef fromFile(const fs::path& path, unordered_map<string, shared_ptr<vulk::cpp2::ShaderDef>> const& vertShaders,
+    static PipelineDef fromFile(const fs::path& path,
+                                unordered_map<string, shared_ptr<vulk::cpp2::ShaderDef>> const& vertShaders,
                                 unordered_map<string, shared_ptr<vulk::cpp2::ShaderDef>> const& geometryShaders,
                                 unordered_map<string, shared_ptr<vulk::cpp2::ShaderDef>> const& fragmentShaders) {
         PipelineDef pipe;
@@ -147,13 +141,9 @@ struct MeshDef {
     vulk::cpp2::MeshDefType type;
     MeshDef() = default;
     MeshDef(string name, ModelMeshDef model)
-        : name(name)
-        , type(vulk::cpp2::MeshDefType::Model)
-        , model(make_shared<ModelMeshDef>(model)) {};
+        : name(name), type(vulk::cpp2::MeshDefType::Model), model(make_shared<ModelMeshDef>(model)) {};
     MeshDef(string name, std::shared_ptr<VulkMesh> mesh)
-        : name(name)
-        , type(vulk::cpp2::MeshDefType::Mesh)
-        , mesh(mesh) {};
+        : name(name), type(vulk::cpp2::MeshDefType::Mesh), mesh(mesh) {};
     shared_ptr<ModelMeshDef> getModelMeshDef() {
         assert(type == vulk::cpp2::MeshDefType::Model);
         return model;
@@ -163,7 +153,7 @@ struct MeshDef {
         return mesh;
     }
 
-private:
+   private:
     shared_ptr<ModelMeshDef> model;
     shared_ptr<VulkMesh> mesh;
 };
@@ -175,14 +165,14 @@ struct ModelDef {
     shared_ptr<MaterialDef> material;
     ModelDef() = default;
     ModelDef(string name, shared_ptr<MeshDef> mesh, shared_ptr<MaterialDef> material)
-        : name(name)
-        , mesh(mesh)
-        , material(material) {
+        : name(name), mesh(mesh), material(material) {
         assert(!name.empty());
         assert(mesh);
     }
 
-    static ModelDef fromDef(vulk::cpp2::ModelDef const& def, unordered_map<string, shared_ptr<MeshDef>> const& meshes, unordered_map<string, shared_ptr<MaterialDef>> materials);
+    static ModelDef fromDef(vulk::cpp2::ModelDef const& def,
+                            unordered_map<string, shared_ptr<MeshDef>> const& meshes,
+                            unordered_map<string, shared_ptr<MaterialDef>> materials);
 };
 
 struct ActorDef {
@@ -198,8 +188,11 @@ struct ActorDef {
         assert(xform != glm::mat4(0.0f));
     }
 
-    static ActorDef fromDef(vulk::cpp2::ActorDef defIn, unordered_map<string, shared_ptr<PipelineDef>> const& pipelines, unordered_map<string, shared_ptr<ModelDef>> const& models,
-                            unordered_map<string, shared_ptr<MeshDef>> meshes, unordered_map<string, shared_ptr<MaterialDef>> materials);
+    static ActorDef fromDef(vulk::cpp2::ActorDef defIn,
+                            unordered_map<string, shared_ptr<PipelineDef>> const& pipelines,
+                            unordered_map<string, shared_ptr<ModelDef>> const& models,
+                            unordered_map<string, shared_ptr<MeshDef>> meshes,
+                            unordered_map<string, shared_ptr<MaterialDef>> materials);
 };
 
 #define SCENE_JSON_VERSION 1
@@ -215,8 +208,11 @@ struct SceneDef {
         assert(!actors.empty());
     }
 
-    static SceneDef fromDef(vulk::cpp2::SceneDef, unordered_map<string, std::shared_ptr<PipelineDef>> const& pipelines, unordered_map<string, shared_ptr<ModelDef>> const& models,
-                            unordered_map<string, shared_ptr<MeshDef>> const& meshes, unordered_map<string, shared_ptr<MaterialDef>> const& materials);
+    static SceneDef fromDef(vulk::cpp2::SceneDef,
+                            unordered_map<string, std::shared_ptr<PipelineDef>> const& pipelines,
+                            unordered_map<string, shared_ptr<ModelDef>> const& models,
+                            unordered_map<string, shared_ptr<MeshDef>> const& meshes,
+                            unordered_map<string, shared_ptr<MaterialDef>> const& materials);
 };
 
 // The metadata is valid up to the point of loading resources, but does

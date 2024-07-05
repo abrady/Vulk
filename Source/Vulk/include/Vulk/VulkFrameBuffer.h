@@ -2,15 +2,16 @@
 #include <vulkan/vulkan.h>
 
 #include "ClassNonCopyableNonMovable.h"
+#include "Vulk.h"
 
-class Vulk;
-template <typename T> class VulkFrameBuffer : public ClassNonCopyableNonMovable {
-  public:
-    VulkFrameBuffer(Vulk &vkIn, std::smart_ptr<T> imageView) : vk(vkIn) {
-    }
-    ~VulkFrameBuffer() {
-    }
+class VulkFrameBuffer : public ClassNonCopyableNonMovable {
+  Vulk& vk;
+  VkFramebuffer framebuffer;
 
-  private:
-    void loadTextureView(char const *texturePath, bool isUNORM);
+ public:
+  VulkFrameBuffer(Vulk& vkIn, std::smart_ptr<T> imageView) : vk(vkIn) {
+    // Vk
+  }
+
+  ~VulkFrameBuffer() { vkDestroyFramebuffer(vk.device, framebuffer, nullptr); }
 };

@@ -23,6 +23,7 @@
         // "${workspaceFolder}/Assets/Pipelines/PBR.pipeline"
         // C:/open/Github/Vulk/build/Resources/Assets/Pipelines/DebugNormals.pipeline.bin C:/open/Github/Vulk/Assets/Pipelines/DebugNormals.pipeline 
         // C:/open/Github/Vulk/build/Resources/Assets/Pipelines/ShadowMap.pipeline.bin C:/open/Github/Vulk/Assets/Pipelines/ShadowMap.pipeline 
+        // C:/open/Github/Vulk/build/Source/Tools/BuildTool/Debug/BuildTool.exe project C:/open/Github/Vulk/Source/Samples/DeferredShading/deferredshading.proj C:/open/Github/Vulk/build/Source/Samples/DeferredShading/Debug 
         {
             "name": "ProjectBuilder - DebugTest",
             "program": "${workspaceFolder}/build/Source/Tools/BuildTool/Debug/BuildTool.exe",

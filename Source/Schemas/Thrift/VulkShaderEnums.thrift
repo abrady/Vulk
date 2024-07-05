@@ -39,16 +39,18 @@ enum VulkShaderBinding {
     GlobalConstantsUBO = 20,
     CubemapSampler = 21,
     GBufNormal = 22,
-    GBufPos = 23,
+    GBufDepth = 23,
     GBufAlbedo = 24,
     GBufMaterial = 25,
-    GBufDepth = 26,
-    GBufLight = 27,
-    GBufLightAccum = 28,
-    GBufLightAccum2 = 29,
-    GBufLightAccum3 = 30,
-    GBufLightAccum4 = 31,
-    
+    GBufSpecular = 26,
+}
+
+enum VulkGeoBufAttachment {
+    Normal = 0,
+    Depth = 1,
+    Albedo = 2,
+    Material = 3,
+    Specular = 4
 }
 
 enum VulkShaderUBOBinding {

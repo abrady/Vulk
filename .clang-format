@@ -1,19 +1,25 @@
 # see https://clang.llvm.org/docs/ClangFormatStyleOptions.html
 ---
-BasedOnStyle: LLVM
-Language: Cpp
-Standard: Cpp11
-
-ColumnLimit: 180
-
-AccessModifierOffset: -4
+# Google
+BasedOnStyle: Chromium
 IndentWidth: 4
+---
+Language: Cpp
+Standard: Latest
+ColumnLimit: 120
 UseTab: Never
 
-AlignEscapedNewlines: Left
-AllowShortFunctionsOnASingleLine: Empty
-AllowShortLambdasOnASingleLine: Empty
-AlwaysBreakTemplateDeclarations: true
-BreakConstructorInitializers: BeforeComma
-IndentPPDirectives: AfterHash
-PointerAlignment: Left
+# AllowAllParametersOfDeclarationOnNextLine: true
+# AllowAllArgumentsOnNextLine: true
+
+
+# AccessModifierOffset: -4
+# IndentWidth: 4
+
+# AlignEscapedNewlines: Left
+# AllowShortFunctionsOnASingleLine: Empty
+# AllowShortLambdasOnASingleLine: Empty
+# AlwaysBreakTemplateDeclarations: true
+# BreakConstructorInitializers: BeforeComma
+# IndentPPDirectives: AfterHash
+# PointerAlignment: Left
