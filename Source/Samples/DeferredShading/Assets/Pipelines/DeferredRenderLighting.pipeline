@@ -1,0 +1,7 @@
+{
+    "version": 1,
+    "name": "DeferredRenderLighting",
+    "vertShader": "DeferredRenderLighting",
+    "fragShader": "DeferredRenderLighting",
+    "subpass": 1
+}

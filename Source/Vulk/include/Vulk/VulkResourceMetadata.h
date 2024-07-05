@@ -141,9 +141,9 @@ struct MeshDef {
     vulk::cpp2::MeshDefType type;
     MeshDef() = default;
     MeshDef(string name, ModelMeshDef model)
-        : name(name), type(vulk::cpp2::MeshDefType::Model), model(make_shared<ModelMeshDef>(model)) {};
+        : name(name), type(vulk::cpp2::MeshDefType::Model), model(make_shared<ModelMeshDef>(model)){};
     MeshDef(string name, std::shared_ptr<VulkMesh> mesh)
-        : name(name), type(vulk::cpp2::MeshDefType::Mesh), mesh(mesh) {};
+        : name(name), type(vulk::cpp2::MeshDefType::Mesh), mesh(mesh){};
     shared_ptr<ModelMeshDef> getModelMeshDef() {
         assert(type == vulk::cpp2::MeshDefType::Model);
         return model;

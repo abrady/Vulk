@@ -52,6 +52,7 @@ struct SrcPipelineDef {
     10: string polygonMode; // VulkShaderEnums.VulkPolygonMode
     11: string cullMode; // VulkShaderEnums.VulkCullModeFlag/VkCullModeFlags
     12: PipelineBlendingDef blending;
+    13: int subpass;
 }
 
 struct PipelineDef {
