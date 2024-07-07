@@ -11,8 +11,6 @@ class World final : public VulkRenderable {
 
     std::shared_ptr<VulkDeferredRenderpass> deferredRenderpass;
     std::vector<std::shared_ptr<VulkActor>> deferredActors;
-    std::shared_ptr<VulkPipeline> deferredGeoPipeline;
-    std::shared_ptr<VulkPipeline> deferredLightingPipeline;
     std::shared_ptr<VulkFence> deferredFence;
 
     std::shared_ptr<VulkDepthRenderpass> shadowMapRenderpass;
@@ -54,18 +52,13 @@ class World final : public VulkRenderable {
         SceneDef& sceneDef = *resources->metadata->scenes.at(sceneName);
         scene = resources->scenes[sceneName];
 
-        deferredRenderpass = std::make_shared<VulkDeferredRenderpass>(vk);
-        deferredFence = std::make_shared<VulkFence>(vk);
-        deferredGeoPipeline =
-            resources->loadPipeline(deferredRenderpass->renderPass, vk.swapChainExtent, "DeferredRenderGeo");
-        deferredLightingPipeline =
-            resources->loadPipeline(deferredRenderpass->renderPass, vk.swapChainExtent, "DeferredRenderLighting");
+        deferredRenderpass = std::make_shared<VulkDeferredRenderpass>(vk, *resources);
         auto deferredPipelineDef = resources->metadata->pipelines.at("DeferredRenderGeo");
         for (size_t i = 0; i < scene->actors.size(); ++i) {
             auto actor = scene->actors[i];
             auto actorDef = sceneDef.actors[i];
             std::shared_ptr<VulkActor> deferredActor =
-                resources->createActorFromPipeline(*actorDef, deferredGeoPipeline, scene);
+                resources->createActorFromPipeline(*actorDef, deferredRenderpass->deferredGeoPipeline, scene);
             deferredActors.push_back(deferredActor);
         }
 

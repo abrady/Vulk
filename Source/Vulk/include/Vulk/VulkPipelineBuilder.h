@@ -1,9 +1,9 @@
 #pragma once
 
+#include <vulkan/vulkan.h>
 #include "VulkDescriptorSetLayoutBuilder.h"
 #include "VulkPipeline.h"
 #include "VulkShaderModule.h"
-#include <vulkan/vulkan.h>
 
 struct PipelineDef;
 
@@ -24,18 +24,19 @@ class VulkPipelineBuilder {
     VkPipelineRasterizationStateCreateInfo rasterizer{};
     VkPipelineMultisampleStateCreateInfo multisampling{};
     VkPipelineDepthStencilStateCreateInfo depthStencil{};
-    VkPipelineColorBlendAttachmentState colorBlendAttachment{};
+    std::vector<VkPipelineColorBlendAttachmentState> colorBlendAttachments;
     VkPipelineColorBlendStateCreateInfo colorBlending{};
     std::vector<VkDynamicState> dynamicStates;
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     VkRect2D scissor{};
     VkViewport viewport{};
-    std::vector<VkPushConstantRange> pushConstantRanges; // currently only one range is supported but this is here for future proofing
+    // currently only one range is supported but this is here for future proofing
+    std::vector<VkPushConstantRange> pushConstantRanges;
 
     VulkPipelineBuilder& addShaderStage(VkShaderStageFlagBits stage, char const* path);
     VulkPipelineBuilder& addShaderStage(VkShaderStageFlagBits stage, std::shared_ptr<VulkShaderModule> shaderModule);
 
-public:
+   public:
     VulkPipelineBuilder(Vulk& vk, std::shared_ptr<PipelineDef> def);
 
     VulkPipelineBuilder& addvertShaderStage(std::shared_ptr<VulkShaderModule> shaderModule) {
@@ -68,8 +69,11 @@ public:
     VulkPipelineBuilder& copyFrontStencilToBack();
 
     VulkPipelineBuilder& addVertexInput(vulk::cpp2::VulkShaderLocation input);
-    VulkPipelineBuilder& setBlending(bool enabled, VkColorComponentFlags colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT |
-                                                                                          VK_COLOR_COMPONENT_A_BIT);
+    VulkPipelineBuilder& addColorBlendAttachment(bool blendingEnabled,
+                                                 VkColorComponentFlags colorWriteMask = VK_COLOR_COMPONENT_R_BIT |
+                                                                                        VK_COLOR_COMPONENT_G_BIT |
+                                                                                        VK_COLOR_COMPONENT_B_BIT |
+                                                                                        VK_COLOR_COMPONENT_A_BIT);
 
     VulkPipelineBuilder& setScissor(VkExtent2D extent);
     VulkPipelineBuilder& setViewport(VkExtent2D extent);
@@ -88,6 +92,10 @@ public:
     }
     VulkPipelineBuilder& addPushConstantRange(VkShaderStageFlags stageFlags, uint32_t size);
 
-    void build(VkRenderPass renderPass, std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout, VkPipelineLayout* pipelineLayout, VkPipeline* graphicsPipeline);
-    std::shared_ptr<VulkPipeline> build(VkRenderPass renderPass, std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout);
+    void build(VkRenderPass renderPass,
+               std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout,
+               VkPipelineLayout* pipelineLayout,
+               VkPipeline* graphicsPipeline);
+    std::shared_ptr<VulkPipeline> build(VkRenderPass renderPass,
+                                        std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout);
 };

@@ -4,7 +4,10 @@
 
 #include "Vulk/ClassNonCopyableNonMovable.h"
 #include "Vulk/Vulk.h"
+#include "Vulk/VulkDescriptorSetLayout.h"
 #include "Vulk/VulkImageView.h"
+#include "Vulk/VulkPipeline.h"
+#include "Vulk/VulkResources.h"
 
 class VulkDeferredImage : public ClassNonCopyableNonMovable {
    public:
@@ -65,9 +68,10 @@ class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
     VkRenderPass renderPass;
     std::array<std::shared_ptr<VulkGBufs>, MAX_FRAMES_IN_FLIGHT> geoBufs;
     std::array<VkFramebuffer, MAX_FRAMES_IN_FLIGHT> frameBuffers;
-    VkFormat format = VK_FORMAT_R32_UINT;
+    std::shared_ptr<VulkPipeline> deferredGeoPipeline;
+    std::shared_ptr<VulkPipeline> deferredLightingPipeline;
 
-    VulkDeferredRenderpass(Vulk& vkIn) : vk(vkIn) {
+    VulkDeferredRenderpass(Vulk& vkIn, VulkResources& resources) : vk(vkIn) {
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
             geoBufs[i] = std::make_unique<VulkGBufs>(vk);
         }
@@ -137,6 +141,9 @@ class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
 
             VK_CALL(vkCreateFramebuffer(vk.device, &framebufferInfo, nullptr, &frameBuffers[i]));
         }
+
+        deferredGeoPipeline = resources.loadPipeline(renderPass, vk.swapChainExtent, "DeferredRenderGeo");
+        deferredLightingPipeline = resources.loadPipeline(renderPass, vk.swapChainExtent, "DeferredRenderLighting");
     }
 
     ~VulkDeferredRenderpass() {

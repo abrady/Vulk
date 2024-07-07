@@ -92,12 +92,7 @@ VkPolygonMode toVkPolygonMode(vulk::cpp2::VulkPolygonMode polygonMode) {
     return static_cast<VkPolygonMode>(polygonMode);
 }
 
-std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(VkRenderPass renderPass,
-                                                          VkExtent2D extent,
-                                                          std::string const& name) {
-    if (pipelines.contains(name)) {
-        return pipelines[name];
-    }
+std::shared_ptr<VulkDescriptorSetLayout> VulkResources::buildDescriptorSetLayoutFromPipeline(std::string name) {
     std::shared_ptr<PipelineDef> def = metadata->pipelines.at(name);
 
     // build the descriptor set layout
@@ -118,13 +113,24 @@ std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(VkRenderPass renderPas
             dslb.addImageSampler(stage, binding);
         }
     }
-    shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout = dslb.build();
+    return dslb.build();
+}
+
+std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(VkRenderPass renderPass,
+                                                          VkExtent2D extent,
+                                                          std::string const& name) {
+    if (pipelines.contains(name)) {
+        return pipelines[name];
+    }
 
     // make the pipeline itself
+    std::shared_ptr<PipelineDef> def = metadata->pipelines.at(name);
     VulkPipelineBuilder pb(vk, def);
+
     for (auto& pc : def->def.get_pushConstants()) {
         pb.addPushConstantRange(pc.get_stageFlags(), pc.get_size());
     }
+
     pb.addvertShaderStage(getvertShader(def->vertShader->get_name()))
         .setLineWidth(1.0f)
         .setScissor(extent)
@@ -147,15 +153,25 @@ std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(VkRenderPass renderPas
         pb.setPolygonMode(toVkPolygonMode(pd.get_polygonMode()));
     if (pd.cullMode().is_set())
         pb.setCullMode((VkCullModeFlags)pd.get_cullMode());
-    if (pd.blending().is_set())
-        pb.setBlending(pd.get_blending().get_enabled(), getColorMask(pd.get_blending().get_colorWriteMask()));
+    if (pd.blending().is_set()) {
+        pb.addColorBlendAttachment(pd.get_blending().get_enabled(),
+                                   getColorMask(pd.get_blending().get_colorWriteMask()));
+    } else {
+        pb.addColorBlendAttachment(false);
+    }
     if (def->geomShader)
         pb.addGeometryShaderStage(getGeometryShader(def->geomShader->get_name()));
+
+    auto blends = def->def.get_colorBlends();
+    for (auto colorBlends : blends) {
+        pb.addColorBlendAttachment(colorBlends.get_enabled(), getColorMask(colorBlends.get_colorWriteMask()));
+    }
 
     for (auto input : def->def.get_vertInputs()) {
         pb.addVertexInput(input);
     }
 
+    std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout = buildDescriptorSetLayoutFromPipeline(name);
     auto p = pb.build(renderPass, descriptorSetLayout);
     pipelines[name] = p;
     return p;

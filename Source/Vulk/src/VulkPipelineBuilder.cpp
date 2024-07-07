@@ -2,16 +2,13 @@
 #include "Vulk/Vulk.h"
 #include "Vulk/VulkUtil.h"
 
-VulkPipelineBuilder::VulkPipelineBuilder(Vulk& vk, std::shared_ptr<PipelineDef> def)
-    : vk(vk)
-    , def(def) {
-
+VulkPipelineBuilder::VulkPipelineBuilder(Vulk& vk, std::shared_ptr<PipelineDef> def) : vk(vk), def(def) {
     rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     rasterizer.depthClampEnable = VK_FALSE;
     rasterizer.rasterizerDiscardEnable = VK_FALSE;
     rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
     rasterizer.lineWidth = 1.0f;
-    rasterizer.cullMode = VK_CULL_MODE_BACK_BIT; // or VK_CULL_MODE_NONE; for no culling
+    rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;  // or VK_CULL_MODE_NONE; for no culling
     rasterizer.frontFace = DEFAULT_FRONT_FACE_WINDING_ORDER;
     rasterizer.depthBiasEnable = VK_FALSE;
 
@@ -34,14 +31,11 @@ VulkPipelineBuilder::VulkPipelineBuilder(Vulk& vk, std::shared_ptr<PipelineDef> 
     depthStencil.depthBoundsTestEnable = VK_FALSE;
     depthStencil.stencilTestEnable = VK_FALSE;
 
-    colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-    colorBlendAttachment.blendEnable = VK_FALSE;
-
     colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
     colorBlending.logicOpEnable = VK_FALSE;
     colorBlending.logicOp = VK_LOGIC_OP_COPY;
-    colorBlending.attachmentCount = 1;
-    colorBlending.pAttachments = &colorBlendAttachment;
+    colorBlending.attachmentCount = (uint32_t)colorBlendAttachments.size();
+    colorBlending.pAttachments = colorBlendAttachments.data();
     colorBlending.blendConstants[0] = 0.0f;
     colorBlending.blendConstants[1] = 0.0f;
     colorBlending.blendConstants[2] = 0.0f;
@@ -57,12 +51,13 @@ VulkPipelineBuilder& VulkPipelineBuilder::addShaderStage(VkShaderStageFlagBits s
     return *this;
 }
 
-VulkPipelineBuilder& VulkPipelineBuilder::addShaderStage(VkShaderStageFlagBits stage, std::shared_ptr<VulkShaderModule> shaderModule) {
+VulkPipelineBuilder& VulkPipelineBuilder::addShaderStage(VkShaderStageFlagBits stage,
+                                                         std::shared_ptr<VulkShaderModule> shaderModule) {
     VkPipelineShaderStageCreateInfo shaderStageInfo{};
     shaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     shaderStageInfo.stage = stage;
     shaderStageInfo.module = shaderModule->shaderModule;
-    shaderStageInfo.pName = "main"; // entrypoint, by convention
+    shaderStageInfo.pName = "main";  // entrypoint, by convention
 
     shaderModules.push_back(shaderModule);
     shaderStages.push_back(shaderStageInfo);
@@ -82,7 +77,8 @@ VulkPipelineBuilder& VulkPipelineBuilder::setPolygonMode(VkPolygonMode polygonMo
 VulkPipelineBuilder& VulkPipelineBuilder::setLineWidth(float lineWidth) {
     VkPhysicalDeviceProperties deviceProperties;
     vkGetPhysicalDeviceProperties(vk.physicalDevice, &deviceProperties);
-    assert(deviceProperties.limits.lineWidthRange[0] <= lineWidth && lineWidth <= deviceProperties.limits.lineWidthRange[1]);
+    assert(deviceProperties.limits.lineWidthRange[0] <= lineWidth &&
+           lineWidth <= deviceProperties.limits.lineWidthRange[1]);
     rasterizer.lineWidth = lineWidth;
     return *this;
 }
@@ -113,24 +109,24 @@ VulkPipelineBuilder& VulkPipelineBuilder::addVertexInput(vulk::cpp2::VulkShaderL
     uint32_t stride;
 
     switch (locationIn) {
-    case vulk::cpp2::VulkShaderLocation::Pos:
-    case vulk::cpp2::VulkShaderLocation::Normal:
-    case vulk::cpp2::VulkShaderLocation::Tangent:
-        format = VK_FORMAT_R32G32B32_SFLOAT;
-        stride = sizeof(glm::vec3);
-        break;
-    case vulk::cpp2::VulkShaderLocation::TexCoord:
-        format = VK_FORMAT_R32G32_SFLOAT;
-        stride = sizeof(glm::vec2);
-        break;
-    default:
-        VULK_THROW("Unknown vertex input location");
+        case vulk::cpp2::VulkShaderLocation::Pos:
+        case vulk::cpp2::VulkShaderLocation::Normal:
+        case vulk::cpp2::VulkShaderLocation::Tangent:
+            format = VK_FORMAT_R32G32B32_SFLOAT;
+            stride = sizeof(glm::vec3);
+            break;
+        case vulk::cpp2::VulkShaderLocation::TexCoord:
+            format = VK_FORMAT_R32G32_SFLOAT;
+            stride = sizeof(glm::vec2);
+            break;
+        default:
+            VULK_THROW("Unknown vertex input location");
     };
 
     VkVertexInputBindingDescription binding = {};
-    binding.binding = location;                      // We'll have a single vertex buffer, so we use binding point 0
-    binding.stride = stride;                         // Size of a single Vertex object
-    binding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX; // Move to the next data entry after each vertex
+    binding.binding = location;                       // We'll have a single vertex buffer, so we use binding point 0
+    binding.stride = stride;                          // Size of a single Vertex object
+    binding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;  // Move to the next data entry after each vertex
 
     VkVertexInputAttributeDescription attribute{};
     attribute.binding = location;
@@ -149,9 +145,11 @@ VulkPipelineBuilder& VulkPipelineBuilder::addVertexInput(vulk::cpp2::VulkShaderL
 
 // enabling means the existing value in the framebuffer will be blended with the new value output from the shader
 // while disabling it will just overwrite the existing value
-VulkPipelineBuilder& VulkPipelineBuilder::setBlending(bool enabled, VkColorComponentFlags colorWriteMask) {
-    colorBlendAttachment.blendEnable = enabled;
-    if (enabled) {
+VulkPipelineBuilder& VulkPipelineBuilder::addColorBlendAttachment(bool blendEnabled,
+                                                                  VkColorComponentFlags colorWriteMask) {
+    VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
+    colorBlendAttachment.blendEnable = blendEnabled;
+    if (blendEnabled) {
         colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
         colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
         colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
@@ -160,10 +158,13 @@ VulkPipelineBuilder& VulkPipelineBuilder::setBlending(bool enabled, VkColorCompo
         colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
     }
     colorBlendAttachment.colorWriteMask = colorWriteMask;
+    colorBlendAttachments.push_back(colorBlendAttachment);
     return *this;
 }
 
-void VulkPipelineBuilder::build(VkRenderPass renderPass, std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout, VkPipelineLayout* pipelineLayout,
+void VulkPipelineBuilder::build(VkRenderPass renderPass,
+                                std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout,
+                                VkPipelineLayout* pipelineLayout,
                                 VkPipeline* graphicsPipeline) {
     assert(viewport.maxDepth > 0.f);
 
@@ -216,11 +217,13 @@ void VulkPipelineBuilder::build(VkRenderPass renderPass, std::shared_ptr<VulkDes
     VK_CALL(vkCreateGraphicsPipelines(vk.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, graphicsPipeline));
 }
 
-std::shared_ptr<VulkPipeline> VulkPipelineBuilder::build(VkRenderPass renderPass, std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout) {
+std::shared_ptr<VulkPipeline> VulkPipelineBuilder::build(VkRenderPass renderPass,
+                                                         std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout) {
     VkPipelineLayout pipelineLayout;
     VkPipeline graphicsPipeline;
     build(renderPass, descriptorSetLayout, &pipelineLayout, &graphicsPipeline);
-    return std::make_shared<VulkPipeline>(vk, def, graphicsPipeline, pipelineLayout, descriptorSetLayout, shaderModules);
+    return std::make_shared<VulkPipeline>(vk, def, graphicsPipeline, pipelineLayout, descriptorSetLayout,
+                                          shaderModules);
 }
 
 VulkPipelineBuilder& VulkPipelineBuilder::setStencilTestEnabled(bool enabled) {

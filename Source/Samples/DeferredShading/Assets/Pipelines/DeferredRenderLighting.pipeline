@@ -3,5 +3,11 @@
     "name": "DeferredRenderLighting",
     "vertShader": "DeferredRenderLighting",
     "fragShader": "DeferredRenderLighting",
+    "colorBlends": [
+        {},
+        {},
+        {},
+        {}
+    ],
     "subpass": 1
 }
