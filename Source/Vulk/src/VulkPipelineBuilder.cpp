@@ -34,8 +34,6 @@ VulkPipelineBuilder::VulkPipelineBuilder(Vulk& vk, std::shared_ptr<PipelineDef> 
     colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
     colorBlending.logicOpEnable = VK_FALSE;
     colorBlending.logicOp = VK_LOGIC_OP_COPY;
-    colorBlending.attachmentCount = (uint32_t)colorBlendAttachments.size();
-    colorBlending.pAttachments = colorBlendAttachments.data();
     colorBlending.blendConstants[0] = 0.0f;
     colorBlending.blendConstants[1] = 0.0f;
     colorBlending.blendConstants[2] = 0.0f;
@@ -197,6 +195,10 @@ void VulkPipelineBuilder::build(VkRenderPass renderPass,
     dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
     dynamicState.pDynamicStates = dynamicStates.data();
 
+    // get the final color blending attachments
+    colorBlending.attachmentCount = (uint32_t)colorBlendAttachments.size();
+    colorBlending.pAttachments = colorBlendAttachments.data();
+
     VkGraphicsPipelineCreateInfo pipelineInfo{};
     pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
     pipelineInfo.stageCount = static_cast<uint32_t>(shaderStages.size());
@@ -211,7 +213,7 @@ void VulkPipelineBuilder::build(VkRenderPass renderPass,
     pipelineInfo.pDynamicState = &dynamicState;
     pipelineInfo.layout = *pipelineLayout;
     pipelineInfo.renderPass = renderPass;
-    pipelineInfo.subpass = 0;
+    pipelineInfo.subpass = subpass;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
     VK_CALL(vkCreateGraphicsPipelines(vk.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, graphicsPipeline));

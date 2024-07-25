@@ -210,28 +210,21 @@ class PipelineBuilder {
         }
 
         vulk::cpp2::PipelineDef pipelineOut;
-        // 1: i32 version;
-        // 2: string name;
-        // 3: string vertShader;
-        // 4: string geomShader;
-        // 5: string fragShader;
-        // 6: string primitiveTopology; // VulkShaderEnums.VulkPrimitiveTopology
-        // 7: bool depthTestEnabled;
-        // 8: bool depthWriteEnabled;
-        // 9: string depthCompareOp; // VulkShaderEnums.VulkCompareOp
-        // 10: string polygonMode; // VulkShaderEnums.VulkPolygonMode
-        // 11: i32 cullMode; // VkCullModeFlags
-        // 12: PipelineBlendingDef blending;
-
         pipelineOut.version_ref() = 1;
         pipelineOut.name_ref() = pipelineIn.get_name();
-        pipelineOut.vertShader_ref() = pipelineIn.get_vertShader();
-        pipelineOut.geomShader_ref() = pipelineIn.get_geomShader();
-        pipelineOut.fragShader_ref() = pipelineIn.get_fragShader();
-        apache::thrift::util::tryParseEnum(pipelineIn.get_primitiveTopology(),
-                                           &pipelineOut.primitiveTopology_ref().value());
-        pipelineOut.depthTestEnabled_ref() = pipelineIn.get_depthTestEnabled();
-        pipelineOut.depthWriteEnabled_ref() = pipelineIn.get_depthWriteEnabled();
+        if (pipelineIn.vertShader().is_set())
+            pipelineOut.vertShader_ref() = pipelineIn.get_vertShader();
+        if (pipelineIn.geomShader().is_set())
+            pipelineOut.geomShader_ref() = pipelineIn.get_geomShader();
+        if (pipelineIn.fragShader().is_set())
+            pipelineOut.fragShader_ref() = pipelineIn.get_fragShader();
+        if (pipelineIn.primitiveTopology().is_set())
+            apache::thrift::util::tryParseEnum(pipelineIn.get_primitiveTopology(),
+                                               &pipelineOut.primitiveTopology_ref().value());
+        if (pipelineIn.depthTestEnabled().is_set())
+            pipelineOut.depthTestEnabled_ref() = pipelineIn.get_depthTestEnabled();
+        if (pipelineIn.depthWriteEnabled().is_set())
+            pipelineOut.depthWriteEnabled_ref() = pipelineIn.get_depthWriteEnabled();
         if (pipelineIn.depthCompareOp().is_set()) {
             VULK_ASSERT_FMT(apache::thrift::util::tryParseEnum(pipelineIn.get_depthCompareOp(),
                                                                &pipelineOut.depthCompareOp_ref().value()),
@@ -246,11 +239,24 @@ class PipelineBuilder {
             pipelineOut.cullMode_ref() =
                 apache::thrift::util::enumValueOrThrow<vulk::cpp2::VulkCullModeFlags>(pipelineIn.get_cullMode());
         }
-        pipelineOut.blending_ref() = pipelineIn.get_blending();
-        pipelineOut.subpass_ref() = pipelineIn.get_subpass();
-        pipelineOut.colorBlends_ref() = pipelineIn.get_colorBlends();
+        {
+            auto colorBlends = pipelineIn.get_colorBlends();
+            if (colorBlends.size() > 0) {
+                pipelineOut.colorBlends_ref() = colorBlends;
+            } else {
+                // if no colorBlends are set, assume this is a regular
+                // pipeline with a single attachment - the framebuffer
+                // so add a default colorBlend
+                logger()->trace("Adding default colorBlend");
+                vulk::cpp2::PipelineBlendingDef def;
+                pipelineOut.colorBlends_ref()->push_back(def);
+            }
+        }
+        if (pipelineIn.subpass().is_set()) {
+            pipelineOut.subpass_ref() = pipelineIn.get_subpass();
+        }
         // assert(sizeof(pipelineIn) == 440);
-        static_assert(sizeof(pipelineIn) == 472);
+        static_assert(sizeof(pipelineIn) == 392);
 
         std::vector<ShaderInfo> shaderInfos;
         ShaderInfo vertShaderInfo = infoFromShader(pipelineIn.get_vertShader(), "vert", builtShadersDir);

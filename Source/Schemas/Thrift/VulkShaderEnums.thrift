@@ -46,9 +46,9 @@ enum VulkShaderBinding {
 }
 
 enum VulkGeoBufAttachment {
-    Normal = 0,
+    Albedo = 0,
     Depth = 1,
-    Albedo = 2,
+    Normal = 2,
     Material = 3,
     Specular = 4
 }

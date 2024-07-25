@@ -153,19 +153,16 @@ std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(VkRenderPass renderPas
         pb.setPolygonMode(toVkPolygonMode(pd.get_polygonMode()));
     if (pd.cullMode().is_set())
         pb.setCullMode((VkCullModeFlags)pd.get_cullMode());
-    if (pd.blending().is_set()) {
-        pb.addColorBlendAttachment(pd.get_blending().get_enabled(),
-                                   getColorMask(pd.get_blending().get_colorWriteMask()));
-    } else {
-        pb.addColorBlendAttachment(false);
+    if (def->def.subpass().is_set())
+        pb.setSubpass(def->def.get_subpass());
+    if (def->def.colorBlends().is_set()) {
+        auto blends = def->def.get_colorBlends();
+        for (auto colorBlends : blends) {
+            pb.addColorBlendAttachment(colorBlends.get_enabled(), getColorMask(colorBlends.get_colorWriteMask()));
+        }
     }
     if (def->geomShader)
         pb.addGeometryShaderStage(getGeometryShader(def->geomShader->get_name()));
-
-    auto blends = def->def.get_colorBlends();
-    for (auto colorBlends : blends) {
-        pb.addColorBlendAttachment(colorBlends.get_enabled(), getColorMask(colorBlends.get_colorWriteMask()));
-    }
 
     for (auto input : def->def.get_vertInputs()) {
         pb.addVertexInput(input);
@@ -300,7 +297,6 @@ std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const
 }
 
 std::shared_ptr<VulkScene> VulkResources::loadScene(
-    VkRenderPass renderPass,
     std::string name,
     std::array<std::shared_ptr<VulkDepthView>, MAX_FRAMES_IN_FLIGHT> shadowMapViews) {
     if (scenes.contains(name)) {
@@ -309,16 +305,16 @@ std::shared_ptr<VulkScene> VulkResources::loadScene(
     }
     logger->info("Loading scene {}", name);
     SceneDef& sceneDef = *metadata->scenes.at(name);
-    shared_ptr<VulkScene> scene = make_shared<VulkScene>(vk);
+    shared_ptr<VulkScene> scene = make_shared<VulkScene>(vk, metadata->scenes.at(name));
 
     scene->shadowMapViews = shadowMapViews;
     scene->camera = sceneDef.camera;
     *scene->sceneUBOs.pointLight.mappedUBO = *sceneDef.pointLights[0];  // just one light for now
 
-    for (auto& actorDef : sceneDef.actors) {
-        auto pipeline = loadPipeline(renderPass, vk.swapChainExtent, actorDef->pipeline->def.get_name());
-        scene->actors.push_back(createActorFromPipeline(*actorDef, pipeline, scene));
-    }
+    // for (auto& actorDef : sceneDef.actors) {
+    //     auto pipeline = loadPipeline(renderPass, vk.swapChainExtent, actorDef->pipeline->def.get_name());
+    //     scene->actors.push_back(createActorFromPipeline(*actorDef, pipeline, scene));
+    // }
     return scenes[name] = scene;
 }
 

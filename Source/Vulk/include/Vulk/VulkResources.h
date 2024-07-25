@@ -31,7 +31,7 @@ struct Metadata;
 //
 // Note: not thread safe
 class VulkResources {
-public:
+   public:
     Vulk& vk;
     std::shared_ptr<Metadata const> metadata;
 
@@ -39,7 +39,7 @@ public:
     VulkResources(Vulk& vk, std::shared_ptr<Metadata> metadata);
     static std::shared_ptr<VulkResources> loadFromProject(Vulk& vk, std::filesystem::path projectDir);
 
-private:
+   private:
     enum ShaderType { Vert, Geom, Frag };
 
     std::shared_ptr<VulkShaderModule> createShaderModule(ShaderType type, std::string const& name);
@@ -49,7 +49,7 @@ private:
     std::shared_ptr<VulkMaterialTextures> getMaterialTextures(std::string const& name);
     std::shared_ptr<VulkModel> getModel(ModelDef const& modelDef, PipelineDef const& pipelineDef);
 
-public:
+   public:
     std::unordered_map<std::string, std::shared_ptr<VulkMaterialTextures>> materialTextures;
     std::unordered_map<std::string, std::shared_ptr<VulkUniformBuffer<VulkMaterialConstants>>> materialUBOs;
     std::unordered_map<std::string, std::shared_ptr<VulkMesh>> meshes;
@@ -60,7 +60,9 @@ public:
     std::unordered_map<std::string, std::shared_ptr<VulkShaderModule>> vertShaders, geomShaders, fragShaders;
     std::shared_ptr<VulkSampler> textureSampler, shadowMapSampler;
 
-    std::shared_ptr<VulkScene> loadScene(VkRenderPass renderPass, std::string name, std::array<std::shared_ptr<VulkDepthView>, MAX_FRAMES_IN_FLIGHT> shadowMapViews);
+    std::shared_ptr<VulkScene> loadScene(
+        std::string name,
+        std::array<std::shared_ptr<VulkDepthView>, MAX_FRAMES_IN_FLIGHT> shadowMapViews);
 
     std::shared_ptr<VulkShaderModule> getvertShader(std::string const& name) {
         if (!vertShaders.contains(name))
@@ -78,11 +80,11 @@ public:
         return fragShaders.at(name);
     }
 
-    std::shared_ptr<VulkActor> createActorFromPipeline(ActorDef const& actorDef, std::shared_ptr<VulkPipeline> pipeline, std::shared_ptr<VulkScene> scene);
+    std::shared_ptr<VulkActor> createActorFromPipeline(ActorDef const& actorDef,
+                                                       std::shared_ptr<VulkPipeline> pipeline,
+                                                       std::shared_ptr<VulkScene> scene);
 
     std::shared_ptr<VulkDescriptorSetLayout> buildDescriptorSetLayoutFromPipeline(std::string name);
     std::shared_ptr<VulkPipeline> loadPipeline(VkRenderPass renderPass, VkExtent2D extent, std::string const& name);
-    std::shared_ptr<VulkPipeline> getPipeline(std::string const& name) {
-        return pipelines.at(name);
-    }
+    std::shared_ptr<VulkPipeline> getPipeline(std::string const& name) { return pipelines.at(name); }
 };

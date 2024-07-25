@@ -51,12 +51,8 @@ struct SrcPipelineDef {
     9: string depthCompareOp; // VulkShaderEnums.VulkCompareOp
     10: string polygonMode; // VulkShaderEnums.VulkPolygonMode
     11: string cullMode; // VulkShaderEnums.VulkCullModeFlag/VkCullModeFlags
-    // these two fields are mutually exclusive
-    // the first is for basic pipelines that tend to have one color attachment
-    // the second is for pipelines that have multiple color attachments
-    12: PipelineBlendingDef blending;           
-    13: list<PipelineBlendingDef> colorBlends;  
-    14: i32 subpass;
+    12: list<PipelineBlendingDef> colorBlends;  
+    13: i32 subpass;
 }
 
 struct PipelineDef {
@@ -74,12 +70,8 @@ struct PipelineDef {
     12: bool depthWriteEnabled = true;
     13: VulkShaderEnums.VulkCompareOp depthCompareOp = VulkShaderEnums.VulkCompareOp.LESS;
     14: VulkCullModeFlags cullMode = VulkCullModeFlags.BACK; // VkCullModeFlags
-    // these two fields are mutually exclusive
-    // the first is for basic pipelines that tend to have one color attachment
-    // the second is for pipelines that have multiple color attachments
-    15: PipelineBlendingDef blending;           
-    16: list<PipelineBlendingDef> colorBlends;  
-    17: i32 subpass;
+    15: list<PipelineBlendingDef> colorBlends;  
+    16: i32 subpass;
 }
 
 struct Vec3 {

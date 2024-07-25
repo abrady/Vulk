@@ -14,6 +14,7 @@ My goal for this project is to transition from the hand-coded samples I was doin
 * <https://www.shadertoy.com/view/4sSfzK> - pbr shadertoy
 * <https://research.ncl.ac.uk/game/mastersdegree/graphicsforgames/deferredrendering/Tutorial%2015%20-%20Deferred%20Rendering.pdf>
 * <https://learnopengl.com/Advanced-OpenGL/Cubemaps>
+* <https://github.com/SaschaWillems/Vulkan> - a set of good vulkan examples
 
 3D resources:
 
@@ -59,7 +60,100 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Log
 
-# 7/1 man I'm feeling slow
+# Deferred Rendering
+
+TODOS:
+
+* pack roughness into the material, make sure ao is in the r field (see TODOs)
+* depth buffer: I think I should just use the depth buffer I'm already allocating in Vulk.
+* I also don't know if the 2 subpass needs the depth buffer?
+
+## 7/24 vkCreateRenderPass failig
+
+why? `pSubpasses[1].pDepthStencilAttachment attachment 6 must be less than the total number of attachments 5. The Vulkan spec states: If the attachment member of any element of pInputAttachments, pColorAttachments, pResolveAttachments or pDepthStencilAttachment, or any element of pPreserveAttachments in any element of pSubpasses is not VK_ATTACHMENT_UNUSED, then it must be less than attachmentCount`
+
+* numAttachments is 5
+* but our depth attachment is at idx 6 apparently.
+
+ah! just didn't increment the attachment count properly for the color/depth for subpass 2 (our output bufs)
+
+* note: I'm using the depth buffer still for some reason...
+
+## 7/14 wire up the imageviews
+
+* x create the image/imageviews/devicemem for the gbufs (normal, albedo,...)
+* x make the renderpass
+  * x declare the geo subpass
+  * x declare the lighting subpass
+* x make the geo framebuffer
+* make the pipelines
+  * x geo
+  * lighting
+
+## 7/14 how samplers are input to shaders refresher
+
+* the frag shader binds a uniform of type sampler2D: `layout(binding = 12) uniform sampler2D shadowSampler;`
+* VulkDescriptorSetLayout specifies what this binding is:
+
+  ```C
+        VkDescriptorSetLayoutBinding layoutBinding{};
+        layoutBinding.binding = binding;
+        layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        layoutBinding.descriptorCount = 1;
+        layoutBinding.stageFlags = stageFlags;
+  ```
+
+* a VulkDescriptorSet gets built for each frame that contains the VkSampler and VkImageView.
+
+  ```C
+      VkDescriptorImageInfo imageInfo{};
+      imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+      imageInfo.imageView = imageView;    // VkImageView
+      imageInfo.sampler = textureSampler; // VkSampler 
+  ```
+
+VulkDescriptorSetInfo takes the layout, pool,
+
+## 7/12
+
+deferred renderpass creation works as follows:
+
+* create the image/imageviews/devicemem for the gbufs (normal, albedo,...)
+* make the renderpass
+  * declare the geo subpass
+  * declare the lighting subpass
+* make the geo framebuffer
+* make the pipelines
+  * geo
+  * lighting
+
+## 7/9
+
+## bug: attachment final layout
+
+Layout/usage mismatch for attachment 0 in VkRenderPass 0xee24d0000000059[] -
+the final layout is VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+but the image attached to VkFramebuffer 0x4868e6000000005a[] via VkImageView 0x535b660000000043[]
+was not created with VK_IMAGE_USAGE_TRANSFER_SRC_BIT.
+
+fix: I'm not doing a src transfer, just change it to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+
+## 7/7 I aint getting shit done
+
+## Framebuffers and what gets displayed refresher
+
+* a framebuffer:
+  * operates in conjunction with a renderpass
+  * represents a set of memory attachments the renderpass uses
+
+How does this get rendered to a surface?
+
+* VkSwapchainKHR: provides the ability to present rendering results to a surface
+* swapChainImages: vector<VkImage>, get this from vkGetSwapchainImagesKHR
+* swapChainImageViews[] = createImageView from the images
+* swapChainFramebuffers[] : made from the image views.
+
+## 7/1 man I'm feeling slow
 
 * let's do an end-to-end gbuf by hand and see if we want a generic VulRenderpass after that.
 * Albedo attachment
@@ -74,7 +168,7 @@ VulkRenderpass:
   * VkAttachmentReference
   * VkImageView (and mem etc.)
 
-# 6/29 Deferred Shading Cont
+## 6/29 Deferred Shading Cont
 
 Ugh. work be taking too much of my time.
 
@@ -133,7 +227,7 @@ Render Pass
   │   │   ├─ VkAttachmentReference::layout (for Subpass 2)
   ├─ Final Layout Transition (finalLayout)
 
-# 6/25 Deferred Rendering
+## 6/25 Deferred Rendering
 
 * <https://developer.nvidia.com/gpugems/gpugems3/part-iii-rendering/chapter-19-deferred-shading-tabula-rasa>
 * Realtime Rendering 4th edition

@@ -30,6 +30,7 @@ class VulkPipelineBuilder {
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     VkRect2D scissor{};
     VkViewport viewport{};
+    uint32_t subpass = 0;
     // currently only one range is supported but this is here for future proofing
     std::vector<VkPushConstantRange> pushConstantRanges;
 
@@ -91,6 +92,11 @@ class VulkPipelineBuilder {
         return addPushConstantRange(stageFlags, sizeof(T));
     }
     VulkPipelineBuilder& addPushConstantRange(VkShaderStageFlags stageFlags, uint32_t size);
+
+    VulkPipelineBuilder& setSubpass(uint32_t subpassIn) {
+        this->subpass = subpassIn;
+        return *this;
+    }
 
     void build(VkRenderPass renderPass,
                std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout,

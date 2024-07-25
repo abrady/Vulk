@@ -9,6 +9,7 @@
 #include "VulkUtil.h"
 
 class VulkDepthView;
+struct SceneDef;
 
 struct VulkSceneUBOs {
     struct XformsUBO {
@@ -20,15 +21,16 @@ struct VulkSceneUBOs {
     VulkFrameUBOs<XformsUBO> xforms;
     VulkFrameUBOs<glm::vec3> eyePos;
     VulkUniformBuffer<VulkPointLight> pointLight;
-    VulkSceneUBOs(Vulk &vk) : xforms(vk), eyePos(vk), pointLight(vk) {
-    }
+    VulkSceneUBOs(Vulk& vk) : xforms(vk), eyePos(vk), pointLight(vk) {}
 };
 
 class VulkScene {
-  public:
+   public:
     VulkSceneUBOs sceneUBOs;
+    std::shared_ptr<SceneDef> def;
     VulkCamera camera;
-    std::vector<std::shared_ptr<VulkActor>> actors;
+
+    // std::vector<std::shared_ptr<VulkActor>> actors;
     std::shared_ptr<VulkUniformBuffer<VulkLightViewProjUBO>> lightViewProjUBO;
     std::array<std::shared_ptr<VulkDepthView>, MAX_FRAMES_IN_FLIGHT> shadowMapViews;
     std::shared_ptr<VulkUniformBuffer<VulkGlobalConstantsUBO>> globalConstantsUBO;
@@ -38,6 +40,5 @@ class VulkScene {
     std::shared_ptr<VulkUniformBuffer<VulkDebugTangentsUBO>> debugTangentsUBO;
     std::shared_ptr<VulkUniformBuffer<VulkPBRDebugUBO>> pbrDebugUBO;
 
-    VulkScene(Vulk &vk) : sceneUBOs(vk) {
-    }
+    VulkScene(Vulk& vk, std::shared_ptr<SceneDef> def) : sceneUBOs(vk), def(def) {}
 };
