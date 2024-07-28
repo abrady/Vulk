@@ -68,7 +68,49 @@ TODOS:
 * depth buffer: I think I should just use the depth buffer I'm already allocating in Vulk.
 * I also don't know if the 2 subpass needs the depth buffer?
 
-## 7/24 vkCreateRenderPass failig
+## 7/27 deferred lighting phase vert shader
+
+For this we need to draw a quad across normalized device coordinates (-1 - 1) in x/y and
+just process the gbufs. rather than pass any verts in let's just generate them in the vert shader
+*
+
+* call vkCmdDraw(cmdBuffer, 4, 1, 0, 0)
+* use gl_VertexIndex to look up the buffers
+
+## 7/27
+
+Vulk: ERROR: 2 message: Validation Error: [ VUID-vkCmdEndRenderPass-None-00910 ] Object 0: handle = 0x1ef8b8c6b00, type = VK_OBJECT_TYPE_COMMAND_BUFFER; | MessageID = 0x7a3c5b09 | vkCmdEndRenderPass: Called before reaching final subpass. The Vulkan spec states: The current subpass index must be equal to the number of subpasses in the render pass minus one (<https://vulkan.lunarg.com/doc/view/1.3.250.1/windows/1.3-extensions/vkspec.html#VUID-vkCmdEndRenderPass-None-00910>)
+
+forgot to call "vkCmdNextSubpass"
+
+## 7/26
+
+Vulk: ERROR: 2 message: Validation Error: [ VUID-VkGraphicsPipelineCreateInfo-renderPass-07609 ]
+Object 0: handle = 0x28c10b627f0, type = VK_OBJECT_TYPE_DEVICE; | MessageID = 0x583c7182 | vkCreateGraphicsPipelines() pCreateInfo[0]: VkRenderPass 0xee24d0000000059[] subpass 1 has colorAttachmentCount of 1 which doesn't match the pColorBlendState->attachmentCount of 4.
+
+Vulk: ERROR: 2 message: Validation Error: [ VUID-VkGraphicsPipelineCreateInfo-layout-07989 ]
+Object 0: handle = 0x1d4e2e0000000062, type = VK_OBJECT_TYPE_SHADER_MODULE;
+Object 1: handle = 0x9f58380000000064, type = VK_OBJECT_TYPE_PIPELINE_LAYOUT; | MessageID = 0xfccb53e7 | vkCreateGraphicsPipelines(): pCreateInfos[0]
+Set 0 Binding 3 type mismatch on descriptor slot in shader (VK_SHADER_STAGE_FRAGMENT_BIT), uses type VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER but expected VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER The Vulkan spec states: If a resource variables is declared in a shader, a descriptor slot in layout must match the descriptor type (<https://vulkan.lunarg.com/doc/view/1.3.250.1/windows/1.3-extensions/vkspec.html#VUID-VkGraphicsPipelineCreateInfo-layout-07989>)
+
+Vulk: ERROR: 2 message: Validation Error: [ VUID-VkRenderPassBeginInfo-clearValueCount-00902 ] Object 0: handle = 0xee24d0000000059, type = VK_OBJECT_TYPE_RENDER_PASS; | MessageID = 0x4de051e3 | In vkCmdBeginRenderPass the VkRenderPassBeginInfo struct has a clearValueCount of 5 but there must be at least 7 entries in pClearValues array to account for the highest index attachment in VkRenderPass 0xee24d0000000059[] that uses VK_ATTACHMENT_LOAD_OP_CLEAR is 7. Note that the pClearValues array is indexed by attachment number so even if some pClearValues entries between 0 and 6 correspond to attachments that aren't cleared they will be ignored. The Vulkan spec states: clearValueCount must be greater than the largest attachment index in renderPass specifying a loadOp (or stencilLoadOp, if the attachment has a depth/stencil format) of VK_ATTACHMENT_LOAD_OP_CLEAR (<https://vulkan.lunarg.com/doc/view/1.3.250.1/windows/1.3-extensions/vkspec.html#VUID-VkRenderPassBeginInfo-clearValueCount-00902>)
+
+Vulk: ERROR: 2 message: Validation Error: [ VUID-vkCmdBeginRenderPass-initialLayout-00897 ]
+
+Object 0: handle = 0xee24d0000000059, type = VK_OBJECT_TYPE_RENDER_PASS;
+Object 1: handle = 0x4868e6000000005a, type = VK_OBJECT_TYPE_FRAMEBUFFER;
+Object 2: handle = 0x535b660000000043, type = VK_OBJECT_TYPE_IMAGE_VIEW;
+Object 3: handle = 0x6612e40000000041, type = VK_OBJECT_TYPE_IMAGE;
+
+| MessageID = 0x961074c1 |
+
+vkCmdBeginRenderPass(): Layout/usage mismatch for attachment 0 in VkRenderPass 0xee24d0000000059[] -
+
+the final layout is VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL but the image attached to VkFramebuffer 0x4868e6000000005a[] via VkImageView 0x535b660000000043[] was not created with VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT or VK_IMAGE_USAGE_SAMPLED_BIT.
+
+Image usage: VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT. The Vulkan spec states: If any of the initialLayout or finalLayout member of the VkAttachmentDescription structures or the layout member of the VkAttachmentReference structures specified when creating the render pass specified in the renderPass member of pRenderPassBegin is VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL then the corresponding attachment image view of the framebuffer specified in the framebuffer member of pRenderPassBegin must have been created with a usage value including VK_IMAGE_USAGE_SAMPLED_BIT or VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT (<https://vulkan.lunarg.com/doc/view/1.3.250.1/windows/1.3-extensions/vkspec.html#VUID-vkCmdBeginRenderPass-initialLayout-00897>)
+
+## 7/24 vkCreateRenderPass failing
 
 why? `pSubpasses[1].pDepthStencilAttachment attachment 6 must be less than the total number of attachments 5. The Vulkan spec states: If the attachment member of any element of pInputAttachments, pColorAttachments, pResolveAttachments or pDepthStencilAttachment, or any element of pPreserveAttachments in any element of pSubpasses is not VK_ATTACHMENT_UNUSED, then it must be less than attachmentCount`
 

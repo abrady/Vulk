@@ -58,6 +58,10 @@ vec3 PBRForLight(PointLight light, vec3 eyePos, vec3 pos, vec3 albedo, float met
 // layout(binding = VulkShaderBinding_MetallicSampler) uniform sampler2D metallicMap;
 // layout(binding = VulkShaderBinding_ShadowMapSampler) uniform sampler2D shadowSampler;
 
+layout(binding = VulkShaderBinding_InvViewProjUBO) uniform InvViewProjUBO {
+    mat4 invViewProj;
+};
+
 layout(binding = VulkShaderBinding_EyePos) uniform EyePos { 
     vec3 eyePos; 
 } eyePosUBO;
@@ -77,31 +81,41 @@ layout (std140, binding = VulkShaderBinding_GlobalConstantsUBO) uniform GlobalCo
 	vec2 iResolution;
 } globalConstants;
 
-layout(binding = 0) uniform sampler2D albedoMap;
-layout(binding = 1) uniform sampler2D depthMap;
-layout(binding = 2) uniform sampler2D normalMap;
-layout(binding = 3) uniform sampler2D materialsMap; //TODO: pack the materials
-layout(binding = 4) uniform sampler2D specularMap; //TODO: wire this up
+layout(binding = VulkShaderBinding_GBufAlbedo) uniform sampler2D albedoMap;
+layout(binding = VulkShaderBinding_GBufDepth) uniform sampler2D depthMap; // single 32-bit float
+layout(binding = VulkShaderBinding_GBufNormal) uniform sampler2D normalMap;
+layout(binding = VulkShaderBinding_GBufMaterial) uniform sampler2D materialsMap; //TODO: pack the materials
+layout(binding = VulkShaderBinding_GBufSpecular) uniform sampler2D specularMap; //TODO: wire this up
 
-layout(location = VulkShaderLocation_Pos) in vec3 inPos;
-layout(location = VulkShaderLocation_Normal) in vec3 inNormal;
-layout(location = VulkShaderLocation_Tangent) in vec3 inTangent;
-layout(location = VulkShaderLocation_Bitangent) in vec3 inBitangent;
+// layout(location = VulkShaderLocation_Pos) in vec3 inPos;
+// layout(location = VulkShaderLocation_Normal) in vec3 inNormal;
+// layout(location = VulkShaderLocation_Tangent) in vec3 inTangent;
+// layout(location = VulkShaderLocation_Bitangent) in vec3 inBitangent;
 layout(location = VulkShaderLocation_TexCoord) in vec2 inTexCoord;
 
 layout(location = 0) out vec4 outColor;
 
+// note: assumes texCoord is already in normalized device coordinates
+vec3 reconstructPosition(vec2 texCoord, float depth, mat4 invViewProj) {
+	vec4 screenPos = vec4(texCoord * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
+	vec4 worldPos = invViewProj * screenPos;
+	worldPos /= worldPos.w;
+	return worldPos.xyz;
+}
+
 void main() {
     vec3 albedo = texture(albedoMap, inTexCoord).rgb;
-    float metallic = texture(metallicMap, inTexCoord).r;
-    // float roughness = texture(roughnessMap, inTexCoord).r;
-	float roughness = 0.0;
     float ao = texture(materialsMap, inTexCoord).r;
-	vec3 N = sampleNormalMap(normalMap, inTexCoord, inNormal, inTangent, inBitangent);
+    float metallic = texture(materialsMap, inTexCoord).g;
+	float roughness = texture(materialsMap, inTexCoord).b;
+	vec3 N = texture(normalMap, inTexCoord).xyz;
+	float depth = texture(depthMap, inTexCoord).r; // VK_FORMAT_D32_SFLOAT stores depth in the red channel
+
+	vec3 worldPos = reconstructPosition(inTexCoord, depth, invViewProj);
 
 	vec3 color = vec3(0.0);
 	for (int i = 0; i < VulkLights_NumLights; i++) {
-		color += PBRForLight(lightsBuf.lights[i], eyePosUBO.eyePos, inPos, albedo, metallic, roughness, N);
+		color += PBRForLight(lightsBuf.lights[i], eyePosUBO.eyePos, worldPos, albedo, metallic, roughness, N);
 	}
 
 	vec3 ambientLightColor = vec3(0.1); // TODO: get this from somewhere

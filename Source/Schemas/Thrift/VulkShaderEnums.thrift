@@ -43,6 +43,7 @@ enum VulkShaderBinding {
     GBufAlbedo = 24,
     GBufMaterial = 25,
     GBufSpecular = 26,
+    InvViewProjUBO = 27,
 }
 
 enum VulkGeoBufAttachment {
@@ -64,7 +65,7 @@ enum VulkShaderUBOBinding {
     LightViewProjUBO = 13,
     PBRDebugUBO = 19,
     GlobalConstantsUBO = 20,
-    MAX = 21,
+    InvViewProjUBO = 27,
 }
 
 enum VulkShaderDebugUBO {

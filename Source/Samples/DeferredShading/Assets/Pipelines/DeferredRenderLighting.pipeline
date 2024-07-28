@@ -3,10 +3,8 @@
     "name": "DeferredRenderLighting",
     "vertShader": "DeferredRenderLighting",
     "fragShader": "DeferredRenderLighting",
+    "primitiveTopology": "TriangleStrip",
     "colorBlends": [
-        {},
-        {},
-        {},
         {}
     ],
     "subpass": 1

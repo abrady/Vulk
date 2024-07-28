@@ -237,7 +237,7 @@ class World final : public VulkRenderable {
     }
 
     void drawMainStuff(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer) {
-        deferredRenderpass->beginRenderPass(commandBuffer);
+        deferredRenderpass->beginRenderToGBufs(commandBuffer);
 
         for (auto& actor : deferredActors) {
             auto model = actor->model;
@@ -248,6 +248,7 @@ class World final : public VulkRenderable {
             vkCmdDrawIndexed(commandBuffer, model->numIndices, 1, 0, 0, 0);
         }
 
+        deferredRenderpass->renderGBufsAndEnd(commandBuffer);
         vkCmdEndRenderPass(commandBuffer);
 
         frameBuffer;  // I'm sure I'll need this eventually
