@@ -11,7 +11,10 @@
 
 static std::shared_ptr<spdlog::logger> logger = VulkLogger::CreateLogger("BuildProject");
 
+namespace at = apache::thrift;
 namespace bp = boost::process;
+namespace vk2 = vulk::cpp2;
+
 static int runProcess(const string cmd, std::string& out) {
     // Stream to capture output and error
     boost::process::ipstream combinedStream;
@@ -56,18 +59,18 @@ void glslShaderEnumsGenerator(fs::path outFile, bool verbose) {
     // Write the UBO bindings
     out << "\n// UBO Bindings\n";
     logger->trace("// UBO Bindings");
-    for (size_t i = 0; i < apache::thrift::TEnumDataStorage<vulk::cpp2::VulkShaderBinding>::values.size(); ++i) {
-        auto value = apache::thrift::TEnumDataStorage<vulk::cpp2::VulkShaderBinding>::names[i];
-        auto key = apache::thrift::TEnumDataStorage<vulk::cpp2::VulkShaderBinding>::values[i];
+    for (size_t i = 0; i < at::TEnumDataStorage<vk2::VulkShaderBinding>::values.size(); ++i) {
+        auto value = at::TEnumDataStorage<vk2::VulkShaderBinding>::names[i];
+        auto key = at::TEnumDataStorage<vk2::VulkShaderBinding>::values[i];
         out << "const int VulkShaderBinding_" << value << " = " << (int)key << ";\n";
         logger->trace("const int VulkShaderBinding_{} = {};", value, (int)key);
     }
 
     // Write the layout locations
     out << "\n// Shader Input Locations\n";
-    for (size_t i = 0; i < apache::thrift::TEnumDataStorage<vulk::cpp2::VulkShaderLocation>::values.size(); ++i) {
-        auto value = apache::thrift::TEnumDataStorage<vulk::cpp2::VulkShaderLocation>::names[i];
-        auto key = apache::thrift::TEnumDataStorage<vulk::cpp2::VulkShaderLocation>::values[i];
+    for (size_t i = 0; i < at::TEnumDataStorage<vk2::VulkShaderLocation>::values.size(); ++i) {
+        auto value = at::TEnumDataStorage<vk2::VulkShaderLocation>::names[i];
+        auto key = at::TEnumDataStorage<vk2::VulkShaderLocation>::values[i];
         out << "const int VulkShaderLocation_" << value << " = " << (int)key << ";\n";
         logger->trace("const int VulkShaderLocation_{} = {};", value, (int)key);
     }
@@ -75,11 +78,20 @@ void glslShaderEnumsGenerator(fs::path outFile, bool verbose) {
     // Write the light constants
     // Write the layout locations
     out << "\n// Shader Input Locations\n";
-    for (size_t i = 0; i < apache::thrift::TEnumDataStorage<vulk::cpp2::VulkLights>::values.size(); ++i) {
-        auto value = apache::thrift::TEnumDataStorage<vulk::cpp2::VulkLights>::names[i];
-        auto key = apache::thrift::TEnumDataStorage<vulk::cpp2::VulkLights>::values[i];
+    for (size_t i = 0; i < at::TEnumDataStorage<vk2::VulkLights>::values.size(); ++i) {
+        auto value = at::TEnumDataStorage<vk2::VulkLights>::names[i];
+        auto key = at::TEnumDataStorage<vk2::VulkLights>::values[i];
         out << "const int VulkLights_" << value << " = " << (int)key << ";\n";
         logger->trace("const int VulkLights_{} = {};", value, (int)key);
+    }
+
+    // Write the gbuf attachments (out locations)
+    out << "\n// GBuffer Attachments\n";
+    for (size_t i = 0; i < at::TEnumDataStorage<vk2::VulkGBufAttachment>::values.size(); ++i) {
+        auto value = at::TEnumDataStorage<vk2::VulkGBufAttachment>::names[i];
+        auto key = at::TEnumDataStorage<vk2::VulkGBufAttachment>::values[i];
+        out << "const int VulkGBufAttachment_" << value << " = " << (int)key << ";\n";
+        logger->trace("const int VulkGBufAttachment_{} = {};", value, (int)key);
     }
 
     out << "\n";
@@ -199,7 +211,7 @@ static void copyDirIfShould(fs::path src, fs::path dst) {
 
 // builds the shader in the build directory so it can be loaded by the pipeline
 // TODO: compare timestamps and only rebuild if necessary
-static vulk::cpp2::ShaderDef buildShaderDef(fs::path srcShaderPath, fs::path buildDir, fs::path generatedHeaderDir) {
+static vk2::ShaderDef buildShaderDef(fs::path srcShaderPath, fs::path buildDir, fs::path generatedHeaderDir) {
     VULK_ASSERT(fs::exists(srcShaderPath) && fs::is_regular_file(srcShaderPath));
 
     fs::path commonDir = srcShaderPath.parent_path().parent_path() / "Common";
@@ -228,17 +240,17 @@ static vulk::cpp2::ShaderDef buildShaderDef(fs::path srcShaderPath, fs::path bui
         logger->trace("Skipping shader already built: {}", srcShaderPath.string());
     }
 
-    vulk::cpp2::ShaderDef shaderOut;
+    vk2::ShaderDef shaderOut;
     shaderOut.name_ref() = srcShaderPath.stem().string();
     shaderOut.path_ref() = dstShaderPath.lexically_relative(buildDir).string();
     return shaderOut;
 }
 
 void buildPipelineAndShaders(const SrcMetadata& metadata,
-                             vulk::cpp2::SrcPipelineDef srcPipelineDef,
+                             vk2::SrcPipelineDef srcPipelineDef,
                              fs::path shadersBuildDir,
                              fs::path generatedHeaderDir) {
-    vulk::cpp2::PipelineDef pipelineDef;
+    vk2::PipelineDef pipelineDef;
     pipelineDef.name_ref() = srcPipelineDef.get_name();
 
     // first build the shaders so we can reference them when we build the descriptor sets etc.
@@ -288,7 +300,7 @@ void buildProjectDef(const fs::path project_file_path, fs::path buildDir) {
     findSrcMetadata(projectDir, metadata);
 
     // then use the project as the root for what is actually referenced.
-    vulk::cpp2::SrcProjectDef projectIn;
+    vk2::SrcProjectDef projectIn;
     readDefFromFile(project_file_path.string(), projectIn);
 
     // build the shader includes
@@ -303,7 +315,7 @@ void buildProjectDef(const fs::path project_file_path, fs::path buildDir) {
     }
 
     // build the shaders, pipelines and models
-    vulk::cpp2::ProjectDef projectOut;
+    vk2::ProjectDef projectOut;
     for (string sceneName : projectIn.get_sceneNames()) {
         if (!metadata.scenes.contains(sceneName)) {
             logger->error("Scene {} in {} doesn't exist. missing scene file?", sceneName, project_file_path.string());
@@ -315,7 +327,7 @@ void buildProjectDef(const fs::path project_file_path, fs::path buildDir) {
         auto& scene = projectOut.scenes_ref()[sceneName];
         for (auto& actorDef : scene.actors_ref().value()) {
             std::string modelName = actorDef.get_modelName();
-            vulk::cpp2::ModelDef* modelDef = nullptr;
+            vk2::ModelDef* modelDef = nullptr;
             if (modelName != "") {
                 if (!projectOut.get_models().contains(modelName)) {
                     fs::path modelPath = (projectDir / (actorDef.get_modelName() + ".model"));
@@ -343,7 +355,7 @@ void buildProjectDef(const fs::path project_file_path, fs::path buildDir) {
     // build all the pipelines, some aren't referenced by the project so we need to build them all
     for (auto [pipelineName, pipelinePath] : metadata.pipelines) {
         if (!projectOut.get_pipelines().contains(pipelineName)) {
-            vulk::cpp2::SrcPipelineDef srcPipelineDef;
+            vk2::SrcPipelineDef srcPipelineDef;
             copyFileIfShould(pipelinePath, assetsDir / "Pipelines" / pipelinePath.filename());
             readDefFromFile(pipelinePath.string(), srcPipelineDef);
             buildPipelineAndShaders(metadata, srcPipelineDef, assetsDir / "Shaders", commonShaderHeadersDir);
