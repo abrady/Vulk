@@ -49,5 +49,5 @@ target_sources(Vulk PUBLIC ${THRIFT_SOURCES})
 # NOTE: these are 'public' so anyone using this library will have access to these too
 target_include_directories(Vulk PUBLIC ${GENERATED_HEADERS_DIR})
 
-
+add_subdirectory(Tests)
 
