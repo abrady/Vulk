@@ -11,12 +11,12 @@ static std::shared_ptr<spdlog::logger> logger = VulkLogger::CreateLogger("VulkRe
 // double just convert quietly in this file only so we can load the data
 // without warnings
 #ifdef __clang__
-#    pragma clang diagnostic push
-#    pragma clang diagnostic ignored "-Wimplicit-float-conversion"
-#    pragma clang diagnostic ignored "-Wdouble-promotion"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wimplicit-float-conversion"
+#pragma clang diagnostic ignored "-Wdouble-promotion"
 #endif
 
-#pragma warning(disable : 4244) // double to float
+#pragma warning(disable : 4244)  // double to float
 
 MaterialDef loadMaterialDef(const fs::path& file) {
     if (!fs::exists(file)) {
@@ -79,7 +79,7 @@ MaterialDef loadMaterialDef(const fs::path& file) {
             continue;
         } else if (prefix == "newmtl") {
             assert(!startedNewMtl);
-            startedNewMtl = true; // just handle 1 material for now
+            startedNewMtl = true;  // just handle 1 material for now
             string mtlName;
             lineStream >> mtlName;
             assert(mtlName == file.stem().string());
@@ -87,51 +87,51 @@ MaterialDef loadMaterialDef(const fs::path& file) {
         } else if (prefix == "map_Ka") {
             std::string relativePath;
             lineStream >> relativePath;
-            material.mapKa = processPath(relativePath); // ambient texture
+            material.mapKa = processPath(relativePath);  // ambient texture
         } else if (prefix == "map_Kd") {
             std::string relativePath;
             lineStream >> relativePath;
-            material.mapKd = processPath(relativePath); // diffuse texture
+            material.mapKd = processPath(relativePath);  // diffuse texture
         } else if (prefix == "map_Ks") {
             std::string relativePath;
             lineStream >> relativePath;
-            material.mapKs = processPath(relativePath); // specular texture
+            material.mapKs = processPath(relativePath);  // specular texture
         } else if (prefix == "map_Bump" || prefix == "norm") {
             std::string relativePath;
             lineStream >> relativePath;
-            material.mapNormal = processPath(relativePath); // normal map texture
+            material.mapNormal = processPath(relativePath);  // normal map texture
         } else if (prefix == "map_Pm") {
             std::string relativePath;
             lineStream >> relativePath;
-            material.mapPm = processPath(relativePath); // metalness map texture
+            material.mapPm = processPath(relativePath);  // metalness map texture
         } else if (prefix == "map_Pr") {
             std::string relativePath;
             lineStream >> relativePath;
-            material.mapPr = processPath(relativePath); // roughness map texture
+            material.mapPr = processPath(relativePath);  // roughness map texture
         } else if (prefix == "disp") {
             std::string relativePath;
             lineStream >> relativePath;
-            material.disp = processPath(relativePath); // displacement map texture
+            material.disp = processPath(relativePath);  // displacement map texture
         } else if (prefix == "cubemap") {
             std::string relativePath;
             for (int i = 0; i < 6; i++) {
                 lineStream >> relativePath;
-                material.cubemapImgs[i] = processPath(relativePath); // cubemap texture
+                material.cubemapImgs[i] = processPath(relativePath);  // cubemap texture
             }
         } else if (prefix == "Ns") {
-            lineStream >> material.Ns; // specular exponent
+            lineStream >> material.Ns;  // specular exponent
         } else if (prefix == "Ni") {
-            lineStream >> material.Ni; // index of refraction
+            lineStream >> material.Ni;  // index of refraction
         } else if (prefix == "d" || prefix == "Tr") {
-            lineStream >> material.d; // dissolve (transparency)
+            lineStream >> material.d;  // dissolve (transparency)
         } else if (prefix == "Ka") {
-            lineStream >> material.Ka[0] >> material.Ka[1] >> material.Ka[2]; // ambient color
+            lineStream >> material.Ka[0] >> material.Ka[1] >> material.Ka[2];  // ambient color
         } else if (prefix == "Kd") {
-            lineStream >> material.Kd[0] >> material.Kd[1] >> material.Kd[2]; // diffuse color
+            lineStream >> material.Kd[0] >> material.Kd[1] >> material.Kd[2];  // diffuse color
         } else if (prefix == "Ks") {
-            lineStream >> material.Ks[0] >> material.Ks[1] >> material.Ks[2]; // specular color
+            lineStream >> material.Ks[0] >> material.Ks[1] >> material.Ks[2];  // specular color
         } else {
-            VULK_THROW_FMT("Unknown material property: {}", prefix);
+            VULK_THROW("Unknown material property: {}", prefix);
         }
         // Add handling for other properties as needed
     }
@@ -139,51 +139,56 @@ MaterialDef loadMaterialDef(const fs::path& file) {
     return material;
 }
 
-ModelDef ModelDef::fromDef(vulk::cpp2::ModelDef const& defIn, unordered_map<string, shared_ptr<MeshDef>> const& meshes, unordered_map<string, shared_ptr<MaterialDef>> materials) {
+ModelDef ModelDef::fromDef(vulk::cpp2::ModelDef const& defIn,
+                           unordered_map<string, shared_ptr<MeshDef>> const& meshes,
+                           unordered_map<string, shared_ptr<MaterialDef>> materials) {
     auto name = defIn.name().value();
     string mn = defIn.get_material();
     auto material = materials.at(mn);
     vulk::cpp2::MeshDefType meshDefType = defIn.meshDefType().value();
     switch (meshDefType) {
-    case vulk::cpp2::MeshDefType::Model: {
-        std::string meshName = defIn.get_mesh();
-        return ModelDef(name, meshes.at(meshName), material);
-    }
-    case vulk::cpp2::MeshDefType::Mesh: {
-        shared_ptr<VulkMesh> mesh = make_shared<VulkMesh>();
-        vulk::cpp2::GeoMeshDef def = defIn.geoMesh().value();
+        case vulk::cpp2::MeshDefType::Model: {
+            std::string meshName = defIn.get_mesh();
+            return ModelDef(name, meshes.at(meshName), material);
+        }
+        case vulk::cpp2::MeshDefType::Mesh: {
+            shared_ptr<VulkMesh> mesh = make_shared<VulkMesh>();
+            vulk::cpp2::GeoMeshDef def = defIn.geoMesh().value();
 
-        auto geoMeshType = defIn.get_geoMesh().getType();
-        switch (geoMeshType) {
-        case vulk::cpp2::GeoMeshDef::Type::sphere: {
-            vulk::cpp2::GeoSphereDef const& sphere = def.get_sphere();
-            makeGeoSphere(sphere.get_radius(), sphere.get_numSubdivisions(), *mesh);
-        } break;
-        case vulk::cpp2::GeoMeshDef::Type::cylinder: {
-            vulk::cpp2::GeoCylinderDef const& cylinder = def.get_cylinder();
-            makeCylinder(cylinder.get_height(), cylinder.get_bottomRadius(), cylinder.get_topRadius(), cylinder.get_numStacks(), cylinder.get_numSlices(), *mesh);
-        } break;
-        case vulk::cpp2::GeoMeshDef::Type::triangle: {
-            makeEquilateralTri(def.get_triangle().get_sideLength(), def.get_triangle().get_numSubdivisions(), *mesh);
-        } break;
-        case vulk::cpp2::GeoMeshDef::Type::quad: {
-            makeQuad(def.get_quad().get_w(), def.get_quad().get_h(), def.get_quad().get_numSubdivisions(), *mesh);
-        } break;
-        case vulk::cpp2::GeoMeshDef::Type::grid: {
-            makeGrid(def.get_grid().get_width(), def.get_grid().get_depth(), def.get_grid().get_m(), def.get_grid().get_n(), *mesh, def.get_grid().get_repeatU(),
-                     def.get_grid().get_repeatV());
-        } break;
-        case vulk::cpp2::GeoMeshDef::Type::axes: {
-            makeAxes(def.get_axes().get_length(), *mesh);
-        } break;
-        default: {
-            VULK_THROW_FMT("Unhandled/known GeoMesh type: {}", (int)geoMeshType);
+            auto geoMeshType = defIn.get_geoMesh().getType();
+            switch (geoMeshType) {
+                case vulk::cpp2::GeoMeshDef::Type::sphere: {
+                    vulk::cpp2::GeoSphereDef const& sphere = def.get_sphere();
+                    makeGeoSphere(sphere.get_radius(), sphere.get_numSubdivisions(), *mesh);
+                } break;
+                case vulk::cpp2::GeoMeshDef::Type::cylinder: {
+                    vulk::cpp2::GeoCylinderDef const& cylinder = def.get_cylinder();
+                    makeCylinder(cylinder.get_height(), cylinder.get_bottomRadius(), cylinder.get_topRadius(),
+                                 cylinder.get_numStacks(), cylinder.get_numSlices(), *mesh);
+                } break;
+                case vulk::cpp2::GeoMeshDef::Type::triangle: {
+                    makeEquilateralTri(def.get_triangle().get_sideLength(), def.get_triangle().get_numSubdivisions(),
+                                       *mesh);
+                } break;
+                case vulk::cpp2::GeoMeshDef::Type::quad: {
+                    makeQuad(def.get_quad().get_w(), def.get_quad().get_h(), def.get_quad().get_numSubdivisions(),
+                             *mesh);
+                } break;
+                case vulk::cpp2::GeoMeshDef::Type::grid: {
+                    makeGrid(def.get_grid().get_width(), def.get_grid().get_depth(), def.get_grid().get_m(),
+                             def.get_grid().get_n(), *mesh, def.get_grid().get_repeatU(), def.get_grid().get_repeatV());
+                } break;
+                case vulk::cpp2::GeoMeshDef::Type::axes: {
+                    makeAxes(def.get_axes().get_length(), *mesh);
+                } break;
+                default: {
+                    VULK_THROW("Unhandled/known GeoMesh type: {}", (int)geoMeshType);
+                }
+            }
+            return ModelDef(name, make_shared<MeshDef>(name, mesh), material);
         }
-        }
-        return ModelDef(name, make_shared<MeshDef>(name, mesh), material);
-    }
-    default:
-        VULK_THROW_FMT("Unknown MeshDef type: {}", (int)meshDefType);
+        default:
+            VULK_THROW("Unknown MeshDef type: {}", (int)meshDefType);
     };
 }
 
@@ -191,8 +196,11 @@ glm::vec3 toVec3(vulk::cpp2::Vec3 const& v) {
     return glm::vec3(v.get_x(), v.get_y(), v.get_z());
 }
 
-ActorDef ActorDef::fromDef(vulk::cpp2::ActorDef defIn, unordered_map<string, shared_ptr<PipelineDef>> const& pipelines, unordered_map<string, shared_ptr<ModelDef>> const& models,
-                           unordered_map<string, shared_ptr<MeshDef>> meshes, unordered_map<string, shared_ptr<MaterialDef>> materials) {
+ActorDef ActorDef::fromDef(vulk::cpp2::ActorDef defIn,
+                           unordered_map<string, shared_ptr<PipelineDef>> const& pipelines,
+                           unordered_map<string, shared_ptr<ModelDef>> const& models,
+                           unordered_map<string, shared_ptr<MeshDef>> meshes,
+                           unordered_map<string, shared_ptr<MaterialDef>> materials) {
     ActorDef a;
     a.def = defIn;
     a.pipeline = pipelines.at(defIn.get_pipeline());
@@ -213,14 +221,18 @@ ActorDef ActorDef::fromDef(vulk::cpp2::ActorDef defIn, unordered_map<string, sha
         glm::vec3 pos = xform.pos().is_set() ? toVec3(xform.get_pos()) : glm::vec3(0);
         glm::vec3 rot = glm::radians(xform.rot().is_set() ? toVec3(xform.get_rot()) : glm::vec3(0));
         glm::vec3 scale = xform.scale().is_set() ? toVec3(xform.get_scale()) : glm::vec3(1);
-        a.xform = glm::translate(glm::mat4(1.0f), pos) * glm::eulerAngleXYZ(rot.x, rot.y, rot.z) * glm::scale(glm::mat4(1.0f), scale);
+        a.xform = glm::translate(glm::mat4(1.0f), pos) * glm::eulerAngleXYZ(rot.x, rot.y, rot.z) *
+                  glm::scale(glm::mat4(1.0f), scale);
     }
     a.validate();
     return a;
 }
 
-SceneDef SceneDef::fromDef(vulk::cpp2::SceneDef defIn, unordered_map<string, shared_ptr<PipelineDef>> const& pipelines, unordered_map<string, shared_ptr<ModelDef>> const& models,
-                           unordered_map<string, shared_ptr<MeshDef>> const& meshes, unordered_map<string, shared_ptr<MaterialDef>> const& materials) {
+SceneDef SceneDef::fromDef(vulk::cpp2::SceneDef defIn,
+                           unordered_map<string, shared_ptr<PipelineDef>> const& pipelines,
+                           unordered_map<string, shared_ptr<ModelDef>> const& models,
+                           unordered_map<string, shared_ptr<MeshDef>> const& meshes,
+                           unordered_map<string, shared_ptr<MaterialDef>> const& materials) {
     SceneDef s;
     s.def = defIn;
 
@@ -235,16 +247,16 @@ SceneDef SceneDef::fromDef(vulk::cpp2::SceneDef defIn, unordered_map<string, sha
     for (auto const& light : defIn.get_lights()) {
         auto type = light.get_type();
         switch (type) {
-        case vulk::cpp2::LightType::Point: {
-            auto pos = toVec3(light.get_pos());
-            auto color = toVec3(light.get_color());
-            auto falloffStart = light.falloffStart().is_set() ? light.get_falloffStart() : 0.f;
-            auto falloffEnd = light.falloffEnd().is_set() ? light.get_falloffEnd() : 0.f;
-            s.pointLights.push_back(make_shared<VulkPointLight>(pos, falloffStart, color, falloffEnd));
-        } break;
-        default: {
-            VULK_THROW_FMT("Unknown light type: {}", (int)type);
-        }
+            case vulk::cpp2::LightType::Point: {
+                auto pos = toVec3(light.get_pos());
+                auto color = toVec3(light.get_color());
+                auto falloffStart = light.falloffStart().is_set() ? light.get_falloffStart() : 0.f;
+                auto falloffEnd = light.falloffEnd().is_set() ? light.get_falloffEnd() : 0.f;
+                s.pointLights.push_back(make_shared<VulkPointLight>(pos, falloffStart, color, falloffEnd));
+            } break;
+            default: {
+                VULK_THROW("Unknown light type: {}", (int)type);
+            }
         }
     }
 
@@ -282,7 +294,8 @@ void findAndProcessMetadata(const fs::path path, Metadata& metadata) {
             continue;
         }
         string stem = entry.path().stem().string();
-        string ext = entry.path().stem().extension().string() + entry.path().extension().string(); // get 'bar' from foo.bar and 'bar.bin' from foo.bar.bin
+        string ext = entry.path().stem().extension().string() +
+                     entry.path().extension().string();  // get 'bar' from foo.bar and 'bar.bin' from foo.bar.bin
         if (fixupExts.contains(ext)) {
             LoadInfo loadInfo;
             loadInfo.filePath = entry.path().string();
@@ -338,7 +351,8 @@ void findAndProcessMetadata(const fs::path path, Metadata& metadata) {
     for (auto const& [name, loadInfo] : loadInfos[".scene"]) {
         vulk::cpp2::SceneDef def;
         readDefFromFile(loadInfo.filePath, def);
-        auto sceneDef = make_shared<SceneDef>(SceneDef::fromDef(def, metadata.pipelines, metadata.models, metadata.meshes, metadata.materials));
+        auto sceneDef = make_shared<SceneDef>(
+            SceneDef::fromDef(def, metadata.pipelines, metadata.models, metadata.meshes, metadata.materials));
         assert(!metadata.scenes.contains(sceneDef->def.get_name()));
         metadata.scenes[sceneDef->def.get_name()] = sceneDef;
     }
@@ -380,5 +394,5 @@ std::shared_ptr<const Metadata> getMetadata() {
 }
 
 #ifdef __clang__
-#    pragma clang diagnostic pop
+#pragma clang diagnostic pop
 #endif

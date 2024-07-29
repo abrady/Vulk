@@ -1,15 +1,15 @@
 #pragma once
 
+#include <Vulk/Vulk.h>
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_vulkan.h"
-#include <Vulk/Vulk.h>
 
 static void imguiCheckResult(VkResult err) {
     if (err == 0)
         return;
     int e = (int)err;
-    VULK_THROW_FMT("[vulkan] Error: VkResult = {}", e);
+    VULK_THROW("[vulkan] Error: VkResult = {}", e);
 }
 
 class VulkImGui {
@@ -23,10 +23,8 @@ class VulkImGui {
     VkClearValue clearColor = {.color = {{0.45f, 0.55f, 0.60f, 1.00f}}};
     ImGuiIO* io = nullptr;
 
-public:
-    VulkImGui(Vulk& vk, GLFWwindow* window)
-        : vk(vk)
-        , window(window) {
+   public:
+    VulkImGui(Vulk& vk, GLFWwindow* window) : vk(vk), window(window) {
         // renderPass
         {
             VkAttachmentDescription colorAttachment{};
@@ -36,7 +34,8 @@ public:
             colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
             colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
             colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-            colorAttachment.initialLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR; // Start with the correct layout for swapchain images
+            colorAttachment.initialLayout =
+                VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;  // Start with the correct layout for swapchain images
             colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
             VkAttachmentReference colorAttachmentRef{};
@@ -73,7 +72,8 @@ public:
         // image views
         swapChainImageViews.resize(vk.swapChainImages.size());
         for (uint32_t i = 0; i < vk.swapChainImages.size(); i++) {
-            swapChainImageViews[i] = vk.createImageView(vk.swapChainImages[i], vk.swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
+            swapChainImageViews[i] =
+                vk.createImageView(vk.swapChainImages[i], vk.swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
         }
 
         // frameBuffers
@@ -94,8 +94,8 @@ public:
         }
 
         // Create Descriptor Pool
-        // The example only requires a single combined image sampler descriptor for the font image and only uses one descriptor set (for that)
-        // If you wish to load e.g. additional textures you may need to alter pools sizes.
+        // The example only requires a single combined image sampler descriptor for the font image and only uses one
+        // descriptor set (for that) If you wish to load e.g. additional textures you may need to alter pools sizes.
         {
             VkDescriptorPoolSize pool_sizes[] = {
                 {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1},
@@ -132,17 +132,17 @@ public:
         ImGui_ImplVulkan_Init(&init_info);
 
         io = &ImGui::GetIO();
-        io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
-        io->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
+        io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
+        io->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;   // Enable Gamepad Controls
 
         // arbitrarily scale the font up
         io->FontGlobalScale = 2.f;
     }
 
-public:
+   public:
     // make your ImGui:: type calls between the begin and end
     void beginFrame() {
-        VULK_ASSERT_FMT(!drawData, "drawData is not null, did you forget to call render?");
+        VULK_ASSERT(!drawData, "drawData is not null, did you forget to call render?");
         // has to happen before any ImGUI calls
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -150,13 +150,13 @@ public:
     }
 
     void endFrame() {
-        VULK_ASSERT_FMT(!drawData, "drawData is not null, did you forget to call render?");
+        VULK_ASSERT(!drawData, "drawData is not null, did you forget to call render?");
         ImGui::Render();
         drawData = ImGui::GetDrawData();
     }
 
     void renderFrame(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
-        VULK_ASSERT_FMT(drawData, "drawData is null, did you forget to call endFrame?");
+        VULK_ASSERT(drawData, "drawData is null, did you forget to call endFrame?");
         // render the UI
         VkRenderPassBeginInfo info = {};
         info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;

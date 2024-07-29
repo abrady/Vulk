@@ -34,7 +34,7 @@ std::shared_ptr<VulkImageView> VulkImageView::createCubemapView(Vulk& vk,
     for (int i = 0; i < 6; ++i) {
         pixels[i] = stbi_load(cubemapImgs[i].c_str(), (int*)&width, (int*)&height, (int*)&channels,
                               STBI_rgb_alpha);  // NOTE: guessing on last param
-        VULK_ASSERT_FMT(pixels[i], "Failed to load {}", cubemapImgs[i]);
+        VULK_ASSERT(pixels[i], "Failed to load {}", cubemapImgs[i]);
     }
 
     // ===========================================

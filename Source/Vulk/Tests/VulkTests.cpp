@@ -8,7 +8,7 @@ void testAssertPasses() {
 }
 
 void testAssertMsgPasses() {
-    VULK_ASSERT_FMT(true, "This is a test message");
+    VULK_ASSERT(true, "This is a test message");
 }
 
 void testAssertFails() {
@@ -16,10 +16,22 @@ void testAssertFails() {
 }
 
 void testAssertMsgFails() {
-    VULK_ASSERT_FMT(false, "This is a test message");
+    VULK_ASSERT(false, "This is a test message");
 }
 
 TEST_CASE("VulkException tests") {
+    try {
+        VULK_ASSERT(false);
+    } catch (VulkException& e) {
+        std::string s = e.what();
+        CHECK(s.find("false") == 0);
+    }
+    try {
+        VULK_ASSERT(false, "fmt check {}", 1);
+    } catch (VulkException& e) {
+        std::string s = e.what();
+        CHECK(s.find("fmt check 1") == 0);
+    }
     REQUIRE_NOTHROW(testAssertPasses());
     REQUIRE_NOTHROW(testAssertMsgPasses());
     REQUIRE_THROWS(testAssertFails());

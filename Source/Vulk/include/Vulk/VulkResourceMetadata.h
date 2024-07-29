@@ -27,7 +27,7 @@ namespace fs = std::filesystem;
 template <typename T>
 void readDefFromFile(const std::string& path, T& def) {
     std::ifstream ifs(path);
-    VULK_ASSERT_FMT(ifs.is_open(), "Could not open file for reading: %s", path.c_str());
+    VULK_ASSERT(ifs.is_open(), "Could not open file for reading: %s", path.c_str());
 
     std::string serializedData((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
@@ -141,9 +141,9 @@ struct MeshDef {
     vulk::cpp2::MeshDefType type;
     MeshDef() = default;
     MeshDef(string name, ModelMeshDef model)
-        : name(name), type(vulk::cpp2::MeshDefType::Model), model(make_shared<ModelMeshDef>(model)){};
+        : name(name), type(vulk::cpp2::MeshDefType::Model), model(make_shared<ModelMeshDef>(model)) {};
     MeshDef(string name, std::shared_ptr<VulkMesh> mesh)
-        : name(name), type(vulk::cpp2::MeshDefType::Mesh), mesh(mesh){};
+        : name(name), type(vulk::cpp2::MeshDefType::Mesh), mesh(mesh) {};
     shared_ptr<ModelMeshDef> getModelMeshDef() {
         assert(type == vulk::cpp2::MeshDefType::Model);
         return model;

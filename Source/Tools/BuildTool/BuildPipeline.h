@@ -71,7 +71,7 @@ class PipelineBuilder {
         //     shaderStage = VulkShaderStage_COMPUTE;
         //     break;
         // default:
-        //     VULK_THROW_FMT("Unsupported shader stage: {}", (int)glsl.get_execution_model());
+        //     VULK_THROW("Unsupported shader stage: {}", (int)glsl.get_execution_model());
         // }
 
         // For UBOs
@@ -123,7 +123,7 @@ class PipelineBuilder {
                 location = glsl.get_decoration(resource.id, spv::DecorationLocation);
             }
             logger()->trace("Push constant buffer: name={}, size={}, location={}", resource.name, size, location);
-            VULK_ASSERT_FMT(
+            VULK_ASSERT(
                 location < 32,
                 "Push constant location is too large");  // no idea what the max may eventually be but this isn't crazy
             if (parsedShader.pushConstants.size() <= location) {
@@ -194,7 +194,7 @@ class PipelineBuilder {
                 bp.pushConstants_ref()[i] = pc;
             } else {
                 auto const& m = bp.get_pushConstants();
-                VULK_ASSERT_FMT(m[i].get_size() == (int)info.pushConstants[i], "Push constant size mismatch");
+                VULK_ASSERT(m[i].get_size() == (int)info.pushConstants[i], "Push constant size mismatch");
                 uint32_t flags = (*bp.pushConstants_ref())[i].get_stageFlags();
                 flags |= (uint32_t)stageFlag;
                 (*bp.pushConstants_ref())[i].stageFlags_ref() = flags;
@@ -226,14 +226,14 @@ class PipelineBuilder {
         if (pipelineIn.depthWriteEnabled().is_set())
             pipelineOut.depthWriteEnabled_ref() = pipelineIn.get_depthWriteEnabled();
         if (pipelineIn.depthCompareOp().is_set()) {
-            VULK_ASSERT_FMT(apache::thrift::util::tryParseEnum(pipelineIn.get_depthCompareOp(),
-                                                               &pipelineOut.depthCompareOp_ref().value()),
-                            "Invalid depthCompareOp value {}", pipelineIn.get_depthCompareOp());
+            VULK_ASSERT(apache::thrift::util::tryParseEnum(pipelineIn.get_depthCompareOp(),
+                                                           &pipelineOut.depthCompareOp_ref().value()),
+                        "Invalid depthCompareOp value {}", pipelineIn.get_depthCompareOp());
         }
         if (pipelineIn.polygonMode().is_set()) {
-            VULK_ASSERT_FMT(apache::thrift::util::tryParseEnum(pipelineIn.get_polygonMode(),
-                                                               &pipelineOut.polygonMode_ref().value()),
-                            "Invalid polygonMode value {}", pipelineIn.get_polygonMode());
+            VULK_ASSERT(apache::thrift::util::tryParseEnum(pipelineIn.get_polygonMode(),
+                                                           &pipelineOut.polygonMode_ref().value()),
+                        "Invalid polygonMode value {}", pipelineIn.get_polygonMode());
         }
         if (pipelineIn.cullMode().is_set()) {
             pipelineOut.cullMode_ref() =

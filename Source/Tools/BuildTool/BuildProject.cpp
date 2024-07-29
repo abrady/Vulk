@@ -125,45 +125,45 @@ void findSrcMetadata(const fs::path path, SrcMetadata& metadata) {
         string ext = entry.path().stem().extension().string() +
                      entry.path().extension().string();  // get 'bar' from foo.bar and 'bar.bin' from foo.bar.bin
         if (ext == ".glsl") {
-            VULK_ASSERT_FMT(!metadata.shaderIncludes.contains(stem), "Duplicate shader include found: {}", stem);
+            VULK_ASSERT(!metadata.shaderIncludes.contains(stem), "Duplicate shader include found: {}", stem);
             metadata.shaderIncludes[stem] = entry.path();
         } else if (ext == ".vert") {
-            VULK_ASSERT_FMT(!metadata.vertShaders.contains(stem), "Duplicate vertex shader found: {}", stem);
+            VULK_ASSERT(!metadata.vertShaders.contains(stem), "Duplicate vertex shader found: {}", stem);
             metadata.vertShaders[stem] = entry.path();
         } else if (ext == ".geom") {
-            VULK_ASSERT_FMT(!metadata.geometryShaders.contains(stem), "Duplicate geometry shader found: {}", stem);
+            VULK_ASSERT(!metadata.geometryShaders.contains(stem), "Duplicate geometry shader found: {}", stem);
             metadata.geometryShaders[stem] = entry.path();
         } else if (ext == ".frag") {
-            VULK_ASSERT_FMT(!metadata.fragmentShaders.contains(stem), "Duplicate fragment shader found: {}", stem);
+            VULK_ASSERT(!metadata.fragmentShaders.contains(stem), "Duplicate fragment shader found: {}", stem);
             metadata.fragmentShaders[stem] = entry.path();
         } else if (ext == ".mtl") {
-            VULK_ASSERT_FMT(!metadata.materials.contains(stem), "Duplicate material found: {}", stem);
+            VULK_ASSERT(!metadata.materials.contains(stem), "Duplicate material found: {}", stem);
             metadata.materials[stem] = entry.path();
         } else if (ext == ".obj") {
-            VULK_ASSERT_FMT(!metadata.meshes.contains(stem), "Duplicate model found: {}", stem);
+            VULK_ASSERT(!metadata.meshes.contains(stem), "Duplicate model found: {}", stem);
             metadata.meshes[stem] = entry.path();
         } else if (ext == ".model") {
-            VULK_ASSERT_FMT(!metadata.models.contains(stem), "Duplicate model found: {}", stem);
+            VULK_ASSERT(!metadata.models.contains(stem), "Duplicate model found: {}", stem);
             metadata.models[stem] = entry.path();
         } else if (ext == ".pipeline") {
-            VULK_ASSERT_FMT(!metadata.pipelines.contains(stem), "Duplicate pipeline found: {}", stem);
+            VULK_ASSERT(!metadata.pipelines.contains(stem), "Duplicate pipeline found: {}", stem);
             metadata.pipelines[stem] = entry.path();
         } else if (ext == ".scene") {
-            VULK_ASSERT_FMT(!metadata.scenes.contains(stem), "Duplicate scene found: {}", stem);
+            VULK_ASSERT(!metadata.scenes.contains(stem), "Duplicate scene found: {}", stem);
             metadata.scenes[stem] = entry.path();
         }
     }
-    VULK_ASSERT_FMT(metadata.scenes.size() > 0, "No scenes found in {}", path.string());
+    VULK_ASSERT(metadata.scenes.size() > 0, "No scenes found in {}", path.string());
 }
 
 static bool shouldCopyFile(fs::path src, fs::path dst) {
     // Check if both files exist
-    VULK_ASSERT_FMT(fs::exists(src) && fs::is_regular_file(src), "src File {} does not exist", src.string());
+    VULK_ASSERT(fs::exists(src) && fs::is_regular_file(src), "src File {} does not exist", src.string());
     if (!fs::exists(dst)) {
         logger->trace("dst File {} does not exist", dst.string());
         return true;
     }
-    VULK_ASSERT_FMT(fs::is_regular_file(dst), "dst File {} is not a regular file", dst.string());
+    VULK_ASSERT(fs::is_regular_file(dst), "dst File {} is not a regular file", dst.string());
     // Get the last modification time of the source and destination files
     auto srcTime = fs::last_write_time(src);
     auto dstTime = fs::last_write_time(dst);
@@ -205,7 +205,7 @@ static void copyDirIfShould(fs::path src, fs::path dst) {
     for (const auto& entry : fs::directory_iterator(dst)) {
         VULK_ASSERT(!fs::is_directory(entry.path()));
         std::string filename = entry.path().filename().string();
-        VULK_ASSERT_FMT(sourceFiles.contains(filename), "File in destination not in source: {}", filename);
+        VULK_ASSERT(sourceFiles.contains(filename), "File in destination not in source: {}", filename);
     }
 }
 
@@ -235,7 +235,7 @@ static vk2::ShaderDef buildShaderDef(fs::path srcShaderPath, fs::path buildDir, 
         cmd += " -o " + dstShaderPath.string() + " " + srcShaderPath.string();
         std::string out;
         int result = runProcess(cmd, out);
-        VULK_ASSERT_FMT(result == 0, "Failed to compile shader: {}, output:\n{}", cmd, out);
+        VULK_ASSERT(result == 0, "Failed to compile shader: {}, output:\n{}", cmd, out);
     } else {
         logger->trace("Skipping shader already built: {}", srcShaderPath.string());
     }
@@ -255,20 +255,20 @@ void buildPipelineAndShaders(const SrcMetadata& metadata,
 
     // first build the shaders so we can reference them when we build the descriptor sets etc.
     if (srcPipelineDef.get_vertShader() != "") {
-        VULK_ASSERT_FMT(metadata.vertShaders.contains(srcPipelineDef.get_vertShader()), "Vertex shader {} not found",
-                        srcPipelineDef.get_vertShader());
+        VULK_ASSERT(metadata.vertShaders.contains(srcPipelineDef.get_vertShader()), "Vertex shader {} not found",
+                    srcPipelineDef.get_vertShader());
         fs::path path = metadata.vertShaders.at(srcPipelineDef.get_vertShader());
         buildShaderDef(path, shadersBuildDir, generatedHeaderDir);
     }
     if (srcPipelineDef.get_geomShader() != "") {
-        VULK_ASSERT_FMT(metadata.geometryShaders.contains(srcPipelineDef.get_geomShader()),
-                        "Geometry shader {} not found", srcPipelineDef.get_geomShader());
+        VULK_ASSERT(metadata.geometryShaders.contains(srcPipelineDef.get_geomShader()), "Geometry shader {} not found",
+                    srcPipelineDef.get_geomShader());
         buildShaderDef(metadata.geometryShaders.at(srcPipelineDef.get_geomShader()), shadersBuildDir,
                        generatedHeaderDir);
     }
     if (srcPipelineDef.get_fragShader() != "") {
-        VULK_ASSERT_FMT(metadata.fragmentShaders.contains(srcPipelineDef.get_fragShader()),
-                        "Fragment shader {} not found", srcPipelineDef.get_fragShader());
+        VULK_ASSERT(metadata.fragmentShaders.contains(srcPipelineDef.get_fragShader()), "Fragment shader {} not found",
+                    srcPipelineDef.get_fragShader());
         buildShaderDef(metadata.fragmentShaders.at(srcPipelineDef.get_fragShader()), shadersBuildDir,
                        generatedHeaderDir);
     }
@@ -285,9 +285,9 @@ void buildPipelineAndShaders(const SrcMetadata& metadata,
 void buildProjectDef(const fs::path project_file_path, fs::path buildDir) {
     fs::path projectDir = project_file_path.parent_path();
     logger->trace("Building project from {}", project_file_path.string());
-    VULK_ASSERT_FMT(fs::exists(project_file_path), "Project file does not exist: {}", project_file_path.string());
-    VULK_ASSERT_FMT(fs::exists(projectDir) && fs::is_directory(projectDir), "Project directory does not exist: {}",
-                    projectDir.string());
+    VULK_ASSERT(fs::exists(project_file_path), "Project file does not exist: {}", project_file_path.string());
+    VULK_ASSERT(fs::exists(projectDir) && fs::is_directory(projectDir), "Project directory does not exist: {}",
+                projectDir.string());
 
     // due to the complexities of not being able to get the build diredctory until
     // generation time in cmake we can't get the build directory 'generation' time
@@ -331,7 +331,7 @@ void buildProjectDef(const fs::path project_file_path, fs::path buildDir) {
             if (modelName != "") {
                 if (!projectOut.get_models().contains(modelName)) {
                     fs::path modelPath = (projectDir / (actorDef.get_modelName() + ".model"));
-                    VULK_ASSERT_FMT(metadata.models.contains(modelName), "Model {} not found", modelName);
+                    VULK_ASSERT(metadata.models.contains(modelName), "Model {} not found", modelName);
                     copyFileIfShould(metadata.models.at(modelName),
                                      assetsDir / "Models" / metadata.models.at(modelName).filename());
                     modelDef = &projectOut.models_ref()[modelName];
@@ -343,8 +343,8 @@ void buildProjectDef(const fs::path project_file_path, fs::path buildDir) {
             }
             if (modelDef) {
                 // copy materials
-                VULK_ASSERT_FMT(metadata.materials.contains(modelDef->get_material()), "Material {} not found",
-                                modelDef->get_material());
+                VULK_ASSERT(metadata.materials.contains(modelDef->get_material()), "Material {} not found",
+                            modelDef->get_material());
                 fs::path materialPath = metadata.materials.at(modelDef->get_material());
                 copyDirIfShould(materialPath.parent_path(),
                                 assetsDir / "Materials" / materialPath.parent_path().filename());

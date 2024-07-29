@@ -1207,7 +1207,7 @@ void Vulk::render() {
 }
 
 VkSurfaceFormatKHR Vulk::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) {
-    VULK_ASSERT_FMT(!availableFormats.empty(), "No available surface formats");
+    VULK_ASSERT(!availableFormats.empty(), "No available surface formats");
     // Iterate over available formats and choose the desired one
     for (const auto& sf : availableFormats) {
         if (sf.format == VK_FORMAT_B8G8R8A8_SRGB && sf.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
