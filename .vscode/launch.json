@@ -84,5 +84,17 @@
             "environment": [],
             "preLaunchTask": "Build BuildToolTests"
         },
+        // C:\open\Github\Vulk\build\Source\Vulk\Tests\Debug\VulkTestsExe.exe
+        {
+            "name": "VulkTests - Debug",
+            "program": "${workspaceFolder}/build/Source/Vulk/Tests/Debug/VulkTestsExe.exe",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "cwd": "${workspaceRoot}/Build",
+            "args": [],
+            "stopAtEntry": false,
+            "environment": [],
+            // "preLaunchTask": "Build VulkTestsExe"
+        },
     ]
 }

@@ -3,7 +3,6 @@
 
 #pragma once
 
-#include "VulkUtil.h"
 #include <algorithm>
 #include <array>
 #include <chrono>
@@ -20,6 +19,7 @@
 #include <thread>
 #include <unordered_map>
 #include <vector>
+#include "VulkUtil.h"
 
 struct MouseDragContext {
     double dt = 0.0;
@@ -42,7 +42,7 @@ struct MouseEventContext {
 #pragma warning(push)
 #pragma warning(disable : 4100)
 class MouseEventHandler {
-public:
+   public:
     virtual void onClick(double xpos, double ypos, MouseEventContext const& ctxt) {}
     virtual void onDoubleClick(double xpos, double ypos, MouseEventContext const& ctxt) {}
     virtual void onMouseDown(double xpos, double ypos, MouseEventContext const& ctxt) {}
@@ -63,7 +63,7 @@ const uint32_t WINDOW_WIDTH = 2880;
 const uint32_t WINDOW_HEIGHT = 1800;
 
 class VulkRenderable {
-public:
+   public:
     virtual ~VulkRenderable() = default;
     virtual void tick() = 0;
     virtual void renderFrame(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer) = 0;
@@ -79,12 +79,12 @@ public:
 
 class VulkImGui;
 
-using namespace std::chrono_literals; // allows things like 16ms
+using namespace std::chrono_literals;  // allows things like 16ms
 
 class Vulk {
     std::chrono::time_point<std::chrono::steady_clock> lastFrameTime;
-    std::chrono::milliseconds msPerFrame = 16ms; // 60 fps
-public:
+    std::chrono::milliseconds msPerFrame = 16ms;  // 60 fps
+   public:
     // TODO: this is just a mess
     std::shared_ptr<VulkRenderable> renderable;
     std::shared_ptr<VulkImGui> uiRenderer;
@@ -93,14 +93,18 @@ public:
 
     void run();
 
-public:
+   public:
     VkDevice device;
     VkRenderPass renderPass;
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-    VkPresentModeKHR presentMode; // for ImGUI
+    VkPresentModeKHR presentMode;  // for ImGUI
 
-public: // utilities
-    void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+   public:  // utilities
+    void createBuffer(VkDeviceSize size,
+                      VkBufferUsageFlags usage,
+                      VkMemoryPropertyFlags properties,
+                      VkBuffer& buffer,
+                      VkDeviceMemory& bufferMemory);
     void copyMemToBuffer(void const* srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
     void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
     void copyImageToBuffer(VkImage image, VkBuffer buffer, uint32_t width, uint32_t height);
@@ -108,37 +112,60 @@ public: // utilities
     void copyImageToMem(VkImage image, void* dstBuffer, uint32_t width, uint32_t height, VkDeviceSize dstEltSize);
     VkSampler createTextureSampler();
     VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
-    VkImage createTextureImage(char const* texture_path, VkDeviceMemory& textureImageMemory, VkImage& textureImage, bool isUNORM, VkFormat& formatOut);
+    VkImage createTextureImage(char const* texture_path,
+                               VkDeviceMemory& textureImageMemory,
+                               VkImage& textureImage,
+                               bool isUNORM,
+                               VkFormat& formatOut);
     uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
     VkShaderModule createShaderModule(const std::vector<char>& code);
     VkDescriptorSet createDescriptorSet(VkDescriptorSetLayout descriptorSetLayout, VkDescriptorPool descriptorPool);
-    VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
+    VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates,
+                                 VkImageTiling tiling,
+                                 VkFormatFeatureFlags features);
     VkFormat findDepthFormat();
-    void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image,
+
+    // check if the device supports the format, tiling, usage, and properties
+    std::unique_ptr<VkImageFormatProperties2> getDeviceImageFormatProperties(VkFormat format,
+                                                                             VkImageTiling tiling,
+                                                                             VkImageUsageFlags usage);
+    void createImage(uint32_t width,
+                     uint32_t height,
+                     VkFormat format,
+                     VkImageTiling tiling,
+                     VkImageUsageFlags usage,
+                     VkMemoryPropertyFlags properties,
+                     VkImage& image,
                      VkDeviceMemory& imageMemory);
 
-    // e.g. convert a created buffer to a texture buffer or when you transition a depth buffer to a shader readable format
-    void transitionImageLayout(VkCommandBuffer commandBuffer, VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels = 1, uint32_t layerCount = 1);
+    // e.g. convert a created buffer to a texture buffer or when you transition a depth buffer to a shader readable
+    // format
+    void transitionImageLayout(VkCommandBuffer commandBuffer,
+                               VkImage image,
+                               VkImageLayout oldLayout,
+                               VkImageLayout newLayout,
+                               uint32_t mipLevels = 1,
+                               uint32_t layerCount = 1);
 
-    uint32_t currentFrame = 0; // index of the current frame in flight, always between 0 and MAX_FRAMES_IN_FLIGHT
+    uint32_t currentFrame = 0;  // index of the current frame in flight, always between 0 and MAX_FRAMES_IN_FLIGHT
     uint32_t lastFrame = UINT32_MAX;
     uint32_t frameCount = 0;
     VkExtent2D swapChainExtent;
     VkCommandPool commandPool;
     std::vector<VkCommandBuffer> commandBuffers;
 
-private:
+   private:
     std::function<void(GLFWwindow*, int, int, int)> onMouseButton;
     std::function<void(GLFWwindow*, double, double)> onCursorMove;
 
-public:
+   public:
     VkInstance instance;
     virtual void handleEvents() {
         // override this to call things like glfwGetKey and glfwGetMouseButton
     }
     virtual void keyCallback(int key, int /*scancode*/, int action, int /*mods*/);
 
-public:
+   public:
     bool enableValidationLayers = true;
     GLFWwindow* window;
     struct WindowDims {
@@ -176,7 +203,7 @@ public:
     void endSingleTimeCommands(VkCommandBuffer commandBuffer);
     void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 
-private:
+   private:
     void initWindow();
     void initVulkan();
     void cleanupSwapChain();
@@ -205,12 +232,20 @@ private:
     VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
     std::vector<const char*> getRequiredExtensions();
     bool checkValidationLayerSupport();
-    static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType,
-                                                        const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* /*pUserData*/);
-    static VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator,
+    static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+                                                        VkDebugUtilsMessageTypeFlagsEXT messageType,
+                                                        const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+                                                        void* /*pUserData*/);
+
+    void debugPrintSupportedImageFormats();
+    static VkResult CreateDebugUtilsMessengerEXT(VkInstance instance,
+                                                 const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
+                                                 const VkAllocationCallbacks* pAllocator,
                                                  VkDebugUtilsMessengerEXT* pDebugMessenger);
-    static void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
+    static void DestroyDebugUtilsMessengerEXT(VkInstance instance,
+                                              VkDebugUtilsMessengerEXT debugMessenger,
+                                              const VkAllocationCallbacks* pAllocator);
     static void dispatchKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 };
 
-#endif // VULK_INCLUDE_H
+#endif  // VULK_INCLUDE_H

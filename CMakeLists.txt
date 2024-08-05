@@ -35,6 +35,7 @@ if(MSVC)
     add_compile_options(/W4 /MP /WX /sdl)
     add_compile_options(/EHa) # enable exception handling - this will allow SEH to be caught by catch(...) blocks
     add_definitions(-DGLOG_USE_GLOG_EXPORT) # glog errors without this, but some sub vcproject is using it so blarg.
+    add_compile_options(/Zc:preprocessor) # https://devblogs.microsoft.com/cppblog/announcing-full-support-for-a-c-c-conformant-preprocessor-in-msvc/
     # we can't do any of this as it causes linker problems :(
     # add_compile_options(/fsanitize=address)
     # add_compile_options(/fsanitize=fuzzer)

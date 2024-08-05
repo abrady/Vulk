@@ -39,6 +39,37 @@ vec3 calcTBNNormal(sampler2D normSampler, vec2 inTexCoord, vec3 normWorld, vec3 
     return norm;
 }
 
+vec2 normalToHemioct(in vec3 v) {
+    // Project the hemisphere onto the hemi-octahedron,
+    // and then into the xy plane
+    vec2 p = v.xy * (1.0 / (abs(v.x) + abs(v.y) + v.z));
+    // Rotate and scale the center diamond to the unit square
+    return vec2(p.x + p.y, p.x - p.y);
+}
+
+vec3 hemioctToNormal(vec2 e) {
+    // Rotate and scale the unit square back to the center diamond
+    vec2 temp = vec2(e.x + e.y, e.x - e.y) * 0.5;
+    vec3 v = vec3(temp, 1.0 - abs(temp.x) - abs(temp.y));
+    return normalize(v);
+}
+
+vec2 normalToSpherical(in vec3 v) {
+    // Assuming rho is always 1 (normalized v)
+    float thetaNormalized = acos(v.y) / PI;
+    float phiNormalized = (atan(v.x, v.z) / PI) * 0.5 + 0.5;
+    return vec2(phiNormalized, thetaNormalized);
+}
+
+vec3 sphericalToNormal(in vec2 p) {
+    float theta = p.y * PI;
+    float phi   = (p.x * (2.0 * PI) - PI);
+
+    float sintheta = sin(theta);
+    return vec3(sintheta * sin(phi), cos(theta), sintheta * cos(phi));
+}
+
+
 #define XFORMS_UBO(xformUBO)  \
 layout(binding = VulkShaderBinding_XformsUBO) uniform UniformBufferObject { \
     mat4 world; \

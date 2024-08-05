@@ -15,6 +15,9 @@ My goal for this project is to transition from the hand-coded samples I was doin
 * <https://research.ncl.ac.uk/game/mastersdegree/graphicsforgames/deferredrendering/Tutorial%2015%20-%20Deferred%20Rendering.pdf>
 * <https://learnopengl.com/Advanced-OpenGL/Cubemaps>
 * <https://github.com/SaschaWillems/Vulkan> - a set of good vulkan examples
+* unit vector encoding:
+  * <https://jcgt.org/published/0003/02/01/> - survey of encoding techniques
+  * <https://knarkowicz.wordpress.com/2014/04/16/octahedron-normal-vector-encoding/> - octahedron encoding
 
 3D resources:
 
@@ -67,6 +70,79 @@ TODOS:
 * pack roughness into the material, make sure ao is in the r field (see TODOs)
 * depth buffer: I think I should just use the depth buffer I'm already allocating in Vulk.
 * I also don't know if the 2 subpass needs the depth buffer?
+
+## 8/1
+
+  Vulk: ERROR: 2 message: Validation Error: [ VUID-VkDescriptorImageInfo-imageLayout-00344 ] Object 0: handle = 0x2b4f34f1d10, type = VK_OBJECT_TYPE_COMMAND_BUFFER; | MessageID = 0xde55a405 | vkCmdDraw: Cannot use VkImage 0x5eb05e000000003b[] (layer=0 mip=0) with specific layout VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL that doesn't match the previous known layout VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL. The Vulkan spec states: imageLayout must match the actual VkImageLayout of each subresource accessible from imageView at the time this descriptor is accessed as defined by the image layout matching rules (<https://vulkan.lunarg.com/doc/view/1.3.250.1/windows/1.3-extensions/vkspec.html#VUID-VkDescriptorImageInfo-imageLayout-00344>)
+
+* trying to use image with layout VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+* but previous known layout is VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+
+1. VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL - this is what we transition VkImages to so that we can sample them. we do this with our shadow map, for example.
+2. VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL optimal form for being rendered to I assume.
+3. this happens during the light subpass
+
+vk images are not getting transitioned...
+
+Created GBuf attachment: Normal : image 0x5eb05e000000003b
+
+## 8/2 subpass imageviews
+
+okay, why aren't images transitioning? let's seek external help.
+
+ Sascha wrote this up: <https://www.saschawillems.de/blog/2018/07/19/vulkan-input-attachments-and-sub-passes/>
+ *
+
+## 7/31 descriptor set for lighting pass
+
+* let's see
+
+  Vulk: ERROR: 2 message: Validation Error: [ VUID-VkDescriptorImageInfo-imageLayout-00344 ] Object 0: handle = 0x19a541fb310, type = VK_OBJECT_TYPE_COMMAND_BUFFER; | MessageID = 0xde55a405 | vkCmdDraw: Cannot use VkImage 0x5eb05e000000003b[] (layer=0 mip=0) with specific layout VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL that doesn't match the previous known layout VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL. The Vulkan spec states: imageLayout must match the actual VkImageLayout of each subresource accessible from imageView at the time this descriptor is accessed as defined by the image layout matching rules (<https://vulkan.lunarg.com/doc/view/1.3.250.1/windows/1.3-extensions/vkspec.html#VUID-VkDescriptorImageInfo-imageLayout-00344>)
+
+So:
+
+* the image used by vkCmdDraw: has layout VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+* previous known layout is                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+
+oh! apparently these transitions don't happen automatically. I need to specify them in the VkSubpassDependency. what's the point in specifying that in the attachment???
+
+* I'm building the descriptor set for the gbufs to be inputs for the lighting frag shader
+
+  Descriptor set VkDescriptorSet 0x1d4e2e0000000062[] encountered the following validation error at vkCmdDraw time: Descriptor in binding #2 index 0 is being used in draw but has never been updated via vkUpdateDescriptorSets() or a similar call. The Vulkan spec states: Descriptors in each bound descriptor set, specified via vkCmdBindDescriptorSets, must be valid as described by descriptor validity if they are statically used by a bound shader (<https://vulkan.lunarg.com/doc/view/1.3.250.1/windows/1.3-extensions/vkspec.html#VUID-vkCmdDraw-None-02699>)
+
+what is this saying exactly?
+
+* binding #2: what does this mean? it shouldn't be one of the bindings we're passing
+
+## 7/29 descriptor set error on lighting pass
+
+  Vulk: ERROR: 2 message: Validation Error: [ VUID-vkCmdDraw-None-02697 ] Object 0: handle = 0x176083000000005f, type = VK_OBJECT_TYPE_PIPELINE; Object 1: handle = 0xee24d0000000059, type = VK_OBJECT_TYPE_PIPELINE_LAYOUT; | MessageID = 0x28d281ae | vkCmdDraw(): The VkPipeline 0x176083000000005f[] (created with VkPipelineLayout 0x96fbe2000000005e[]) statically uses descriptor set (index #0) which is not compatible with the currently bound descriptor set's pipeline layout (VkPipelineLayout 0xee24d0000000059[]) The Vulkan spec states: For each set n that is statically used by a bound shader, a descriptor set must have been bound to n at the same pipeline bind point, with a VkPipelineLayout that is compatible for set n, with the VkPipelineLayout used to create the current VkPipeline, as described in Pipeline Layout Compatibility (<https://vulkan.lunarg.com/doc/view/1.3.250.1/windows/1.3-extensions/vkspec.html#VUID-vkCmdDraw-None-02697>)
+
+* oh duh, I need to pass the gbuf image views into the frag shader via the ds.
+
+## 7/29 GBuf Normal Encoding
+
+* my naive attempt at RGB16 isn't supported. what other ways can we encode normals
+* since this is just used for lighting and it's normal length can we do spherical coordinates?
+
+### Survey of Unit Vec Encodings
+
+<https://jcgt.org/published/0003/02/01/> - survey of encoding techniques says:
+
+  The oct and spherical representations are clearly the most practical. They are close
+  to minimal error among the surveyed methods and have very efficient implementations that require no tables. Spherical has better decode speed than oct on the tested
+  architecture, and oct has slightly better quality and encode speed. For low bit sizes,
+  the precise oct variant gives significantly better quality. The oct mapping is sufficiently simple and stateless that we suggest future graphics APIs provide a hardware
+  abstraction of oct32 attribute and texture formats, with future GPUs then able to support texture and attribute fetch (and framebuffer and attribute write) in fixed-function
+  hardware, akin to sRGB, to eliminate the remaining time cost.
+
+* let's code up spherical and hemioct (mentioned as the least lossy in this doc)
+
+## 7/28
+
+1. setup: make the gbufs: albedo, normal, depth, specular, material
+2. geo pass: collect these params
+3. light pass: for each fragment sample the params and run PBR lighting
 
 ## 7/27 deferred lighting phase vert shader
 

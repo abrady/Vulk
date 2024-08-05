@@ -77,15 +77,10 @@ layout (std140, binding = VulkShaderBinding_PBRDebugUBO) uniform PBRDebugUBO {
     bool specular;        // 4 bytes in GLSL
 } PBRDebug;
 
-layout (std140, binding = VulkShaderBinding_GlobalConstantsUBO) uniform GlobalConstantsUBO {
-	vec2 iResolution;
-} globalConstants;
-
 layout(binding = VulkShaderBinding_GBufAlbedo) uniform sampler2D albedoMap;
 layout(binding = VulkShaderBinding_GBufDepth) uniform sampler2D depthMap; // single 32-bit float
 layout(binding = VulkShaderBinding_GBufNormal) uniform sampler2D normalMap;
 layout(binding = VulkShaderBinding_GBufMaterial) uniform sampler2D materialsMap; //TODO: pack the materials
-layout(binding = VulkShaderBinding_GBufSpecular) uniform sampler2D specularMap; //TODO: wire this up
 
 // layout(location = VulkShaderLocation_Pos) in vec3 inPos;
 // layout(location = VulkShaderLocation_Normal) in vec3 inNormal;
@@ -108,7 +103,8 @@ void main() {
     float ao = texture(materialsMap, inTexCoord).r;
     float metallic = texture(materialsMap, inTexCoord).g;
 	float roughness = texture(materialsMap, inTexCoord).b;
-	vec3 N = texture(normalMap, inTexCoord).xyz;
+	vec2 hemioctNormal = texture(normalMap, inTexCoord).xy; // VK_FORMAT_R16G16_SFLOAT stores normal in the xy channels
+	vec3 N = hemioctToNormal(hemioctNormal);
 	float depth = texture(depthMap, inTexCoord).r; // VK_FORMAT_D32_SFLOAT stores depth in the red channel
 
 	vec3 worldPos = reconstructPosition(inTexCoord, depth, invViewProj);

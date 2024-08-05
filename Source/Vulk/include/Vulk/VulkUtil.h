@@ -50,6 +50,8 @@
 #include "gen-cpp2/VulkShaderEnums_types.tcc"
 #pragma warning(pop)
 
+using apache::thrift::TEnumTraits;
+
 #define VK_CALL(func)                                                                                       \
     do {                                                                                                    \
         VkResult vkcall_macro_result = (func);                                                              \

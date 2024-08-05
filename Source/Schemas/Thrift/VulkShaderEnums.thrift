@@ -42,16 +42,15 @@ enum VulkShaderBinding {
     GBufDepth = 23,
     GBufAlbedo = 24,
     GBufMaterial = 25,
-    GBufSpecular = 26,
     InvViewProjUBO = 27,
 }
 
-enum VulkGeoBufAttachment {
+// attachments are bound to framebuffers and typically written to by the fragment shader
+enum VulkGBufAttachment {
     Albedo = 0,
     Depth = 1,
     Normal = 2,
     Material = 3,
-    Specular = 4
 }
 
 enum VulkShaderUBOBinding {
@@ -89,7 +88,10 @@ enum VulkShaderTextureBinding {
     MetallicSampler = 17,
     RoughnessSampler = 18,
     CubemapSampler = 21,
-    MAX = 19,
+    GBufNormal = 22,
+    GBufDepth = 23,
+    GBufAlbedo = 24,
+    GBufMaterial = 25,
 }
 
 enum VulkLights {

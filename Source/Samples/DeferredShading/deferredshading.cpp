@@ -51,7 +51,7 @@ class World final : public VulkRenderable {
         resources->loadScene(sceneName, shadowMapRenderpass->depthViews);
         scene = resources->scenes[sceneName];
 
-        deferredRenderpass = std::make_shared<vulk::VulkDeferredRenderpass>(vk, *resources);
+        deferredRenderpass = std::make_shared<vulk::VulkDeferredRenderpass>(vk, *resources, scene.get());
         for (size_t i = 0; i < scene->def->actors.size(); ++i) {
             auto actorDef = scene->def->actors[i];
             std::shared_ptr<VulkActor> deferredActor =
@@ -152,6 +152,9 @@ class World final : public VulkRenderable {
             clip * glm::perspective(DEFAULT_FOV_RADS, viewport.width / (float)viewport.height, nearClip, farClip);
 
         // Vulkan clip space has inverted Y
+        glm::mat4 mvp = ubo.proj * ubo.view * ubo.world;
+        glm::mat4 invMvp = glm::inverse(mvp);
+        *scene->invViewProjUBO->mappedUBO = invMvp;
 
         // set up the light view proj
         VulkPointLight& light = *scene->sceneUBOs.pointLight.mappedUBO;
@@ -249,7 +252,6 @@ class World final : public VulkRenderable {
         }
 
         deferredRenderpass->renderGBufsAndEnd(commandBuffer);
-        vkCmdEndRenderPass(commandBuffer);
 
         frameBuffer;  // I'm sure I'll need this eventually
     }

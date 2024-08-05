@@ -4,16 +4,23 @@
 
 #include "Vulk/ClassNonCopyableNonMovable.h"
 #include "Vulk/Vulk.h"
+#include "Vulk/VulkDescriptorSet.h"
+#include "Vulk/VulkDescriptorSetBuilder.h"
 #include "Vulk/VulkDescriptorSetLayout.h"
 #include "Vulk/VulkImageView.h"
 #include "Vulk/VulkPipeline.h"
 #include "Vulk/VulkResources.h"
+#include "Vulk/VulkSampler.h"
 
 namespace vulk {
 
-constexpr uint32_t NumGeoBufs = apache::thrift::TEnumTraits<vulk::cpp2::VulkGeoBufAttachment>::size;
+constexpr uint32_t NumGeoBufs = TEnumTraits<vulk::cpp2::VulkGBufAttachment>::size;
 class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
-    using VulkGeoBufAttachment = vulk::cpp2::VulkGeoBufAttachment;
+    inline static std::shared_ptr<spdlog::logger> logger = VulkLogger::CreateLogger("VulkDeferredRenderpass");
+
+    using VulkGBufAttachment = vulk::cpp2::VulkGBufAttachment;
+    using VulkShaderTextureBinding = vulk::cpp2::VulkShaderTextureBinding;
+    using VulkShaderUBOBinding = vulk::cpp2::VulkShaderUBOBinding;
 
     class VulkDeferredImage : public ClassNonCopyableNonMovable {
        public:
@@ -31,7 +38,7 @@ class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
                 vk.createImage(vk.swapChainExtent.width, vk.swapChainExtent.height, format, VK_IMAGE_TILING_OPTIMAL,
                                VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
                                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
-                imageView = vk.createImageView(image, format, VK_IMAGE_ASPECT_DEPTH_BIT);
+                imageView = vk.createImageView(image, format, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
             } else {
                 vk.createImage(vk.swapChainExtent.width, vk.swapChainExtent.height, format, VK_IMAGE_TILING_OPTIMAL,
                                VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
@@ -45,22 +52,27 @@ class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
     class VulkGBufs : public ClassNonCopyableNonMovable {
        public:
         Vulk& vk;
-        std::unordered_map<VulkGeoBufAttachment, std::shared_ptr<VulkDeferredImage>> gbufs;
+        std::unordered_map<VulkGBufAttachment, std::shared_ptr<VulkDeferredImage>> gbufs;
         std::array<VkImageView, NumGeoBufs> gbufViews;
 
+        // normal could also be: VK_FORMAT_R16G16B16A16_SFLOAT
+        // depth could be: VK_FORMAT_D24_UNORM_S8_UINT - could pack data in the stencil buffer
+        // material could be more compact: VK_FORMAT_R4G4B4A4_UNORM or VK_FORMAT_R5G5B5A1_UNORM
+
         VulkGBufs(Vulk& vkIn) : vk(vkIn) {
-            std::pair<VulkGeoBufAttachment, VkFormat> bindings[] = {
-                {VulkGeoBufAttachment::Normal, VK_FORMAT_R16G16B16A16_SFLOAT},
-                {VulkGeoBufAttachment::Depth, VK_FORMAT_D32_SFLOAT},  // vk.findDepthFormat()},
-                {VulkGeoBufAttachment::Albedo, VK_FORMAT_R8G8B8A8_UNORM},
-                {VulkGeoBufAttachment::Material, VK_FORMAT_R8G8B8A8_UNORM},
-                {VulkGeoBufAttachment::Specular, VK_FORMAT_R8G8B8A8_UNORM},
+            std::pair<VulkGBufAttachment, VkFormat> bindings[] = {
+                {VulkGBufAttachment::Normal, VK_FORMAT_R16G16_SFLOAT},  // hemioct-encoded normal
+                {VulkGBufAttachment::Depth, VK_FORMAT_D32_SFLOAT},      // vk.findDepthFormat()},
+                {VulkGBufAttachment::Albedo, VK_FORMAT_R8G8B8A8_UNORM},
+                {VulkGBufAttachment::Material, VK_FORMAT_R8G8B8A8_UNORM},
             };
-            for (auto& binding : bindings) {
-                bool isDepth = binding.first == VulkGeoBufAttachment::Depth;
-                auto vdi = std::make_shared<VulkDeferredImage>(vk, binding.second, isDepth);
-                gbufs[binding.first] = vdi;
-                gbufViews[(int)binding.first] = vdi->view->imageView;
+            for (auto& [attachment, format] : bindings) {
+                bool isDepth = attachment == VulkGBufAttachment::Depth;
+                auto vdi = std::make_shared<VulkDeferredImage>(vk, format, isDepth);
+                gbufs[attachment] = vdi;
+                gbufViews[(int)attachment] = vdi->view->imageView;
+                logger->debug("Created GBuf attachment: {} : image {}",
+                              TEnumTraits<VulkGBufAttachment>::findName(attachment), (void*)vdi->view->image);
             }
         }
     };
@@ -72,8 +84,12 @@ class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
     std::array<VkFramebuffer, MAX_FRAMES_IN_FLIGHT> frameBuffers;
     std::shared_ptr<VulkPipeline> deferredGeoPipeline;
     std::shared_ptr<VulkPipeline> deferredLightingPipeline;
+    std::shared_ptr<VulkDescriptorSetInfo> deferredLightingDescriptorSetInfo;
+    std::shared_ptr<VulkSampler> textureSampler;
 
-    VulkDeferredRenderpass(Vulk& vkIn, VulkResources& resources) : vk(vkIn) {
+    VulkDeferredRenderpass(Vulk& vkIn, VulkResources& resources, VulkScene* scene) : vk(vkIn) {
+        // TODO: remove
+        logger->set_level(spdlog::level::debug);
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
             geoBufs[i] = std::make_unique<VulkGBufs>(vk);
         }
@@ -84,9 +100,15 @@ class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
 
         const uint32_t numAttachments = (uint32_t)geoBufs[0]->gbufs.size();
         std::vector<VkAttachmentDescription> geoAttachments(numAttachments);
-        for (uint32_t i = 0; i < numAttachments; i++) {
-            bool isDepth = i == (uint32_t)VulkGeoBufAttachment::Depth;
-            geoAttachments[i].format = geoBufs[0]->gbufs.at(static_cast<VulkGeoBufAttachment>(i))->format;
+        // std::vector<VulkGBufAttachment> geoAttachmentTypes = {VulkGBufAttachment::Albedo, VulkGBufAttachment::Normal,
+        //                                                       VulkGBufAttachment::Depth,
+        //                                                       VulkGBufAttachment::Material};
+        // static_assert(TEnumTraits<VulkGBufAttachment>::max() == VulkGBufAttachment::Material);
+
+        for (VulkGBufAttachment a : TEnumTraits<VulkGBufAttachment>::values) {
+            bool isDepth = a == VulkGBufAttachment::Depth;
+            size_t i = (size_t)a;
+            geoAttachments[i].format = geoBufs[0]->gbufs.at(a)->format;
             geoAttachments[i].samples = VK_SAMPLE_COUNT_1_BIT;
             geoAttachments[i].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
             geoAttachments[i].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -100,7 +122,7 @@ class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
         std::vector<VkAttachmentReference> geoAttachmentRefs;
         VkAttachmentReference geoDepthAttachmentRef = {};
         for (uint32_t i = 0; i < numAttachments; i++) {
-            if (i == (size_t)VulkGeoBufAttachment::Depth) {
+            if (i == (size_t)VulkGBufAttachment::Depth) {
                 geoDepthAttachmentRef.attachment = i;
                 geoDepthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
             } else {
@@ -156,14 +178,31 @@ class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
         lightingSubpassDescription.pColorAttachments = &lightingColorAttachmentRef;
         lightingSubpassDescription.pDepthStencilAttachment = &lightingDepthAttachmentRef;
 
-        VkSubpassDependency dependency = {};
-        dependency.srcSubpass = 0;  // First subpass
-        dependency.dstSubpass = 1;  // Second subpass
-        dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        dependency.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-        dependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-        dependency.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-        dependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+        // this first dependency resets the gbufs to a state where they can be written to
+        // the second dependency waits for the gbufs to be written and transitions them to a
+        // state where they can be read
+        VkSubpassDependency preGeoDependency = {};
+        preGeoDependency.srcSubpass = VK_SUBPASS_EXTERNAL;  // External dependency
+        preGeoDependency.dstSubpass = 0;                    // First subpass
+        preGeoDependency.srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+        preGeoDependency.dstStageMask =
+            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+        preGeoDependency.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+        preGeoDependency.dstAccessMask =
+            VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        preGeoDependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+        VkSubpassDependency geoToLightDependency = {};
+        geoToLightDependency.srcSubpass = 0;  // First subpass
+        geoToLightDependency.dstSubpass = 1;  // Second subpass
+        geoToLightDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        geoToLightDependency.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        geoToLightDependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        geoToLightDependency.dstAccessMask =
+            VK_ACCESS_SHADER_READ_BIT;  // | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+        geoToLightDependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+        std::vector<VkSubpassDependency> dependencies = {preGeoDependency, geoToLightDependency};
 
         std::vector<VkAttachmentDescription> attachments(geoAttachments);
         attachments.push_back(lightingColorAttachment);
@@ -176,8 +215,8 @@ class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
         renderPassInfo.subpassCount = 2;
         VkSubpassDescription subpasses[] = {geoSubpassDescription, lightingSubpassDescription};
         renderPassInfo.pSubpasses = subpasses;
-        renderPassInfo.dependencyCount = 1;
-        renderPassInfo.pDependencies = &dependency;
+        renderPassInfo.dependencyCount = (uint32_t)dependencies.size();
+        renderPassInfo.pDependencies = dependencies.data();
         VK_CALL(vkCreateRenderPass(vk.device, &renderPassInfo, nullptr, &renderPass));
 
         std::array<std::array<VkImageView, NumGeoBufs + 2>, MAX_FRAMES_IN_FLIGHT> framebufImageViews;
@@ -198,8 +237,36 @@ class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
             VK_CALL(vkCreateFramebuffer(vk.device, &framebufferInfo, nullptr, &frameBuffers[i]));
         }
 
-        deferredLightingPipeline = resources.loadPipeline(renderPass, vk.swapChainExtent, "DeferredRenderLighting");
         deferredGeoPipeline = resources.loadPipeline(renderPass, vk.swapChainExtent, "DeferredRenderGeo");
+        deferredLightingPipeline = resources.loadPipeline(renderPass, vk.swapChainExtent, "DeferredRenderLighting");
+
+        textureSampler = VulkSampler::createImageSampler(vk);
+
+        VulkDescriptorSetBuilder dsBuilder(vk);
+        // this makes sue our .frag file matches what we do here
+        dsBuilder.setDescriptorSetLayout(deferredLightingPipeline->descriptorSetLayout);
+        dsBuilder.addFrameUBOs(scene->sceneUBOs.eyePos, VK_SHADER_STAGE_FRAGMENT_BIT, VulkShaderUBOBinding::EyePos);
+        dsBuilder.addUniformBuffer(scene->sceneUBOs.pointLight, VK_SHADER_STAGE_FRAGMENT_BIT,
+                                   VulkShaderUBOBinding::Lights);
+        if (scene->pbrDebugUBO == nullptr)
+            scene->pbrDebugUBO = std::make_shared<VulkUniformBuffer<VulkPBRDebugUBO>>(vk);
+        dsBuilder.addUniformBuffer(*scene->pbrDebugUBO, VK_SHADER_STAGE_FRAGMENT_BIT,
+                                   VulkShaderUBOBinding::PBRDebugUBO);
+        if (scene->invViewProjUBO == nullptr)
+            scene->invViewProjUBO = std::make_shared<VulkUniformBuffer<glm::mat4>>(vk);
+
+        for (uint32_t frame = 0; frame < MAX_FRAMES_IN_FLIGHT; frame++) {
+            auto geoBuf = geoBufs[frame];
+            dsBuilder.addFrameImageSampler(frame, VK_SHADER_STAGE_FRAGMENT_BIT, VulkShaderTextureBinding::GBufAlbedo,
+                                           geoBuf->gbufs.at(VulkGBufAttachment::Albedo)->view, textureSampler);
+            dsBuilder.addFrameImageSampler(frame, VK_SHADER_STAGE_FRAGMENT_BIT, VulkShaderTextureBinding::GBufNormal,
+                                           geoBuf->gbufs.at(VulkGBufAttachment::Normal)->view, textureSampler);
+            dsBuilder.addFrameImageSampler(frame, VK_SHADER_STAGE_FRAGMENT_BIT, VulkShaderTextureBinding::GBufDepth,
+                                           geoBuf->gbufs.at(VulkGBufAttachment::Depth)->view, textureSampler);
+            dsBuilder.addFrameImageSampler(frame, VK_SHADER_STAGE_FRAGMENT_BIT, VulkShaderTextureBinding::GBufMaterial,
+                                           geoBuf->gbufs.at(VulkGBufAttachment::Material)->view, textureSampler);
+        }
+        deferredLightingDescriptorSetInfo = dsBuilder.build();
     }
 
     void beginRenderToGBufs(VkCommandBuffer commandBuffer) {
@@ -211,7 +278,7 @@ class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
         renderPassInfo.renderArea.extent = vk.swapChainExtent;
 
         std::array<VkClearValue, 7> clearValues{};
-        clearValues[(int)VulkGeoBufAttachment::Depth].depthStencil = {1.0f, 0};
+        clearValues[(int)VulkGBufAttachment::Depth].depthStencil = {1.0f, 0};
 
         renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
         renderPassInfo.pClearValues = clearValues.data();
@@ -221,6 +288,10 @@ class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
 
     void renderGBufsAndEnd(VkCommandBuffer commandBuffer) {
         vkCmdNextSubpass(commandBuffer, VK_SUBPASS_CONTENTS_INLINE);
+        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, deferredLightingPipeline->pipeline);
+        vkCmdBindDescriptorSets(
+            commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, deferredLightingPipeline->pipelineLayout, 0, 1,
+            &deferredLightingDescriptorSetInfo->descriptorSets[vk.currentFrame]->descriptorSet, 0, nullptr);
         vkCmdDraw(commandBuffer, 4, 1, 0, 0);  // the vert shader handles this, just need 4 verts to draw a quad
         vkCmdEndRenderPass(commandBuffer);
     }

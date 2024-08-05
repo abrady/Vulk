@@ -241,7 +241,7 @@ std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const
                 default:
                     VULK_THROW("Invalid UBO binding");
             }
-            static_assert((int)apache::thrift::TEnumTraits<::vulk::cpp2::VulkShaderUBOBinding>::max() == 27);
+            static_assert((int)TEnumTraits<::vulk::cpp2::VulkShaderUBOBinding>::max() == 27);
         }
     }
     // for (auto &[stage, ssbos] : dsDef.storageBuffers)
@@ -289,13 +289,17 @@ std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef const
                 case vulk::cpp2::VulkShaderTextureBinding::CubemapSampler:
                     dsBuilder.addBothFramesImageSampler(stage, binding, model->textures->cubemapView, textureSampler);
                     break;
+                case vulk::cpp2::VulkShaderTextureBinding::GBufNormal:
+                case vulk::cpp2::VulkShaderTextureBinding::GBufDepth:
+                case vulk::cpp2::VulkShaderTextureBinding::GBufAlbedo:
+                case vulk::cpp2::VulkShaderTextureBinding::GBufMaterial:
                 default:
                     VULK_THROW("Invalid texture binding");
             }
         }
     }
-    static_assert(apache::thrift::TEnumTraits<::vulk::cpp2::VulkShaderTextureBinding>::max() ==
-                  vulk::cpp2::VulkShaderTextureBinding::CubemapSampler);
+    static_assert(TEnumTraits<::vulk::cpp2::VulkShaderTextureBinding>::max() ==
+                  vulk::cpp2::VulkShaderTextureBinding::GBufMaterial);
 
     std::shared_ptr<VulkDescriptorSetInfo> info = dsBuilder.build();
     return make_shared<VulkActor>(vk, model, modelXformUBOs, info, pipeline);
@@ -369,7 +373,8 @@ shared_ptr<VulkMaterialTextures> VulkResources::getMaterialTextures(string const
             !def.mapPr.empty() ? make_unique<VulkImageView>(vk, def.mapPr, true) : nullptr;
         materialTextures[name]->cubemapView =
             !def.cubemapImgs[0].empty() ? VulkImageView::createCubemapView(vk, def.cubemapImgs) : nullptr;
-        static_assert((int)vulk::cpp2::VulkShaderTextureBinding::MAX == 19);
+        static_assert(TEnumTraits<::vulk::cpp2::VulkShaderTextureBinding>::max() ==
+                      vulk::cpp2::VulkShaderTextureBinding::GBufMaterial);
     }
 
     return materialTextures[name];

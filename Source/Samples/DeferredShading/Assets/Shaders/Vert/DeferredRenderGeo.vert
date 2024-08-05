@@ -15,10 +15,10 @@ layout(location = VulkShaderLocation_TexCoord) out vec2 outTexCoord;
 // layout(location = VulkShaderLocation_CubemapCoord) out vec3 outCubemapCoord;
 
 void main() {
-    mat4 worldXform = xform.world * modelUBO.xform;
+    mat4 worldXform = xform.view * xform.world * modelUBO.xform;
     vec4 worldPos = worldXform * vec4(inPosition, 1.0);
     // outCubemapCoord = normalize(worldPos.xyz);
-    gl_Position = xform.proj * xform.view * worldPos;
+    gl_Position = xform.proj *  worldPos;
     outTexCoord = inTexCoord;
     outPos = vec3(worldXform * vec4(inPosition, 1.0));
     outNorm = vec3(worldXform * vec4(inNormal, 0.0));

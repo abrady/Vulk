@@ -697,6 +697,8 @@ void Vulk::pickPhysicalDevice() {
     if (physicalDevice == VK_NULL_HANDLE) {
         VULK_THROW("failed to find a suitable GPU!");
     }
+
+    debugPrintSupportedImageFormats();
 }
 
 void Vulk::createLogicalDevice() {
@@ -938,6 +940,25 @@ VkFormat Vulk::findDepthFormat() {
 
 bool Vulk::hasStencilComponent(VkFormat format) {
     return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
+}
+
+std::unique_ptr<VkImageFormatProperties2> Vulk::getDeviceImageFormatProperties(VkFormat format,
+                                                                               VkImageTiling tiling,
+                                                                               VkImageUsageFlags usage) {
+    // VkImageFormatProperties2 ifp2 = {};
+    std::unique_ptr<VkImageFormatProperties2> ifp2 = std::make_unique<VkImageFormatProperties2>();
+    ifp2->sType = VK_STRUCTURE_TYPE_IMAGE_FORMAT_PROPERTIES_2;
+    ifp2->pNext = nullptr;
+    VkPhysicalDeviceImageFormatInfo2 pdifi2 = {};
+    pdifi2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_FORMAT_INFO_2;
+    pdifi2.format = format;
+    pdifi2.tiling = tiling;
+    pdifi2.type = VK_IMAGE_TYPE_2D;
+    pdifi2.usage = usage;
+    if (VK_SUCCESS == vkGetPhysicalDeviceImageFormatProperties2(physicalDevice, &pdifi2, ifp2.get())) {
+        return ifp2;
+    }
+    return nullptr;
 }
 
 void Vulk::createImage(uint32_t width,
@@ -1346,5 +1367,26 @@ void Vulk::dispatchKeyCallback(GLFWwindow* window, int key, int scancode, int ac
 void Vulk::keyCallback(int key, int /*scancode*/, int action, int /*mods*/) {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, GLFW_TRUE);
+    }
+}
+
+void Vulk::debugPrintSupportedImageFormats() {
+    std::vector<std::pair<VkFormat, std::string>> imageFormats = {
+        {VK_FORMAT_R8G8B8A8_UNORM, "VK_FORMAT_R8G8B8A8_UNORM"},
+        {VK_FORMAT_R8G8B8A8_SRGB, "VK_FORMAT_R8G8B8A8_SRGB"},
+        {VK_FORMAT_R8G8B8A8_SNORM, "VK_FORMAT_R8G8B8A8_SNORM"},
+        {VK_FORMAT_R8G8B8A8_UINT, "VK_FORMAT_R8G8B8A8_UINT"},
+        {VK_FORMAT_R8G8B8A8_SINT, "VK_FORMAT_R8G8B8A8_SINT"},
+        // {VK_FORMAT_R16G16B16_SFLOAT, "VK_FORMAT_R16G16B16_SFLOAT"},
+        {VK_FORMAT_R16G16_SFLOAT, "VK_FORMAT_R16G16_SFLOAT"},
+        {VK_FORMAT_D32_SFLOAT, "VK_FORMAT_D32_SFLOAT"},
+    };
+    for (auto [format, name] : imageFormats) {
+        auto ifp2 = getDeviceImageFormatProperties(format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+        if (ifp2) {
+            logger->info("Supported image format: {}", name);
+        } else {
+            logger->info("Unsupported image format: {}", name);
+        }
     }
 }
