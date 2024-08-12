@@ -6,8 +6,15 @@ IndentWidth: 4
 ---
 Language: Cpp
 Standard: Latest
-ColumnLimit: 120
+ColumnLimit: 130
 UseTab: Never
+#AlignAfterOpenBracket(BAS_BlockIndent): true
+AlignAfterOpenBracket: BlockIndent
+#AlignConsecutiveAssignments : true
+# BinPackArguments: false
+
+#BreakBeforeDesignatedInitializer: true
+#InitializerListBinPacking: false
 
 # AllowAllParametersOfDeclarationOnNextLine: true
 # AllowAllArgumentsOnNextLine: true
@@ -23,3 +30,4 @@ UseTab: Never
 # BreakConstructorInitializers: BeforeComma
 # IndentPPDirectives: AfterHash
 # PointerAlignment: Left
+# BinPackArguments: false

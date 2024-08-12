@@ -100,11 +100,13 @@ class Vulk {
     VkPresentModeKHR presentMode;  // for ImGUI
 
    public:  // utilities
-    void createBuffer(VkDeviceSize size,
-                      VkBufferUsageFlags usage,
-                      VkMemoryPropertyFlags properties,
-                      VkBuffer& buffer,
-                      VkDeviceMemory& bufferMemory);
+    void createBuffer(
+        VkDeviceSize size,
+        VkBufferUsageFlags usage,
+        VkMemoryPropertyFlags properties,
+        VkBuffer& buffer,
+        VkDeviceMemory& bufferMemory
+    );
     void copyMemToBuffer(void const* srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
     void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
     void copyImageToBuffer(VkImage image, VkBuffer buffer, uint32_t width, uint32_t height);
@@ -112,40 +114,43 @@ class Vulk {
     void copyImageToMem(VkImage image, void* dstBuffer, uint32_t width, uint32_t height, VkDeviceSize dstEltSize);
     VkSampler createTextureSampler();
     VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
-    VkImage createTextureImage(char const* texture_path,
-                               VkDeviceMemory& textureImageMemory,
-                               VkImage& textureImage,
-                               bool isUNORM,
-                               VkFormat& formatOut);
+    VkImage createTextureImage(
+        char const* texture_path,
+        VkDeviceMemory& textureImageMemory,
+        VkImage& textureImage,
+        bool isUNORM,
+        VkFormat& formatOut
+    );
     uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
     VkShaderModule createShaderModule(const std::vector<char>& code);
     VkDescriptorSet createDescriptorSet(VkDescriptorSetLayout descriptorSetLayout, VkDescriptorPool descriptorPool);
-    VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates,
-                                 VkImageTiling tiling,
-                                 VkFormatFeatureFlags features);
+    VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
     VkFormat findDepthFormat();
 
     // check if the device supports the format, tiling, usage, and properties
-    std::unique_ptr<VkImageFormatProperties2> getDeviceImageFormatProperties(VkFormat format,
-                                                                             VkImageTiling tiling,
-                                                                             VkImageUsageFlags usage);
-    void createImage(uint32_t width,
-                     uint32_t height,
-                     VkFormat format,
-                     VkImageTiling tiling,
-                     VkImageUsageFlags usage,
-                     VkMemoryPropertyFlags properties,
-                     VkImage& image,
-                     VkDeviceMemory& imageMemory);
+    std::unique_ptr<VkImageFormatProperties2>
+    getDeviceImageFormatProperties(VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage);
+    void createImage(
+        uint32_t width,
+        uint32_t height,
+        VkFormat format,
+        VkImageTiling tiling,
+        VkImageUsageFlags usage,
+        VkMemoryPropertyFlags properties,
+        VkImage& image,
+        VkDeviceMemory& imageMemory
+    );
 
     // e.g. convert a created buffer to a texture buffer or when you transition a depth buffer to a shader readable
     // format
-    void transitionImageLayout(VkCommandBuffer commandBuffer,
-                               VkImage image,
-                               VkImageLayout oldLayout,
-                               VkImageLayout newLayout,
-                               uint32_t mipLevels = 1,
-                               uint32_t layerCount = 1);
+    void transitionImageLayout(
+        VkCommandBuffer commandBuffer,
+        VkImage image,
+        VkImageLayout oldLayout,
+        VkImageLayout newLayout,
+        uint32_t mipLevels = 1,
+        uint32_t layerCount = 1
+    );
 
     uint32_t currentFrame = 0;  // index of the current frame in flight, always between 0 and MAX_FRAMES_IN_FLIGHT
     uint32_t lastFrame = UINT32_MAX;
@@ -211,7 +216,7 @@ class Vulk {
     void recreateSwapChain();
     void createInstance();
     void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
-    void setupDebugMessenger();
+    void setupDebug();
     void createSurface();
     bool isDeviceSuitable(VkPhysicalDevice physDevice);
     bool checkDeviceExtensionSupport(VkPhysicalDevice physDevice);
@@ -232,20 +237,36 @@ class Vulk {
     VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
     std::vector<const char*> getRequiredExtensions();
     bool checkValidationLayerSupport();
-    static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-                                                        VkDebugUtilsMessageTypeFlagsEXT messageType,
-                                                        const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-                                                        void* /*pUserData*/);
+
+    static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
+        VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+        VkDebugUtilsMessageTypeFlagsEXT messageType,
+        const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+        void* /*pUserData*/
+    );
 
     void debugPrintSupportedImageFormats();
-    static VkResult CreateDebugUtilsMessengerEXT(VkInstance instance,
-                                                 const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
-                                                 const VkAllocationCallbacks* pAllocator,
-                                                 VkDebugUtilsMessengerEXT* pDebugMessenger);
-    static void DestroyDebugUtilsMessengerEXT(VkInstance instance,
-                                              VkDebugUtilsMessengerEXT debugMessenger,
-                                              const VkAllocationCallbacks* pAllocator);
+    static VkResult CreateDebugUtilsMessengerEXT(
+        VkInstance instance,
+        const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
+        const VkAllocationCallbacks* pAllocator,
+        VkDebugUtilsMessengerEXT* pDebugMessenger
+    );
+    static void DestroyDebugUtilsMessengerEXT(
+        VkInstance instance,
+        VkDebugUtilsMessengerEXT debugMessenger,
+        const VkAllocationCallbacks* pAllocator
+    );
     static void dispatchKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
-};
 
+   public:
+    // labels for tools like renderdoc
+
+    // mark a section of the command buffer
+    void beginDebugLabel(VkCommandBuffer cmdbuffer, std::string caption, glm::vec4 color = {1.0f, 0.78f, 0.05f, 1.0f});
+    void endDebugLabel(VkCommandBuffer cmdbuffer);
+
+    // insert a label at a specific point in the command buffer
+    void insertDebugLabel(VkCommandBuffer cmdbuffer, std::string caption, glm::vec4 color = {1.0f, 0.2f, 0.05f, 1.0f});
+};
 #endif  // VULK_INCLUDE_H

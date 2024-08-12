@@ -71,6 +71,26 @@ TODOS:
 * depth buffer: I think I should just use the depth buffer I'm already allocating in Vulk.
 * I also don't know if the 2 subpass needs the depth buffer?
 
+## 8/11/24
+
+### Summary of how multi-subpasses work
+
+#### Renderpass / Framebuffers
+
+![](Assets/Screenshots/renderpass_framebuffer_subpass.png)
+
+* VkRenderPass: At a high level the renderpass just tracks the number of subpasses, the states attachments should be in, and what the dependencies for those attachments are:
+  * attachments: state attachments are in at the start and end of the renderpass
+  * dependencies: transitions to do as the renderpass runs
+  * subpasses: what state attachments should be in during each subpass.
+* VkFramebuffer:
+  * use a framebuffer per swapchain image to hold the actual imageviews used by it - the attachments.
+
+Where we at:
+
+* I now understand that
+* attachments:
+
 ## 8/1
 
   Vulk: ERROR: 2 message: Validation Error: [ VUID-VkDescriptorImageInfo-imageLayout-00344 ] Object 0: handle = 0x2b4f34f1d10, type = VK_OBJECT_TYPE_COMMAND_BUFFER; | MessageID = 0xde55a405 | vkCmdDraw: Cannot use VkImage 0x5eb05e000000003b[] (layer=0 mip=0) with specific layout VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL that doesn't match the previous known layout VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL. The Vulkan spec states: imageLayout must match the actual VkImageLayout of each subresource accessible from imageView at the time this descriptor is accessed as defined by the image layout matching rules (<https://vulkan.lunarg.com/doc/view/1.3.250.1/windows/1.3-extensions/vkspec.html#VUID-VkDescriptorImageInfo-imageLayout-00344>)

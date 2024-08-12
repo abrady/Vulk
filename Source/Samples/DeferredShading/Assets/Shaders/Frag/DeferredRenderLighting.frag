@@ -77,6 +77,10 @@ layout (std140, binding = VulkShaderBinding_PBRDebugUBO) uniform PBRDebugUBO {
     bool specular;        // 4 bytes in GLSL
 } PBRDebug;
 
+layout (input_attachment_index = 0, binding = 0) uniform subpassInput inputPosition;
+layout (input_attachment_index = 1, binding = 1) uniform subpassInput inputNormal;
+layout (input_attachment_index = 2, binding = 2) uniform subpassInput inputAlbedo;
+
 layout(binding = VulkShaderBinding_GBufAlbedo) uniform sampler2D albedoMap;
 layout(binding = VulkShaderBinding_GBufDepth) uniform sampler2D depthMap; // single 32-bit float
 layout(binding = VulkShaderBinding_GBufNormal) uniform sampler2D normalMap;

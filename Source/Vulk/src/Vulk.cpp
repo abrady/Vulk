@@ -7,6 +7,10 @@
 
 DECLARE_FILE_LOGGER();
 
+PFN_vkCmdBeginDebugUtilsLabelEXT pfnVkCmdBeginDebugUtilsLabelEXT{nullptr};
+PFN_vkCmdEndDebugUtilsLabelEXT pfnVkCmdEndDebugUtilsLabelEXT{nullptr};
+PFN_vkCmdInsertDebugUtilsLabelEXT pfnVkCmdInsertDebugUtilsLabelEXT{nullptr};
+
 class DebugMouseEventHandler : public MouseEventHandler {
    public:
     void onClick(double xpos, double ypos, MouseEventContext const& ctxt) override {
@@ -37,8 +41,7 @@ class DebugMouseEventHandler : public MouseEventHandler {
     void onDrag(double xpos, double ypos, MouseDragContext const& drag, MouseEventContext const& ctxt) override {
         std::cout << "Dragging at: (" << xpos << ", " << ypos << ")"
                   << " Shift: " << ctxt.shift << "is dragging: " << ctxt.isDragging << " Control: " << ctxt.control
-                  << " Alt: " << ctxt.alt << " Drag start: (" << drag.dragStartX << ", " << drag.dragStartY << ")"
-                  << std::endl;
+                  << " Alt: " << ctxt.alt << " Drag start: (" << drag.dragStartX << ", " << drag.dragStartY << ")" << std::endl;
     }
 
     void onDragStart(double xpos, double ypos, MouseEventContext const& ctxt) override {
@@ -137,12 +140,10 @@ void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
         dragContext->dydt = 0.8 * dragContext->dydt + 0.2 * dydt;
     }
 
-    ctxt.shift =
-        glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
-    ctxt.control = glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS ||
-                   glfwGetKey(window, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS;
-    ctxt.alt =
-        glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS;
+    ctxt.shift = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
+    ctxt.control =
+        glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS;
+    ctxt.alt = glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS;
 
     eventHandler->onMouseMove(xpos, ypos, ctxt);
     if (ctxt.isDragging) {
@@ -197,11 +198,13 @@ void Vulk::run() {
     cleanupVulkan();  // calls cleanup
 }
 
-void Vulk::createBuffer(VkDeviceSize size,
-                        VkBufferUsageFlags usage,
-                        VkMemoryPropertyFlags properties,
-                        VkBuffer& buffer,
-                        VkDeviceMemory& bufferMemory) {
+void Vulk::createBuffer(
+    VkDeviceSize size,
+    VkBufferUsageFlags usage,
+    VkMemoryPropertyFlags properties,
+    VkBuffer& buffer,
+    VkDeviceMemory& bufferMemory
+) {
     VkBufferCreateInfo bufferInfo{};
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     bufferInfo.size = size;
@@ -226,9 +229,10 @@ void Vulk::createBuffer(VkDeviceSize size,
 void Vulk::copyMemToBuffer(void const* srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
-    createBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer,
-                 stagingBufferMemory);
+    createBuffer(
+        size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        stagingBuffer, stagingBufferMemory
+    );
     void* data;
     vkMapMemory(device, stagingBufferMemory, 0, size, 0, &data);
     memcpy(data, srcBuffer, size);
@@ -275,9 +279,10 @@ void Vulk::copyBufferToMem(VkBuffer srcBuffer, void* dstBuffer, VkDeviceSize siz
     // Map the staging buffer memory and copy the data to the destination buffer in CPU memory
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
-    createBuffer(size, VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer,
-                 stagingBufferMemory);
+    createBuffer(
+        size, VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        stagingBuffer, stagingBufferMemory
+    );
     copyBuffer(srcBuffer, stagingBuffer, size);
     void* data;
     vkMapMemory(device, stagingBufferMemory, 0, size, 0, &data);
@@ -292,9 +297,10 @@ void Vulk::copyImageToMem(VkImage image, void* dstBuffer, uint32_t width, uint32
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
     VkDeviceSize size = width * height * dstEltSize;
-    createBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer,
-                 stagingBufferMemory);
+    createBuffer(
+        size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory
+    );
 
     VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
@@ -365,7 +371,7 @@ void Vulk::framebufferResizeCallback(GLFWwindow* window, int /*width*/, int /*he
 
 void Vulk::initVulkan() {
     createInstance();
-    setupDebugMessenger();
+    setupDebug();
     createSurface();
     pickPhysicalDevice();
     createLogicalDevice();
@@ -432,11 +438,13 @@ static const std::unordered_map<VkFormat, uint32_t> numChannelsFromFormat = {
     {VK_FORMAT_R8G8B8_SRGB, 3}, {VK_FORMAT_R8G8B8A8_UNORM, 4}, {VK_FORMAT_R8G8B8A8_SRGB, 4},
 };
 
-VkImage Vulk::createTextureImage(char const* texture_path,
-                                 VkDeviceMemory& textureImageMemory,
-                                 VkImage& textureImage,
-                                 bool isUNORM,
-                                 VkFormat& formatOut) {
+VkImage Vulk::createTextureImage(
+    char const* texture_path,
+    VkDeviceMemory& textureImageMemory,
+    VkImage& textureImage,
+    bool isUNORM,
+    VkFormat& formatOut
+) {
     int texWidth, texHeight, texChannels;
     stbi_uc* pixels = stbi_load(texture_path, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
     VkDeviceSize imageSize = texWidth * texHeight * 4;  // not texChannels because we always load 4 channels because
@@ -452,9 +460,10 @@ VkImage Vulk::createTextureImage(char const* texture_path,
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
-    createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer,
-                 stagingBufferMemory);
+    createBuffer(
+        imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        stagingBuffer, stagingBufferMemory
+    );
 
     void* data;
     vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
@@ -463,9 +472,10 @@ VkImage Vulk::createTextureImage(char const* texture_path,
 
     stbi_image_free(pixels);
 
-    createImage(texWidth, texHeight, format, VK_IMAGE_TILING_OPTIMAL,
-                VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                textureImage, textureImageMemory);
+    createImage(
+        texWidth, texHeight, format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory
+    );
 
     VkCommandBuffer commandBuffer = beginSingleTimeCommands();
     transitionImageLayout(commandBuffer, textureImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
@@ -474,8 +484,9 @@ VkImage Vulk::createTextureImage(char const* texture_path,
     copyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
 
     commandBuffer = beginSingleTimeCommands();
-    transitionImageLayout(commandBuffer, textureImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                          VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    transitionImageLayout(
+        commandBuffer, textureImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+    );
     endSingleTimeCommands(commandBuffer);
 
     vkDestroyBuffer(device, stagingBuffer, nullptr);
@@ -621,15 +632,13 @@ void Vulk::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& 
     createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
     createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
-                                 VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-                                 VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-    createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
-                             VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+                                 VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+    createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
                              VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
     createInfo.pfnUserCallback = debugCallback;
 }
 
-void Vulk::setupDebugMessenger() {
+void Vulk::setupDebug() {
     if (!enableValidationLayers)
         return;
 
@@ -637,6 +646,13 @@ void Vulk::setupDebugMessenger() {
     populateDebugMessengerCreateInfo(createInfo);
 
     VK_CALL(CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger));
+
+    pfnVkCmdBeginDebugUtilsLabelEXT =
+        reinterpret_cast<PFN_vkCmdBeginDebugUtilsLabelEXT>(vkGetInstanceProcAddr(instance, "vkCmdBeginDebugUtilsLabelEXT"));
+    pfnVkCmdEndDebugUtilsLabelEXT =
+        reinterpret_cast<PFN_vkCmdEndDebugUtilsLabelEXT>(vkGetInstanceProcAddr(instance, "vkCmdEndDebugUtilsLabelEXT"));
+    pfnVkCmdInsertDebugUtilsLabelEXT =
+        reinterpret_cast<PFN_vkCmdInsertDebugUtilsLabelEXT>(vkGetInstanceProcAddr(instance, "vkCmdInsertDebugUtilsLabelEXT"));
 }
 
 void Vulk::createSurface() {
@@ -842,8 +858,7 @@ void Vulk::createRenderPass() {
     dependency.dstSubpass = 0;
     dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
     dependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-    dependency.dstStageMask =
-        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+    dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
     dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
     std::array<VkAttachmentDescription, 2> attachments = {colorAttachment, depthAttachment};
@@ -904,15 +919,14 @@ void Vulk::createCommandBuffers() {
 void Vulk::createDepthResources() {
     VkFormat depthFormat = findDepthFormat();
 
-    createImage(swapChainExtent.width, swapChainExtent.height, depthFormat, VK_IMAGE_TILING_OPTIMAL,
-                VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImage,
-                depthImageMemory);
+    createImage(
+        swapChainExtent.width, swapChainExtent.height, depthFormat, VK_IMAGE_TILING_OPTIMAL,
+        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImage, depthImageMemory
+    );
     depthImageView = createImageView(depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
 }
 
-VkFormat Vulk::findSupportedFormat(const std::vector<VkFormat>& candidates,
-                                   VkImageTiling tiling,
-                                   VkFormatFeatureFlags features) {
+VkFormat Vulk::findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features) {
     for (VkFormat format : candidates) {
         VkFormatProperties props;
         vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &props);
@@ -935,16 +949,16 @@ VkFormat Vulk::findDepthFormat() {
             VK_FORMAT_D32_SFLOAT_S8_UINT,
             VK_FORMAT_D24_UNORM_S8_UINT,
         },
-        VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+        VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+    );
 }
 
 bool Vulk::hasStencilComponent(VkFormat format) {
     return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
 }
 
-std::unique_ptr<VkImageFormatProperties2> Vulk::getDeviceImageFormatProperties(VkFormat format,
-                                                                               VkImageTiling tiling,
-                                                                               VkImageUsageFlags usage) {
+std::unique_ptr<VkImageFormatProperties2>
+Vulk::getDeviceImageFormatProperties(VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage) {
     // VkImageFormatProperties2 ifp2 = {};
     std::unique_ptr<VkImageFormatProperties2> ifp2 = std::make_unique<VkImageFormatProperties2>();
     ifp2->sType = VK_STRUCTURE_TYPE_IMAGE_FORMAT_PROPERTIES_2;
@@ -961,14 +975,16 @@ std::unique_ptr<VkImageFormatProperties2> Vulk::getDeviceImageFormatProperties(V
     return nullptr;
 }
 
-void Vulk::createImage(uint32_t width,
-                       uint32_t height,
-                       VkFormat format,
-                       VkImageTiling tiling,
-                       VkImageUsageFlags usage,
-                       VkMemoryPropertyFlags properties,
-                       VkImage& image,
-                       VkDeviceMemory& imageMemory) {
+void Vulk::createImage(
+    uint32_t width,
+    uint32_t height,
+    VkFormat format,
+    VkImageTiling tiling,
+    VkImageUsageFlags usage,
+    VkMemoryPropertyFlags properties,
+    VkImage& image,
+    VkDeviceMemory& imageMemory
+) {
     VkImageCreateInfo imageInfo{};
     imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     imageInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -999,12 +1015,14 @@ void Vulk::createImage(uint32_t width,
     VK_CALL(vkBindImageMemory(device, image, imageMemory, 0));
 }
 
-void Vulk::transitionImageLayout(VkCommandBuffer commandBuffer,
-                                 VkImage image,
-                                 VkImageLayout oldLayout,
-                                 VkImageLayout newLayout,
-                                 uint32_t mipLevels,
-                                 uint32_t layerCount) {
+void Vulk::transitionImageLayout(
+    VkCommandBuffer commandBuffer,
+    VkImage image,
+    VkImageLayout oldLayout,
+    VkImageLayout newLayout,
+    uint32_t mipLevels,
+    uint32_t layerCount
+) {
     VkImageMemoryBarrier barrier{};
     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
     barrier.oldLayout = oldLayout;
@@ -1023,8 +1041,7 @@ void Vulk::transitionImageLayout(VkCommandBuffer commandBuffer,
         sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
         destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
         aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    } else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL &&
-               newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+    } else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
         barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
         barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
@@ -1047,8 +1064,7 @@ void Vulk::transitionImageLayout(VkCommandBuffer commandBuffer,
         sourceStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
         destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
         aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;  // | VK_IMAGE_ASPECT_STENCIL_BIT;
-    } else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL &&
-               newLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
+    } else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
         barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
         barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
@@ -1148,8 +1164,8 @@ void Vulk::render() {
         renderable->onBeforeRender();
 
     uint32_t imageIndex;
-    VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame],
-                                            VK_NULL_HANDLE, &imageIndex);
+    VkResult result =
+        vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
         recreateSwapChain();
@@ -1258,8 +1274,7 @@ VkExtent2D Vulk::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities) 
         glfwGetFramebufferSize(window, &windowDims.width, &windowDims.height);
         VkExtent2D actualExtent = {static_cast<uint32_t>(windowDims.width), static_cast<uint32_t>(windowDims.height)};
 
-        actualExtent.width =
-            std::clamp(actualExtent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
+        actualExtent.width = std::clamp(actualExtent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
         actualExtent.height =
             std::clamp(actualExtent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
 
@@ -1306,10 +1321,12 @@ bool Vulk::checkValidationLayerSupport() {
     return true;
 }
 
-VKAPI_ATTR VkBool32 VKAPI_CALL Vulk::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-                                                   VkDebugUtilsMessageTypeFlagsEXT messageType,
-                                                   const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-                                                   void* /*pUserData*/) {
+VKAPI_ATTR VkBool32 VKAPI_CALL Vulk::debugCallback(
+    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+    VkDebugUtilsMessageTypeFlagsEXT messageType,
+    const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+    void* /*pUserData*/
+) {
     char const* severity;
     if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
         severity = "ERROR: ";
@@ -1322,25 +1339,28 @@ VKAPI_ATTR VkBool32 VKAPI_CALL Vulk::debugCallback(VkDebugUtilsMessageSeverityFl
     } else {
         severity = "UNKNOWN: ";
     }
-    std::cerr << "Vulk: " << severity << std::hex << messageType << " message: " << pCallbackData->pMessage
-              << std::endl;
+    std::cerr << "Vulk: " << severity << std::hex << messageType << " message: " << pCallbackData->pMessage << std::endl;
     if ((messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
         // super annoying: I used vulkan configurator to see if it did anything
         // useful and now I can't figure out how to turn this off.
-        && 0 != strcmp(pCallbackData->pMessage,
-                       "loader_get_json: Failed to open JSON file C:\\Program "
-                       "Files\\IntelSWTools\\GPA\\Streams\\VkLayer_state_tracker."
-                       "json")) {
+        && 0 != strcmp(
+                    pCallbackData->pMessage,
+                    "loader_get_json: Failed to open JSON file C:\\Program "
+                    "Files\\IntelSWTools\\GPA\\Streams\\VkLayer_state_tracker."
+                    "json"
+                )) {
         VULK_THROW("validation layer error");
     }
 
     return VK_FALSE;
 }
 
-VkResult Vulk::CreateDebugUtilsMessengerEXT(VkInstance instance,
-                                            const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
-                                            const VkAllocationCallbacks* pAllocator,
-                                            VkDebugUtilsMessengerEXT* pDebugMessenger) {
+VkResult Vulk::CreateDebugUtilsMessengerEXT(
+    VkInstance instance,
+    const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
+    const VkAllocationCallbacks* pAllocator,
+    VkDebugUtilsMessengerEXT* pDebugMessenger
+) {
     auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
     if (func != nullptr) {
         return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
@@ -1349,9 +1369,11 @@ VkResult Vulk::CreateDebugUtilsMessengerEXT(VkInstance instance,
     }
 }
 
-void Vulk::DestroyDebugUtilsMessengerEXT(VkInstance instance,
-                                         VkDebugUtilsMessengerEXT debugMessenger,
-                                         const VkAllocationCallbacks* pAllocator) {
+void Vulk::DestroyDebugUtilsMessengerEXT(
+    VkInstance instance,
+    VkDebugUtilsMessengerEXT debugMessenger,
+    const VkAllocationCallbacks* pAllocator
+) {
     auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
     if (func != nullptr) {
         func(instance, debugMessenger, pAllocator);
@@ -1389,4 +1411,34 @@ void Vulk::debugPrintSupportedImageFormats() {
             logger->info("Unsupported image format: {}", name);
         }
     }
+}
+
+void Vulk::beginDebugLabel(VkCommandBuffer cmdbuffer, std::string caption, glm::vec4 color) {
+    if (!pfnVkCmdBeginDebugUtilsLabelEXT) {
+        return;
+    }
+    VkDebugUtilsLabelEXT labelInfo{};
+    labelInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
+    labelInfo.pLabelName = caption.c_str();
+    memcpy(labelInfo.color, &color[0], sizeof(float) * 4);
+    pfnVkCmdBeginDebugUtilsLabelEXT(cmdbuffer, &labelInfo);
+}
+
+void Vulk::endDebugLabel(VkCommandBuffer cmdbuffer) {
+    if (!pfnVkCmdEndDebugUtilsLabelEXT) {
+        return;
+    }
+    pfnVkCmdEndDebugUtilsLabelEXT(cmdbuffer);
+}
+
+void Vulk::insertDebugLabel(VkCommandBuffer cmdBuffer, std::string caption, glm::vec4 color) {
+    if (!pfnVkCmdInsertDebugUtilsLabelEXT) {
+        return;
+    }
+    VkDebugUtilsLabelEXT label = {
+        .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT,
+        .pLabelName = caption.c_str(),
+        .color = {color[0], color[1], color[2], color[3]},
+    };
+    pfnVkCmdInsertDebugUtilsLabelEXT(cmdBuffer, &label);
 }

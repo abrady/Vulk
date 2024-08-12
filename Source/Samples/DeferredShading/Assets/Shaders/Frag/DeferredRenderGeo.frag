@@ -41,6 +41,8 @@ layout(location = VulkGBufAttachment_Albedo) out vec4 outAlbedo;
 layout(location = VulkGBufAttachment_Normal) out vec2 outNormal;
 layout(location = VulkGBufAttachment_Depth) out float outDepth;
 layout(location = VulkGBufAttachment_Material) out vec4 outMaterial;
+layout (location = 4) out vec4 outColor;
+
 
 void main() {
     // Sample the textures
@@ -53,6 +55,10 @@ void main() {
     // Write to the G-Buffers
 	outAlbedo = vec4(albedo, 1.0);
 	outNormal = normalToHemioct(normal);
+    // TODO: linearize depth?
 	outDepth = gl_FragCoord.z;
 	outMaterial = vec4(metallic, roughness, ao, 0.0);
+
+	// Write color attachments to avoid undefined behaviour (validation error)
+	outColor = vec4(0.0);
 }
