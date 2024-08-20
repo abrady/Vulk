@@ -17,9 +17,10 @@ layout(location = VulkShaderLocation_TexCoord) out vec2 outTexCoord;
 // 2 -> 0,2 -> -1, 1
 // 3 -> 2,2 ->  1, 1
 // order: bl, br, tl, tr
-// vec2 pos = vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2) - 1.0;
+// vec2 pos = vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2) - 1.0; // or divide by 2 or shift right by 1...
 // boo, wrong winding order for Vulkan. I'm sure there's some fancy way to do this with bit manipulation, but 
-// I want this to be readable
+// I want this to be readable...
+// can I turn off backface fulling for a subpass?
 void main() {
     vec2 vertices[4] = vec2[](
         vec2(-1.0, -1.0), // bl

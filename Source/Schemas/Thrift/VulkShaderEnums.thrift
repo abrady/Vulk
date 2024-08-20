@@ -46,11 +46,12 @@ enum VulkShaderBinding {
 }
 
 // attachments are bound to framebuffers and typically written to by the fragment shader
-enum VulkGBufAttachment {
-    Albedo = 0,
-    Depth = 1,
+enum GBufAtmtIdx {
+    Color = 0, // the index of the swapchain image
+    Albedo = 1,
     Normal = 2,
     Material = 3,
+    Depth = 4,
 }
 
 enum VulkShaderUBOBinding {

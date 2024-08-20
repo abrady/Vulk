@@ -37,11 +37,11 @@ layout(location = VulkShaderLocation_Tangent) in vec3 inTangent;
 layout(location = VulkShaderLocation_Bitangent) in vec3 inBitangent;
 layout(location = VulkShaderLocation_TexCoord) in vec2 inTexCoord;
 
-layout(location = VulkGBufAttachment_Albedo) out vec4 outAlbedo;
-layout(location = VulkGBufAttachment_Normal) out vec2 outNormal;
-layout(location = VulkGBufAttachment_Depth) out float outDepth;
-layout(location = VulkGBufAttachment_Material) out vec4 outMaterial;
-layout (location = 4) out vec4 outColor;
+layout (location = GBufAtmtIdx_Color) out vec4 outColor;
+layout(location = GBufAtmtIdx_Albedo) out vec4 outAlbedo;
+layout(location = GBufAtmtIdx_Normal) out vec2 outNormal;
+layout(location = GBufAtmtIdx_Depth) out float outDepth;
+layout(location = GBufAtmtIdx_Material) out vec4 outMaterial;
 
 
 void main() {

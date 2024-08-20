@@ -23,6 +23,8 @@ file(GLOB MODULES "modules/*.ixx") # getting compiler errors doing this for now.
 #message(STATUS "MODULES: ${MODULES}")
 
 add_library(Vulk ${SOURCES} ${MODULES})
+add_dependencies(Vulk GenSchemaFiles)
+
 target_include_directories(Vulk PUBLIC include) # Make the include directory public
 target_include_directories(Vulk PRIVATE private)
 

@@ -58,9 +58,9 @@ void setMouseEventHandler(MouseEventHandler* handler);
 void clearMouseEventHandler();
 
 // TODO: constexpr?
-const int MAX_FRAMES_IN_FLIGHT = 2;
-const uint32_t WINDOW_WIDTH = 2880;
-const uint32_t WINDOW_HEIGHT = 1800;
+constexpr int MAX_FRAMES_IN_FLIGHT = 2;
+constexpr uint32_t WINDOW_WIDTH = 2880;
+constexpr uint32_t WINDOW_HEIGHT = 1800;
 
 class VulkRenderable {
    public:

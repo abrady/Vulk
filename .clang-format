@@ -10,6 +10,7 @@ ColumnLimit: 130
 UseTab: Never
 #AlignAfterOpenBracket(BAS_BlockIndent): true
 AlignAfterOpenBracket: BlockIndent
+AlignOperands: true
 #AlignConsecutiveAssignments : true
 # BinPackArguments: false
 

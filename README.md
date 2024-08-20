@@ -71,6 +71,13 @@ TODOS:
 * depth buffer: I think I should just use the depth buffer I'm already allocating in Vulk.
 * I also don't know if the 2 subpass needs the depth buffer?
 
+## 8/18/24
+
+finally getting around to running this thing. let's see what errors
+
+* let's just add the Color gbuf attachment and handle it special
+* we need to make the framebuffers...
+
 ## 8/11/24
 
 ### Summary of how multi-subpasses work
@@ -88,8 +95,97 @@ TODOS:
 
 Where we at:
 
-* I now understand that
-* attachments:
+#### Pipelines
+
+#### Shaders
+
+* Gbuf shaders: transform points and handle the fragments normally up to the point of writing to the gbufs:
+  * Position, Albedo, Normal, ...
+Shaders need special code to read in the attachment fragment values (subpassLoad)
+
+##### gbuf pass (pass 0)
+
+Vert Shader
+
+* This takes everything you're going to render just like normal forward rendering
+
+Frag Shader
+
+* in: the usual stuff - normal, pos, UV, color
+* out:
+
+  ```
+      layout (location = 0) out vec4 outColor;
+      layout (location = 1) out vec4 outPosition;
+      layout (location = 2) out vec4 outNormal;
+      layout (location = 3) out vec4 outAlbedo;
+  ```
+
+  * these correspond to the attachments in the renderpass/framebuffer
+
+* body:
+  * normalize the normal
+  * otherwise just pass the data through
+
+##### lighting/composition pass
+
+Vert shader
+
+The vert shader just needs to make 4 points at the 4 corners
+of the screen in device normal coords and pass it to the frag
+shader (as a triangle strip)
+
+* in: nothing! it uses the data from the attachments and uniforms (lights)
+* out: a pixel position.
+
+```
+
+  out gl_PerVertex
+  {
+    vec4 gl_Position;
+  };
+
+```
+
+* body
+
+```
+
+  outUV = vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2);
+  gl_Position = vec4(outUV * 2.0f - 1.0f, 0.0f, 1.0f);
+
+```
+
+Frag shader
+
+* in:
+  * the 2D UV encoded as a gl_Position,
+  * the gbuf attachments:
+
+  ```
+
+  layout (input_attachment_index = 0, binding = 0) uniform subpassInput inputPosition;
+  layout (input_attachment_index = 1, binding = 1) uniform subpassInput inputNormal;
+  layout (input_attachment_index = 2, binding = 2) uniform subpassInput inputAlbedo;
+
+  ```
+
+  * NOTE: input_attachment_index is where the index of the attachment in the renderpass, binding is your usual shader binding. likely different because you might need to put these somehwere else in the binding.
+* out:
+  * color: `layout (location = 0) out vec4 outColor;`
+* body:
+
+  * this gets the gbuf values:
+
+  ```
+
+    vec3 fragPos = subpassLoad(inputPosition).rgb;
+    vec3 normal = subpassLoad(inputNormal).rgb;
+    vec4 albedo = subpassLoad(inputAlbedo);
+
+  ```
+
+  * then it does the lighting calculations with the data and outputs the color
 
 ## 8/1
 
