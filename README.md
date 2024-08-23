@@ -78,6 +78,14 @@ finally getting around to running this thing. let's see what errors
 * let's just add the Color gbuf attachment and handle it special
 * we need to make the framebuffers...
 
+## 8/22
+
+let's see how far we get. I'd like to be confident the renderpass can be made properly, then we'll check the other stuff - DONE!
+
+TODO:
+
+* I'm definitely not passing in the inputs properly: VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT
+
 ## 8/11/24
 
 ### Summary of how multi-subpasses work

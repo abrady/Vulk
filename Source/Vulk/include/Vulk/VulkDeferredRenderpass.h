@@ -18,9 +18,9 @@ constexpr uint32_t NumGeoBufs = TEnumTraits<vulk::cpp2::GBufAtmtIdx>::size;
 class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
     inline static std::shared_ptr<spdlog::logger> logger = VulkLogger::CreateLogger("VulkDeferredRenderpass");
 
-    using GBufAtmtIdx = vulk::cpp2::GBufAtmtIdx;
+    using GBufAtmtIdx              = vulk::cpp2::GBufAtmtIdx;
     using VulkShaderTextureBinding = vulk::cpp2::VulkShaderTextureBinding;
-    using VulkShaderUBOBinding = vulk::cpp2::VulkShaderUBOBinding;
+    using VulkShaderUBOBinding     = vulk::cpp2::VulkShaderUBOBinding;
 
     class VulkDeferredImage : public ClassNonCopyableNonMovable {
        public:
@@ -36,15 +36,25 @@ class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
             // VK_IMAGE_USAGE_SAMPLED_BIT so that we can sample from the image in the shader
             if (isDepth) {
                 vk.createImage(
-                    vk.swapChainExtent.width, vk.swapChainExtent.height, format, VK_IMAGE_TILING_OPTIMAL,
-                    VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                    image, imageMemory
+                    vk.swapChainExtent.width,
+                    vk.swapChainExtent.height,
+                    format,
+                    VK_IMAGE_TILING_OPTIMAL,
+                    VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                    image,
+                    imageMemory
                 );
                 imageView = vk.createImageView(image, format, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
             } else {
                 vk.createImage(
-                    vk.swapChainExtent.width, vk.swapChainExtent.height, format, VK_IMAGE_TILING_OPTIMAL,
-                    VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image,
+                    vk.swapChainExtent.width,
+                    vk.swapChainExtent.height,
+                    format,
+                    VK_IMAGE_TILING_OPTIMAL,
+                    VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                    image,
                     imageMemory
                 );
                 imageView = vk.createImageView(image, format, VK_IMAGE_ASPECT_COLOR_BIT);
@@ -72,11 +82,12 @@ class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
                 {GBufAtmtIdx::Material, VK_FORMAT_R8G8B8A8_UNORM},
             };
             for (auto& [attachment, format] : bindings) {
-                bool isDepth = attachment == GBufAtmtIdx::Depth;
-                gbufs[attachment] = std::make_unique<VulkDeferredImage>(vk, format, isDepth);
+                bool isDepth               = attachment == GBufAtmtIdx::Depth;
+                gbufs[attachment]          = std::make_unique<VulkDeferredImage>(vk, format, isDepth);
                 gbufViews[(int)attachment] = gbufs[attachment]->view->imageView;
                 logger->debug(
-                    "Created GBuf attachment: {} : image {}", TEnumTraits<GBufAtmtIdx>::findName(attachment),
+                    "Created GBuf attachment: {} : image {}",
+                    TEnumTraits<GBufAtmtIdx>::findName(attachment),
                     (void*)gbufs[attachment]->view->image
                 );
             }
@@ -100,29 +111,19 @@ class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
 
         // Attachments: We need the gbufs and the swapchain image as attachments to the renderpass
         // --------------------------------------------------------------------------
-
         std::vector<VkAttachmentDescription> attachments((uint32_t)TEnumTraits<GBufAtmtIdx>::size);
-        attachments[(int)GBufAtmtIdx::Color].format = geoBuf->gbufs.at(GBufAtmtIdx::Depth)->format;
-        attachments[(int)GBufAtmtIdx::Color].format = vk.swapChainImageFormat;
-        attachments[(int)GBufAtmtIdx::Color].samples = VK_SAMPLE_COUNT_1_BIT;
-        attachments[(int)GBufAtmtIdx::Color].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        attachments[(int)GBufAtmtIdx::Color].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        attachments[(int)GBufAtmtIdx::Color].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-        attachments[(int)GBufAtmtIdx::Color].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        attachments[(int)GBufAtmtIdx::Color].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        attachments[(int)GBufAtmtIdx::Color].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-        for (const GBufAtmtIdx a : geoBuf->gbufs | std::views::keys) {
-            VULK_ASSERT(a != GBufAtmtIdx::Color);
-            bool isDepth = a == GBufAtmtIdx::Depth;
-            size_t i = (size_t)a;
-            attachments[i].format = geoBuf->gbufs.at(a)->format;
-            attachments[i].samples = VK_SAMPLE_COUNT_1_BIT;
-            attachments[i].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-            attachments[i].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;  // VK_ATTACHMENT_STORE_OP_STORE;
-            attachments[i].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        for (const GBufAtmtIdx atmt : geoBuf->gbufs | std::views::keys) {
+            VULK_ASSERT(atmt != GBufAtmtIdx::Color);
+            bool isDepth                  = atmt == GBufAtmtIdx::Depth;
+            size_t i                      = (size_t)atmt;
+            attachments[i].format         = geoBuf->gbufs.at(atmt)->format;
+            attachments[i].samples        = VK_SAMPLE_COUNT_1_BIT;
+            attachments[i].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
+            attachments[i].storeOp        = VK_ATTACHMENT_STORE_OP_DONT_CARE;  // VK_ATTACHMENT_STORE_OP_STORE;
+            attachments[i].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
             attachments[i].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-            attachments[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+            attachments[i].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
             // these aren't actually read from the shaders as textures, so we don't need to make them shader read only
             attachments[i].finalLayout =
                 isDepth ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -131,23 +132,23 @@ class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
 
         // we also need the swapchain image
         VkAttachmentDescription colorAttachment{
-            .format = vk.swapChainImageFormat,
-            .samples = VK_SAMPLE_COUNT_1_BIT,
-            .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-            .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+            .format         = vk.swapChainImageFormat,
+            .samples        = VK_SAMPLE_COUNT_1_BIT,
+            .loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR,
+            .storeOp        = VK_ATTACHMENT_STORE_OP_STORE,
+            .stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE,  // VK_ATTACHMENT_LOAD_OP_CLEAR, why not this?
             .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-            .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+            .initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED,
+            .finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
         };
         attachments[(int)GBufAtmtIdx::Color] = colorAttachment;
 
-        // ============================== Attachment References ==============================
+        // ============================== Subpass Descriptions ==============================
 
         // used in both subpasses
         VkAttachmentReference depthRef = {
             .attachment = (uint32_t)GBufAtmtIdx::Depth,
-            .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+            .layout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
         };
 
         // ------------------------------ First Subpass: Geometry Pass ------------------------------
@@ -155,19 +156,19 @@ class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
         std::vector<VkAttachmentReference> geoAttachmentRefs;
         for (uint32_t i = 0; i < attachments.size(); i++) {
             if (i == (uint32_t)GBufAtmtIdx::Depth) {
-                continue;
+                continue;  // passed separately
             }
 
             geoAttachmentRefs.push_back({
                 .attachment = i,
-                .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                .layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
             });
         }
 
         VkSubpassDescription geoSubpassDescription = {
-            .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
-            .colorAttachmentCount = (uint32_t)geoAttachmentRefs.size(),
-            .pColorAttachments = geoAttachmentRefs.data(),
+            .pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS,
+            .colorAttachmentCount    = (uint32_t)geoAttachmentRefs.size(),
+            .pColorAttachments       = geoAttachmentRefs.data(),
             .pDepthStencilAttachment = &depthRef,
         };
 
@@ -176,31 +177,31 @@ class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
         // we still need this as an attachment reference
         VkAttachmentReference colorAttachmentRef{
             .attachment = (uint32_t)GBufAtmtIdx::Color,
-            .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            .layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
         };
 
         // but the gbufs are now input attachments
         std::vector<VkAttachmentReference> lightingAttachments{{
             {
                 .attachment = (uint32_t)GBufAtmtIdx::Albedo,
-                .layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                .layout     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
             },
             {
                 .attachment = (uint32_t)GBufAtmtIdx::Normal,
-                .layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                .layout     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
             },
             {
                 .attachment = (uint32_t)GBufAtmtIdx::Material,
-                .layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                .layout     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
             },
         }};
 
         VkSubpassDescription lightingSubpassDescription{
-            .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
-            .inputAttachmentCount = (uint32_t)lightingAttachments.size(),
-            .pInputAttachments = lightingAttachments.data(),
-            .colorAttachmentCount = 1,
-            .pColorAttachments = &colorAttachmentRef,
+            .pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS,
+            .inputAttachmentCount    = (uint32_t)lightingAttachments.size(),
+            .pInputAttachments       = lightingAttachments.data(),
+            .colorAttachmentCount    = 1,
+            .pColorAttachments       = &colorAttachmentRef,
             .pDepthStencilAttachment = &depthRef,
         };
 
@@ -208,29 +209,29 @@ class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
 
         std::array<VkSubpassDependency, 4> dependencies;
         // This makes sure that writes to the depth image are done before we try to write to it again
-        dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-        dependencies[0].dstSubpass = 0;
-        dependencies[0].srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-        dependencies[0].dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-        dependencies[0].srcAccessMask = 0;
-        dependencies[0].dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
+        dependencies[0].dstSubpass      = 0;
+        dependencies[0].srcStageMask    = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+        dependencies[0].dstStageMask    = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+        dependencies[0].srcAccessMask   = 0;
+        dependencies[0].dstAccessMask   = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
         dependencies[0].dependencyFlags = 0;
 
-        dependencies[1].srcSubpass = VK_SUBPASS_EXTERNAL;
-        dependencies[1].dstSubpass = 0;
-        dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        dependencies[1].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        dependencies[1].srcAccessMask = 0;
-        dependencies[1].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        dependencies[1].srcSubpass      = VK_SUBPASS_EXTERNAL;
+        dependencies[1].dstSubpass      = 0;
+        dependencies[1].srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        dependencies[1].dstStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        dependencies[1].srcAccessMask   = 0;
+        dependencies[1].dstAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
         dependencies[1].dependencyFlags = 0;
 
         // This dependency transitions the input attachment from color attachment to input attachment read
-        dependencies[2].srcSubpass = 0;
-        dependencies[2].dstSubpass = 1;
-        dependencies[2].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        dependencies[2].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-        dependencies[2].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-        dependencies[2].dstAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
+        dependencies[2].srcSubpass      = 0;
+        dependencies[2].dstSubpass      = 1;
+        dependencies[2].srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        dependencies[2].dstStageMask    = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        dependencies[2].srcAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        dependencies[2].dstAccessMask   = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
         dependencies[2].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
         // for when we add a transparent subpass
@@ -242,31 +243,31 @@ class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
         // dependencies[3].dstAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
         // dependencies[3].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-        dependencies[3].srcSubpass = 1;
-        dependencies[3].dstSubpass = VK_SUBPASS_EXTERNAL;
-        dependencies[3].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        dependencies[3].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-        dependencies[3].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-        dependencies[3].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+        dependencies[3].srcSubpass      = 1;
+        dependencies[3].dstSubpass      = VK_SUBPASS_EXTERNAL;
+        dependencies[3].srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        dependencies[3].dstStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+        dependencies[3].srcAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        dependencies[3].dstAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
         dependencies[3].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
         // ------------------------------ Create Render Pass ------------------------------
         std::array<VkSubpassDescription, 2> subpassDescriptions{geoSubpassDescription, lightingSubpassDescription};
 
         VkRenderPassCreateInfo renderPassInfo = {
-            .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+            .sType           = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
             .attachmentCount = static_cast<uint32_t>(attachments.size()),
-            .pAttachments = attachments.data(),
-            .subpassCount = static_cast<uint32_t>(subpassDescriptions.size()),
-            .pSubpasses = subpassDescriptions.data(),
+            .pAttachments    = attachments.data(),
+            .subpassCount    = static_cast<uint32_t>(subpassDescriptions.size()),
+            .pSubpasses      = subpassDescriptions.data(),
             .dependencyCount = static_cast<uint32_t>(dependencies.size()),
-            .pDependencies = dependencies.data(),
+            .pDependencies   = dependencies.data(),
         };
         VK_CALL(vkCreateRenderPass(vk.device, &renderPassInfo, nullptr, &renderPass));
 
         // ------------------------------ Create Framebuffers ------------------------------
 
-        deferredGeoPipeline = resources.loadPipeline(renderPass, vk.swapChainExtent, "DeferredRenderGeo");
+        deferredGeoPipeline      = resources.loadPipeline(renderPass, vk.swapChainExtent, "DeferredRenderGeo");
         deferredLightingPipeline = resources.loadPipeline(renderPass, vk.swapChainExtent, "DeferredRenderLighting");
 
         VulkDescriptorSetBuilder dsBuilder(vk);
@@ -288,8 +289,8 @@ class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
         clearValues[(int)GBufAtmtIdx::Depth].depthStencil = {1.0f, 0};
 
         VkRenderPassBeginInfo renderPassInfo{
-            .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-            .renderPass = renderPass,
+            .sType       = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+            .renderPass  = renderPass,
             .framebuffer = frameBuffers[vk.currentFrame],
             .renderArea =
                 {
@@ -297,15 +298,15 @@ class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
                     .extent = vk.swapChainExtent,
                 },
             .clearValueCount = static_cast<uint32_t>(clearValues.size()),
-            .pClearValues = clearValues.data()
+            .pClearValues    = clearValues.data()
         };
 
         vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
         VkViewport viewport{
-            .x = 0.0f,
-            .y = 0.0f,
-            .width = (float)vk.swapChainExtent.width,
-            .height = (float)vk.swapChainExtent.height,
+            .x        = 0.0f,
+            .y        = 0.0f,
+            .width    = (float)vk.swapChainExtent.width,
+            .height   = (float)vk.swapChainExtent.height,
             .minDepth = 0.0f,
             .maxDepth = 1.0f,
         };
@@ -325,8 +326,14 @@ class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
         vkCmdNextSubpass(commandBuffer, VK_SUBPASS_CONTENTS_INLINE);
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, deferredLightingPipeline->pipeline);
         vkCmdBindDescriptorSets(
-            commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, deferredLightingPipeline->pipelineLayout, 0, 1,
-            &deferredLightingDescriptorSetInfo->descriptorSets[vk.currentFrame]->descriptorSet, 0, nullptr
+            commandBuffer,
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            deferredLightingPipeline->pipelineLayout,
+            0,
+            1,
+            &deferredLightingDescriptorSetInfo->descriptorSets[vk.currentFrame]->descriptorSet,
+            0,
+            nullptr
         );
         vkCmdDraw(commandBuffer, 4, 1, 0, 0);  // the vert shader handles this, just need 4 verts to draw a quad
         vkCmdEndRenderPass(commandBuffer);
