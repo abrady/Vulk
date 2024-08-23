@@ -1159,15 +1159,15 @@ where the hell was I?
 
 * EnumLookup\<VulkShaderTextureBinding\>::getStrFromEnum(17) is failing
 * looks like VulkShaderTextureBinding doesn't have 17
-* 17 maps to VulkShaderBinding_AmbientOcclusionSampler - just need to add these
+* 17 maps to Binding_AmbientOcclusionSampler - just need to add these
 
 Now I'm getting 0 in the imageSamplers for the fragment shader in the descriptor set def.
 
 * texture, displacement, roughness, 0, normal, metallic.
 * why that 0? and where are these coming from? these are the inferred image samplers from PBR.frag
-* VulkShaderBinding_AmbientOcclusionSampler must be the 0 by elimination.
-  * const int VulkShaderBinding_AmbientOcclusionSampler = 17; in the shader
-  * const int VulkShaderBinding_= 16; // what is this in VulkShaderEnums_generated.glsl? it doesn't exist in the .h
+* Binding_AmbientOcclusionSampler must be the 0 by elimination.
+  * const int Binding_AmbientOcclusionSampler = 17; in the shader
+  * const int Binding_= 16; // what is this in VulkShaderEnums_generated.glsl? it doesn't exist in the .h
   
 Okay, more flatbuf funniness: if you have gaps in the numbering it can get messed up.
 

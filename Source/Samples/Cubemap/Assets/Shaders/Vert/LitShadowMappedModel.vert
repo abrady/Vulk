@@ -6,7 +6,7 @@
 
 XFORMS_UBO(xform);
 MODELXFORM_UBO(modelUBO);
-layout(binding = VulkShaderBinding_LightViewProjUBO) uniform LightData {
+layout(binding = Binding_LightViewProjUBO) uniform LightData {
     mat4 viewProjMatrix;
 } light;
 

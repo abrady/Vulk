@@ -11,8 +11,8 @@
 
 static std::shared_ptr<spdlog::logger> logger = VulkLogger::CreateLogger("BuildProject");
 
-namespace at = apache::thrift;
-namespace bp = boost::process;
+namespace at  = apache::thrift;
+namespace bp  = boost::process;
 namespace vk2 = vulk::cpp2;
 
 static int runProcess(const string cmd, std::string& out) {
@@ -61,16 +61,16 @@ void glslShaderEnumsGenerator(fs::path outFile, bool verbose) {
     logger->trace("// UBO Bindings");
     for (size_t i = 0; i < at::TEnumDataStorage<vk2::VulkShaderBinding>::values.size(); ++i) {
         auto value = at::TEnumDataStorage<vk2::VulkShaderBinding>::names[i];
-        auto key = at::TEnumDataStorage<vk2::VulkShaderBinding>::values[i];
-        out << "const int VulkShaderBinding_" << value << " = " << (int)key << ";\n";
-        logger->trace("const int VulkShaderBinding_{} = {};", value, (int)key);
+        auto key   = at::TEnumDataStorage<vk2::VulkShaderBinding>::values[i];
+        out << "const int Binding_" << value << " = " << (int)key << ";\n";
+        logger->trace("const int Binding_{} = {};", value, (int)key);
     }
 
     // Write the layout locations
     out << "\n// Shader Input Locations\n";
     for (size_t i = 0; i < at::TEnumDataStorage<vk2::VulkShaderLocation>::values.size(); ++i) {
         auto value = at::TEnumDataStorage<vk2::VulkShaderLocation>::names[i];
-        auto key = at::TEnumDataStorage<vk2::VulkShaderLocation>::values[i];
+        auto key   = at::TEnumDataStorage<vk2::VulkShaderLocation>::values[i];
         out << "const int VulkShaderLocation_" << value << " = " << (int)key << ";\n";
         logger->trace("const int VulkShaderLocation_{} = {};", value, (int)key);
     }
@@ -80,7 +80,7 @@ void glslShaderEnumsGenerator(fs::path outFile, bool verbose) {
     out << "\n// Shader Input Locations\n";
     for (size_t i = 0; i < at::TEnumDataStorage<vk2::VulkLights>::values.size(); ++i) {
         auto value = at::TEnumDataStorage<vk2::VulkLights>::names[i];
-        auto key = at::TEnumDataStorage<vk2::VulkLights>::values[i];
+        auto key   = at::TEnumDataStorage<vk2::VulkLights>::values[i];
         out << "const int VulkLights_" << value << " = " << (int)key << ";\n";
         logger->trace("const int VulkLights_{} = {};", value, (int)key);
     }
@@ -89,7 +89,7 @@ void glslShaderEnumsGenerator(fs::path outFile, bool verbose) {
     out << "\n// GBuffer Attachments\n";
     for (size_t i = 0; i < at::TEnumDataStorage<vk2::GBufAtmtIdx>::values.size(); ++i) {
         auto value = at::TEnumDataStorage<vk2::GBufAtmtIdx>::names[i];
-        auto key = at::TEnumDataStorage<vk2::GBufAtmtIdx>::values[i];
+        auto key   = at::TEnumDataStorage<vk2::GBufAtmtIdx>::values[i];
         out << "const int GBufAtmtIdx_" << value << " = " << (int)key << ";\n";
         logger->trace("const int GBufAtmtIdx_{} = {};", value, (int)key);
     }
@@ -122,7 +122,7 @@ void findSrcMetadata(const fs::path path, SrcMetadata& metadata) {
             continue;
         }
         string stem = entry.path().stem().string();
-        string ext = entry.path().stem().extension().string() +
+        string ext  = entry.path().stem().extension().string() +
                      entry.path().extension().string();  // get 'bar' from foo.bar and 'bar.bin' from foo.bar.bin
         if (ext == ".glsl") {
             VULK_ASSERT(!metadata.shaderIncludes.contains(stem), "Duplicate shader include found: {}", stem);
@@ -333,7 +333,7 @@ void buildProjectDef(const fs::path project_file_path, fs::path buildDir) {
         readDefFromFile(scenePath.string(), projectOut.scenes_ref()[sceneName]);
         auto& scene = projectOut.scenes_ref()[sceneName];
         for (auto& actorDef : scene.actors_ref().value()) {
-            std::string modelName = actorDef.get_modelName();
+            std::string modelName   = actorDef.get_modelName();
             vk2::ModelDef* modelDef = nullptr;
             if (modelName != "") {
                 if (!projectOut.get_models().contains(modelName)) {
@@ -375,7 +375,7 @@ void buildProjectDef(const fs::path project_file_path, fs::path buildDir) {
         VULK_THROW("No scenes found in {}", project_file_path.string());
     }
 
-    projectOut.name_ref() = projectIn.get_name();
+    projectOut.name_ref()          = projectIn.get_name();
     projectOut.startingScene_ref() = projectIn.get_startingScene();
     writeDefToFile((buildDir / project_file_path.filename()).string(), projectOut);
 }

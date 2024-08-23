@@ -3,8 +3,8 @@
 #include "common.glsl"
 #include "lighting.frag"
 
-layout(binding = VulkShaderBinding_TextureSampler) uniform sampler2D texSampler;
-layout(binding = VulkShaderBinding_NormalSampler) uniform sampler2D normSampler;
+layout(binding = Binding_TextureSampler) uniform sampler2D texSampler;
+layout(binding = Binding_NormalSampler) uniform sampler2D normSampler;
 
 EYEPOS_UBO(eyePosUBO);
 LIGHTS_UBO(lightBuf);

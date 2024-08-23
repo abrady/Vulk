@@ -3,20 +3,20 @@
 #include "common.glsl"
 #include "lighting.frag"
 
-layout(binding = VulkShaderBinding_TextureSampler) uniform sampler2D albedoMap;
-layout(binding = VulkShaderBinding_DisplacementSampler) uniform sampler2D displacementMap; // TODO: Implement displacement mapping
-layout(binding = VulkShaderBinding_RoughnessSampler) uniform sampler2D roughnessMap;
-layout(binding = VulkShaderBinding_AmbientOcclusionSampler) uniform sampler2D aoMap; //TODO: double check we're sampling this correctly
-layout(binding = VulkShaderBinding_NormalSampler) uniform sampler2D normalMap;
-layout(binding = VulkShaderBinding_MetallicSampler) uniform sampler2D metallicMap;
+layout(binding = Binding_TextureSampler) uniform sampler2D albedoMap;
+layout(binding = Binding_DisplacementSampler) uniform sampler2D displacementMap; // TODO: Implement displacement mapping
+layout(binding = Binding_RoughnessSampler) uniform sampler2D roughnessMap;
+layout(binding = Binding_AmbientOcclusionSampler) uniform sampler2D aoMap; //TODO: double check we're sampling this correctly
+layout(binding = Binding_NormalSampler) uniform sampler2D normalMap;
+layout(binding = Binding_MetallicSampler) uniform sampler2D metallicMap;
 
 EYEPOS_UBO(eyePosUBO);
 
-layout(binding = VulkShaderBinding_Lights) uniform LightBuf { 
+layout(binding = Binding_Lights) uniform LightBuf { 
     PointLight lights[VulkLights_NumLights]; 
 } lightsBuf;
 
-layout (std140, binding = VulkShaderBinding_PBRDebugUBO) uniform PBRDebug {
+layout (std140, binding = Binding_PBRDebugUBO) uniform PBRDebug {
     uint isMetallic;      // 4 bytes
     float roughness;      // 4 bytes, follows directly because it's also 4-byte aligned
     bool diffuse;         // 4 bytes in GLSL

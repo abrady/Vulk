@@ -40,35 +40,35 @@ vec3 calcTBNNormal(sampler2D normSampler, vec2 inTexCoord, vec3 normWorld, vec3 
 }
 
 #define XFORMS_UBO(xformUBO)  \
-layout(binding = VulkShaderBinding_XformsUBO) uniform UniformBufferObject { \
+layout(binding = Binding_XformsUBO) uniform UniformBufferObject { \
     mat4 world; \
     mat4 view; \
     mat4 proj; \
 } xformUBO
 
 #define MODELXFORM_UBO(modelUBO)  \
-layout(binding = VulkShaderBinding_ModelXform) uniform ModelXformUBO { \
+layout(binding = Binding_ModelXform) uniform ModelXformUBO { \
     mat4 xform; \
 } modelUBO
 
 #define EYEPOS_UBO(eyePosUBO)  \
-layout(binding = VulkShaderBinding_EyePos) uniform EyePos { \
+layout(binding = Binding_EyePos) uniform EyePos { \
     vec3 eyePos; \
 } eyePosUBO
 
 #define LIGHTS_UBO(lightUBO)  \
-layout(binding = VulkShaderBinding_Lights) uniform LightBuf { \
+layout(binding = Binding_Lights) uniform LightBuf { \
     PointLight light; \
 } lightBuf
 
 #define DEBUGNORMALS_UBO(debugNormalsUBO)  \
-layout(binding = VulkShaderBinding_DebugNormalsUBO) uniform DebugNormalsUBO { \
+layout(binding = Binding_DebugNormalsUBO) uniform DebugNormalsUBO { \
     float len;         \
     bool useModel;     \
 } debugNormalsUBO
 
 #define MATERIAL_UBO(materialUBO)  \
-layout(binding = VulkShaderBinding_MaterialUBO) uniform MaterialBuf { \
+layout(binding = Binding_MaterialUBO) uniform MaterialBuf { \
     Material material; \
 } materialBuf
 

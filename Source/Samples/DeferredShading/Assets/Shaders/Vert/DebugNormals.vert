@@ -12,12 +12,12 @@ layout(push_constant) uniform pickPushConstants {
 } pc;
 
 
-layout(binding = VulkShaderBinding_DebugNormalsUBO) uniform DebugNormalsUBO {
+layout(binding = Binding_DebugNormalsUBO) uniform DebugNormalsUBO {
     float len;        
     bool useModel;       
 } debugNormalsUBO;
 
-layout(binding = VulkShaderBinding_NormalSampler) uniform sampler2D normSampler;
+layout(binding = Binding_NormalSampler) uniform sampler2D normSampler;
 
 VERTEX_IN(inPosition, inNormal, inTangent, inTexCoord);
 

@@ -8,11 +8,11 @@
 XFORMS_UBO(xformUBO);
 MODELXFORM_UBO(modelUBO);
 
-layout(binding = VulkShaderBinding_DebugTangentsUBO) uniform DebugTangentsUBO {
+layout(binding = Binding_DebugTangentsUBO) uniform DebugTangentsUBO {
     float len;        
 } debugTangentsUBO;
 
-layout(binding = VulkShaderBinding_NormalSampler) uniform sampler2D normSampler;
+layout(binding = Binding_NormalSampler) uniform sampler2D normSampler;
 
 VERTEX_IN(inPosition, inNormal, inTangent, inTexCoord);
 

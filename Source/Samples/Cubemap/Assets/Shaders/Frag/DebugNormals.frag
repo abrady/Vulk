@@ -2,7 +2,7 @@
 
 #include "common.glsl"
 
-layout(binding = VulkShaderBinding_EyePos) uniform EyePos {
+layout(binding = Binding_EyePos) uniform EyePos {
     vec3 eyePos;
 } eyePosUBO;
 

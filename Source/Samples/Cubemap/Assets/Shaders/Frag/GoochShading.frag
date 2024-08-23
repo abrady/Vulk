@@ -6,17 +6,17 @@
 XFORMS_UBO(xformUBO);
 MODELXFORM_UBO(modelXformUBO);
 
-layout(binding = VulkShaderBinding_NormalSampler) uniform sampler2D normSampler;
+layout(binding = Binding_NormalSampler) uniform sampler2D normSampler;
 
-layout(binding = VulkShaderBinding_EyePos) uniform EyePos {
+layout(binding = Binding_EyePos) uniform EyePos {
     vec3 eyePos;
 } eyePosUBO;
 
-layout(binding = VulkShaderBinding_Lights) uniform LightBuf {
+layout(binding = Binding_Lights) uniform LightBuf {
     PointLight light;
 } lightBuf;
 
-layout(binding = VulkShaderBinding_MaterialUBO) uniform MaterialBuf {
+layout(binding = Binding_MaterialUBO) uniform MaterialBuf {
     Material material;
 } materialBuf;
 
