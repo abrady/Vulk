@@ -61,6 +61,10 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 ![](Assets/Screenshots/renderpass_components.png)
 
+## DescriptorSet and related
+
+![](Assets/Screenshots/descriptorsets.png)
+
 # Log
 
 # Deferred Rendering
@@ -71,20 +75,30 @@ TODOS:
 * depth buffer: I think I should just use the depth buffer I'm already allocating in Vulk.
 * I also don't know if the 2 subpass needs the depth buffer?
 
+## 8/22 create the pipelines
+
+* these pipelines are a little special. I wonder if I can't just make them manually?
+* what do we want pipeline-wise:
+  * a gbuf pipeline
+  * a lighting pipeline
+* the gbuf pipeline
+  * has our gbuf shaders
+  * the descriptor set layouts for gbuf:
+    * our uniforms
+  * all the other rendering params
+
+* I'm definitely not passing in the inputs properly: VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT
+
+## 8/22 create renderpass
+
+let's see how far we get. I'd like to be confident the renderpass can be made properly, then we'll check the other stuff - DONE!
+
 ## 8/18/24
 
 finally getting around to running this thing. let's see what errors
 
 * let's just add the Color gbuf attachment and handle it special
 * we need to make the framebuffers...
-
-## 8/22
-
-let's see how far we get. I'd like to be confident the renderpass can be made properly, then we'll check the other stuff - DONE!
-
-TODO:
-
-* I'm definitely not passing in the inputs properly: VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT
 
 ## 8/11/24
 

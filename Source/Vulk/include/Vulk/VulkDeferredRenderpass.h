@@ -269,18 +269,6 @@ class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
 
         deferredGeoPipeline      = resources.loadPipeline(renderPass, vk.swapChainExtent, "DeferredRenderGeo");
         deferredLightingPipeline = resources.loadPipeline(renderPass, vk.swapChainExtent, "DeferredRenderLighting");
-
-        VulkDescriptorSetBuilder dsBuilder(vk);
-        // this makes sure our .frag file matches what we do here
-        dsBuilder.setDescriptorSetLayout(deferredLightingPipeline->descriptorSetLayout);
-        dsBuilder.addFrameUBOs(scene->sceneUBOs.eyePos, VK_SHADER_STAGE_FRAGMENT_BIT, VulkShaderUBOBinding::EyePos);
-        dsBuilder.addUniformBuffer(scene->sceneUBOs.pointLight, VK_SHADER_STAGE_FRAGMENT_BIT, VulkShaderUBOBinding::Lights);
-        if (scene->pbrDebugUBO == nullptr)
-            scene->pbrDebugUBO = std::make_shared<VulkUniformBuffer<VulkPBRDebugUBO>>(vk);
-        dsBuilder.addUniformBuffer(*scene->pbrDebugUBO, VK_SHADER_STAGE_FRAGMENT_BIT, VulkShaderUBOBinding::PBRDebugUBO);
-        if (scene->invViewProjUBO == nullptr)
-            scene->invViewProjUBO = std::make_shared<VulkUniformBuffer<glm::mat4>>(vk);
-        deferredLightingDescriptorSetInfo = dsBuilder.build();
     }
 
     void beginRenderToGBufs(VkCommandBuffer commandBuffer) {
