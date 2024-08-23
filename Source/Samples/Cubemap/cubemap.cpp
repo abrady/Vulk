@@ -1,9 +1,9 @@
+#include <memory>
 #include "Vulk/VulkPCH.h"
 #include "imgui.h"
-#include <memory>
 
 class World final : public VulkRenderable {
-public:
+   public:
     Vulk& vk;
     std::shared_ptr<VulkScene> scene;
 
@@ -26,41 +26,40 @@ public:
     std::shared_ptr<VulkPipeline> axesPipeline;
 
     struct Debug {
-        bool renderNormals = false;
-        bool renderTangents = false;
+        bool renderNormals   = false;
+        bool renderTangents  = false;
         bool renderWireframe = false;
     } debug;
 
     std::shared_ptr<spdlog::logger> logger = VulkLogger::CreateLogger("World");
 
-public:
-    World(Vulk& vk, std::string projFile)
-        : vk(vk) {
+   public:
+    World(Vulk& vk, std::string projFile) : vk(vk) {
         shadowMapRenderpass = std::make_shared<VulkDepthRenderpass>(vk);
-        shadowMapFence = std::make_shared<VulkFence>(vk);
+        shadowMapFence      = std::make_shared<VulkFence>(vk);
 
         vulk::cpp2::ProjectDef projDef;
         readDefFromFile(projFile, projDef);
-        std::string sceneName = projDef.get_startingScene();
+        std::string sceneName                    = projDef.get_startingScene();
         std::shared_ptr<VulkResources> resources = VulkResources::loadFromProject(vk, projFile);
         resources->loadScene(vk.renderPass, sceneName, shadowMapRenderpass->depthViews);
         SceneDef& sceneDef = *resources->metadata->scenes.at(sceneName);
-        scene = resources->scenes[sceneName];
+        scene              = resources->scenes[sceneName];
 
         shadowMapPipeline = resources->loadPipeline(shadowMapRenderpass->renderPass, shadowMapRenderpass->extent, "ShadowMap");
         auto shadowMapPipelineDef = resources->metadata->pipelines.at("ShadowMap");
         for (size_t i = 0; i < scene->actors.size(); ++i) {
-            auto actor = scene->actors[i];
-            auto actorDef = sceneDef.actors[i];
+            auto actor                                = scene->actors[i];
+            auto actorDef                             = sceneDef.actors[i];
             std::shared_ptr<VulkActor> shadowMapActor = resources->createActorFromPipeline(*actorDef, shadowMapPipeline, scene);
             shadowMapActors.push_back(shadowMapActor);
         }
 
         pickRenderpass = std::make_shared<VulkPickRenderpass>(vk);
-        pickPipeline = resources->loadPipeline(pickRenderpass->renderPass, vk.swapChainExtent, "Pick");
+        pickPipeline   = resources->loadPipeline(pickRenderpass->renderPass, vk.swapChainExtent, "Pick");
         for (size_t i = 0; i < scene->actors.size(); ++i) {
-            auto actor = scene->actors[i];
-            auto actorDef = sceneDef.actors[i];
+            auto actor                           = scene->actors[i];
+            auto actorDef                        = sceneDef.actors[i];
             std::shared_ptr<VulkActor> pickActor = resources->createActorFromPipeline(*actorDef, pickPipeline, scene);
             pickActors.push_back(pickActor);
         }
@@ -69,15 +68,15 @@ public:
         // Debug stuff
 
         VulkPBRDebugUBO& pbrDebugUBO = *scene->pbrDebugUBO->mappedUBO;
-        pbrDebugUBO.isMetallic = 0;
-        pbrDebugUBO.roughness = 0.5f;
-        pbrDebugUBO.diffuse = 1;
-        pbrDebugUBO.specular = 1;
+        pbrDebugUBO.isMetallic       = 0;
+        pbrDebugUBO.roughness        = 0.5f;
+        pbrDebugUBO.diffuse          = 1;
+        pbrDebugUBO.specular         = 1;
 
         wireframePipeline = resources->loadPipeline(vk.renderPass, vk.swapChainExtent, "Wireframe");
         for (size_t i = 0; i < scene->actors.size(); ++i) {
-            auto actor = scene->actors[i];
-            auto actorDef = sceneDef.actors[i];
+            auto actor                                = scene->actors[i];
+            auto actorDef                             = sceneDef.actors[i];
             std::shared_ptr<VulkActor> wireframeActor = resources->createActorFromPipeline(*actorDef, wireframePipeline, scene);
             // scene->actors[i]->pipeline = wireframeActor->pipeline;
             debugWireframeActors.push_back(wireframeActor);
@@ -102,25 +101,27 @@ public:
 
         // always create the debug actors/pipeline so we can render them on command.
         // our cubemap sphere doesn't have a normal map, so this errors. we could use vert normals... eh commenting out for now.
-        // std::shared_ptr<VulkPipeline> debugNormalsPipeline = resources->loadPipeline(vk.renderPass, vk.swapChainExtent, "DebugNormals");
-        // std::shared_ptr<VulkPipeline> debugTangentsPipeline = resources->loadPipeline(vk.renderPass, vk.swapChainExtent,
-        //                                                                               "DebugTangents"); // TODO: does this even need to be a separate pipeline?
+        // std::shared_ptr<VulkPipeline> debugNormalsPipeline = resources->loadPipeline(vk.renderPass, vk.swapChainExtent,
+        // "DebugNormals"); std::shared_ptr<VulkPipeline> debugTangentsPipeline = resources->loadPipeline(vk.renderPass,
+        // vk.swapChainExtent,
+        //                                                                               "DebugTangents"); // TODO: does this even
+        //                                                                               need to be a separate pipeline?
 
         // // could probably defer this until we actually want to render the debug normals, eh.
         // for (size_t i = 0; i < scene->actors.size(); ++i) {
         //     auto actor = scene->actors[i];
         //     auto actorDef = sceneDef.actors[i];
-        //     std::shared_ptr<VulkActor> debugNormalsActor = resources->createActorFromPipeline(*actorDef, debugNormalsPipeline, scene);
-        //     debugNormalsActors.push_back(debugNormalsActor);
-        //     std::shared_ptr<VulkActor> debugTangentsActor = resources->createActorFromPipeline(*actorDef, debugTangentsPipeline, scene);
+        //     std::shared_ptr<VulkActor> debugNormalsActor = resources->createActorFromPipeline(*actorDef, debugNormalsPipeline,
+        //     scene); debugNormalsActors.push_back(debugNormalsActor); std::shared_ptr<VulkActor> debugTangentsActor =
+        //     resources->createActorFromPipeline(*actorDef, debugTangentsPipeline, scene);
         //     debugTangentsActors.push_back(debugTangentsActor);
         // }
     }
 
     struct Menu {
         ImGuiWindowFlags windowFlags = 0;
-        bool show = true;
-        bool isOpen = false;
+        bool show                    = true;
+        bool isOpen                  = false;
     } menu;
 
     struct Selection {
@@ -132,16 +133,16 @@ public:
         ImGuiIO& io = ImGui::GetIO();
 
         float dragScale = 0.001f;
-        float dx = -dragScale * io.MouseDelta.x;
-        float dy = dragScale * io.MouseDelta.y;
-        float scroll = ImGui::GetIO().MouseWheel;
+        float dx        = -dragScale * io.MouseDelta.x;
+        float dy        = dragScale * io.MouseDelta.y;
+        float scroll    = ImGui::GetIO().MouseWheel;
         bool camUpdated = false;
 
-        uint32_t mouseIdx = (uint32_t)(io.MousePos.x + io.MousePos.y * (float)vk.swapChainExtent.width);
-        bool modelPicked = false;
+        uint32_t mouseIdx        = (uint32_t)(io.MousePos.x + io.MousePos.y * (float)vk.swapChainExtent.width);
+        bool modelPicked         = false;
         uint32_t selectedModelID = 0;
         if (mouseIdx < pickRenderpass->pickData.size()) {
-            modelPicked = pickRenderpass->pickData[mouseIdx] > 0;
+            modelPicked     = pickRenderpass->pickData[mouseIdx] > 0;
             selectedModelID = pickRenderpass->pickData[mouseIdx] - 1;
         }
 
@@ -174,18 +175,18 @@ public:
             camUpdated = true;
         }
 
-        float speed = 0.1f; // Adjust speed as necessary
+        float speed = 0.1f;  // Adjust speed as necessary
         if (io.KeysDown[GLFW_KEY_W]) {
-            scene->camera.updatePosition(0.0f, 0.0f, speed); // Move forward
+            scene->camera.updatePosition(0.0f, 0.0f, speed);  // Move forward
         }
         if (io.KeysDown[GLFW_KEY_A]) {
-            scene->camera.updatePosition(-speed, 0.0f, 0.0f); // Move left
+            scene->camera.updatePosition(-speed, 0.0f, 0.0f);  // Move left
         }
         if (io.KeysDown[GLFW_KEY_S]) {
-            scene->camera.updatePosition(0.0f, 0.0f, -speed); // Move backward
+            scene->camera.updatePosition(0.0f, 0.0f, -speed);  // Move backward
         }
         if (io.KeysDown[GLFW_KEY_D]) {
-            scene->camera.updatePosition(speed, 0.0f, 0.0f); // Move right
+            scene->camera.updatePosition(speed, 0.0f, 0.0f);  // Move right
         }
 
         if (camUpdated) {
@@ -253,19 +254,19 @@ public:
         // - the lightViewProj : both for shadow map and for sampling during the main render
 
         VkViewport viewport{};
-        viewport.x = 0.0f;
-        viewport.y = 0.0f;
-        viewport.width = (float)vk.swapChainExtent.width;
-        viewport.height = (float)vk.swapChainExtent.height;
+        viewport.x        = 0.0f;
+        viewport.y        = 0.0f;
+        viewport.width    = (float)vk.swapChainExtent.width;
+        viewport.height   = (float)vk.swapChainExtent.height;
         viewport.minDepth = 0.0f;
         viewport.maxDepth = 1.0f;
 
-        scene->globalConstantsUBO->mappedUBO->viewportWidth = viewport.width;
+        scene->globalConstantsUBO->mappedUBO->viewportWidth  = viewport.width;
         scene->globalConstantsUBO->mappedUBO->viewportHeight = viewport.height;
 
-        float rotationTime = rotateWorldTimer.getElapsedTime(); // make sure this stays the same for the entire frame
-        float nearClip = scene->camera.nearClip;
-        float farClip = scene->camera.farClip;
+        float rotationTime = rotateWorldTimer.getElapsedTime();  // make sure this stays the same for the entire frame
+        float nearClip     = scene->camera.nearClip;
+        float farClip      = scene->camera.farClip;
 
         // glm::vec3 lookAt = scene->camera.lookAt;
         // glm::vec3 up = scene->camera.getUpVec();
@@ -276,16 +277,16 @@ public:
         // ubo.view = glm::lookAt(scene->camera.eye, lookAt, up);
         ubo.view = scene->camera.getViewMat();
         glm::mat4 clip(1.0f);
-        clip[1][1] = -1; // flip the Y axis
-        ubo.proj = clip * glm::perspective(DEFAULT_FOV_RADS, viewport.width / (float)viewport.height, nearClip, farClip);
+        clip[1][1] = -1;  // flip the Y axis
+        ubo.proj   = clip * glm::perspective(DEFAULT_FOV_RADS, viewport.width / (float)viewport.height, nearClip, farClip);
 
         // Vulkan clip space has inverted Y
 
         // set up the light view proj
         VulkPointLight& light = *scene->sceneUBOs.pointLight.mappedUBO;
-        glm::mat4 lightView = glm::lookAt(light.pos, glm::vec3(0.0f, 0.0f, 0.0f), VIEWSPACE_UP_VEC);
-        glm::mat4 lightProj = glm::perspective(DEFAULT_FOV_RADS, viewport.width / (float)viewport.height, nearClip, farClip);
-        glm::mat4 viewProj = lightProj * lightView;
+        glm::mat4 lightView   = glm::lookAt(light.pos, glm::vec3(0.0f, 0.0f, 0.0f), VIEWSPACE_UP_VEC);
+        glm::mat4 lightProj   = glm::perspective(DEFAULT_FOV_RADS, viewport.width / (float)viewport.height, nearClip, farClip);
+        glm::mat4 viewProj    = lightProj * lightView;
         if (scene->lightViewProjUBO) {
             scene->lightViewProjUBO->mappedUBO->viewProj = viewProj;
         }
@@ -294,35 +295,53 @@ public:
 
         renderPickBuffer(commandBuffer);
         renderShadowMapImageForLight(commandBuffer);
-        vk.transitionImageLayout(commandBuffer, depthView->image, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        vk.transitionImageLayout(
+            commandBuffer,
+            depthView->image,
+            VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        );
         drawMainStuff(commandBuffer, frameBuffer);
-        vk.transitionImageLayout(commandBuffer, depthView->image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+        vk.transitionImageLayout(
+            commandBuffer,
+            depthView->image,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+        );
     }
 
     void renderPickBuffer(VkCommandBuffer commandBuffer) {
         VkRenderPassBeginInfo renderPassBeginInfo{};
-        renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        renderPassBeginInfo.renderPass = pickRenderpass->renderPass;
-        renderPassBeginInfo.framebuffer = pickRenderpass->frameBuffers[vk.currentFrame];
+        renderPassBeginInfo.sType             = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        renderPassBeginInfo.renderPass        = pickRenderpass->renderPass;
+        renderPassBeginInfo.framebuffer       = pickRenderpass->frameBuffers[vk.currentFrame];
         renderPassBeginInfo.renderArea.offset = {0, 0};
         renderPassBeginInfo.renderArea.extent = vk.swapChainExtent;
 
         std::array<VkClearValue, 2> clearValues{};
-        clearValues[0].color = {{0}};
+        clearValues[0].color        = {{0}};
         clearValues[1].depthStencil = {1.0f, 0};
 
         renderPassBeginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-        renderPassBeginInfo.pClearValues = clearValues.data();
+        renderPassBeginInfo.pClearValues    = clearValues.data();
 
         vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
         for (uint32_t i = 0; i < pickActors.size(); ++i) {
-            auto& actor = pickActors[i];
-            auto& model = actor->model;
+            auto& actor   = pickActors[i];
+            auto& model   = actor->model;
             uint32_t data = i + 1;
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pickPipeline->pipeline);
             vkCmdPushConstants(commandBuffer, pickPipeline->pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(data), &data);
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pickPipeline->pipelineLayout, 0, 1,
-                                    &actor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet, 0, nullptr);
+            vkCmdBindDescriptorSets(
+                commandBuffer,
+                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                pickPipeline->pipelineLayout,
+                0,
+                1,
+                &actor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet,
+                0,
+                nullptr
+            );
             model->bindInputBuffers(commandBuffer);
             vkCmdDrawIndexed(commandBuffer, model->numIndices, 1, 0, 0, 0);
         }
@@ -336,24 +355,32 @@ public:
 
     void renderShadowMapImageForLight(VkCommandBuffer commandBuffer) {
         VkClearValue clearValue;
-        clearValue.depthStencil.depth = 1.0f;
+        clearValue.depthStencil.depth   = 1.0f;
         clearValue.depthStencil.stencil = 0;
 
         VkRenderPassBeginInfo renderPassBeginInfo = {};
-        renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        renderPassBeginInfo.renderPass = shadowMapRenderpass->renderPass;
-        renderPassBeginInfo.framebuffer = shadowMapRenderpass->frameBuffers[vk.currentFrame];
-        renderPassBeginInfo.renderArea.offset = {0, 0};
-        renderPassBeginInfo.renderArea.extent = shadowMapRenderpass->extent;
-        renderPassBeginInfo.clearValueCount = 1;
-        renderPassBeginInfo.pClearValues = &clearValue;
+        renderPassBeginInfo.sType                 = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        renderPassBeginInfo.renderPass            = shadowMapRenderpass->renderPass;
+        renderPassBeginInfo.framebuffer           = shadowMapRenderpass->frameBuffers[vk.currentFrame];
+        renderPassBeginInfo.renderArea.offset     = {0, 0};
+        renderPassBeginInfo.renderArea.extent     = shadowMapRenderpass->extent;
+        renderPassBeginInfo.clearValueCount       = 1;
+        renderPassBeginInfo.pClearValues          = &clearValue;
 
         vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
         for (auto& actor : shadowMapActors) {
             auto model = actor->model;
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipeline);
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout, 0, 1,
-                                    &actor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet, 0, nullptr);
+            vkCmdBindDescriptorSets(
+                commandBuffer,
+                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                actor->pipeline->pipelineLayout,
+                0,
+                1,
+                &actor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet,
+                0,
+                nullptr
+            );
             model->bindInputBuffers(commandBuffer);
             vkCmdDrawIndexed(commandBuffer, model->numIndices, 1, 0, 0, 0);
         }
@@ -362,18 +389,18 @@ public:
 
     void drawMainStuff(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer) {
         VkRenderPassBeginInfo renderPassInfo{};
-        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        renderPassInfo.renderPass = vk.renderPass;
-        renderPassInfo.framebuffer = frameBuffer;
+        renderPassInfo.sType             = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        renderPassInfo.renderPass        = vk.renderPass;
+        renderPassInfo.framebuffer       = frameBuffer;
         renderPassInfo.renderArea.offset = {0, 0};
         renderPassInfo.renderArea.extent = vk.swapChainExtent;
 
         std::array<VkClearValue, 2> clearValues{};
-        clearValues[0].color = {{0.1f, 0.0f, 0.1f, 1.0f}};
+        clearValues[0].color        = {{0.1f, 0.0f, 0.1f, 1.0f}};
         clearValues[1].depthStencil = {1.0f, 0};
 
         renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-        renderPassInfo.pClearValues = clearValues.data();
+        renderPassInfo.pClearValues    = clearValues.data();
 
         vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
         render(commandBuffer, vk.currentFrame);
@@ -386,8 +413,16 @@ public:
             for (auto& actor : debugWireframeActors) {
                 auto model = actor->model;
                 vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, wireframePipeline->pipeline);
-                vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, wireframePipeline->pipelineLayout, 0, 1,
-                                        &actor->dsInfo->descriptorSets[currentFrame]->descriptorSet, 0, nullptr);
+                vkCmdBindDescriptorSets(
+                    commandBuffer,
+                    VK_PIPELINE_BIND_POINT_GRAPHICS,
+                    wireframePipeline->pipelineLayout,
+                    0,
+                    1,
+                    &actor->dsInfo->descriptorSets[currentFrame]->descriptorSet,
+                    0,
+                    nullptr
+                );
                 model->bindInputBuffers(commandBuffer);
                 vkCmdDrawIndexed(commandBuffer, model->numIndices, 1, 0, 0, 0);
             }
@@ -395,8 +430,16 @@ public:
             for (auto& actor : scene->actors) {
                 auto model = actor->model;
                 vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipeline);
-                vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout, 0, 1,
-                                        &actor->dsInfo->descriptorSets[currentFrame]->descriptorSet, 0, nullptr);
+                vkCmdBindDescriptorSets(
+                    commandBuffer,
+                    VK_PIPELINE_BIND_POINT_GRAPHICS,
+                    actor->pipeline->pipelineLayout,
+                    0,
+                    1,
+                    &actor->dsInfo->descriptorSets[currentFrame]->descriptorSet,
+                    0,
+                    nullptr
+                );
                 model->bindInputBuffers(commandBuffer);
                 vkCmdDrawIndexed(commandBuffer, model->numIndices, 1, 0, 0, 0);
             }
@@ -408,8 +451,16 @@ public:
             for (auto& actor : debugNormalsActors) {
                 auto model = actor->model;
                 vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipeline);
-                vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout, 0, 1,
-                                        &actor->dsInfo->descriptorSets[currentFrame]->descriptorSet, 0, nullptr);
+                vkCmdBindDescriptorSets(
+                    commandBuffer,
+                    VK_PIPELINE_BIND_POINT_GRAPHICS,
+                    actor->pipeline->pipelineLayout,
+                    0,
+                    1,
+                    &actor->dsInfo->descriptorSets[currentFrame]->descriptorSet,
+                    0,
+                    nullptr
+                );
 
                 model->bindInputBuffers(commandBuffer);
                 vkCmdDraw(commandBuffer, model->numVertices, 1, 0, 0);
@@ -422,8 +473,16 @@ public:
             for (auto& actor : debugTangentsActors) {
                 auto model = actor->model;
                 vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipeline);
-                vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout, 0, 1,
-                                        &actor->dsInfo->descriptorSets[currentFrame]->descriptorSet, 0, nullptr);
+                vkCmdBindDescriptorSets(
+                    commandBuffer,
+                    VK_PIPELINE_BIND_POINT_GRAPHICS,
+                    actor->pipeline->pipelineLayout,
+                    0,
+                    1,
+                    &actor->dsInfo->descriptorSets[currentFrame]->descriptorSet,
+                    0,
+                    nullptr
+                );
 
                 model->bindInputBuffers(commandBuffer);
                 vkCmdDraw(commandBuffer, model->numVertices, 1, 0, 0);
@@ -432,8 +491,16 @@ public:
 
         // draw the axes
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, axesPipeline->pipeline);
-        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, axesPipeline->pipelineLayout, 0, 1,
-                                &axesActor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet, 0, nullptr);
+        vkCmdBindDescriptorSets(
+            commandBuffer,
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            axesPipeline->pipelineLayout,
+            0,
+            1,
+            &axesActor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet,
+            0,
+            nullptr
+        );
 
         axesActor->model->bindInputBuffers(commandBuffer);
         vkCmdDrawIndexed(commandBuffer, axesActor->model->numIndices, 1, 0, 0, 0);
@@ -442,13 +509,13 @@ public:
     // TODO: re-wire this up
     bool keyCallback(int key, int /*scancode*/, int action, int /*mods*/) {
         VulkCamera& camera = scene->camera;
-        bool handled = false;
+        bool handled       = false;
         if (action == GLFW_PRESS || action == GLFW_REPEAT) {
-            glm::vec3 fwd = camera.getForwardVec();
+            glm::vec3 fwd   = camera.getForwardVec();
             glm::vec3 right = camera.getRightVec();
-            glm::vec3 up = camera.getUpVec();
-            handled = true;
-            float move = .2f;
+            glm::vec3 up    = camera.getUpVec();
+            handled         = true;
+            float move      = .2f;
             if (key == GLFW_KEY_W)
                 camera.eye += move * fwd;
             else if (key == GLFW_KEY_A)

@@ -33,7 +33,12 @@ void pipelineBuilder(fs::path builtShadersDir, fs::path pipelineFileOut, fs::pat
         throw CLI::ValidationError("Pipeline file does not exist: " + pipelineFileIn.string());
     }
 
-    logger->trace("Shaders Dir: {}, Pipeline Out Dir: {}, Processing pipeline: {}", builtShadersDir.string(), pipelineFileOut.string(), pipelineFileIn.string());
+    logger->trace(
+        "Shaders Dir: {}, Pipeline Out Dir: {}, Processing pipeline: {}",
+        builtShadersDir.string(),
+        pipelineFileOut.string(),
+        pipelineFileIn.string()
+    );
 
     try {
         PipelineBuilder::buildPipelineFromFile(builtShadersDir, pipelineFileOut, pipelineFileIn);
@@ -52,8 +57,8 @@ void pipelineBuilder(fs::path builtShadersDir, fs::path pipelineFileOut, fs::pat
 int main(int argc, char** argv) {
     // SetUnhandledExceptionFilter(exceptionFilter);
     std::shared_ptr<spdlog::logger> logger = VulkLogger::CreateLogger("BuildTool");
-    string args = "Args: ";
-    bool verbose = false;
+    string args                            = "Args: ";
+    bool verbose                           = false;
     for (int i = 0; i < argc; i++) {
         args += argv[i];
         args += " ";
@@ -75,9 +80,9 @@ int main(int argc, char** argv) {
     fs::path builtShadersDir;
     pipeline->add_option("builtShadersDir", builtShadersDir, "Directory where the built shaders are located (for reading).");
     fs::path pipelineFileOut;
-    pipeline->add_option("pipelineFileOut", pipelineFileOut, "Directory where the pipelines are built to."); // Corrected here
+    pipeline->add_option("pipelineFileOut", pipelineFileOut, "Directory where the pipelines are built to.");  // Corrected here
     fs::path pipelineFileIn;
-    pipeline->add_option("pipelineFileIn", pipelineFileIn, "Pipeline file to build."); // Corrected here
+    pipeline->add_option("pipelineFileIn", pipelineFileIn, "Pipeline file to build.");  // Corrected here
     pipeline->callback([&builtShadersDir, &pipelineFileOut, &pipelineFileIn, &verbose]() {
         pipelineBuilder(builtShadersDir, pipelineFileOut, pipelineFileIn, verbose);
     });
@@ -96,9 +101,7 @@ int main(int argc, char** argv) {
     project->add_option("projectFileIn", projectFileIn, "Project file to build.");
     fs::path projectOutDir;
     project->add_option("projectOutDir", projectOutDir, "Directory where the projects are built to.");
-    project->callback([&projectFileIn, &projectOutDir]() {
-        buildProjectDef(projectFileIn, projectOutDir);
-    });
+    project->callback([&projectFileIn, &projectOutDir]() { buildProjectDef(projectFileIn, projectOutDir); });
 
     // CLI::App *scene = app.add_subcommand("scene", "build the scene file");
     // fs::path sceneFileIn;

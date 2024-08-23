@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Vulk.h"
-#include "VulkUtil.h"
 #include "VulkActor.h"
 #include "VulkBufferBuilder.h"
 #include "VulkCamera.h"
@@ -20,3 +19,4 @@
 #include "VulkScene.h"
 #include "VulkStorageBuffer.h"
 #include "VulkUniformBuffer.h"
+#include "VulkUtil.h"

@@ -1,10 +1,10 @@
 #pragma once
 
+#include <memory>
+#include <vector>
 #include "ClassNonCopyableNonMovable.h"
 #include "Vulk.h"
 #include "VulkSampler.h"
-#include <memory>
-#include <vector>
 
 class VulkImageView;
 
@@ -13,7 +13,7 @@ class VulkDescriptorSet : public ClassNonCopyableNonMovable {
     std::vector<std::shared_ptr<VulkImageView>> textureImageViews;
     std::vector<std::shared_ptr<VulkSampler>> textureSamplers;
 
-public:
+   public:
     VkDescriptorSet descriptorSet;
     VulkDescriptorSet(Vulk& vk, VkDescriptorSetLayout descriptorSetLayout, VkDescriptorPool descriptorPool) {
         descriptorSet = vk.createDescriptorSet(descriptorSetLayout, descriptorPool);

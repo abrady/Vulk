@@ -26,7 +26,8 @@
  * // Update the contents of the uniform buffer
  * ubo.mappedUBO->model = glm::mat4(1.0f);
  * ubo.mappedUBO->view = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
- * ubo.mappedUBO->projection = glm::perspective(glm::radians(45.0f), swapchainExtent.width / (float)swapchainExtent.height, 0.1f, 10.0f);
+ * ubo.mappedUBO->projection = glm::perspective(glm::radians(45.0f), swapchainExtent.width / (float)swapchainExtent.height,
+ * 0.1f, 10.0f);
  *
  * // ...
  *
@@ -35,29 +36,36 @@
  */
 #pragma once
 
+#include <vulkan/vulkan.h>
 #include "ClassNonCopyableNonMovable.h"
 #include "Vulk.h"
-#include <vulkan/vulkan.h>
 
-template <typename T> class VulkUniformBuffer : public ClassNonCopyableNonMovable {
-    Vulk &vk;
+template <typename T>
+class VulkUniformBuffer : public ClassNonCopyableNonMovable {
+    Vulk& vk;
     VkDeviceMemory mem;
 
     void init() {
         VkDeviceSize bufferSize = sizeof(T);
-        vk.createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, buf, mem);
-        vkMapMemory(vk.device, mem, 0, bufferSize, 0, (void **)&mappedUBO);
+        vk.createBuffer(
+            bufferSize,
+            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            buf,
+            mem
+        );
+        vkMapMemory(vk.device, mem, 0, bufferSize, 0, (void**)&mappedUBO);
     }
 
-  public:
+   public:
     VkBuffer buf;
-    T *mappedUBO;
+    T* mappedUBO;
 
-    VulkUniformBuffer(Vulk &vk) : vk(vk) {
+    VulkUniformBuffer(Vulk& vk) : vk(vk) {
         init();
     }
 
-    VulkUniformBuffer(Vulk &vk, T const &data) : vk(vk) {
+    VulkUniformBuffer(Vulk& vk, T const& data) : vk(vk) {
         init();
         *mappedUBO = data;
     }

@@ -1,10 +1,10 @@
-#define CATCH_CONFIG_MAIN // This tells Catch to provide a main() - only do this in one cpp file
+#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
 #include <catch.hpp>
 
+#include <thrift/lib/cpp/util/EnumUtils.h>
 #include <filesystem>
 #include <iostream>
 #include <memory>
-#include <thrift/lib/cpp/util/EnumUtils.h>
 
 #include <filesystem>
 
@@ -15,7 +15,7 @@
 
 TEST_CASE("build a project") {
     std::filesystem::path projectFile = std::filesystem::path(__FILE__).parent_path() / "TestProjDir" / "test.proj";
-    fs::path buildDir = "./TestProjBuildDir";
+    fs::path buildDir                 = "./TestProjBuildDir";
     std::filesystem::remove_all(buildDir);
     fs::create_directories(buildDir);
     buildProjectDef(projectFile, buildDir);

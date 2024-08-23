@@ -8,17 +8,21 @@ Language: Cpp
 Standard: Latest
 ColumnLimit: 130
 UseTab: Never
+BinPackArguments: false            # this combined with AllowAllArgumentsOnNextLine
+AllowAllArgumentsOnNextLine: false # puts all function arguments on their own line
 AlignAfterOpenBracket: BlockIndent # follow normal indentation rules after open bracket
 AlignConsecutiveAssignments : true # for vulkan struct init blocks it looks nicer
+AllowShortFunctionsOnASingleLine: Empty # I just don't like single line functions on a single line
 #AlignOperands: true
 #AlignAssignments: true
-# BinPackArguments: false
+
+#AlignAfterOpenBracket: Align
+#AlignAfterOpenBracket: Block
+#AlignAfterOpenBracket: AlwaysBreak
 
 #BreakBeforeDesignatedInitializer: true
-#InitializerListBinPacking: false
 
 # AllowAllParametersOfDeclarationOnNextLine: true
-# AllowAllArgumentsOnNextLine: true
 
 
 # AccessModifierOffset: -4
@@ -31,4 +35,3 @@ AlignConsecutiveAssignments : true # for vulkan struct init blocks it looks nice
 # BreakConstructorInitializers: BeforeComma
 # IndentPPDirectives: AfterHash
 # PointerAlignment: Left
-# BinPackArguments: false

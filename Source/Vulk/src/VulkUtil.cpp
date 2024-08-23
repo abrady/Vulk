@@ -7,8 +7,8 @@
 #include "Vulk/VulkMesh.h"
 
 #ifdef _MSC_VER
-#pragma warning(push, 0)        // assume these headers know what they're doing
-#pragma warning(disable : 6262) // warning C6262: Function uses '35036' bytes of stack:  exceeds /analyze:stacksize '16384'
+#pragma warning(push, 0)         // assume these headers know what they're doing
+#pragma warning(disable : 6262)  // warning C6262: Function uses '35036' bytes of stack:  exceeds /analyze:stacksize '16384'
 #endif
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -51,7 +51,7 @@ QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surfa
     vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
 
     int i = 0;
-    for (const auto &queueFamily : queueFamilies) {
+    for (const auto& queueFamily : queueFamilies) {
         if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
             indices.graphicsFamily = i;
         }
@@ -73,7 +73,7 @@ QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surfa
     return indices;
 }
 
-std::vector<char> readFileIntoMem(const std::string &filename) {
+std::vector<char> readFileIntoMem(const std::string& filename) {
     std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
     if (!file.is_open()) {

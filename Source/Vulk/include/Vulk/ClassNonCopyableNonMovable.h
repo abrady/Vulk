@@ -9,12 +9,11 @@
 // inherit from this class if you want to force a paradigm of always
 // using smart pointers, for example, to manage the lifetime of the resource:
 // you can use the smart pointer's move semantics to transfer ownership.
-class ClassNonCopyableNonMovable
-{
-public:
-    ClassNonCopyableNonMovable() = default;
-    ClassNonCopyableNonMovable(const ClassNonCopyableNonMovable &) = delete;
-    ClassNonCopyableNonMovable &operator=(const ClassNonCopyableNonMovable &) = delete;
-    ClassNonCopyableNonMovable(ClassNonCopyableNonMovable &&) = delete;
-    ClassNonCopyableNonMovable &operator=(ClassNonCopyableNonMovable &&) = delete;
+class ClassNonCopyableNonMovable {
+   public:
+    ClassNonCopyableNonMovable()                                             = default;
+    ClassNonCopyableNonMovable(const ClassNonCopyableNonMovable&)            = delete;
+    ClassNonCopyableNonMovable& operator=(const ClassNonCopyableNonMovable&) = delete;
+    ClassNonCopyableNonMovable(ClassNonCopyableNonMovable&&)                 = delete;
+    ClassNonCopyableNonMovable& operator=(ClassNonCopyableNonMovable&&)      = delete;
 };

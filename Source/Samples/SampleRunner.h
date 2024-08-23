@@ -12,12 +12,12 @@ concept HasDrawFrame = requires(T a, VkCommandBuffer cmdBuffer, VkFramebuffer fr
 };
 
 // TODO: delete this
-template <typename T> class SampleRunner : public Vulk {
-  public:
-    SampleRunner(std::string scene) : scene(scene) {
-    }
+template <typename T>
+class SampleRunner : public Vulk {
+   public:
+    SampleRunner(std::string scene) : scene(scene) {}
 
-  protected:
+   protected:
     std::unique_ptr<T> world;
     std::string scene;
     void init() override {
@@ -36,24 +36,24 @@ template <typename T> class SampleRunner : public Vulk {
             VK_CALL(vkBeginCommandBuffer(commandBuffer, &beginInfo));
 
             VkRenderPassBeginInfo renderPassInfo{};
-            renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-            renderPassInfo.renderPass = renderPass;
-            renderPassInfo.framebuffer = frameBuffer;
+            renderPassInfo.sType             = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+            renderPassInfo.renderPass        = renderPass;
+            renderPassInfo.framebuffer       = frameBuffer;
             renderPassInfo.renderArea.offset = {0, 0};
             renderPassInfo.renderArea.extent = swapChainExtent;
 
             std::array<VkClearValue, 2> clearValues{};
-            clearValues[0].color = {{0.1f, 0.0f, 0.1f, 1.0f}};
+            clearValues[0].color        = {{0.1f, 0.0f, 0.1f, 1.0f}};
             clearValues[1].depthStencil = {1.0f, 0};
 
             renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-            renderPassInfo.pClearValues = clearValues.data();
+            renderPassInfo.pClearValues    = clearValues.data();
 
             VkViewport viewport{};
-            viewport.x = 0.0f;
-            viewport.y = 0.0f;
-            viewport.width = (float)swapChainExtent.width;
-            viewport.height = (float)swapChainExtent.height;
+            viewport.x        = 0.0f;
+            viewport.y        = 0.0f;
+            viewport.width    = (float)swapChainExtent.width;
+            viewport.height   = (float)swapChainExtent.height;
             viewport.minDepth = 0.0f;
             viewport.maxDepth = 1.0f;
 

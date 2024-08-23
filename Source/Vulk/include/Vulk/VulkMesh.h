@@ -7,8 +7,8 @@
 struct VulkMeshRef {
     std::string name;
     uint32_t firstVertex = 0;
-    uint32_t firstIndex = 0;
-    uint32_t indexCount = 0;
+    uint32_t firstIndex  = 0;
+    uint32_t indexCount  = 0;
 };
 
 struct Vertex {
@@ -19,7 +19,7 @@ struct Vertex {
 };
 
 class VulkMesh {
-public:
+   public:
     std::string name;
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;

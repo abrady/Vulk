@@ -5,13 +5,15 @@
 #include "Vulk.h"
 
 class VulkFrameBuffer : public ClassNonCopyableNonMovable {
-  Vulk& vk;
-  VkFramebuffer framebuffer;
+    Vulk& vk;
+    VkFramebuffer framebuffer;
 
- public:
-  VulkFrameBuffer(Vulk& vkIn, std::smart_ptr<T> imageView) : vk(vkIn) {
-    // Vk
-  }
+   public:
+    VulkFrameBuffer(Vulk& vkIn, std::smart_ptr<T> imageView) : vk(vkIn) {
+        // Vk
+    }
 
-  ~VulkFrameBuffer() { vkDestroyFramebuffer(vk.device, framebuffer, nullptr); }
+    ~VulkFrameBuffer() {
+        vkDestroyFramebuffer(vk.device, framebuffer, nullptr);
+    }
 };

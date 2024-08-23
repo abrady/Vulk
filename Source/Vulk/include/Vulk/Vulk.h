@@ -22,21 +22,21 @@
 #include "VulkUtil.h"
 
 struct MouseDragContext {
-    double dt = 0.0;
-    double dxdt = 0.0;
-    double dydt = 0.0;
+    double dt         = 0.0;
+    double dxdt       = 0.0;
+    double dydt       = 0.0;
     double dragStartX = 0.0;
     double dragStartY = 0.0;
 };
 
 struct MouseEventContext {
-    bool isDragging = false;
-    double lastClickTime = 0.0;
+    bool isDragging          = false;
+    double lastClickTime     = 0.0;
     double lastCursorPosTime = 0.0;
     double lastX = 0.0, lastY = 0.0;
-    bool shift = false;
+    bool shift   = false;
     bool control = false;
-    bool alt = false;
+    bool alt     = false;
 };
 
 #pragma warning(push)
@@ -59,13 +59,13 @@ void clearMouseEventHandler();
 
 // TODO: constexpr?
 constexpr int MAX_FRAMES_IN_FLIGHT = 2;
-constexpr uint32_t WINDOW_WIDTH = 2880;
-constexpr uint32_t WINDOW_HEIGHT = 1800;
+constexpr uint32_t WINDOW_WIDTH    = 2880;
+constexpr uint32_t WINDOW_HEIGHT   = 1800;
 
 class VulkRenderable {
    public:
-    virtual ~VulkRenderable() = default;
-    virtual void tick() = 0;
+    virtual ~VulkRenderable()                                                          = default;
+    virtual void tick()                                                                = 0;
     virtual void renderFrame(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer) = 0;
 
     // ==================
@@ -148,13 +148,13 @@ class Vulk {
         VkImage image,
         VkImageLayout oldLayout,
         VkImageLayout newLayout,
-        uint32_t mipLevels = 1,
+        uint32_t mipLevels  = 1,
         uint32_t layerCount = 1
     );
 
     uint32_t currentFrame = 0;  // index of the current frame in flight, always between 0 and MAX_FRAMES_IN_FLIGHT
-    uint32_t lastFrame = UINT32_MAX;
-    uint32_t frameCount = 0;
+    uint32_t lastFrame    = UINT32_MAX;
+    uint32_t frameCount   = 0;
     VkExtent2D swapChainExtent;
     VkCommandPool commandPool;
     std::vector<VkCommandBuffer> commandBuffers;

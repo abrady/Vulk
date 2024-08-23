@@ -41,7 +41,7 @@ class PipelineBuilder {
         const spirv_cross::ShaderResources resources = glsl.get_shader_resources();
 
         ShaderInfo parsedShader;
-        parsedShader.name = shaderPath.stem().string();
+        parsedShader.name       = shaderPath.stem().string();
         parsedShader.entryPoint = glsl.get_entry_points_and_stages()[0].name;
 
         // vulk::cpp2::VulkShaderStage shaderStage;
@@ -116,7 +116,7 @@ class PipelineBuilder {
         for (const spirv_cross::Resource& resource : resources.push_constant_buffers) {
             // Get the buffer size
             spirv_cross::SPIRType const& type = glsl.get_type(resource.base_type_id);
-            uint32_t size = (uint32_t)glsl.get_declared_struct_size(type);
+            uint32_t size                     = (uint32_t)glsl.get_declared_struct_size(type);
             // Note: Push constants do not have a traditional binding location like uniforms yet.
             unsigned location = 0;
             if (glsl.has_decoration(resource.id, spv::DecorationLocation)) {
@@ -125,7 +125,8 @@ class PipelineBuilder {
             logger()->trace("Push constant buffer: name={}, size={}, location={}", resource.name, size, location);
             VULK_ASSERT(
                 location < 32,
-                "Push constant location is too large");  // no idea what the max may eventually be but this isn't crazy
+                "Push constant location is too large"
+            );  // no idea what the max may eventually be but this isn't crazy
             if (parsedShader.pushConstants.size() <= location) {
                 parsedShader.pushConstants.resize(location + 1);
             }
@@ -170,7 +171,7 @@ class PipelineBuilder {
     // e.g. the "vert" or "frag" part of the descriptor set
     static void updatePipelineDef(ShaderInfo info, std::string stage, vulk::cpp2::PipelineDef& bp) {
         vulk::cpp2::DescriptorSetDef& def = bp.descriptorSetDef_ref().value();
-        int32_t stageFlag = (int)getShaderStageFromStr(stage);
+        int32_t stageFlag                 = (int)getShaderStageFromStr(stage);
         for (auto& ubo : info.uboBindings) {
             auto& v = def.uniformBuffers_ref()[stageFlag];
             v.push_back((vulk::cpp2::VulkShaderUBOBinding)ubo.first);
@@ -189,9 +190,9 @@ class PipelineBuilder {
             if (i >= bp.get_pushConstants().size()) {
                 bp.pushConstants_ref()->resize(i + 1);
                 vulk::cpp2::PushConstantDef pc = {};
-                pc.stageFlags_ref() = (uint32_t)stageFlag;
-                pc.size_ref() = info.pushConstants[i];
-                bp.pushConstants_ref()[i] = pc;
+                pc.stageFlags_ref()            = (uint32_t)stageFlag;
+                pc.size_ref()                  = info.pushConstants[i];
+                bp.pushConstants_ref()[i]      = pc;
             } else {
                 auto const& m = bp.get_pushConstants();
                 VULK_ASSERT(m[i].get_size() == (int)info.pushConstants[i], "Push constant size mismatch");
@@ -202,8 +203,7 @@ class PipelineBuilder {
         }
     }
 
-    static vulk::cpp2::PipelineDef buildPipeline(vulk::cpp2::SrcPipelineDef pipelineIn,
-                                                 std::filesystem::path builtShadersDir) {
+    static vulk::cpp2::PipelineDef buildPipeline(vulk::cpp2::SrcPipelineDef pipelineIn, std::filesystem::path builtShadersDir) {
         if (!std::filesystem::exists(builtShadersDir)) {
             std::cerr << "Shaders directory does not exist: " << builtShadersDir << std::endl;
             VULK_THROW("PipelineBuilder: Shaders directory does not exist");
@@ -211,7 +211,7 @@ class PipelineBuilder {
 
         vulk::cpp2::PipelineDef pipelineOut;
         pipelineOut.version_ref() = 1;
-        pipelineOut.name_ref() = pipelineIn.get_name();
+        pipelineOut.name_ref()    = pipelineIn.get_name();
         if (pipelineIn.vertShader().is_set())
             pipelineOut.vertShader_ref() = pipelineIn.get_vertShader();
         if (pipelineIn.geomShader().is_set())
@@ -219,21 +219,24 @@ class PipelineBuilder {
         if (pipelineIn.fragShader().is_set())
             pipelineOut.fragShader_ref() = pipelineIn.get_fragShader();
         if (pipelineIn.primitiveTopology().is_set())
-            apache::thrift::util::tryParseEnum(pipelineIn.get_primitiveTopology(),
-                                               &pipelineOut.primitiveTopology_ref().value());
+            apache::thrift::util::tryParseEnum(pipelineIn.get_primitiveTopology(), &pipelineOut.primitiveTopology_ref().value());
         if (pipelineIn.depthTestEnabled().is_set())
             pipelineOut.depthTestEnabled_ref() = pipelineIn.get_depthTestEnabled();
         if (pipelineIn.depthWriteEnabled().is_set())
             pipelineOut.depthWriteEnabled_ref() = pipelineIn.get_depthWriteEnabled();
         if (pipelineIn.depthCompareOp().is_set()) {
-            VULK_ASSERT(apache::thrift::util::tryParseEnum(pipelineIn.get_depthCompareOp(),
-                                                           &pipelineOut.depthCompareOp_ref().value()),
-                        "Invalid depthCompareOp value {}", pipelineIn.get_depthCompareOp());
+            VULK_ASSERT(
+                apache::thrift::util::tryParseEnum(pipelineIn.get_depthCompareOp(), &pipelineOut.depthCompareOp_ref().value()),
+                "Invalid depthCompareOp value {}",
+                pipelineIn.get_depthCompareOp()
+            );
         }
         if (pipelineIn.polygonMode().is_set()) {
-            VULK_ASSERT(apache::thrift::util::tryParseEnum(pipelineIn.get_polygonMode(),
-                                                           &pipelineOut.polygonMode_ref().value()),
-                        "Invalid polygonMode value {}", pipelineIn.get_polygonMode());
+            VULK_ASSERT(
+                apache::thrift::util::tryParseEnum(pipelineIn.get_polygonMode(), &pipelineOut.polygonMode_ref().value()),
+                "Invalid polygonMode value {}",
+                pipelineIn.get_polygonMode()
+            );
         }
         if (pipelineIn.cullMode().is_set()) {
             pipelineOut.cullMode_ref() =
@@ -293,9 +296,11 @@ class PipelineBuilder {
         return pipelineOut;
     }
 
-    static void buildPipelineFile(vulk::cpp2::SrcPipelineDef pipelineIn,
-                                  std::filesystem::path builtShadersDir,
-                                  std::filesystem::path pipelineFileOut) {
+    static void buildPipelineFile(
+        vulk::cpp2::SrcPipelineDef pipelineIn,
+        std::filesystem::path builtShadersDir,
+        std::filesystem::path pipelineFileOut
+    ) {
         if (!std::filesystem::exists(builtShadersDir)) {
             std::cerr << "Shaders directory does not exist: " << builtShadersDir << std::endl;
             VULK_THROW("PipelineBuilder: Shaders directory does not exist");
@@ -308,9 +313,11 @@ class PipelineBuilder {
         writeDefToFile(pipelineFileOut.string(), pipelineOut);
     }
 
-    static void buildPipelineFromFile(std::filesystem::path builtShadersDir,
-                                      std::filesystem::path pipelineFileOut,
-                                      fs::path pipelineFileSrc) {
+    static void buildPipelineFromFile(
+        std::filesystem::path builtShadersDir,
+        std::filesystem::path pipelineFileOut,
+        fs::path pipelineFileSrc
+    ) {
         if (!std::filesystem::exists(pipelineFileSrc)) {
             std::cerr << "Pipeline file does not exist: '" << pipelineFileSrc << "'" << std::endl;
             VULK_THROW("PipelineBuilder: Pipeline file does not exist");

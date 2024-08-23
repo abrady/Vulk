@@ -1,10 +1,10 @@
-#define CATCH_CONFIG_MAIN // This tells Catch to provide a main() - only do this in one cpp file
+#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
 #include <catch.hpp>
 
+#include <thrift/lib/cpp/util/EnumUtils.h>
 #include <filesystem>
 #include <iostream>
 #include <memory>
-#include <thrift/lib/cpp/util/EnumUtils.h>
 
 #include <filesystem>
 
@@ -16,11 +16,11 @@ namespace fs = std::filesystem;
 
 TEST_CASE("basic Pipeline serialization") {
     vulk::cpp2::PipelineDef def;
-    def.version_ref() = 1;
-    def.name_ref() = "TestPipeline";
-    def.vertShader_ref() = "test.vert.spv";
-    def.geomShader_ref() = "test.geom.spv";
-    def.fragShader_ref() = "test.frag.spv";
+    def.version_ref()           = 1;
+    def.name_ref()              = "TestPipeline";
+    def.vertShader_ref()        = "test.vert.spv";
+    def.geomShader_ref()        = "test.geom.spv";
+    def.fragShader_ref()        = "test.frag.spv";
     def.primitiveTopology_ref() = vulk::cpp2::VulkPrimitiveTopology::LineListWithAdjacency;
     writeDefToFile("test.pipeline", def);
 
@@ -34,16 +34,16 @@ TEST_CASE("basic Scene serialization") {
     def.name_ref() = "TestScene";
     // def.camera_ref()->eye_ref().emplace = {1.0, 2.0, 3.0};
     vulk::cpp2::Vec3& cam = def.camera_ref()->eye_ref().value();
-    cam.x_ref() = 1.0;
-    cam.y_ref() = 2.0;
-    cam.z_ref() = 3.0;
+    cam.x_ref()           = 1.0;
+    cam.y_ref()           = 2.0;
+    cam.z_ref()           = 3.0;
 
-    vulk::cpp2::Vec3& lookAt = def.camera_ref()->lookAt_ref().value();
-    lookAt.x_ref() = 4.1;
-    lookAt.y_ref() = 5.2;
-    lookAt.z_ref() = 6.3;
+    vulk::cpp2::Vec3& lookAt         = def.camera_ref()->lookAt_ref().value();
+    lookAt.x_ref()                   = 4.1;
+    lookAt.y_ref()                   = 5.2;
+    lookAt.z_ref()                   = 6.3;
     def.camera_ref()->nearClip_ref() = 0.1;
-    def.camera_ref()->farClip_ref() = 100.0;
+    def.camera_ref()->farClip_ref()  = 100.0;
 
     writeDefToFile("test.scene", def);
 
@@ -55,14 +55,14 @@ TEST_CASE("basic Scene serialization") {
 TEST_CASE("misc serialization test") {
     SECTION("CameraDef") {
         vulk::cpp2::CameraDef def;
-        def.eye_ref()->x_ref() = 1.0;
-        def.eye_ref()->y_ref() = 2.0;
-        def.eye_ref()->z_ref() = 3.0;
+        def.eye_ref()->x_ref()    = 1.0;
+        def.eye_ref()->y_ref()    = 2.0;
+        def.eye_ref()->z_ref()    = 3.0;
         def.lookAt_ref()->x_ref() = 4.0;
         def.lookAt_ref()->y_ref() = 5.0;
         def.lookAt_ref()->z_ref() = 6.0;
-        def.nearClip_ref() = 0.1;
-        def.farClip_ref() = 100.0;
+        def.nearClip_ref()        = 0.1;
+        def.farClip_ref()         = 100.0;
         writeDefToFile("test.camera", def);
 
         vulk::cpp2::CameraDef def2;
@@ -72,8 +72,8 @@ TEST_CASE("misc serialization test") {
 
     SECTION("GeoMeshDef") {
         vulk::cpp2::GeoMeshDef def;
-        auto& sphere = def.set_sphere();
-        sphere.radius_ref() = 1.0;
+        auto& sphere                 = def.set_sphere();
+        sphere.radius_ref()          = 1.0;
         sphere.numSubdivisions_ref() = 3;
         REQUIRE(def.get_sphere().get_radius() == 1.0);
 
@@ -87,13 +87,13 @@ TEST_CASE("misc serialization test") {
 
     SECTION("ModelDef") {
         vulk::cpp2::ModelDef def;
-        def.name_ref() = "TestModel";
-        def.mesh_ref() = "TestMesh";
-        def.material_ref() = "TestMaterial";
-        def.meshDefType_ref() = vulk::cpp2::MeshDefType::Mesh;
+        def.name_ref()                   = "TestModel";
+        def.mesh_ref()                   = "TestMesh";
+        def.material_ref()               = "TestMaterial";
+        def.meshDefType_ref()            = vulk::cpp2::MeshDefType::Mesh;
         vulk::cpp2::GeoSphereDef& sphere = def.geoMesh_ref()->set_sphere();
-        sphere.radius_ref() = 1.0;
-        sphere.numSubdivisions_ref() = 3;
+        sphere.radius_ref()              = 1.0;
+        sphere.numSubdivisions_ref()     = 3;
         writeDefToFile("test.model", def);
 
         vulk::cpp2::ModelDef def2;
@@ -107,17 +107,17 @@ TEST_CASE("misc serialization test") {
         vulk::cpp2::SceneDef sceneDef;
         sceneDef.name_ref() = "TestScene";
         // sceneDef.camera_ref()->eye_ref().emplace = {1.0, 2.0, 3.0};
-        vulk::cpp2::Vec3& cam = sceneDef.camera_ref()->eye_ref().value();
-        cam.x_ref() = 1.0;
-        cam.y_ref() = 2.0;
-        cam.z_ref() = 3.0;
-        vulk::cpp2::Vec3& lookAt = sceneDef.camera_ref()->lookAt_ref().value();
-        lookAt.x_ref() = 4.1;
-        lookAt.y_ref() = 5.2;
-        lookAt.z_ref() = 6.3;
+        vulk::cpp2::Vec3& cam                 = sceneDef.camera_ref()->eye_ref().value();
+        cam.x_ref()                           = 1.0;
+        cam.y_ref()                           = 2.0;
+        cam.z_ref()                           = 3.0;
+        vulk::cpp2::Vec3& lookAt              = sceneDef.camera_ref()->lookAt_ref().value();
+        lookAt.x_ref()                        = 4.1;
+        lookAt.y_ref()                        = 5.2;
+        lookAt.z_ref()                        = 6.3;
         sceneDef.camera_ref()->nearClip_ref() = 0.1;
-        sceneDef.camera_ref()->farClip_ref() = 100.0;
-        def.scenes_ref()["TestScene"] = sceneDef;
+        sceneDef.camera_ref()->farClip_ref()  = 100.0;
+        def.scenes_ref()["TestScene"]         = sceneDef;
 
         writeDefToFile("test.project", def);
 

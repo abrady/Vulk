@@ -258,7 +258,8 @@ void buildPipelineAndShaders(
     // first build the shaders so we can reference them when we build the descriptor sets etc.
     if (srcPipelineDef.get_vertShader() != "") {
         VULK_ASSERT(
-            metadata.vertShaders.contains(srcPipelineDef.get_vertShader()), "Vertex shader {} not found",
+            metadata.vertShaders.contains(srcPipelineDef.get_vertShader()),
+            "Vertex shader {} not found",
             srcPipelineDef.get_vertShader()
         );
         fs::path path = metadata.vertShaders.at(srcPipelineDef.get_vertShader());
@@ -266,14 +267,16 @@ void buildPipelineAndShaders(
     }
     if (srcPipelineDef.get_geomShader() != "") {
         VULK_ASSERT(
-            metadata.geometryShaders.contains(srcPipelineDef.get_geomShader()), "Geometry shader {} not found",
+            metadata.geometryShaders.contains(srcPipelineDef.get_geomShader()),
+            "Geometry shader {} not found",
             srcPipelineDef.get_geomShader()
         );
         buildShaderDef(metadata.geometryShaders.at(srcPipelineDef.get_geomShader()), shadersBuildDir, generatedHeaderDir);
     }
     if (srcPipelineDef.get_fragShader() != "") {
         VULK_ASSERT(
-            metadata.fragmentShaders.contains(srcPipelineDef.get_fragShader()), "Fragment shader {} not found",
+            metadata.fragmentShaders.contains(srcPipelineDef.get_fragShader()),
+            "Fragment shader {} not found",
             srcPipelineDef.get_fragShader()
         );
         buildShaderDef(metadata.fragmentShaders.at(srcPipelineDef.get_fragShader()), shadersBuildDir, generatedHeaderDir);
@@ -281,7 +284,9 @@ void buildPipelineAndShaders(
 
     // build the pipeline with the built shaders
     PipelineBuilder::buildPipelineFile(
-        srcPipelineDef, shadersBuildDir, shadersBuildDir.parent_path() / "Pipelines" / (srcPipelineDef.get_name() + ".pipeline")
+        srcPipelineDef,
+        shadersBuildDir,
+        shadersBuildDir.parent_path() / "Pipelines" / (srcPipelineDef.get_name() + ".pipeline")
     );
 }
 
@@ -293,7 +298,9 @@ void buildProjectDef(const fs::path project_file_path, fs::path buildDir) {
     logger->trace("Building project from {}", project_file_path.string());
     VULK_ASSERT(fs::exists(project_file_path), "Project file does not exist: {}", project_file_path.string());
     VULK_ASSERT(
-        fs::exists(projectDir) && fs::is_directory(projectDir), "Project directory does not exist: {}", projectDir.string()
+        fs::exists(projectDir) && fs::is_directory(projectDir),
+        "Project directory does not exist: {}",
+        projectDir.string()
     );
 
     // due to the complexities of not being able to get the build diredctory until
@@ -340,7 +347,8 @@ void buildProjectDef(const fs::path project_file_path, fs::path buildDir) {
                     fs::path modelPath = (projectDir / (actorDef.get_modelName() + ".model"));
                     VULK_ASSERT(metadata.models.contains(modelName), "Model {} not found", modelName);
                     copyFileIfShould(
-                        metadata.models.at(modelName), assetsDir / "Models" / metadata.models.at(modelName).filename()
+                        metadata.models.at(modelName),
+                        assetsDir / "Models" / metadata.models.at(modelName).filename()
                     );
                     modelDef = &projectOut.models_ref()[modelName];
                     readDefFromFile(modelPath.string(), *modelDef);
@@ -352,7 +360,9 @@ void buildProjectDef(const fs::path project_file_path, fs::path buildDir) {
             if (modelDef) {
                 // copy materials
                 VULK_ASSERT(
-                    metadata.materials.contains(modelDef->get_material()), "Material {} not found", modelDef->get_material()
+                    metadata.materials.contains(modelDef->get_material()),
+                    "Material {} not found",
+                    modelDef->get_material()
                 );
                 fs::path materialPath = metadata.materials.at(modelDef->get_material());
                 copyDirIfShould(materialPath.parent_path(), assetsDir / "Materials" / materialPath.parent_path().filename());

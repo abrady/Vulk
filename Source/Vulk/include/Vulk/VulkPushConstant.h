@@ -3,13 +3,13 @@
 
 // push constants go into the pipeline layout info.
 class VulkPushConstant {
-public:
+   public:
     VulkPushConstant() {
         // Initialize push constant
-        pushConstant = {};
+        pushConstant            = {};
         pushConstant.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-        pushConstant.offset = 0;
-        pushConstant.size = sizeof(PushConstantData);
+        pushConstant.offset     = 0;
+        pushConstant.size       = sizeof(PushConstantData);
     }
 
     ~VulkPushConstant() {
@@ -28,7 +28,7 @@ public:
         return pushConstantData;
     }
 
-private:
+   private:
     VkPushConstantRange pushConstant;
     struct PushConstantData {
         // Define your push constant data here

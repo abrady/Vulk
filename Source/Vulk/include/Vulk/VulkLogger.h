@@ -18,8 +18,8 @@ class VulkLogger {
         // 5, 30, false);
         auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(name + "_logfile.log", /*truncate=*/false);
         spdlog::sinks_init_list sink_list = {file_sink, console_sink};
-        auto p = std::make_shared<spdlog::logger>(name, sink_list.begin(), sink_list.end());
-        auto level = spdlog::get_level();
+        auto p                            = std::make_shared<spdlog::logger>(name, sink_list.begin(), sink_list.end());
+        auto level                        = spdlog::get_level();
         p->set_level(level);
         return p;
     }
@@ -41,9 +41,8 @@ class VulkLogger {
     }
 };
 
-#define DECLARE_FILE_LOGGER()                       \
-    static std::shared_ptr<spdlog::logger> logger = \
-        VulkLogger::CreateLogger(std::filesystem::path(__FILE__).stem().string())
+#define DECLARE_FILE_LOGGER() \
+    static std::shared_ptr<spdlog::logger> logger = VulkLogger::CreateLogger(std::filesystem::path(__FILE__).stem().string())
 
 #define VULK_SET_LOG_LEVEL(level) VulkLogger::GetLogger()->set_level(level)
 #define VULK_SET_TRACE_LOG_LEVEL() VULK_SET_LOG_LEVEL(spdlog::level::trace)

@@ -32,8 +32,8 @@ class World final : public VulkRenderable {
     std::shared_ptr<VulkPipeline> axesPipeline;
 
     struct Debug {
-        bool renderNormals = false;
-        bool renderTangents = false;
+        bool renderNormals   = false;
+        bool renderTangents  = false;
         bool renderWireframe = false;
     } debug;
 
@@ -45,9 +45,9 @@ class World final : public VulkRenderable {
         vulk::cpp2::ProjectDef projDef;
         logger->info("loading project file: {}", projFile);
         readDefFromFile(projFile, projDef);
-        std::string sceneName = projDef.get_startingScene();
+        std::string sceneName                    = projDef.get_startingScene();
         std::shared_ptr<VulkResources> resources = VulkResources::loadFromProject(vk, projFile);
-        shadowMapRenderpass = std::make_shared<VulkDepthRenderpass>(vk);
+        shadowMapRenderpass                      = std::make_shared<VulkDepthRenderpass>(vk);
         resources->loadScene(sceneName, shadowMapRenderpass->depthViews);
         scene = resources->scenes[sceneName];
 
@@ -59,19 +59,19 @@ class World final : public VulkRenderable {
             deferredActors.push_back(deferredActor);
         }
 
-        shadowMapFence = std::make_shared<VulkFence>(vk);
+        shadowMapFence    = std::make_shared<VulkFence>(vk);
         shadowMapPipeline = resources->loadPipeline(shadowMapRenderpass->renderPass, shadowMapRenderpass->extent, "ShadowMap");
         auto shadowMapPipelineDef = resources->metadata->pipelines.at("ShadowMap");
         for (size_t i = 0; i < scene->def->actors.size(); ++i) {
-            auto actorDef = scene->def->actors[i];
+            auto actorDef                             = scene->def->actors[i];
             std::shared_ptr<VulkActor> shadowMapActor = resources->createActorFromPipeline(*actorDef, shadowMapPipeline, scene);
             shadowMapActors.push_back(shadowMapActor);
         }
 
         pickRenderpass = std::make_shared<VulkPickRenderpass>(vk);
-        pickPipeline = resources->loadPipeline(pickRenderpass->renderPass, vk.swapChainExtent, "Pick");
+        pickPipeline   = resources->loadPipeline(pickRenderpass->renderPass, vk.swapChainExtent, "Pick");
         for (size_t i = 0; i < scene->def->actors.size(); ++i) {
-            auto actorDef = scene->def->actors[i];
+            auto actorDef                        = scene->def->actors[i];
             std::shared_ptr<VulkActor> pickActor = resources->createActorFromPipeline(*actorDef, pickPipeline, scene);
             pickActors.push_back(pickActor);
         }
@@ -80,14 +80,14 @@ class World final : public VulkRenderable {
         // Debug stuff
 
         VulkPBRDebugUBO& pbrDebugUBO = *scene->pbrDebugUBO->mappedUBO;
-        pbrDebugUBO.isMetallic = 0;
-        pbrDebugUBO.roughness = 0.5f;
-        pbrDebugUBO.diffuse = 1;
-        pbrDebugUBO.specular = 1;
+        pbrDebugUBO.isMetallic       = 0;
+        pbrDebugUBO.roughness        = 0.5f;
+        pbrDebugUBO.diffuse          = 1;
+        pbrDebugUBO.specular         = 1;
 
         wireframePipeline = resources->loadPipeline(vk.renderPass, vk.swapChainExtent, "Wireframe");
         for (size_t i = 0; i < scene->def->actors.size(); ++i) {
-            auto actorDef = scene->def->actors[i];
+            auto actorDef                             = scene->def->actors[i];
             std::shared_ptr<VulkActor> wireframeActor = resources->createActorFromPipeline(*actorDef, wireframePipeline, scene);
             // scene->actors[i]->pipeline = wireframeActor->pipeline;
             debugWireframeActors.push_back(wireframeActor);
@@ -120,19 +120,19 @@ class World final : public VulkRenderable {
         // - the lightViewProj : both for shadow map and for sampling during the main render
 
         VkViewport viewport{};
-        viewport.x = 0.0f;
-        viewport.y = 0.0f;
-        viewport.width = (float)vk.swapChainExtent.width;
-        viewport.height = (float)vk.swapChainExtent.height;
+        viewport.x        = 0.0f;
+        viewport.y        = 0.0f;
+        viewport.width    = (float)vk.swapChainExtent.width;
+        viewport.height   = (float)vk.swapChainExtent.height;
         viewport.minDepth = 0.0f;
         viewport.maxDepth = 1.0f;
 
-        scene->globalConstantsUBO->mappedUBO->viewportWidth = viewport.width;
+        scene->globalConstantsUBO->mappedUBO->viewportWidth  = viewport.width;
         scene->globalConstantsUBO->mappedUBO->viewportHeight = viewport.height;
 
         float rotationTime = rotateWorldTimer.getElapsedTime();  // make sure this stays the same for the entire frame
-        float nearClip = scene->camera.nearClip;
-        float farClip = scene->camera.farClip;
+        float nearClip     = scene->camera.nearClip;
+        float farClip      = scene->camera.farClip;
 
         // glm::vec3 lookAt = scene->camera.lookAt;
         // glm::vec3 up = scene->camera.getUpVec();
@@ -144,18 +144,18 @@ class World final : public VulkRenderable {
         ubo.view = scene->camera.getViewMat();
         glm::mat4 clip(1.0f);
         clip[1][1] = -1;  // flip the Y axis
-        ubo.proj = clip * glm::perspective(DEFAULT_FOV_RADS, viewport.width / (float)viewport.height, nearClip, farClip);
+        ubo.proj   = clip * glm::perspective(DEFAULT_FOV_RADS, viewport.width / (float)viewport.height, nearClip, farClip);
 
         // Vulkan clip space has inverted Y
-        glm::mat4 mvp = ubo.proj * ubo.view * ubo.world;
-        glm::mat4 invMvp = glm::inverse(mvp);
+        glm::mat4 mvp                     = ubo.proj * ubo.view * ubo.world;
+        glm::mat4 invMvp                  = glm::inverse(mvp);
         *scene->invViewProjUBO->mappedUBO = invMvp;
 
         // set up the light view proj
         VulkPointLight& light = *scene->sceneUBOs.pointLight.mappedUBO;
-        glm::mat4 lightView = glm::lookAt(light.pos, glm::vec3(0.0f, 0.0f, 0.0f), VIEWSPACE_UP_VEC);
-        glm::mat4 lightProj = glm::perspective(DEFAULT_FOV_RADS, viewport.width / (float)viewport.height, nearClip, farClip);
-        glm::mat4 viewProj = lightProj * lightView;
+        glm::mat4 lightView   = glm::lookAt(light.pos, glm::vec3(0.0f, 0.0f, 0.0f), VIEWSPACE_UP_VEC);
+        glm::mat4 lightProj   = glm::perspective(DEFAULT_FOV_RADS, viewport.width / (float)viewport.height, nearClip, farClip);
+        glm::mat4 viewProj    = lightProj * lightView;
         if (scene->lightViewProjUBO) {
             scene->lightViewProjUBO->mappedUBO->viewProj = viewProj;
         }
@@ -165,43 +165,53 @@ class World final : public VulkRenderable {
         renderPickBuffer(commandBuffer);
         renderShadowMapImageForLight(commandBuffer);
         vk.transitionImageLayout(
-            commandBuffer, depthView->image, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+            commandBuffer,
+            depthView->image,
+            VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
         );
         drawMainStuff(commandBuffer, frameBuffer);
         // TODO
         // drawDebugStuff(commandBuffer, frameBuffer);
         vk.transitionImageLayout(
-            commandBuffer, depthView->image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            commandBuffer,
+            depthView->image,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
             VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
         );
     }
 
     void renderPickBuffer(VkCommandBuffer commandBuffer) {
         VkRenderPassBeginInfo renderPassBeginInfo{};
-        renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        renderPassBeginInfo.renderPass = pickRenderpass->renderPass;
-        renderPassBeginInfo.framebuffer = pickRenderpass->frameBuffers[vk.currentFrame];
+        renderPassBeginInfo.sType             = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        renderPassBeginInfo.renderPass        = pickRenderpass->renderPass;
+        renderPassBeginInfo.framebuffer       = pickRenderpass->frameBuffers[vk.currentFrame];
         renderPassBeginInfo.renderArea.offset = {0, 0};
         renderPassBeginInfo.renderArea.extent = vk.swapChainExtent;
 
         std::array<VkClearValue, 2> clearValues{};
-        clearValues[0].color = {{0}};
+        clearValues[0].color        = {{0}};
         clearValues[1].depthStencil = {1.0f, 0};
 
         renderPassBeginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-        renderPassBeginInfo.pClearValues = clearValues.data();
+        renderPassBeginInfo.pClearValues    = clearValues.data();
 
         vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
         for (uint32_t i = 0; i < pickActors.size(); ++i) {
-            auto& actor = pickActors[i];
-            auto& model = actor->model;
+            auto& actor   = pickActors[i];
+            auto& model   = actor->model;
             uint32_t data = i + 1;
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pickPipeline->pipeline);
             vkCmdPushConstants(commandBuffer, pickPipeline->pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(data), &data);
             vkCmdBindDescriptorSets(
-                commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pickPipeline->pipelineLayout, 0, 1,
-                &actor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet, 0, nullptr
+                commandBuffer,
+                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                pickPipeline->pipelineLayout,
+                0,
+                1,
+                &actor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet,
+                0,
+                nullptr
             );
             model->bindInputBuffers(commandBuffer);
             vkCmdDrawIndexed(commandBuffer, model->numIndices, 1, 0, 0, 0);
@@ -210,29 +220,37 @@ class World final : public VulkRenderable {
         vkCmdEndRenderPass(commandBuffer);
     }
 
-    void onBeforeRender() override { pickRenderpass->updatePickDataFromBuffer(vk.lastFrame); }
+    void onBeforeRender() override {
+        pickRenderpass->updatePickDataFromBuffer(vk.lastFrame);
+    }
 
     void renderShadowMapImageForLight(VkCommandBuffer commandBuffer) {
         VkClearValue clearValue;
-        clearValue.depthStencil.depth = 1.0f;
+        clearValue.depthStencil.depth   = 1.0f;
         clearValue.depthStencil.stencil = 0;
 
         VkRenderPassBeginInfo renderPassBeginInfo = {};
-        renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        renderPassBeginInfo.renderPass = shadowMapRenderpass->renderPass;
-        renderPassBeginInfo.framebuffer = shadowMapRenderpass->frameBuffers[vk.currentFrame];
-        renderPassBeginInfo.renderArea.offset = {0, 0};
-        renderPassBeginInfo.renderArea.extent = shadowMapRenderpass->extent;
-        renderPassBeginInfo.clearValueCount = 1;
-        renderPassBeginInfo.pClearValues = &clearValue;
+        renderPassBeginInfo.sType                 = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        renderPassBeginInfo.renderPass            = shadowMapRenderpass->renderPass;
+        renderPassBeginInfo.framebuffer           = shadowMapRenderpass->frameBuffers[vk.currentFrame];
+        renderPassBeginInfo.renderArea.offset     = {0, 0};
+        renderPassBeginInfo.renderArea.extent     = shadowMapRenderpass->extent;
+        renderPassBeginInfo.clearValueCount       = 1;
+        renderPassBeginInfo.pClearValues          = &clearValue;
 
         vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
         for (auto& actor : shadowMapActors) {
             auto model = actor->model;
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipeline);
             vkCmdBindDescriptorSets(
-                commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout, 0, 1,
-                &actor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet, 0, nullptr
+                commandBuffer,
+                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                actor->pipeline->pipelineLayout,
+                0,
+                1,
+                &actor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet,
+                0,
+                nullptr
             );
             model->bindInputBuffers(commandBuffer);
             vkCmdDrawIndexed(commandBuffer, model->numIndices, 1, 0, 0, 0);
@@ -247,8 +265,14 @@ class World final : public VulkRenderable {
             auto model = actor->model;
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipeline);
             vkCmdBindDescriptorSets(
-                commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout, 0, 1,
-                &actor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet, 0, nullptr
+                commandBuffer,
+                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                actor->pipeline->pipelineLayout,
+                0,
+                1,
+                &actor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet,
+                0,
+                nullptr
             );
             model->bindInputBuffers(commandBuffer);
             vkCmdDrawIndexed(commandBuffer, model->numIndices, 1, 0, 0, 0);
@@ -261,18 +285,18 @@ class World final : public VulkRenderable {
 
     void drawDebugStuff(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer) {
         VkRenderPassBeginInfo renderPassInfo{};
-        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        renderPassInfo.renderPass = vk.renderPass;
-        renderPassInfo.framebuffer = frameBuffer;
+        renderPassInfo.sType             = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        renderPassInfo.renderPass        = vk.renderPass;
+        renderPassInfo.framebuffer       = frameBuffer;
         renderPassInfo.renderArea.offset = {0, 0};
         renderPassInfo.renderArea.extent = vk.swapChainExtent;
 
         std::array<VkClearValue, 2> clearValues{};
-        clearValues[0].color = {{0.1f, 0.0f, 0.1f, 1.0f}};
+        clearValues[0].color        = {{0.1f, 0.0f, 0.1f, 1.0f}};
         clearValues[1].depthStencil = {1.0f, 0};
 
         renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-        renderPassInfo.pClearValues = clearValues.data();
+        renderPassInfo.pClearValues    = clearValues.data();
 
         vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
         // render the scene
@@ -281,8 +305,14 @@ class World final : public VulkRenderable {
                 auto model = actor->model;
                 vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, wireframePipeline->pipeline);
                 vkCmdBindDescriptorSets(
-                    commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, wireframePipeline->pipelineLayout, 0, 1,
-                    &actor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet, 0, nullptr
+                    commandBuffer,
+                    VK_PIPELINE_BIND_POINT_GRAPHICS,
+                    wireframePipeline->pipelineLayout,
+                    0,
+                    1,
+                    &actor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet,
+                    0,
+                    nullptr
                 );
                 model->bindInputBuffers(commandBuffer);
                 vkCmdDrawIndexed(commandBuffer, model->numIndices, 1, 0, 0, 0);
@@ -296,8 +326,14 @@ class World final : public VulkRenderable {
                 auto model = actor->model;
                 vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipeline);
                 vkCmdBindDescriptorSets(
-                    commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout, 0, 1,
-                    &actor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet, 0, nullptr
+                    commandBuffer,
+                    VK_PIPELINE_BIND_POINT_GRAPHICS,
+                    actor->pipeline->pipelineLayout,
+                    0,
+                    1,
+                    &actor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet,
+                    0,
+                    nullptr
                 );
 
                 model->bindInputBuffers(commandBuffer);
@@ -312,8 +348,14 @@ class World final : public VulkRenderable {
                 auto model = actor->model;
                 vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipeline);
                 vkCmdBindDescriptorSets(
-                    commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipelineLayout, 0, 1,
-                    &actor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet, 0, nullptr
+                    commandBuffer,
+                    VK_PIPELINE_BIND_POINT_GRAPHICS,
+                    actor->pipeline->pipelineLayout,
+                    0,
+                    1,
+                    &actor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet,
+                    0,
+                    nullptr
                 );
 
                 model->bindInputBuffers(commandBuffer);
@@ -324,8 +366,14 @@ class World final : public VulkRenderable {
         // draw the axes
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, axesPipeline->pipeline);
         vkCmdBindDescriptorSets(
-            commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, axesPipeline->pipelineLayout, 0, 1,
-            &axesActor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet, 0, nullptr
+            commandBuffer,
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            axesPipeline->pipelineLayout,
+            0,
+            1,
+            &axesActor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet,
+            0,
+            nullptr
         );
 
         axesActor->model->bindInputBuffers(commandBuffer);
@@ -336,8 +384,8 @@ class World final : public VulkRenderable {
 
     struct Menu {
         ImGuiWindowFlags windowFlags = 0;
-        bool show = true;
-        bool isOpen = false;
+        bool show                    = true;
+        bool isOpen                  = false;
     } menu;
 
     struct Selection {
@@ -349,16 +397,16 @@ class World final : public VulkRenderable {
         ImGuiIO& io = ImGui::GetIO();
 
         float dragScale = 0.001f;
-        float dx = -dragScale * io.MouseDelta.x;
-        float dy = dragScale * io.MouseDelta.y;
-        float scroll = ImGui::GetIO().MouseWheel;
+        float dx        = -dragScale * io.MouseDelta.x;
+        float dy        = dragScale * io.MouseDelta.y;
+        float scroll    = ImGui::GetIO().MouseWheel;
         bool camUpdated = false;
 
-        uint32_t mouseIdx = (uint32_t)(io.MousePos.x + io.MousePos.y * (float)vk.swapChainExtent.width);
-        bool modelPicked = false;
+        uint32_t mouseIdx        = (uint32_t)(io.MousePos.x + io.MousePos.y * (float)vk.swapChainExtent.width);
+        bool modelPicked         = false;
         uint32_t selectedModelID = 0;
         if (mouseIdx < pickRenderpass->pickData.size()) {
-            modelPicked = pickRenderpass->pickData[mouseIdx] > 0;
+            modelPicked     = pickRenderpass->pickData[mouseIdx] > 0;
             selectedModelID = pickRenderpass->pickData[mouseIdx] - 1;
         }
 

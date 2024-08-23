@@ -6,17 +6,12 @@
 class VulkBufferBuilder {
     Vulk& vk;
     VkDeviceSize size;
-    void const* mem; // optional memory to fill the buffer with
+    void const* mem;  // optional memory to fill the buffer with
     VkBufferUsageFlags usage;
     VkMemoryPropertyFlags properties;
 
-public:
-    VulkBufferBuilder(Vulk& vk)
-        : vk(vk)
-        , size(0)
-        , mem(nullptr)
-        , usage(0)
-        , properties(0) {}
+   public:
+    VulkBufferBuilder(Vulk& vk) : vk(vk), size(0), mem(nullptr), usage(0), properties(0) {}
 
     VulkBufferBuilder& setSize(VkDeviceSize sizeIn) {
         assert(size == 0);

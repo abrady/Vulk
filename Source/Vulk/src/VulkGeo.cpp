@@ -1,6 +1,7 @@
 #include "Vulk/VulkPCH.h"
 
-// TODO: get subdivideTris working with our geo creation functions and maybe we can accumulate the vertices and indices in the meshData
+// TODO: get subdivideTris working with our geo creation functions and maybe we can accumulate the vertices and indices in the
+// meshData
 #define CHECK_MESH_DATA(meshData) assert(meshData.vertices.size() == 0 && meshData.indices.size() == 0)
 
 using namespace glm;
@@ -24,8 +25,8 @@ static vec3 calcTangent(vec3 pos1, vec3 pos2, vec3 pos3, vec2 uv1, vec2 uv2, vec
     // normal vector
     // glm::vec3 nm(0.0, 0.0, 1.0);
 
-    glm::vec3 edge1 = pos2 - pos1;
-    glm::vec3 edge2 = pos3 - pos1;
+    glm::vec3 edge1    = pos2 - pos1;
+    glm::vec3 edge2    = pos3 - pos1;
     glm::vec2 deltaUV1 = uv2 - uv1;
     glm::vec2 deltaUV2 = uv3 - uv1;
 
@@ -44,19 +45,19 @@ static vec3 calcTangent(vec3 pos1, vec3 pos2, vec3 pos3, vec2 uv1, vec2 uv2, vec
 
 static void calcMeshTangents(VulkMesh& meshData) {
     for (auto& vert : meshData.vertices) {
-        vert.tangent = vec3(0.f); // normalize to get the 'average' tangent
+        vert.tangent = vec3(0.f);  // normalize to get the 'average' tangent
     }
     // tangent space needs special handling
     for (uint32_t i = 0; i < meshData.indices.size(); i += 3) {
-        uint32_t i0 = meshData.indices[i + 0];
-        uint32_t i1 = meshData.indices[i + 1];
-        uint32_t i2 = meshData.indices[i + 2];
-        vec3 P0 = meshData.vertices[i0].pos;
-        vec3 P1 = meshData.vertices[i1].pos;
-        vec3 P2 = meshData.vertices[i2].pos;
-        vec2 UV0 = meshData.vertices[i0].uv;
-        vec2 UV1 = meshData.vertices[i1].uv;
-        vec2 UV2 = meshData.vertices[i2].uv;
+        uint32_t i0  = meshData.indices[i + 0];
+        uint32_t i1  = meshData.indices[i + 1];
+        uint32_t i2  = meshData.indices[i + 2];
+        vec3 P0      = meshData.vertices[i0].pos;
+        vec3 P1      = meshData.vertices[i1].pos;
+        vec3 P2      = meshData.vertices[i2].pos;
+        vec2 UV0     = meshData.vertices[i0].uv;
+        vec2 UV1     = meshData.vertices[i1].uv;
+        vec2 UV2     = meshData.vertices[i2].uv;
         vec3 tangent = calcTangent(P0, P1, P2, UV0, UV1, UV2);
         meshData.vertices[i0].tangent += tangent;
         meshData.vertices[i1].tangent += tangent;
@@ -64,7 +65,7 @@ static void calcMeshTangents(VulkMesh& meshData) {
     }
 
     for (auto& vert : meshData.vertices) {
-        vert.tangent = normalize(vert.tangent); // normalize to get the 'average' tangent
+        vert.tangent = normalize(vert.tangent);  // normalize to get the 'average' tangent
     }
 }
 
@@ -83,7 +84,7 @@ static void calcMeshTangents(VulkMesh& meshData) {
 //
 static void subdivideTris(VulkMesh& meshData) {
     // save a copy of the input geometry
-    std::vector<Vertex> verticesCopy = meshData.vertices;
+    std::vector<Vertex> verticesCopy  = meshData.vertices;
     std::vector<uint32_t> indicesCopy = meshData.indices;
     meshData.vertices.clear();
     meshData.indices.clear();
@@ -110,14 +111,14 @@ static void subdivideTris(VulkMesh& meshData) {
 
         // generate 3 new vertices at the midpoints of each edge
         Vertex m0, m1, m2;
-        m0.pos = 0.5f * (v0.pos + v1.pos);
-        m0.uv = 0.5f * (v0.uv + v1.uv);
+        m0.pos    = 0.5f * (v0.pos + v1.pos);
+        m0.uv     = 0.5f * (v0.uv + v1.uv);
         m0.normal = 0.5f * (v0.normal + v1.normal);
-        m1.pos = 0.5f * (v1.pos + v2.pos);
-        m1.uv = 0.5f * (v1.uv + v2.uv);
+        m1.pos    = 0.5f * (v1.pos + v2.pos);
+        m1.uv     = 0.5f * (v1.uv + v2.uv);
         m1.normal = 0.5f * (v1.normal + v2.normal);
-        m2.pos = 0.5f * (v0.pos + v2.pos);
-        m2.uv = 0.5f * (v0.uv + v2.uv);
+        m2.pos    = 0.5f * (v0.pos + v2.pos);
+        m2.uv     = 0.5f * (v0.uv + v2.uv);
         m2.normal = 0.5f * (v0.normal + v2.normal);
 
         // add new geometry
@@ -157,19 +158,19 @@ void makeEquilateralTri(float side, uint32_t numSubdivisions, VulkMesh& meshData
     CHECK_MESH_DATA(meshData);
     meshData.name = "EquilateralTriangle";
     Vertex v0;
-    v0.pos = vec3(0.0f, 0.0f, 0.0f);
+    v0.pos    = vec3(0.0f, 0.0f, 0.0f);
     v0.normal = vec3(0.0f, 0.0f, 1.0f);
-    v0.uv = vec2(0.5f, 0.0f);
+    v0.uv     = vec2(0.5f, 0.0f);
 
     Vertex v1;
-    v1.pos = vec3(side, 0.0f, 0.0f);
+    v1.pos    = vec3(side, 0.0f, 0.0f);
     v1.normal = vec3(0.0f, 0.0f, 1.0f);
-    v1.uv = vec2(0.5f, 1.0f);
+    v1.uv     = vec2(0.5f, 1.0f);
 
     Vertex v2;
-    v2.pos = vec3(side / 2.0f, side * sqrtf(3.0f) / 2.0f, 0.0f);
+    v2.pos    = vec3(side / 2.0f, side * sqrtf(3.0f) / 2.0f, 0.0f);
     v2.normal = vec3(0.0f, 0.0f, 1.0f);
-    v2.uv = vec2(0.0f, 1.0f);
+    v2.uv     = vec2(0.0f, 1.0f);
 
     uint32_t baseIndex = (uint32_t)meshData.vertices.size();
     meshData.vertices.push_back(v0);
@@ -194,24 +195,24 @@ void makeQuad(float x, float y, float w, float h, float depth, uint32_t numSubdi
     meshData.name = "Quad";
 
     Vertex v0;
-    v0.pos = vec3(x, y, depth);
+    v0.pos    = vec3(x, y, depth);
     v0.normal = vec3(0.0f, 0.0f, 1.0f);
-    v0.uv = vec2(0.0f, 0.0f);
+    v0.uv     = vec2(0.0f, 0.0f);
 
     Vertex v1;
-    v1.pos = vec3(x + w, y, depth);
+    v1.pos    = vec3(x + w, y, depth);
     v1.normal = vec3(0.0f, 0.0f, 1.0f);
-    v1.uv = vec2(1.0f, 0.0f);
+    v1.uv     = vec2(1.0f, 0.0f);
 
     Vertex v2;
-    v2.pos = vec3(x + w, y + h, depth);
+    v2.pos    = vec3(x + w, y + h, depth);
     v2.normal = vec3(0.0f, 0.0f, 1.0f);
-    v2.uv = vec2(1.0f, 1.0f);
+    v2.uv     = vec2(1.0f, 1.0f);
 
     Vertex v3;
-    v3.pos = vec3(x, y + h, depth);
+    v3.pos    = vec3(x, y + h, depth);
     v3.normal = vec3(0.0f, 0.0f, 1.0f);
-    v3.uv = vec2(0.0f, 1.0f);
+    v3.uv     = vec2(0.0f, 1.0f);
 
     uint32_t baseIndex = (uint32_t)meshData.vertices.size();
     meshData.vertices.push_back(v0);
@@ -238,29 +239,36 @@ void makeQuad(float w, float h, uint32_t numSubdivisions, VulkMesh& meshData) {
     makeQuad(-w / 2.0f, -h / 2.0f, w, h, 0.0f, numSubdivisions, meshData);
 }
 
-// make a cylinder of height `height` with radius `radius`, `numStacks` and `numSlices` slices (stacks are vertical, slices are horizontal - think pizza slices)
-// cenetered at the origin
-void makeCylinder(float height, float bottomRadius, float topRadius, uint32_t numStacksIn, uint32_t numSlices, VulkMesh& meshData) {
+// make a cylinder of height `height` with radius `radius`, `numStacks` and `numSlices` slices (stacks are vertical, slices are
+// horizontal - think pizza slices) cenetered at the origin
+void makeCylinder(
+    float height,
+    float bottomRadius,
+    float topRadius,
+    uint32_t numStacksIn,
+    uint32_t numSlices,
+    VulkMesh& meshData
+) {
     CHECK_MESH_DATA(meshData);
     meshData.name = "Cylinder";
 
     uint32_t baseIndex;
     float numStacks = (float)numStacksIn;
 
-    float stackHeight = height / numStacks;
-    float radiusStep = (topRadius - bottomRadius) / numStacks;
+    float stackHeight  = height / numStacks;
+    float radiusStep   = (topRadius - bottomRadius) / numStacks;
     uint32_t ringCount = numStacksIn + 1;
-    baseIndex = (uint32_t)meshData.vertices.size();
+    baseIndex          = (uint32_t)meshData.vertices.size();
     for (uint32_t i = 0; i < ringCount; ++i) {
-        float y = -0.5f * height + (float)i * stackHeight;
-        float r = bottomRadius + (float)i * radiusStep;
+        float y      = -0.5f * height + (float)i * stackHeight;
+        float r      = bottomRadius + (float)i * radiusStep;
         float dTheta = 2.0f * pi<float>() / (float)numSlices;
         for (uint32_t j = 0; j <= numSlices; ++j) {
             Vertex vertex;
-            float c = cosf((float)j * dTheta);
-            float s = sinf((float)j * dTheta);
-            vertex.pos = vec3(r * c, y, r * s);
-            vertex.uv = vec2((float)j / (float)numSlices, 1.0f - (float)i / (float)numStacks);
+            float c       = cosf((float)j * dTheta);
+            float s       = sinf((float)j * dTheta);
+            vertex.pos    = vec3(r * c, y, r * s);
+            vertex.uv     = vec2((float)j / (float)numSlices, 1.0f - (float)i / (float)numStacks);
             vertex.normal = vec3(c, 0.0f, s);
             meshData.vertices.push_back(vertex);
         }
@@ -284,21 +292,21 @@ void makeCylinder(float height, float bottomRadius, float topRadius, uint32_t nu
     baseIndex = (uint32_t)meshData.vertices.size();
     for (uint32_t i = 0; i <= numSlices; ++i) {
         Vertex vertex;
-        float c = cosf((float)i * dTheta);
-        float s = sinf((float)i * dTheta);
-        float x = topRadius * c;
-        float z = topRadius * s;
-        float u = x / height + 0.5f;
-        float v = z / height + 0.5f;
-        vertex.pos = vec3(x, 0.5f * height, z);
+        float c       = cosf((float)i * dTheta);
+        float s       = sinf((float)i * dTheta);
+        float x       = topRadius * c;
+        float z       = topRadius * s;
+        float u       = x / height + 0.5f;
+        float v       = z / height + 0.5f;
+        vertex.pos    = vec3(x, 0.5f * height, z);
         vertex.normal = vec3(0.0f, 1.0f, 0.0f);
         // vertex.tangent = vec3(-s, 0.0f, c);
         vertex.uv = vec2(u, v);
         meshData.vertices.push_back(vertex);
     }
     Vertex topCenter;
-    topCenter.pos = vec3(0.0f, 0.5f * height, 0.0f);
-    topCenter.uv = vec2(0.5f, 0.5f);
+    topCenter.pos    = vec3(0.0f, 0.5f * height, 0.0f);
+    topCenter.uv     = vec2(0.5f, 0.5f);
     topCenter.normal = vec3(0.0f, -1.0f, 0.0f);
     // topCenter.tangent = vec3(1.0f, 0.0f, 0.0f); // no idea on tangent for the topCenter point
     meshData.vertices.push_back(topCenter);
@@ -321,15 +329,15 @@ void makeCylinder(float height, float bottomRadius, float topRadius, uint32_t nu
         float u = x / height + 0.5f;
         float v = z / height + 0.5f;
 
-        vertex.pos = vec3(x, -0.5f * height, z);
+        vertex.pos    = vec3(x, -0.5f * height, z);
         vertex.normal = vec3(0.0f, -1.0f, 0.0f);
         // vertex.tangent = vec3(-s, 0.0f, c);
         vertex.uv = vec2(u, v);
         meshData.vertices.push_back(vertex);
     }
     Vertex bottomCenter;
-    bottomCenter.pos = vec3(0.0f, -0.5f * height, 0.0f);
-    bottomCenter.uv = vec2(0.5f, 0.5f);
+    bottomCenter.pos    = vec3(0.0f, -0.5f * height, 0.0f);
+    bottomCenter.uv     = vec2(0.5f, 0.5f);
     bottomCenter.normal = vec3(0.0f, -1.0f, 0.0f);
     // bottomCenter.tangent = vec3(1.0f, 0.0f, 0.0f); // no idea on tangent for the bottomCenter point
     meshData.vertices.push_back(bottomCenter);
@@ -354,8 +362,20 @@ void makeGeoSphere(float radius, uint32_t numSubdivisions, VulkMesh& meshData) {
     const float x = 0.525731f;
     const float z = 0.850651f;
 
-    vec3 pos[12] = {vec3(-x, 0.0f, z), vec3(x, 0.0f, z),   vec3(-x, 0.0f, -z), vec3(x, 0.0f, -z), vec3(0.0f, z, x),  vec3(0.0f, z, -x),
-                    vec3(0.0f, -z, x), vec3(0.0f, -z, -x), vec3(z, x, 0.0f),   vec3(-z, x, 0.0f), vec3(z, -x, 0.0f), vec3(-z, -x, 0.0f)};
+    vec3 pos[12] = {
+        vec3(-x, 0.0f, z),
+        vec3(x, 0.0f, z),
+        vec3(-x, 0.0f, -z),
+        vec3(x, 0.0f, -z),
+        vec3(0.0f, z, x),
+        vec3(0.0f, z, -x),
+        vec3(0.0f, -z, x),
+        vec3(0.0f, -z, -x),
+        vec3(z, x, 0.0f),
+        vec3(-z, x, 0.0f),
+        vec3(z, -x, 0.0f),
+        vec3(-z, -x, 0.0f)
+    };
 
     uint32_t k[60] = {1, 4,  0, 4,  9, 0, 4, 5,  9, 8, 5, 4,  1, 8, 4, 1,  10, 8, 10, 3, 8, 8, 3,  5, 3, 2, 5, 3,  7, 2,
                       3, 10, 7, 10, 6, 7, 6, 11, 7, 6, 0, 11, 6, 1, 0, 10, 1,  6, 11, 0, 9, 2, 11, 9, 5, 2, 9, 11, 2, 7};
@@ -377,12 +397,12 @@ void makeGeoSphere(float radius, uint32_t numSubdivisions, VulkMesh& meshData) {
 
     // project vertices onto sphere and scale
     for (uint32_t i = 0; i < meshData.vertices.size(); ++i) {
-        vec3 n = normalize(meshData.vertices[i].pos);
-        vec3 p = radius * n;
-        meshData.vertices[i].pos = p;
+        vec3 n                      = normalize(meshData.vertices[i].pos);
+        vec3 p                      = radius * n;
+        meshData.vertices[i].pos    = p;
         meshData.vertices[i].normal = n;
-        meshData.vertices[i].uv.x = atan2f(n.z, n.x) / (2.0f * pi<float>()) + 0.5f;
-        meshData.vertices[i].uv.y = asinf(n.y) / pi<float>() + 0.5f;
+        meshData.vertices[i].uv.x   = atan2f(n.z, n.x) / (2.0f * pi<float>()) + 0.5f;
+        meshData.vertices[i].uv.y   = asinf(n.y) / pi<float>() + 0.5f;
     }
     calcMeshTangents(meshData);
 }
@@ -403,14 +423,14 @@ void makeAxes(float length, VulkMesh& meshData) {
         z.vertices[i].uv = vec2(1.0f, 0.0f);
     }
 
-    mat4 rotX = rotate(mat4(1.0f), pi<float>() / 2.0f, vec3(0.0f, 0.0f, 1.0f));
+    mat4 rotX             = rotate(mat4(1.0f), pi<float>() / 2.0f, vec3(0.0f, 0.0f, 1.0f));
     mat4 rotAndTranslateX = translate(mat4(1.0f), vec3(length / 2.0f, 0.0f, 0.0f)) * rotX;
     x.xform(rotAndTranslateX);
 
     mat4 transY = translate(mat4(1.0f), vec3(0.0f, length / 2.0f, 0.0f));
     y.xform(transY);
 
-    mat4 rotZ = rotate(mat4(1.0f), pi<float>() / 2.0f, vec3(1.0f, 0.0f, 0.0f));
+    mat4 rotZ             = rotate(mat4(1.0f), pi<float>() / 2.0f, vec3(1.0f, 0.0f, 0.0f));
     mat4 rotAndTranslateZ = translate(mat4(1.0f), vec3(0.0f, 0.0f, length / 2.0f)) * rotZ;
     z.xform(rotAndTranslateZ);
 
@@ -421,13 +441,13 @@ void makeAxes(float length, VulkMesh& meshData) {
 }
 
 #ifdef __clang__
-#    pragma clang diagnostic push
-#    pragma clang diagnostic ignored "-Wimplicit-int-float-conversion"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wimplicit-int-float-conversion"
 #endif
 
 void makeGrid(float width, float depth, uint32_t m, uint32_t n, VulkMesh& meshData, float repeatU, float repeatV) {
     uint32_t vertexCount = m * n;
-    uint32_t faceCount = (m - 1) * (n - 1) * 2;
+    uint32_t faceCount   = (m - 1) * (n - 1) * 2;
 
     // Create the vertices
     float halfWidth = 0.5f * width;
@@ -445,7 +465,7 @@ void makeGrid(float width, float depth, uint32_t m, uint32_t n, VulkMesh& meshDa
         for (uint32_t j = 0; j < n; ++j) {
             float x = -halfWidth + j * dx;
 
-            meshData.vertices[i * n + j].pos = vec3(x, 0.0f, z);
+            meshData.vertices[i * n + j].pos    = vec3(x, 0.0f, z);
             meshData.vertices[i * n + j].normal = vec3(0.0f, 1.0f, 0.0f);
             // meshData.vertices[i * n + j].tangent = vec3(1.0f, 0.0f, 0.0f);
             meshData.vertices[i * n + j].uv = vec2(j * du, i * dv);
@@ -453,13 +473,13 @@ void makeGrid(float width, float depth, uint32_t m, uint32_t n, VulkMesh& meshDa
     }
 
     // Create the indices.
-    meshData.indices.resize(faceCount * 3); // 3 indices per face
+    meshData.indices.resize(faceCount * 3);  // 3 indices per face
 
     // Iterate over each quad and compute indices.
     uint32_t k = 0;
     for (uint32_t i = 0; i < m - 1; ++i) {
         for (uint32_t j = 0; j < n - 1; ++j) {
-            meshData.indices[k] = i * n + j;
+            meshData.indices[k]     = i * n + j;
             meshData.indices[k + 1] = i * n + j + 1;
             meshData.indices[k + 2] = (i + 1) * n + j;
 
@@ -467,7 +487,7 @@ void makeGrid(float width, float depth, uint32_t m, uint32_t n, VulkMesh& meshDa
             meshData.indices[k + 4] = i * n + j + 1;
             meshData.indices[k + 5] = (i + 1) * n + j + 1;
 
-            k += 6; // next quad
+            k += 6;  // next quad
         }
     }
 

@@ -35,13 +35,21 @@ class VulkException : public std::exception {
     }
 
    public:
-    VulkException(const char* message) : msg(message), st(std::stacktrace::current()) { init(); }
+    VulkException(const char* message) : msg(message), st(std::stacktrace::current()) {
+        init();
+    }
 
-    VulkException(std::string message) : msg(message), st(std::stacktrace::current()) { init(); }
+    VulkException(std::string message) : msg(message), st(std::stacktrace::current()) {
+        init();
+    }
 
-    const char* what() const noexcept override { return msg.c_str(); }
+    const char* what() const noexcept override {
+        return msg.c_str();
+    }
 
-    const std::stacktrace& get_stacktrace() const { return st; }
+    const std::stacktrace& get_stacktrace() const {
+        return st;
+    }
 
    private:
     std::string msg;

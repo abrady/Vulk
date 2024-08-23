@@ -52,14 +52,13 @@
 
 using apache::thrift::TEnumTraits;
 
-#define VK_CALL(func)                                                                                       \
-    do {                                                                                                    \
-        VkResult vkcall_macro_result = (func);                                                              \
-        if (vkcall_macro_result != VK_SUCCESS) {                                                            \
-            std::cerr << "Vulkan error: " << (vkcall_macro_result) << " at " << __FILE__ << ":" << __LINE__ \
-                      << std::endl;                                                                         \
-            VULK_THROW("Vulkan error: {}", std::to_string(vkcall_macro_result));                            \
-        }                                                                                                   \
+#define VK_CALL(func)                                                                                                     \
+    do {                                                                                                                  \
+        VkResult vkcall_macro_result = (func);                                                                            \
+        if (vkcall_macro_result != VK_SUCCESS) {                                                                          \
+            std::cerr << "Vulkan error: " << (vkcall_macro_result) << " at " << __FILE__ << ":" << __LINE__ << std::endl; \
+            VULK_THROW("Vulkan error: {}", std::to_string(vkcall_macro_result));                                          \
+        }                                                                                                                 \
     } while (0)
 
 #define ASSERT_KEY_NOT_SET(findable_container, key) assert((findable_container).find(key) == (findable_container).end())
@@ -82,7 +81,9 @@ struct QueueFamilyIndices {
     std::optional<uint32_t> graphicsFamily;
     std::optional<uint32_t> presentFamily;
 
-    bool isComplete() { return graphicsFamily.has_value() && presentFamily.has_value(); }
+    bool isComplete() {
+        return graphicsFamily.has_value() && presentFamily.has_value();
+    }
 };
 
 struct SwapChainSupportDetails {
@@ -116,7 +117,9 @@ class VulkPauseableTimer {
         }
     }
 
-    void resume() { start(); }
+    void resume() {
+        start();
+    }
 
     void toggle() {
         if (isRunning) {
@@ -127,13 +130,13 @@ class VulkPauseableTimer {
     }
 
     void reset() {
-        isRunning = false;
+        isRunning   = false;
         elapsedTime = 0.0f;
     }
 
     float getElapsedTime() {
         if (isRunning) {
-            auto currentTime = std::chrono::high_resolution_clock::now();
+            auto currentTime        = std::chrono::high_resolution_clock::now();
             auto currentElapsedTime = elapsedTime + std::chrono::duration<float>(currentTime - startTime).count();
             return currentElapsedTime;
         } else {
