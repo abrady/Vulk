@@ -78,7 +78,8 @@ class PipelineBuilder {
         for (const spirv_cross::Resource& resource : resources.uniform_buffers) {
             // unsigned set = glsl.get_decoration(resource.id, spv::DecorationDescriptorSet);
             vulk::cpp2::VulkShaderUBOBinding binding =
-                (vulk::cpp2::VulkShaderUBOBinding)glsl.get_decoration(resource.id, spv::DecorationBinding);
+                enumFromInt<vulk::cpp2::VulkShaderUBOBinding>(glsl.get_decoration(resource.id, spv::DecorationBinding));
+
             parsedShader.uboBindings[binding] = resource.name;
         }
 

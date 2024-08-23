@@ -4,6 +4,8 @@
 #pragma warning(push, 0)  // assume these headers know what they're doing
 #endif
 
+#include <concepts>
+
 #include "VulkConstants.h"
 
 #include <glm/gtx/quaternion.hpp>
@@ -51,6 +53,23 @@
 #pragma warning(pop)
 
 using apache::thrift::TEnumTraits;
+
+template <typename T, std::integral N>
+bool enumIsValid(N value) {
+    return TEnumTraits<T>::findName((T)value) != nullptr;
+}
+
+template <typename T, std::integral N>
+T enumFromInt(N value) {
+    auto name = TEnumTraits<T>::findName((T)value);
+    VULK_ASSERT(name != nullptr);
+    if (name == nullptr) {
+        throw std::runtime_error("Invalid enum value");
+    }
+    T out;
+    VULK_ASSERT(TEnumTraits<T>::findValue(name, &out));
+    return out;
+}
 
 #define VK_CALL(func)                                                                                                     \
     do {                                                                                                                  \
