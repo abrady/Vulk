@@ -8,10 +8,10 @@ Language: Cpp
 Standard: Latest
 ColumnLimit: 130
 UseTab: Never
-#AlignAfterOpenBracket(BAS_BlockIndent): true
-AlignAfterOpenBracket: BlockIndent
-AlignOperands: true
-#AlignConsecutiveAssignments : true
+AlignAfterOpenBracket: BlockIndent # follow normal indentation rules after open bracket
+AlignConsecutiveAssignments : true # for vulkan struct init blocks it looks nicer
+#AlignOperands: true
+#AlignAssignments: true
 # BinPackArguments: false
 
 #BreakBeforeDesignatedInitializer: true
