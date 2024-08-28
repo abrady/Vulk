@@ -20,12 +20,18 @@ struct PushConstantDef {
     2: i32 size;
 }
 
+struct DescriptorSetInputAttachmentDef {
+    1: VulkShaderEnums.GBufAtmtIdx atmtIdx;
+    2: VulkShaderEnums.GBufBinding binding;
+}
+
 // Define complex structures
 struct DescriptorSetDef {
     // the keys are VkShaderStageFlagBits
     2: map<i32, list<VulkShaderEnums.VulkShaderUBOBinding>> uniformBuffers; 
     3: map<i32, list<VulkShaderEnums.VulkShaderSSBOBinding>> storageBuffers;
     4: map<i32, list<VulkShaderEnums.VulkShaderTextureBinding>> imageSamplers;
+    5: map<i32, list<DescriptorSetInputAttachmentDef>> inputAttachments;
 }
 
 struct PipelineBlendingDef {

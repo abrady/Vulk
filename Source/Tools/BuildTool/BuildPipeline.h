@@ -11,11 +11,16 @@
 #include "Vulk/VulkResourceMetadata.h"
 
 struct ShaderInfo {
+    struct InputAttachment {
+        vulk::cpp2::GBufAtmtIdx atmtIdx;
+        std::string name;
+    };
     std::string name;
     std::string entryPoint;
     std::unordered_map<vulk::cpp2::VulkShaderUBOBinding, std::string> uboBindings;
     std::unordered_map<vulk::cpp2::VulkShaderSSBOBinding, std::string> sboBindings;
     std::unordered_map<vulk::cpp2::VulkShaderTextureBinding, std::string> samplerBindings;
+    std::unordered_map<vulk::cpp2::GBufBinding, InputAttachment> inputAttachments;
     std::unordered_map<vulk::cpp2::VulkShaderLocation, std::string> inputLocations;
     std::unordered_map<vulk::cpp2::VulkShaderLocation, std::string> outputLocations;
     std::vector<uint32_t> pushConstants;  // bitfield of vulk::cpp2::VulkShaderStage
@@ -97,6 +102,16 @@ class PipelineBuilder {
             vulk::cpp2::VulkShaderTextureBinding binding =
                 (vulk::cpp2::VulkShaderTextureBinding)glsl.get_decoration(resource.id, spv::DecorationBinding);
             parsedShader.samplerBindings[binding] = resource.name;
+        }
+
+        // For input attachments
+        for (const spirv_cross::Resource& resource : resources.subpass_inputs) {
+            // unsigned set = glsl.get_decoration(resource.id, spv::DecorationDescriptorSet);
+            vulk::cpp2::GBufAtmtIdx atmtIdx =
+                (vulk::cpp2::GBufAtmtIdx)glsl.get_decoration(resource.id, spv::DecorationInputAttachmentIndex);
+            vulk::cpp2::GBufBinding binding = (vulk::cpp2::GBufBinding)glsl.get_decoration(resource.id, spv::DecorationBinding);
+            parsedShader.inputAttachments[binding].name    = resource.name;
+            parsedShader.inputAttachments[binding].atmtIdx = atmtIdx;
         }
 
         // Inputs
@@ -185,6 +200,13 @@ class PipelineBuilder {
             std::map<std::int32_t, std::vector<::vulk::cpp2::VulkShaderTextureBinding>>& samplers = *imageSamplersRef;
             samplers[stageFlag].push_back((vulk::cpp2::VulkShaderTextureBinding)sampler.first);
             // def.imageSamplers_ref()[stageFlag].push_back((vulk::cpp2::VulkShaderBinding)sampler.first);
+        }
+        for (auto& [binding, ia] : info.inputAttachments) {
+            auto inputRefs = def.inputAttachments_ref()[stageFlag];
+            vulk::cpp2::DescriptorSetInputAttachmentDef atmtDef;
+            atmtDef.atmtIdx_ref() = ia.atmtIdx;
+            atmtDef.binding_ref() = binding;
+            inputRefs.push_back(atmtDef);
         }
 
         for (uint32_t i = 0; i < info.pushConstants.size(); i++) {

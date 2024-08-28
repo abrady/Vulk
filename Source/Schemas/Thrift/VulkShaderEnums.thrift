@@ -89,10 +89,13 @@ enum VulkShaderTextureBinding {
     MetallicSampler = 17,
     RoughnessSampler = 18,
     CubemapSampler = 21,
-    GBufNormal = 22,
-    GBufDepth = 23,
-    GBufAlbedo = 24,
-    GBufMaterial = 25,
+}
+
+enum GBufBinding {
+    Normal = 22,
+    Depth = 23,
+    Albedo = 24,
+    Material = 25,
 }
 
 enum VulkLights {

@@ -75,7 +75,8 @@
         // C:\open\Github\Vulk\build\Source\Tools\BuildTool\Tests\Debug
         {
             "name": "BuildToolTests - Debug",
-            "program": "${workspaceFolder}/build/Source/Tools/BuildTool/Tests/BuildToolTests.exe",
+            // "program": "${workspaceFolder}/build/Source/Tools/BuildTool/Tests/BuildToolTests.exe",
+            "program": "${workspaceFolder}/build/Source/Tools/BuildTool/Tests/Debug/BuildToolTests.exe",
             "type": "cppvsdbg",
             "request": "launch",
             "cwd": "${workspaceRoot}/Build",

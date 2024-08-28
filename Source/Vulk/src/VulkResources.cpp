@@ -188,6 +188,7 @@ VulkResources::createActorFromPipeline(ActorDef const& actorDef, shared_ptr<Vulk
     PipelineDef const& pd       = *pipeline->def;
     shared_ptr<VulkModel> model = getModel(*actorDef.model, pd);
     shared_ptr<VulkFrameUBOs<glm::mat4>> modelXformUBOs;
+
     dsBuilder.setDescriptorSetLayout(pipeline->descriptorSetLayout);
     for (auto& iter : dsDef.get_uniformBuffers()) {
         VkShaderStageFlagBits stage = (VkShaderStageFlagBits)iter.first;
@@ -288,17 +289,13 @@ VulkResources::createActorFromPipeline(ActorDef const& actorDef, shared_ptr<Vulk
                 case vulk::cpp2::VulkShaderTextureBinding::CubemapSampler:
                     dsBuilder.addBothFramesImageSampler(stage, binding, model->textures->cubemapView, textureSampler);
                     break;
-                case vulk::cpp2::VulkShaderTextureBinding::GBufNormal:
-                case vulk::cpp2::VulkShaderTextureBinding::GBufDepth:
-                case vulk::cpp2::VulkShaderTextureBinding::GBufAlbedo:
-                case vulk::cpp2::VulkShaderTextureBinding::GBufMaterial:
                 default:
                     VULK_THROW("Invalid texture binding");
             }
         }
     }
     static_assert(
-        TEnumTraits<::vulk::cpp2::VulkShaderTextureBinding>::max() == vulk::cpp2::VulkShaderTextureBinding::GBufMaterial
+        TEnumTraits<::vulk::cpp2::VulkShaderTextureBinding>::max() == vulk::cpp2::VulkShaderTextureBinding::CubemapSampler
     );
 
     std::shared_ptr<VulkDescriptorSetInfo> info = dsBuilder.build();
@@ -369,7 +366,7 @@ shared_ptr<VulkMaterialTextures> VulkResources::getMaterialTextures(string const
         materialTextures[name]->cubemapView =
             !def.cubemapImgs[0].empty() ? VulkImageView::createCubemapView(vk, def.cubemapImgs) : nullptr;
         static_assert(
-            TEnumTraits<::vulk::cpp2::VulkShaderTextureBinding>::max() == vulk::cpp2::VulkShaderTextureBinding::GBufMaterial
+            TEnumTraits<::vulk::cpp2::VulkShaderTextureBinding>::max() == vulk::cpp2::VulkShaderTextureBinding::CubemapSampler
         );
     }
 

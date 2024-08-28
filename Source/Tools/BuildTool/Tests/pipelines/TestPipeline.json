@@ -7,9 +7,11 @@
     "depthTestEnabled": true,
     "depthWriteEnabled": true,
     "depthCompareOp": "NOT_EQUAL",
-    "blending": {
-        "enabled": true,
-        "colorMask": "RB"
-    },
+    "colorBlends": [
+        {
+            "enabled": true,
+            "colorMask": "RB"
+        }
+    ],
     "version": 1
 }

@@ -11,22 +11,26 @@
 #include "spirv_cross/spirv_glsl.hpp"
 
 namespace fs = std::filesystem;
+using namespace vulk::cpp2;
 
 static vulk::cpp2::SrcPipelineDef makeTestPipelineDeclDef() {
     vulk::cpp2::SrcPipelineDef def;
-    def.name_ref()                           = "TestPipeline";
-    def.vertShader_ref()                     = "DebugNormals";
-    def.geomShader_ref()                     = "DebugNormals";
-    def.fragShader_ref()                     = "DebugNormals";
-    def.primitiveTopology_ref()              = "TriangleFan";
-    def.polygonMode_ref()                    = "FILL";
-    def.depthTestEnabled_ref()               = true;
-    def.depthWriteEnabled_ref()              = true;
-    def.depthCompareOp_ref()                 = "NOT_EQUAL";
-    def.cullMode_ref().value()               = "BACK";
-    def.blending_ref()->enabled_ref()        = true;
-    def.blending_ref()->colorWriteMask_ref() = "RB";
-    def.cullMode_ref()                       = "BACK";
+    def.name_ref()              = "TestPipeline";
+    def.vertShader_ref()        = "DebugNormals";
+    def.geomShader_ref()        = "DebugNormals";
+    def.fragShader_ref()        = "DebugNormals";
+    def.primitiveTopology_ref() = "TriangleFan";
+    def.polygonMode_ref()       = "FILL";
+    def.depthTestEnabled_ref()  = true;
+    def.depthWriteEnabled_ref() = true;
+    def.depthCompareOp_ref()    = "NOT_EQUAL";
+    def.cullMode_ref().value()  = "BACK";
+
+    vulk::cpp2::PipelineBlendingDef blending;
+    blending.enabled_ref()        = true;
+    blending.colorWriteMask_ref() = "RB";
+    def.colorBlends_ref()->push_back(blending);
+    def.cullMode_ref() = "BACK";
     return def;
 }
 
@@ -70,6 +74,18 @@ TEST_CASE("PipelineBuilder Tests") {  // Define your tests here
         CAPTURE(errMsg);
         CHECK(PipelineBuilder::checkConnections(info1, info2, errMsg) == true);
         CHECK(PipelineBuilder::checkConnections(info2, info3, errMsg) == true);
+    }
+    SECTION("Test match in upstream/downstream") {
+        ShaderInfo info = PipelineBuilder::getShaderInfo(builtShadersDir / "frag" / "DeferredRenderLighting.fragspv");
+        CHECK(info.inputAttachments.size() == 4);
+        CHECK(info.inputAttachments[GBufBinding::Albedo].atmtIdx == GBufAtmtIdx::Albedo);
+        CHECK(info.inputAttachments[GBufBinding::Albedo].name == "albedoMap");
+        CHECK(info.inputAttachments[GBufBinding::Depth].atmtIdx == GBufAtmtIdx::Depth);
+        CHECK(info.inputAttachments[GBufBinding::Depth].name == "depthMap");
+        CHECK(info.inputAttachments[GBufBinding::Normal].atmtIdx == GBufAtmtIdx::Normal);
+        CHECK(info.inputAttachments[GBufBinding::Normal].name == "normalMap");
+        CHECK(info.inputAttachments[GBufBinding::Material].atmtIdx == GBufAtmtIdx::Material);
+        CHECK(TEnumTraits<GBufAtmtIdx>::max() == GBufAtmtIdx::Depth);  // to catch if we add more
     }
     SECTION("Test Pipeline Generation") {
         vulk::cpp2::SrcPipelineDef def = makeTestPipelineDeclDef();
@@ -138,8 +154,8 @@ TEST_CASE("PipelineBuilder Tests") {  // Define your tests here
             builtDef.get_depthCompareOp() ==
             apache::thrift::util::enumValueOrThrow<decltype(builtDef.get_depthCompareOp())>(def.get_depthCompareOp())
         );
-        CHECK(builtDef.get_blending().get_enabled() == def.get_blending().get_enabled());
-        CHECK(builtDef.get_blending().get_colorWriteMask() == def.get_blending().get_colorWriteMask());
+        CHECK(builtDef.get_colorBlends()[0].get_enabled() == def.get_colorBlends()[0].get_enabled());
+        CHECK(builtDef.get_colorBlends()[0].get_colorWriteMask() == def.get_colorBlends()[0].get_colorWriteMask());
         CHECK(
             builtDef.get_cullMode() == apache::thrift::util::enumValueOrThrow<vulk::cpp2::VulkCullModeFlags>(def.get_cullMode())
         );
@@ -157,8 +173,8 @@ TEST_CASE("PipelineBuilder Tests") {  // Define your tests here
         );
         CHECK(builtDef.get_pushConstants()[0].get_size() == 4);
 
-        REQUIRE(sizeof(def) == 432);       // reminder to add new fields to the test
-        REQUIRE(sizeof(builtDef) == 432);  // reminder to add new fields to the test
+        REQUIRE(sizeof(def) == 392);       // reminder to add new fields to the test
+        REQUIRE(sizeof(builtDef) == 416);  // reminder to add new fields to the test
         // I would do a static assert here but it doesn't print out the sizes.
         auto v2 = std::vector<vulk::cpp2::VulkShaderUBOBinding>{
             vulk::cpp2::VulkShaderUBOBinding::Xforms,

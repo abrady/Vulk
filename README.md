@@ -57,7 +57,7 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 # Diagrams
 
-## Renderpass Components
+## Renderpass creation
 
 ![](Assets/Screenshots/renderpass_components.png)
 
@@ -65,15 +65,136 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 ![](Assets/Screenshots/descriptorsets.png)
 
+## Building the draw command buffer
+
+![](Assets/Screenshots/building_draw_cmd_buffer.png)
+
+## Rendering to Screen
+
+![](Assets/Screenshots/rendering_to_screen_diagram.png)
+
 # Log
 
 # Deferred Rendering
 
 TODOS:
 
+* VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT
 * pack roughness into the material, make sure ao is in the r field (see TODOs)
 * depth buffer: I think I should just use the depth buffer I'm already allocating in Vulk.
 * I also don't know if the 2 subpass needs the depth buffer?
+* I don't need to build the command buffer each frame
+
+## 8/25/24 attachments as input
+
+So: I need to
+
+* allocate input attachments for the pool
+* bind the attachments in the descriptor set
+* update the DS to point to the attachments.
+
+How do we do the pool size and binding for other things now?
+
+* we do it for each actor given a pipeline...
+  * VulkDescriptorSetBuilder dsBuilder(vk);
+  * dsBuilder.setDescriptorSetLayout(pipeline->descriptorSetLayout);
+    * this includes the bindings
+    * hmm... dsBuilder has a this->descriptorSetLayoutOverride that ignores layout builder :(
+  * the descriptor set values come from pipeline->def->def:
+
+```C++
+  vulk::cpp2::DescriptorSetDef const& dsDef = pipeline->def->def.get_descriptorSetDef();
+  for (auto& iter : dsDef.get_uniformBuffers()) {
+    VkShaderStageFlagBits stage = (VkShaderStageFlagBits)iter.first;
+    for (vulk::cpp2::VulkShaderUBOBinding binding : iter.second) {
+    switch (binding) {
+      case vulk::cpp2::VulkShaderUBOBinding::Xforms:
+        dsBuilder.addFrameUBOs(scene->sceneUBOs.xforms, stage, binding);
+        ...
+    }
+    for (auto& [stage, samplers] : dsDef.get_imageSamplers()) { 
+      ...
+```
+
+the subpasses example has a pipeline for each:
+
+* VkPipeline offscreen;
+* VkPipeline composition;
+* VkPipeline transparent;
+
+So really I just need to add these inputs to the pipeline when I process the shaders
+
+e.g. DeferredRenderGeo.pipeline:
+
+```json
+{
+    "version": 1,
+    "name": "DeferredRenderLighting",
+    "vertShader": "DeferredRenderLighting",
+    "fragShader": "DeferredRenderLighting",
+    "primitiveTopology": "TriangleStrip",
+    "subpass": 1
+    "descriptorSetDef": {
+      "inputAttachment": ...
+}
+```
+
+How do we load descriptor sets again?
+
+* VkDescriptorSetLayout made by VulkDescriptorSetLayout: takes a vector<VkDescriptorSetLayoutBinding>
+* Who uses VulkDescriptorSetLayout?
+  * VulkDescriptorSetBuilder
+  * VulkPipeline
+
+* So our VkDescriptorSetLayout is made in VulkResources::buildDescriptorSetLayoutFromPipeline using a layout builder based on the PipelineDef which has a DescriptorSetDef in it
+
+* update thrift:
+  * DescriptorSetDef : use GBufAtmtIdx
+* BuildPipeline.h: detect the input attachments and write to DescriptorSetDef
+* VulkResourceMetadata: should be fine...
+* VulkPipeline: fine
+* VulkDescriptorSetLayoutBuilder : add "addInputAttachment"
+  * type is VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT
+  * update pool size
+  * VkDescriptorSetLayoutBinding : to the global binding?
+* VulkResources
+  * ::buildDescriptorSetLayoutFromPipeline : convert def to "addInputAttachment" calls
+* update descriptor sets
+  * VkDescriptorImageInfo for each attachment that takes a view
+    * VkDescriptorImageInfo texDescriptorAlbedo = vks::initializers::descriptorImageInfo(VK_NULL_HANDLE, attachments.albedo.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+  * VkWriteDescriptorSet that takes the image info for the binding
+
+what is a VkWriteDescriptorSet?
+*
+
+Init:
+
+```C++
+    // pool size
+  vks::initializers::descriptorPoolSize(VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 4),
+
+  // Descriptor set layout
+  std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings =
+  {
+   // Binding 0: Position input attachment
+   vks::initializers::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, VK_SHADER_STAGE_FRAGMENT_BIT, 0),
+   // Binding 1: Normal input attachment
+   vks::initializers::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, VK_SHADER_STAGE_FRAGMENT_BIT, 1),
+   // Binding 2: Albedo input attachment
+   vks::initializers::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, VK_SHADER_STAGE_FRAGMENT_BIT, 2),
+   // Binding 3: Light positions
+   vks::initializers::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, 3),
+  };
+```
+
+Update:
+
+```C++
+   for (size_t i = 0; i < descriptorImageInfos.size(); i++) {
+    writeDescriptorSets.push_back(vks::initializers::writeDescriptorSet(descriptorSets.composition, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, static_cast<uint32_t>(i), &descriptorImageInfos[i]));
+   }
+   vkUpdateDescriptorSets(device, static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, nullptr);
+```
 
 ## 8/22 create the pipelines
 
