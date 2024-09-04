@@ -85,6 +85,41 @@ TODOS:
 * I also don't know if the 2 subpass needs the depth buffer?
 * I don't need to build the command buffer each frame
 
+## 8/30/24
+
+* need to actually write the descriptorsets
+
+Okay: end to end one more time.
+
+* add gbufs as attachments to the framebuffer of the renderpass
+* subpass 0 (geo) writes to the gbufs, it has attachment refs to them
+  * ds layout: std uniforms: xforms, lights etc.
+  * ds: also normal
+  * subpass desc:
+    * the gbufs are colorAttachments: written to by the frag shader.
+    * depth is passed as well.
+  * frag shader:
+    * declares out index: `layout(location = GBufAtmtIdx_Albedo) out vec4 outAlbedo;`
+    * writes to it as part of the albedo calculation.
+* subpass 1 (lighting) takes the gbufs as inputs:
+  * the ds pool needs a VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT for each
+  * the ds layouts include input attachments for each bound to frag shader
+  * subpass desc:
+    * the gbufs are input attachments
+    * the swapchain buf is the only colorAttachment
+    * depth passed again
+  * frag shader:
+    * reads from the input attachments: `layout(input_attachment_index = GBufAtmtIdx_Albedo, binding = Binding_GBufAlbedo) uniform subpassInput albedoMap;`
+    * writes to color: `layout(location = 0) out vec4 outColor;`
+
+Descriptor Set classes:
+
+* VulkDescriptorSetBuilder => VulkDescriptorSetInfo
+  * layout, pool
+* VulkDescriptorSetUpdater : just accumulates and updates ds's in a batch
+  * calls vkUpdateDescriptorSets with accumulated changes
+  * not really necessary honestly...
+
 ## 8/25/24 attachments as input
 
 So: I need to
@@ -148,15 +183,12 @@ How do we load descriptor sets again?
 
 * So our VkDescriptorSetLayout is made in VulkResources::buildDescriptorSetLayoutFromPipeline using a layout builder based on the PipelineDef which has a DescriptorSetDef in it
 
-* update thrift:
-  * DescriptorSetDef : use GBufAtmtIdx
-* BuildPipeline.h: detect the input attachments and write to DescriptorSetDef
-* VulkResourceMetadata: should be fine...
-* VulkPipeline: fine
-* VulkDescriptorSetLayoutBuilder : add "addInputAttachment"
-  * type is VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT
-  * update pool size
-  * VkDescriptorSetLayoutBinding : to the global binding?
+* x update thrift:
+  * x DescriptorSetDef : use GBufAtmtIdx
+* x BuildPipeline.h: detect the input attachments and write to DescriptorSetDef
+* x VulkResourceMetadata: should be fine...
+* x VulkPipeline: fine
+* x VulkDescriptorSetBuilder : add "addInputAttachment"
 * VulkResources
   * ::buildDescriptorSetLayoutFromPipeline : convert def to "addInputAttachment" calls
 * update descriptor sets

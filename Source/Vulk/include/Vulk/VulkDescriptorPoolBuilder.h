@@ -37,6 +37,10 @@ class VulkDescriptorPoolBuilder {
         return addPoolSizeCount(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, count);
     }
 
+    VulkDescriptorPoolBuilder& addInputAttachmentCount(uint32_t count) {
+        return addPoolSizeCount(VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, count);
+    }
+
     VkDescriptorPool build(uint32_t maxSets) {
         std::vector<VkDescriptorPoolSize> poolSizesVector;
         for (auto& kv : poolSizes) {

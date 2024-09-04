@@ -63,6 +63,12 @@ class VulkDescriptorSetBuilder {
     std::array<std::unordered_map<vulk::cpp2::VulkShaderTextureBinding, SamplerSetUpdaterInfo>, MAX_FRAMES_IN_FLIGHT>
         perFrameSamplerSetInfos;
 
+    struct InputAttachmentInfo {
+        // uint32_t atmtIdx;
+        std::shared_ptr<VulkImageView> imageView;
+    };
+    std::unordered_map<vulk::cpp2::InputAttachmentBinding, InputAttachmentInfo> inputAttachments;
+
    public:
     VulkDescriptorSetBuilder(Vulk& vk) : vk(vk), layoutBuilder(vk), poolBuilder(vk) {}
 
@@ -128,6 +134,17 @@ class VulkDescriptorSetBuilder {
         return *this;
     }
 
+    VulkDescriptorSetBuilder&
+    addInputAttachment(VkShaderStageFlags stageFlags, auto bindingID, std::shared_ptr<VulkImageView> imageView)
+        requires InputAtmtBinding<decltype(bindingID)>
+    {
+        layoutBuilder.addInputAttachment(stageFlags, bindingID);
+        poolBuilder.addInputAttachmentCount(1);
+        InputAttachmentInfo info                                        = {imageView};
+        inputAttachments[(vulk::cpp2::InputAttachmentBinding)bindingID] = info;
+        return *this;
+    }
+
     std::shared_ptr<VulkDescriptorSetInfo> build() {
         std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout;
         if (this->descriptorSetLayoutOverride) {
@@ -149,6 +166,9 @@ class VulkDescriptorSetBuilder {
             }
             for (auto& pair : perFrameSamplerSetInfos[i]) {
                 updater.addImageSampler(pair.second.imageView, pair.second.sampler, pair.first);
+            }
+            for (auto& [binding, info] : inputAttachments) {
+                updater.addInputAttachment(info.imageView, binding);
             }
 
             updater.update(vk.device);

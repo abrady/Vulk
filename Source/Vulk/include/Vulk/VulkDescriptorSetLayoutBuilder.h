@@ -12,7 +12,22 @@ class VulkDescriptorSetLayoutBuilder {
     VulkDescriptorSetLayoutBuilder& addUniformBuffer(VkShaderStageFlags stageFlags, vulk::cpp2::VulkShaderUBOBinding binding);
     VulkDescriptorSetLayoutBuilder& addImageSampler(VkShaderStageFlags stageFlags, vulk::cpp2::VulkShaderTextureBinding binding);
     VulkDescriptorSetLayoutBuilder& addStorageBuffer(VkShaderStageFlags stageFlags, vulk::cpp2::VulkShaderSSBOBinding binding);
-
+    VulkDescriptorSetLayoutBuilder& addInputAttachment(VkShaderStageFlags stageFlags, auto bindingIn)
+        requires InputAtmtBinding<decltype(bindingIn)>
+    {
+        uint32_t binding = (uint32_t)bindingIn;
+        if (!layoutBindingsMap.contains(binding)) {
+            VkDescriptorSetLayoutBinding layoutBinding{};
+            layoutBinding.binding         = binding;
+            layoutBinding.descriptorType  = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+            layoutBinding.descriptorCount = 1;
+            layoutBinding.stageFlags      = stageFlags;
+            layoutBindingsMap[binding]    = layoutBinding;
+        } else {
+            layoutBindingsMap[binding].stageFlags |= stageFlags;
+        }
+        return *this;
+    }
     // and finally, build the layout
     std::shared_ptr<VulkDescriptorSetLayout> build();
 

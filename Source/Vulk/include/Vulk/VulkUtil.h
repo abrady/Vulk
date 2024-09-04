@@ -54,6 +54,9 @@
 
 using apache::thrift::TEnumTraits;
 
+template <typename T>
+concept InputAtmtBinding = std::same_as<T, vulk::cpp2::InputAttachmentBinding> || std::same_as<T, vulk::cpp2::GBufBinding>;
+
 template <typename T, std::integral N>
 bool enumIsValid(N value) {
     return TEnumTraits<T>::findName((T)value) != nullptr;

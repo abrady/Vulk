@@ -91,6 +91,13 @@ enum VulkShaderTextureBinding {
     CubemapSampler = 21,
 }
 
+enum InputAttachmentBinding {
+    GBufNormal = 22,
+    GBufDepth = 23,
+    GBufAlbedo = 24,
+    GBufMaterial = 25,
+}
+
 enum GBufBinding {
     Normal = 22,
     Depth = 23,

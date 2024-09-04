@@ -9,6 +9,9 @@
 #include "VulkUtil.h"
 
 class VulkDepthView;
+namespace vulk {
+class VulkDeferredRenderpass;
+}
 struct SceneDef;
 
 struct VulkSceneUBOs {
@@ -30,7 +33,8 @@ class VulkScene {
     std::shared_ptr<SceneDef> def;
     VulkCamera camera;
 
-    // std::vector<std::shared_ptr<VulkActor>> actors;
+    std::shared_ptr<vulk::VulkDeferredRenderpass> deferredRenderpass;
+
     std::shared_ptr<VulkUniformBuffer<VulkLightViewProjUBO>> lightViewProjUBO;
     std::array<std::shared_ptr<VulkDepthView>, MAX_FRAMES_IN_FLIGHT> shadowMapViews;
     std::shared_ptr<VulkUniformBuffer<VulkGlobalConstantsUBO>> globalConstantsUBO;

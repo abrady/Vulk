@@ -5,6 +5,7 @@
 #include <string>
 #include <unordered_map>
 
+#include "Vulk/VulkDeferredRenderpass.h"
 #include "Vulk/VulkDepthView.h"
 #include "Vulk/VulkDescriptorSetBuilder.h"
 #include "Vulk/VulkDescriptorSetLayoutBuilder.h"
@@ -116,6 +117,11 @@ std::shared_ptr<VulkDescriptorSetLayout> VulkResources::buildDescriptorSetLayout
     for (auto& [stage, bindings] : def->def.get_descriptorSetDef().get_imageSamplers()) {
         for (auto& binding : bindings) {
             dslb.addImageSampler(stage, binding);
+        }
+    }
+    for (auto& [stage, bindingDefs] : def->def.get_descriptorSetDef().get_inputAttachments()) {
+        for (auto& bd : bindingDefs) {
+            dslb.addInputAttachment(stage, bd.get_binding());
         }
     }
     return dslb.build();
@@ -297,6 +303,18 @@ VulkResources::createActorFromPipeline(ActorDef const& actorDef, shared_ptr<Vulk
     static_assert(
         TEnumTraits<::vulk::cpp2::VulkShaderTextureBinding>::max() == vulk::cpp2::VulkShaderTextureBinding::CubemapSampler
     );
+
+    for (auto& [stage, inputAttachments] : dsDef.get_inputAttachments()) {
+        for (vulk::cpp2::DescriptorSetInputAttachmentDef inputDef : inputAttachments) {
+            vulk::cpp2::GBufBinding binding = inputDef.get_binding();
+            vulk::cpp2::GBufAtmtIdx atmtIdx = inputDef.get_atmtIdx();
+            VULK_ASSERT(scene->deferredRenderpass && scene->deferredRenderpass->geoBufs);
+            auto& gbufs                                        = scene->deferredRenderpass->geoBufs;
+            vulk::VulkDeferredRenderpass::DeferredImage* image = gbufs->gbufs.at(atmtIdx).get();
+            dsBuilder.addInputAttachment(stage, binding, image->view);
+        }
+        static_assert(TEnumTraits<::vulk::cpp2::GBufAtmtIdx>::max() == vulk::cpp2::GBufAtmtIdx::Depth);
+    }
 
     std::shared_ptr<VulkDescriptorSetInfo> info = dsBuilder.build();
     return make_shared<VulkActor>(vk, model, modelXformUBOs, info, pipeline);

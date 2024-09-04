@@ -11,8 +11,12 @@
 template <typename T>
 class VulkStorageBuffer;
 
+// accumulate and batch-update descriptor sets
+// honestly I'm not quite sure what the value of this is
+// vs. just calling vkUpdateDescriptorSets directly
 class VulkDescriptorSetUpdater {
    private:
+    // why did I allocate these? I don't know...
     std::vector<std::unique_ptr<VkDescriptorBufferInfo>> bufferInfos;
     std::vector<std::unique_ptr<VkDescriptorImageInfo>> imageInfos;
     std::vector<VkWriteDescriptorSet> descriptorWrites;
@@ -32,5 +36,31 @@ class VulkDescriptorSetUpdater {
     VulkDescriptorSetUpdater& addVulkStorageBuffer(VulkStorageBuffer<T>& storageBuffer, uint32_t binding) {
         return addStorageBuffer(storageBuffer.buf, storageBuffer.getSize(), binding);
     }
+
+    // e.g. for GBuffer when you need the gbuf as an input attachment
+    VulkDescriptorSetUpdater& addInputAttachment(std::shared_ptr<VulkImageView> textureImageView, auto bindingIn)
+        requires InputAtmtBinding<decltype(bindingIn)>
+    {
+        uint32_t binding = (uint32_t)bindingIn;
+
+        auto imageInfo         = std::make_unique<VkDescriptorImageInfo>();
+        imageInfo->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        imageInfo->imageView   = textureImageView->imageView;
+        imageInfo->sampler     = VK_NULL_HANDLE;
+
+        VkWriteDescriptorSet writeDescriptorSet{};
+        writeDescriptorSet.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        writeDescriptorSet.dstSet          = descriptorSet->descriptorSet;
+        writeDescriptorSet.descriptorType  = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+        writeDescriptorSet.dstBinding      = binding;
+        writeDescriptorSet.pImageInfo      = imageInfo.get();
+        writeDescriptorSet.descriptorCount = 1;
+
+        descriptorSet->textureImageViews.push_back(textureImageView);
+        descriptorWrites.push_back(writeDescriptorSet);
+        imageInfos.push_back(std::move(imageInfo));
+        return *this;
+    }
+
     void update(VkDevice device);
 };

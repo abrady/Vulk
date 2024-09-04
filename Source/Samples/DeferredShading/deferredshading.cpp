@@ -48,8 +48,11 @@ class World final : public VulkRenderable {
         std::string sceneName                    = projDef.get_startingScene();
         std::shared_ptr<VulkResources> resources = VulkResources::loadFromProject(vk, projFile);
         shadowMapRenderpass                      = std::make_shared<VulkDepthRenderpass>(vk);
+
+        // set up the scene for deferred rendering
         resources->loadScene(sceneName, shadowMapRenderpass->depthViews);
-        scene = resources->scenes[sceneName];
+        scene                     = resources->scenes[sceneName];
+        scene->deferredRenderpass = make_shared<vulk::VulkDeferredRenderpass>(vk);
 
         deferredRenderpass = std::make_shared<vulk::VulkDeferredRenderpass>(vk, *resources, scene.get());
         for (size_t i = 0; i < scene->def->actors.size(); ++i) {
