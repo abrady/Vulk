@@ -77,10 +77,10 @@ layout (std140, binding = Binding_PBRDebugUBO) uniform PBRDebugUBO {
     bool specular;        // 4 bytes in GLSL
 } PBRDebug;
 
-layout(input_attachment_index = GBufAtmtIdx_Albedo, binding = Binding_GBufAlbedo) uniform subpassInput albedoMap;
-layout(input_attachment_index = GBufAtmtIdx_Normal, binding = Binding_GBufNormal) uniform subpassInput normalMap;
-layout(input_attachment_index = GBufAtmtIdx_Depth, binding = Binding_GBufDepth) uniform subpassInput depthMap;
-layout(input_attachment_index = GBufAtmtIdx_Material, binding = Binding_GBufMaterial) uniform subpassInput materialMap;
+layout(input_attachment_index = GBufInputAtmtIdx_Albedo,   binding = Binding_GBufAlbedo) uniform subpassInput albedoMap;
+layout(input_attachment_index = GBufInputAtmtIdx_Normal,   binding = Binding_GBufNormal) uniform subpassInput normalMap;
+layout(input_attachment_index = GBufInputAtmtIdx_Material, binding = Binding_GBufMaterial) uniform subpassInput materialMap;
+// layout(input_attachment_index = GBufAtmtIdx_Depth, binding = Binding_GBufDepth) uniform subpassInput depthMap;
 
 layout(location = VulkShaderLocation_TexCoord) in vec2 inTexCoord;
 
@@ -101,7 +101,7 @@ void main() {
 	float roughness = subpassLoad(materialMap).b;
 	vec2 hemioctNormal = subpassLoad(normalMap).xy; // VK_FORMAT_R16G16_SFLOAT stores normal in the xy channels
 	vec3 N = hemioctToNormal(hemioctNormal);
-	float depth = subpassLoad(depthMap).r; // VK_FORMAT_D32_SFLOAT stores depth in the red channel
+	float depth = gl_FragCoord.z; // subpassLoad(depthMap).r; // VK_FORMAT_D32_SFLOAT stores depth in the red channel
 
 	vec3 worldPos = reconstructPosition(inTexCoord, depth, invViewProj);
 

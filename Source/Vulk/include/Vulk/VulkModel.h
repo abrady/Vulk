@@ -30,14 +30,13 @@ struct VulkModel {
     std::unordered_map<vulk::cpp2::VulkShaderLocation, std::shared_ptr<VulkBuffer>>
         bufs;  // each index is VulkShaderLocation_Pos, Color, Normal, etc.;
     std::shared_ptr<VulkBuffer> indexBuf;
+    std::shared_ptr<VulkFrameUBOs<glm::mat4>> xformUBOs;
 
-    VulkModel(
-        Vulk& vk,
-        std::shared_ptr<VulkMesh> meshIn,
-        std::shared_ptr<VulkMaterialTextures> texturesIn,
-        std::shared_ptr<VulkUniformBuffer<VulkMaterialConstants>> materialUBO,
-        std::vector<vulk::cpp2::VulkShaderLocation> const& inputs
-    )
+    VulkModel(Vulk& vk,
+              std::shared_ptr<VulkMesh> meshIn,
+              std::shared_ptr<VulkMaterialTextures> texturesIn,
+              std::shared_ptr<VulkUniformBuffer<VulkMaterialConstants>> materialUBO,
+              std::vector<vulk::cpp2::VulkShaderLocation> const& inputs)
         : vk(vk),
           mesh(meshIn),
           textures(texturesIn),

@@ -13,6 +13,7 @@
 #include "Vulk/VulkSampler.h"
 
 class VulkResources;
+class VulkScene;
 
 namespace vulk {
 
@@ -21,6 +22,7 @@ class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
 
     using GBufAtmtIdx              = vulk::cpp2::GBufAtmtIdx;
     using GBufBinding              = vulk::cpp2::GBufBinding;
+    using GBufInputAtmtIdx         = vulk::cpp2::GBufInputAtmtIdx;
     using VulkShaderTextureBinding = vulk::cpp2::VulkShaderTextureBinding;
     using VulkShaderUBOBinding     = vulk::cpp2::VulkShaderUBOBinding;
 
@@ -38,16 +40,14 @@ class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
 
             // VK_IMAGE_USAGE_SAMPLED_BIT so that we can sample from the image in the shader
             if (isDepth) {
-                vk.createImage(
-                    vk.swapChainExtent.width,
-                    vk.swapChainExtent.height,
-                    format,
-                    VK_IMAGE_TILING_OPTIMAL,
-                    VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                    image,
-                    imageMemory
-                );
+                vk.createImage(vk.swapChainExtent.width,
+                               vk.swapChainExtent.height,
+                               format,
+                               VK_IMAGE_TILING_OPTIMAL,
+                               VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                               VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                               image,
+                               imageMemory);
                 imageView = vk.createImageView(image, format, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
             } else {
                 vk.createImage(
@@ -55,11 +55,10 @@ class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
                     vk.swapChainExtent.height,
                     format,
                     VK_IMAGE_TILING_OPTIMAL,
-                    VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+                    VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                     image,
-                    imageMemory
-                );
+                    imageMemory);
                 imageView = vk.createImageView(image, format, VK_IMAGE_ASPECT_COLOR_BIT);
             }
             view = std::make_shared<VulkImageView>(vk, image, imageMemory, imageView);
@@ -71,6 +70,25 @@ class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
         Vulk& vk;
         std::unordered_map<GBufAtmtIdx, std::unique_ptr<DeferredImage>> gbufs;
         std::array<VkImageView, TEnumTraits<vulk::cpp2::GBufAtmtIdx>::size> gbufViews;
+
+        DeferredImage* imageFromInput(GBufInputAtmtIdx input) {
+            GBufAtmtIdx atmt;
+            switch (input) {
+                case GBufInputAtmtIdx::Albedo:
+                    atmt = GBufAtmtIdx::Albedo;
+                    break;
+                case GBufInputAtmtIdx::Normal:
+                    atmt = GBufAtmtIdx::Normal;
+                    break;
+                case GBufInputAtmtIdx::Material:
+                    atmt = GBufAtmtIdx::Material;
+                    break;
+                default:
+                    VULK_THROW("Invalid GBufInputAtmtIdx {}", TEnumTraits<GBufInputAtmtIdx>::findName(input));
+            }
+            static_assert(TEnumTraits<GBufInputAtmtIdx>::size == 3);
+            return gbufs.at(atmt).get();
+        }
 
         DeferredImage* imageFromBinding(vulk::cpp2::GBufBinding binding) {
             GBufAtmtIdx atmt;
@@ -110,11 +128,9 @@ class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
                 bool isDepth               = attachment == GBufAtmtIdx::Depth;
                 gbufs[attachment]          = std::make_unique<DeferredImage>(vk, format, isDepth);
                 gbufViews[(int)attachment] = gbufs[attachment]->view->imageView;
-                logger->debug(
-                    "Created GBuf attachment: {} : image {}",
-                    TEnumTraits<GBufAtmtIdx>::findName(attachment),
-                    (void*)gbufs[attachment]->view->image
-                );
+                logger->debug("Created GBuf attachment: {} : image {}",
+                              TEnumTraits<GBufAtmtIdx>::findName(attachment),
+                              (void*)gbufs[attachment]->view->image);
             }
         }
     };
@@ -128,25 +144,23 @@ class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
     std::shared_ptr<VulkDescriptorSetInfo> deferredLightingDescriptorSetInfo;
     std::shared_ptr<VulkSampler> textureSampler;
 
-    VulkDeferredRenderpass(Vulk& vkIn, VulkResources& resources);
+    VulkDeferredRenderpass(Vulk& vkIn, VulkResources& resources, VulkScene& scene);
 
     void beginRenderToGBufs(VkCommandBuffer commandBuffer) {
         vk.beginDebugLabel(commandBuffer, "Deferred GBuffer Creation");
         std::array<VkClearValue, TEnumTraits<GBufAtmtIdx>::size + 1> clearValues{};
         clearValues[(int)GBufAtmtIdx::Depth].depthStencil = {1.0f, 0};
 
-        VkRenderPassBeginInfo renderPassInfo{
-            .sType       = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-            .renderPass  = renderPass,
-            .framebuffer = frameBuffers[vk.currentFrame],
-            .renderArea =
-                {
-                    .offset = {0, 0},
-                    .extent = vk.swapChainExtent,
-                },
-            .clearValueCount = static_cast<uint32_t>(clearValues.size()),
-            .pClearValues    = clearValues.data()
-        };
+        VkRenderPassBeginInfo renderPassInfo{.sType       = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+                                             .renderPass  = renderPass,
+                                             .framebuffer = frameBuffers[vk.currentFrame],
+                                             .renderArea =
+                                                 {
+                                                     .offset = {0, 0},
+                                                     .extent = vk.swapChainExtent,
+                                                 },
+                                             .clearValueCount = static_cast<uint32_t>(clearValues.size()),
+                                             .pClearValues    = clearValues.data()};
 
         vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
         VkViewport viewport{
@@ -172,16 +186,14 @@ class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
         vk.beginDebugLabel(commandBuffer, "Deferred Lighting Pass");
         vkCmdNextSubpass(commandBuffer, VK_SUBPASS_CONTENTS_INLINE);
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, deferredLightingPipeline->pipeline);
-        vkCmdBindDescriptorSets(
-            commandBuffer,
-            VK_PIPELINE_BIND_POINT_GRAPHICS,
-            deferredLightingPipeline->pipelineLayout,
-            0,
-            1,
-            &deferredLightingDescriptorSetInfo->descriptorSets[vk.currentFrame]->descriptorSet,
-            0,
-            nullptr
-        );
+        vkCmdBindDescriptorSets(commandBuffer,
+                                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                deferredLightingPipeline->pipelineLayout,
+                                0,
+                                1,
+                                &deferredLightingDescriptorSetInfo->descriptorSets[vk.currentFrame]->descriptorSet,
+                                0,
+                                nullptr);
         vkCmdDraw(commandBuffer, 4, 1, 0, 0);  // the vert shader handles this, just need 4 verts to draw a quad
         vkCmdEndRenderPass(commandBuffer);
         vk.endDebugLabel(commandBuffer);

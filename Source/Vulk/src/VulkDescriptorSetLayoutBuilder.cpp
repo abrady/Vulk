@@ -2,8 +2,8 @@
 #include "Vulk/Vulk.h"
 #include "Vulk/VulkUtil.h"
 
-VulkDescriptorSetLayoutBuilder&
-VulkDescriptorSetLayoutBuilder::addUniformBuffer(VkShaderStageFlags stageFlags, vulk::cpp2::VulkShaderUBOBinding bindingIn) {
+VulkDescriptorSetLayoutBuilder& VulkDescriptorSetLayoutBuilder::addUniformBuffer(VkShaderStageFlags stageFlags,
+                                                                                 vulk::cpp2::VulkShaderUBOBinding bindingIn) {
     uint32_t binding = (uint32_t)bindingIn;
     if (!layoutBindingsMap.contains(binding)) {
         VkDescriptorSetLayoutBinding layoutBinding{};
@@ -18,8 +18,8 @@ VulkDescriptorSetLayoutBuilder::addUniformBuffer(VkShaderStageFlags stageFlags, 
     return *this;
 }
 
-VulkDescriptorSetLayoutBuilder&
-VulkDescriptorSetLayoutBuilder::addImageSampler(VkShaderStageFlags stageFlags, vulk::cpp2::VulkShaderTextureBinding bindingIn) {
+VulkDescriptorSetLayoutBuilder& VulkDescriptorSetLayoutBuilder::addImageSampler(VkShaderStageFlags stageFlags,
+                                                                                vulk::cpp2::VulkShaderTextureBinding bindingIn) {
     uint32_t binding = (uint32_t)bindingIn;
     if (!layoutBindingsMap.contains(binding)) {
         VkDescriptorSetLayoutBinding layoutBinding{};
@@ -34,8 +34,8 @@ VulkDescriptorSetLayoutBuilder::addImageSampler(VkShaderStageFlags stageFlags, v
     return *this;
 }
 
-VulkDescriptorSetLayoutBuilder&
-VulkDescriptorSetLayoutBuilder::addStorageBuffer(VkShaderStageFlags stageFlags, vulk::cpp2::VulkShaderSSBOBinding bindingIn) {
+VulkDescriptorSetLayoutBuilder& VulkDescriptorSetLayoutBuilder::addStorageBuffer(VkShaderStageFlags stageFlags,
+                                                                                 vulk::cpp2::VulkShaderSSBOBinding bindingIn) {
     uint32_t binding = (uint32_t)bindingIn;
     if (!layoutBindingsMap.contains(binding)) {
         VkDescriptorSetLayoutBinding layoutBinding{};
@@ -63,10 +63,8 @@ std::shared_ptr<VulkDescriptorSetLayout> VulkDescriptorSetLayoutBuilder::build()
     VkDescriptorSetLayout descriptorSetLayout;
 
     VK_CALL(vkCreateDescriptorSetLayout(vk.device, &layoutCreateInfo, nullptr, &descriptorSetLayout));
-    return std::make_shared<VulkDescriptorSetLayout>(
-        vk,
-        descriptorSetLayout,
-        std::move(layoutBindings),
-        std::move(layoutCreateInfo)
-    );
+    return std::make_shared<VulkDescriptorSetLayout>(vk,
+                                                     descriptorSetLayout,
+                                                     std::move(layoutBindings),
+                                                     std::move(layoutCreateInfo));
 }

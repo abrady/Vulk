@@ -13,8 +13,8 @@
 namespace fs = std::filesystem;
 using namespace vulk::cpp2;
 
-static vulk::cpp2::SrcPipelineDef makeTestPipelineDeclDef() {
-    vulk::cpp2::SrcPipelineDef def;
+static SrcPipelineDef makeTestGeomShaderPipelineDeclDef() {
+    SrcPipelineDef def;
     def.name_ref()              = "TestPipeline";
     def.vertShader_ref()        = "DebugNormals";
     def.geomShader_ref()        = "DebugNormals";
@@ -26,11 +26,24 @@ static vulk::cpp2::SrcPipelineDef makeTestPipelineDeclDef() {
     def.depthCompareOp_ref()    = "NOT_EQUAL";
     def.cullMode_ref().value()  = "BACK";
 
-    vulk::cpp2::PipelineBlendingDef blending;
+    // simulate gbufs for the pipeline
+    PipelineBlendingDef blending;
     blending.enabled_ref()        = true;
     blending.colorWriteMask_ref() = "RB";
     def.colorBlends_ref()->push_back(blending);
+    blending.colorWriteMask_ref() = "G";
+    def.colorBlends_ref()->push_back(blending);
+    blending.colorWriteMask_ref() = "B";
+    def.colorBlends_ref()->push_back(blending);
     def.cullMode_ref() = "BACK";
+    return def;
+}
+
+static SrcPipelineDef makeTestDeferredLightingPipelineDeclDef() {
+    SrcPipelineDef def;
+    def.name_ref()       = "TestPipeline";
+    def.vertShader_ref() = "DeferredRenderLighting";
+    def.fragShader_ref() = "DeferredRenderLighting";
     return def;
 }
 
@@ -38,22 +51,22 @@ TEST_CASE("PipelineBuilder Tests") {  // Define your tests here
     fs::path builtShadersDir = fs::path(__FILE__).parent_path() / "shaders";
 
     SECTION("Test Basics") {
-        // int size = sizeof(vulk::cpp2::SrcPipelineDef);
+        // int size = sizeof(SrcPipelineDef);
         // std::cout << "Size of SrcPipelineDef: " << size << std::endl;
         ShaderInfo info = PipelineBuilder::getShaderInfo(builtShadersDir / "vert" / "DebugNormals.vertspv");
-        CHECK(info.uboBindings[vulk::cpp2::VulkShaderUBOBinding::Xforms] == "UniformBufferObject");
-        CHECK(info.uboBindings[vulk::cpp2::VulkShaderUBOBinding::ModelXform] == "ModelXformUBO");
-        CHECK(info.uboBindings[vulk::cpp2::VulkShaderUBOBinding::DebugNormals] == "DebugNormalsUBO");
-        CHECK(info.inputLocations[vulk::cpp2::VulkShaderLocation::Pos] == "inPosition");
-        CHECK(info.inputLocations[vulk::cpp2::VulkShaderLocation::Normal] == "inNormal");
-        CHECK(info.inputLocations[vulk::cpp2::VulkShaderLocation::Tangent] == "inTangent");
-        CHECK(info.outputLocations[vulk::cpp2::VulkShaderLocation::Pos] == "outWorldPos");
-        CHECK(info.outputLocations[vulk::cpp2::VulkShaderLocation::Normal] == "outWorldNorm");
-        CHECK(info.outputLocations[vulk::cpp2::VulkShaderLocation::Pos2] == "outProjPos");
+        CHECK(info.uboBindings[VulkShaderUBOBinding::Xforms] == "UniformBufferObject");
+        CHECK(info.uboBindings[VulkShaderUBOBinding::ModelXform] == "ModelXformUBO");
+        CHECK(info.uboBindings[VulkShaderUBOBinding::DebugNormals] == "DebugNormalsUBO");
+        CHECK(info.inputLocations[VulkShaderLocation::Pos] == "inPosition");
+        CHECK(info.inputLocations[VulkShaderLocation::Normal] == "inNormal");
+        CHECK(info.inputLocations[VulkShaderLocation::Tangent] == "inTangent");
+        CHECK(info.outputLocations[VulkShaderLocation::Pos] == "outWorldPos");
+        CHECK(info.outputLocations[VulkShaderLocation::Normal] == "outWorldNorm");
+        CHECK(info.outputLocations[VulkShaderLocation::Pos2] == "outProjPos");
     }
     SECTION("Test Gooch Frag") {
         ShaderInfo info = PipelineBuilder::getShaderInfo(builtShadersDir / "frag" / "GoochShading.fragspv");
-        CHECK(info.samplerBindings[vulk::cpp2::VulkShaderTextureBinding::NormalSampler] == "normSampler");
+        CHECK(info.samplerBindings[VulkShaderTextureBinding::NormalSampler] == "normSampler");
     }
     SECTION("Test Pick Frag") {
         ShaderInfo info = PipelineBuilder::getShaderInfo(builtShadersDir / "frag" / "pick.fragspv");
@@ -88,38 +101,53 @@ TEST_CASE("PipelineBuilder Tests") {  // Define your tests here
         CHECK(TEnumTraits<GBufAtmtIdx>::max() == GBufAtmtIdx::Depth);  // to catch if we add more
     }
     SECTION("Test Pipeline Generation") {
-        vulk::cpp2::SrcPipelineDef def = makeTestPipelineDeclDef();
-        vulk::cpp2::PipelineDef res    = PipelineBuilder::buildPipeline(def, builtShadersDir);
+        SrcPipelineDef def          = makeTestGeomShaderPipelineDeclDef();
+        vulk::cpp2::PipelineDef res = PipelineBuilder::buildPipeline(def, builtShadersDir);
         CHECK(res.get_name() == "TestPipeline");
         CHECK(res.get_vertShader() == "DebugNormals");
         CHECK(res.get_geomShader() == "DebugNormals");
         CHECK(res.get_fragShader() == "DebugNormals");
-        CHECK(res.get_primitiveTopology() == vulk::cpp2::VulkPrimitiveTopology::TriangleFan);
-        CHECK(res.get_polygonMode() == vulk::cpp2::VulkPolygonMode::FILL);
+        CHECK(res.get_primitiveTopology() == VulkPrimitiveTopology::TriangleFan);
+        CHECK(res.get_polygonMode() == VulkPolygonMode::FILL);
         CHECK(res.get_depthTestEnabled() == true);
         CHECK(res.get_depthWriteEnabled() == true);
-        auto locs = std::vector<vulk::cpp2::VulkShaderLocation>{
-            vulk::cpp2::VulkShaderLocation::Pos,
-            vulk::cpp2::VulkShaderLocation::Normal,
-            vulk::cpp2::VulkShaderLocation::Tangent,
-            vulk::cpp2::VulkShaderLocation::TexCoord
-        };
+        auto locs = std::vector<VulkShaderLocation>{VulkShaderLocation::Pos,
+                                                    VulkShaderLocation::Normal,
+                                                    VulkShaderLocation::Tangent,
+                                                    VulkShaderLocation::TexCoord};
         CHECK(res.get_vertInputs() == locs);
 
-        CHECK(res.get_depthCompareOp() == vulk::cpp2::VulkCompareOp::NOT_EQUAL);
+        CHECK(res.get_depthCompareOp() == VulkCompareOp::NOT_EQUAL);
 
-        auto loc2 = std::vector<vulk::cpp2::VulkShaderUBOBinding>{
-            vulk::cpp2::VulkShaderUBOBinding::Xforms,
-            vulk::cpp2::VulkShaderUBOBinding::ModelXform,
-            vulk::cpp2::VulkShaderUBOBinding::DebugNormals
-        };
-        auto ub = res.get_descriptorSetDef().get_uniformBuffers();
+        auto loc2  = std::vector<VulkShaderUBOBinding>{VulkShaderUBOBinding::Xforms,
+                                                       VulkShaderUBOBinding::ModelXform,
+                                                       VulkShaderUBOBinding::DebugNormals};
+        auto dsdef = res.get_descriptorSetDef();
+        auto ub    = dsdef.get_uniformBuffers();
         CHECK(ub.at(VK_SHADER_STAGE_VERTEX_BIT) == loc2);
         CHECK(ub.count(VK_SHADER_STAGE_GEOMETRY_BIT) == 0);
-        CHECK(
-            ub.at(VK_SHADER_STAGE_FRAGMENT_BIT) ==
-            std::vector<vulk::cpp2::VulkShaderUBOBinding>{vulk::cpp2::VulkShaderUBOBinding::EyePos}
-        );
+        CHECK(ub.at(VK_SHADER_STAGE_FRAGMENT_BIT) == std::vector<VulkShaderUBOBinding>{VulkShaderUBOBinding::EyePos});
+    }
+
+    SECTION("Test Pipeline Generation Deferred Lighting") {
+        SrcPipelineDef def          = makeTestDeferredLightingPipelineDeclDef();
+        vulk::cpp2::PipelineDef res = PipelineBuilder::buildPipeline(def, builtShadersDir);
+        CHECK(res.get_name() == "TestPipeline");
+        CHECK(res.get_vertShader() == "DeferredRenderLighting");
+        CHECK(res.get_fragShader() == "DeferredRenderLighting");
+
+        // check input attachments
+        auto dsdef            = res.get_descriptorSetDef();
+        auto inputAttachments = dsdef.get_inputAttachments();
+        CHECK(inputAttachments.count(VK_SHADER_STAGE_FRAGMENT_BIT) == 1);
+        CHECK(inputAttachments.size() == 1);
+        auto& attmts = inputAttachments.at(VK_SHADER_STAGE_FRAGMENT_BIT);
+        CHECK(attmts.size() == 4);
+        CHECK(attmts[0].get_binding() == GBufBinding::Albedo);
+        CHECK(attmts[0].get_atmtIdx() == GBufAtmtIdx::Albedo);
+        CHECK(attmts[1].get_binding() == GBufBinding::Material);
+        CHECK(attmts[1].get_atmtIdx() == GBufAtmtIdx::Material);
+        // etc...
     }
 
     SECTION("buildPipelineFile") {
@@ -130,8 +158,8 @@ TEST_CASE("PipelineBuilder Tests") {  // Define your tests here
             CHECK(!ec);
         }
         CHECK(fs::create_directories(builtPipelinesDir));
-        vulk::cpp2::SrcPipelineDef def = makeTestPipelineDeclDef();
-        fs::path builtPipeline         = builtPipelinesDir / "TestPipeline.pipeline";
+        SrcPipelineDef def     = makeTestGeomShaderPipelineDeclDef();
+        fs::path builtPipeline = builtPipelinesDir / "TestPipeline.pipeline";
         PipelineBuilder::buildPipelineFile(def, builtShadersDir, builtPipeline);
         CHECK(fs::exists(builtPipeline));
         vulk::cpp2::PipelineDef builtDef;
@@ -140,55 +168,40 @@ TEST_CASE("PipelineBuilder Tests") {  // Define your tests here
         CHECK(builtDef.get_vertShader() == def.get_vertShader());
         CHECK(builtDef.get_geomShader() == def.get_geomShader());
         CHECK(builtDef.get_fragShader() == def.get_fragShader());
-        CHECK(
-            builtDef.get_primitiveTopology() ==
-            apache::thrift::util::enumValueOrThrow<decltype(builtDef.get_primitiveTopology())>(def.get_primitiveTopology())
-        );
-        CHECK(
-            builtDef.get_polygonMode() ==
-            apache::thrift::util::enumValueOrThrow<decltype(builtDef.get_polygonMode())>(def.get_polygonMode())
-        );
+        CHECK(builtDef.get_primitiveTopology() ==
+              apache::thrift::util::enumValueOrThrow<decltype(builtDef.get_primitiveTopology())>(def.get_primitiveTopology()));
+        CHECK(builtDef.get_polygonMode() ==
+              apache::thrift::util::enumValueOrThrow<decltype(builtDef.get_polygonMode())>(def.get_polygonMode()));
         CHECK(builtDef.get_depthTestEnabled() == def.get_depthTestEnabled());
         CHECK(builtDef.get_depthWriteEnabled() == def.get_depthWriteEnabled());
-        CHECK(
-            builtDef.get_depthCompareOp() ==
-            apache::thrift::util::enumValueOrThrow<decltype(builtDef.get_depthCompareOp())>(def.get_depthCompareOp())
-        );
-        CHECK(builtDef.get_colorBlends()[0].get_enabled() == def.get_colorBlends()[0].get_enabled());
-        CHECK(builtDef.get_colorBlends()[0].get_colorWriteMask() == def.get_colorBlends()[0].get_colorWriteMask());
-        CHECK(
-            builtDef.get_cullMode() == apache::thrift::util::enumValueOrThrow<vulk::cpp2::VulkCullModeFlags>(def.get_cullMode())
-        );
-        auto v = std::vector<vulk::cpp2::VulkShaderLocation>{
-            vulk::cpp2::VulkShaderLocation::Pos,
-            vulk::cpp2::VulkShaderLocation::Normal,
-            vulk::cpp2::VulkShaderLocation::Tangent,
-            vulk::cpp2::VulkShaderLocation::TexCoord
-        };
+        CHECK(builtDef.get_depthCompareOp() ==
+              apache::thrift::util::enumValueOrThrow<decltype(builtDef.get_depthCompareOp())>(def.get_depthCompareOp()));
+        CHECK(builtDef.get_colorBlends().size() == def.get_colorBlends().size());
+        for (size_t i = 0; i < def.get_colorBlends().size(); i++) {
+            CHECK(builtDef.get_colorBlends()[i].get_enabled() == def.get_colorBlends()[i].get_enabled());
+            CHECK(builtDef.get_colorBlends()[i].get_colorWriteMask() == def.get_colorBlends()[i].get_colorWriteMask());
+        }
+        CHECK(builtDef.get_cullMode() == apache::thrift::util::enumValueOrThrow<VulkCullModeFlags>(def.get_cullMode()));
+        auto v = std::vector<VulkShaderLocation>{VulkShaderLocation::Pos,
+                                                 VulkShaderLocation::Normal,
+                                                 VulkShaderLocation::Tangent,
+                                                 VulkShaderLocation::TexCoord};
         CHECK(builtDef.get_vertInputs() == v);
         CHECK(builtDef.get_pushConstants().size() == 1);
-        CHECK(
-            builtDef.get_pushConstants()[0].get_stageFlags() ==
-            (VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_GEOMETRY_BIT)
-        );
+        CHECK(builtDef.get_pushConstants()[0].get_stageFlags() ==
+              (VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_GEOMETRY_BIT));
         CHECK(builtDef.get_pushConstants()[0].get_size() == 4);
 
         REQUIRE(sizeof(def) == 392);       // reminder to add new fields to the test
         REQUIRE(sizeof(builtDef) == 416);  // reminder to add new fields to the test
         // I would do a static assert here but it doesn't print out the sizes.
-        auto v2 = std::vector<vulk::cpp2::VulkShaderUBOBinding>{
-            vulk::cpp2::VulkShaderUBOBinding::Xforms,
-            vulk::cpp2::VulkShaderUBOBinding::ModelXform,
-            vulk::cpp2::VulkShaderUBOBinding::DebugNormals
-        };
+        auto v2 = std::vector<VulkShaderUBOBinding>{VulkShaderUBOBinding::Xforms,
+                                                    VulkShaderUBOBinding::ModelXform,
+                                                    VulkShaderUBOBinding::DebugNormals};
         CHECK(builtDef.get_descriptorSetDef().get_uniformBuffers().at(VK_SHADER_STAGE_VERTEX_BIT) == v2);
-        CHECK(
-            builtDef.get_descriptorSetDef().get_uniformBuffers().at(VK_SHADER_STAGE_FRAGMENT_BIT) ==
-            std::vector<vulk::cpp2::VulkShaderUBOBinding>{vulk::cpp2::VulkShaderUBOBinding::EyePos}
-        );
-        CHECK(
-            builtDef.get_descriptorSetDef().get_imageSamplers().at(VK_SHADER_STAGE_VERTEX_BIT) ==
-            std::vector<vulk::cpp2::VulkShaderTextureBinding>{vulk::cpp2::VulkShaderTextureBinding::NormalSampler}
-        );
+        CHECK(builtDef.get_descriptorSetDef().get_uniformBuffers().at(VK_SHADER_STAGE_FRAGMENT_BIT) ==
+              std::vector<VulkShaderUBOBinding>{VulkShaderUBOBinding::EyePos});
+        CHECK(builtDef.get_descriptorSetDef().get_imageSamplers().at(VK_SHADER_STAGE_VERTEX_BIT) ==
+              std::vector<VulkShaderTextureBinding>{VulkShaderTextureBinding::NormalSampler});
     }
 }

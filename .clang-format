@@ -10,7 +10,7 @@ ColumnLimit: 130
 UseTab: Never
 BinPackArguments: false            # this combined with AllowAllArgumentsOnNextLine
 AllowAllArgumentsOnNextLine: false # puts all function arguments on their own line
-AlignAfterOpenBracket: BlockIndent # follow normal indentation rules after open bracket
+AlignAfterOpenBracket: Align # follow normal indentation rules after open bracket
 AlignConsecutiveAssignments : true # for vulkan struct init blocks it looks nicer
 AllowShortFunctionsOnASingleLine: Empty # I just don't like single line functions on a single line
 #AlignOperands: true

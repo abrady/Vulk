@@ -100,13 +100,11 @@ class Vulk {
     VkPresentModeKHR presentMode;  // for ImGUI
 
    public:  // utilities
-    void createBuffer(
-        VkDeviceSize size,
-        VkBufferUsageFlags usage,
-        VkMemoryPropertyFlags properties,
-        VkBuffer& buffer,
-        VkDeviceMemory& bufferMemory
-    );
+    void createBuffer(VkDeviceSize size,
+                      VkBufferUsageFlags usage,
+                      VkMemoryPropertyFlags properties,
+                      VkBuffer& buffer,
+                      VkDeviceMemory& bufferMemory);
     void copyMemToBuffer(void const* srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
     void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
     void copyImageToBuffer(VkImage image, VkBuffer buffer, uint32_t width, uint32_t height);
@@ -114,13 +112,11 @@ class Vulk {
     void copyImageToMem(VkImage image, void* dstBuffer, uint32_t width, uint32_t height, VkDeviceSize dstEltSize);
     VkSampler createTextureSampler();
     VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
-    VkImage createTextureImage(
-        char const* texture_path,
-        VkDeviceMemory& textureImageMemory,
-        VkImage& textureImage,
-        bool isUNORM,
-        VkFormat& formatOut
-    );
+    VkImage createTextureImage(char const* texture_path,
+                               VkDeviceMemory& textureImageMemory,
+                               VkImage& textureImage,
+                               bool isUNORM,
+                               VkFormat& formatOut);
     uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
     VkShaderModule createShaderModule(const std::vector<char>& code);
     VkDescriptorSet createDescriptorSet(VkDescriptorSetLayout descriptorSetLayout, VkDescriptorPool descriptorPool);
@@ -128,29 +124,26 @@ class Vulk {
     VkFormat findDepthFormat();
 
     // check if the device supports the format, tiling, usage, and properties
-    std::unique_ptr<VkImageFormatProperties2>
-    getDeviceImageFormatProperties(VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage);
-    void createImage(
-        uint32_t width,
-        uint32_t height,
-        VkFormat format,
-        VkImageTiling tiling,
-        VkImageUsageFlags usage,
-        VkMemoryPropertyFlags properties,
-        VkImage& image,
-        VkDeviceMemory& imageMemory
-    );
+    std::unique_ptr<VkImageFormatProperties2> getDeviceImageFormatProperties(VkFormat format,
+                                                                             VkImageTiling tiling,
+                                                                             VkImageUsageFlags usage);
+    void createImage(uint32_t width,
+                     uint32_t height,
+                     VkFormat format,
+                     VkImageTiling tiling,
+                     VkImageUsageFlags usage,
+                     VkMemoryPropertyFlags properties,
+                     VkImage& image,
+                     VkDeviceMemory& imageMemory);
 
     // e.g. convert a created buffer to a texture buffer or when you transition a depth buffer to a shader readable
     // format
-    void transitionImageLayout(
-        VkCommandBuffer commandBuffer,
-        VkImage image,
-        VkImageLayout oldLayout,
-        VkImageLayout newLayout,
-        uint32_t mipLevels  = 1,
-        uint32_t layerCount = 1
-    );
+    void transitionImageLayout(VkCommandBuffer commandBuffer,
+                               VkImage image,
+                               VkImageLayout oldLayout,
+                               VkImageLayout newLayout,
+                               uint32_t mipLevels  = 1,
+                               uint32_t layerCount = 1);
 
     uint32_t currentFrame = 0;  // index of the current frame in flight, always between 0 and MAX_FRAMES_IN_FLIGHT
     uint32_t lastFrame    = UINT32_MAX;
@@ -175,7 +168,7 @@ class Vulk {
     GLFWwindow* window;
     struct WindowDims {
         int width = 0, height = 0;
-    } windowDims;
+    };
 
     QueueFamilyIndices indices;
     VkSurfaceFormatKHR surfaceFormat;
@@ -238,25 +231,20 @@ class Vulk {
     std::vector<const char*> getRequiredExtensions();
     bool checkValidationLayerSupport();
 
-    static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
-        VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-        VkDebugUtilsMessageTypeFlagsEXT messageType,
-        const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-        void* /*pUserData*/
+    static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+                                                        VkDebugUtilsMessageTypeFlagsEXT messageType,
+                                                        const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+                                                        void* /*pUserData*/
     );
 
     void debugPrintSupportedImageFormats();
-    static VkResult CreateDebugUtilsMessengerEXT(
-        VkInstance instance,
-        const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
-        const VkAllocationCallbacks* pAllocator,
-        VkDebugUtilsMessengerEXT* pDebugMessenger
-    );
-    static void DestroyDebugUtilsMessengerEXT(
-        VkInstance instance,
-        VkDebugUtilsMessengerEXT debugMessenger,
-        const VkAllocationCallbacks* pAllocator
-    );
+    static VkResult CreateDebugUtilsMessengerEXT(VkInstance instance,
+                                                 const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
+                                                 const VkAllocationCallbacks* pAllocator,
+                                                 VkDebugUtilsMessengerEXT* pDebugMessenger);
+    static void DestroyDebugUtilsMessengerEXT(VkInstance instance,
+                                              VkDebugUtilsMessengerEXT debugMessenger,
+                                              const VkAllocationCallbacks* pAllocator);
     static void dispatchKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
    public:

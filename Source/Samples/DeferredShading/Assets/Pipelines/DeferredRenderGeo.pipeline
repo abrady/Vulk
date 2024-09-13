@@ -2,5 +2,19 @@
     "version": 1,
     "name": "DeferredRenderGeo",
     "vertShader": "DeferredRenderGeo",
-    "fragShader": "DeferredRenderGeo"
+    "fragShader": "DeferredRenderGeo",
+    "colorBlends": [
+        {
+            "enabled": false
+        },
+        {
+            "enabled": false
+        },
+        {
+            "enabled": false
+        },
+        {
+            "enabled": false
+        }
+    ]
 }

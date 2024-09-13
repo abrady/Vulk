@@ -12,7 +12,7 @@
 
 struct ShaderInfo {
     struct InputAttachment {
-        vulk::cpp2::GBufAtmtIdx atmtIdx;
+        vulk::cpp2::GBufInputAtmtIdx atmtIdx;
         std::string name;
     };
     std::string name;
@@ -107,8 +107,8 @@ class PipelineBuilder {
         // For input attachments
         for (const spirv_cross::Resource& resource : resources.subpass_inputs) {
             // unsigned set = glsl.get_decoration(resource.id, spv::DecorationDescriptorSet);
-            vulk::cpp2::GBufAtmtIdx atmtIdx =
-                (vulk::cpp2::GBufAtmtIdx)glsl.get_decoration(resource.id, spv::DecorationInputAttachmentIndex);
+            vulk::cpp2::GBufInputAtmtIdx atmtIdx =
+                (vulk::cpp2::GBufInputAtmtIdx)glsl.get_decoration(resource.id, spv::DecorationInputAttachmentIndex);
             vulk::cpp2::GBufBinding binding = (vulk::cpp2::GBufBinding)glsl.get_decoration(resource.id, spv::DecorationBinding);
             parsedShader.inputAttachments[binding].name    = resource.name;
             parsedShader.inputAttachments[binding].atmtIdx = atmtIdx;
@@ -139,10 +139,8 @@ class PipelineBuilder {
                 location = glsl.get_decoration(resource.id, spv::DecorationLocation);
             }
             logger()->trace("Push constant buffer: name={}, size={}, location={}", resource.name, size, location);
-            VULK_ASSERT(
-                location < 32,
-                "Push constant location is too large"
-            );  // no idea what the max may eventually be but this isn't crazy
+            VULK_ASSERT(location < 32,
+                        "Push constant location is too large");  // no idea what the max may eventually be but this isn't crazy
             if (parsedShader.pushConstants.size() <= location) {
                 parsedShader.pushConstants.resize(location + 1);
             }
@@ -202,11 +200,11 @@ class PipelineBuilder {
             // def.imageSamplers_ref()[stageFlag].push_back((vulk::cpp2::VulkShaderBinding)sampler.first);
         }
         for (auto& [binding, ia] : info.inputAttachments) {
-            auto inputRefs = def.inputAttachments_ref()[stageFlag];
+            auto inputRefs = def.inputAttachments_ref();
             vulk::cpp2::DescriptorSetInputAttachmentDef atmtDef;
             atmtDef.atmtIdx_ref() = ia.atmtIdx;
             atmtDef.binding_ref() = binding;
-            inputRefs.push_back(atmtDef);
+            (*inputRefs)[stageFlag].push_back(atmtDef);
         }
 
         for (uint32_t i = 0; i < info.pushConstants.size(); i++) {
@@ -251,15 +249,12 @@ class PipelineBuilder {
             VULK_ASSERT(
                 apache::thrift::util::tryParseEnum(pipelineIn.get_depthCompareOp(), &pipelineOut.depthCompareOp_ref().value()),
                 "Invalid depthCompareOp value {}",
-                pipelineIn.get_depthCompareOp()
-            );
+                pipelineIn.get_depthCompareOp());
         }
         if (pipelineIn.polygonMode().is_set()) {
-            VULK_ASSERT(
-                apache::thrift::util::tryParseEnum(pipelineIn.get_polygonMode(), &pipelineOut.polygonMode_ref().value()),
-                "Invalid polygonMode value {}",
-                pipelineIn.get_polygonMode()
-            );
+            VULK_ASSERT(apache::thrift::util::tryParseEnum(pipelineIn.get_polygonMode(), &pipelineOut.polygonMode_ref().value()),
+                        "Invalid polygonMode value {}",
+                        pipelineIn.get_polygonMode());
         }
         if (pipelineIn.cullMode().is_set()) {
             pipelineOut.cullMode_ref() =
@@ -319,11 +314,9 @@ class PipelineBuilder {
         return pipelineOut;
     }
 
-    static void buildPipelineFile(
-        vulk::cpp2::SrcPipelineDef pipelineIn,
-        std::filesystem::path builtShadersDir,
-        std::filesystem::path pipelineFileOut
-    ) {
+    static void buildPipelineFile(vulk::cpp2::SrcPipelineDef pipelineIn,
+                                  std::filesystem::path builtShadersDir,
+                                  std::filesystem::path pipelineFileOut) {
         if (!std::filesystem::exists(builtShadersDir)) {
             std::cerr << "Shaders directory does not exist: " << builtShadersDir << std::endl;
             VULK_THROW("PipelineBuilder: Shaders directory does not exist");
@@ -336,11 +329,9 @@ class PipelineBuilder {
         writeDefToFile(pipelineFileOut.string(), pipelineOut);
     }
 
-    static void buildPipelineFromFile(
-        std::filesystem::path builtShadersDir,
-        std::filesystem::path pipelineFileOut,
-        fs::path pipelineFileSrc
-    ) {
+    static void buildPipelineFromFile(std::filesystem::path builtShadersDir,
+                                      std::filesystem::path pipelineFileOut,
+                                      fs::path pipelineFileSrc) {
         if (!std::filesystem::exists(pipelineFileSrc)) {
             std::cerr << "Pipeline file does not exist: '" << pipelineFileSrc << "'" << std::endl;
             VULK_THROW("PipelineBuilder: Pipeline file does not exist");

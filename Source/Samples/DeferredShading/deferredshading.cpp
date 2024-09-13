@@ -47,18 +47,18 @@ class World final : public VulkRenderable {
         readDefFromFile(projFile, projDef);
         std::string sceneName                    = projDef.get_startingScene();
         std::shared_ptr<VulkResources> resources = VulkResources::loadFromProject(vk, projFile);
-        shadowMapRenderpass                      = std::make_shared<VulkDepthRenderpass>(vk);
+
+        shadowMapRenderpass = std::make_shared<VulkDepthRenderpass>(vk);
 
         // set up the scene for deferred rendering
-        resources->loadScene(sceneName, shadowMapRenderpass->depthViews);
-        scene                     = resources->scenes[sceneName];
-        scene->deferredRenderpass = make_shared<vulk::VulkDeferredRenderpass>(vk);
-
-        deferredRenderpass = std::make_shared<vulk::VulkDeferredRenderpass>(vk, *resources, scene.get());
+        scene              = resources->loadScene(sceneName, shadowMapRenderpass->depthViews);
+        deferredRenderpass = std::make_shared<vulk::VulkDeferredRenderpass>(vk, *resources, *scene);
         for (size_t i = 0; i < scene->def->actors.size(); ++i) {
-            auto actorDef = scene->def->actors[i];
-            std::shared_ptr<VulkActor> deferredActor =
-                resources->createActorFromPipeline(*actorDef, deferredRenderpass->deferredGeoPipeline, scene);
+            auto actorDef                            = scene->def->actors[i];
+            std::shared_ptr<VulkActor> deferredActor = resources->createActorFromPipeline(*actorDef,
+                                                                                          deferredRenderpass->deferredGeoPipeline,
+                                                                                          scene.get(),
+                                                                                          deferredRenderpass.get());
             deferredActors.push_back(deferredActor);
         }
 
@@ -66,16 +66,18 @@ class World final : public VulkRenderable {
         shadowMapPipeline = resources->loadPipeline(shadowMapRenderpass->renderPass, shadowMapRenderpass->extent, "ShadowMap");
         auto shadowMapPipelineDef = resources->metadata->pipelines.at("ShadowMap");
         for (size_t i = 0; i < scene->def->actors.size(); ++i) {
-            auto actorDef                             = scene->def->actors[i];
-            std::shared_ptr<VulkActor> shadowMapActor = resources->createActorFromPipeline(*actorDef, shadowMapPipeline, scene);
+            auto actorDef = scene->def->actors[i];
+            std::shared_ptr<VulkActor> shadowMapActor =
+                resources->createActorFromPipeline(*actorDef, shadowMapPipeline, scene.get(), nullptr);
             shadowMapActors.push_back(shadowMapActor);
         }
 
         pickRenderpass = std::make_shared<VulkPickRenderpass>(vk);
         pickPipeline   = resources->loadPipeline(pickRenderpass->renderPass, vk.swapChainExtent, "Pick");
         for (size_t i = 0; i < scene->def->actors.size(); ++i) {
-            auto actorDef                        = scene->def->actors[i];
-            std::shared_ptr<VulkActor> pickActor = resources->createActorFromPipeline(*actorDef, pickPipeline, scene);
+            auto actorDef = scene->def->actors[i];
+            std::shared_ptr<VulkActor> pickActor =
+                resources->createActorFromPipeline(*actorDef, pickPipeline, scene.get(), nullptr);
             pickActors.push_back(pickActor);
         }
 
@@ -90,8 +92,9 @@ class World final : public VulkRenderable {
 
         wireframePipeline = resources->loadPipeline(vk.renderPass, vk.swapChainExtent, "Wireframe");
         for (size_t i = 0; i < scene->def->actors.size(); ++i) {
-            auto actorDef                             = scene->def->actors[i];
-            std::shared_ptr<VulkActor> wireframeActor = resources->createActorFromPipeline(*actorDef, wireframePipeline, scene);
+            auto actorDef = scene->def->actors[i];
+            std::shared_ptr<VulkActor> wireframeActor =
+                resources->createActorFromPipeline(*actorDef, wireframePipeline, scene.get(), nullptr);
             // scene->actors[i]->pipeline = wireframeActor->pipeline;
             debugWireframeActors.push_back(wireframeActor);
         }
@@ -111,7 +114,7 @@ class World final : public VulkRenderable {
         VulkDescriptorSetBuilder dsBuilder(vk);
         dsBuilder.addFrameUBOs(scene->sceneUBOs.xforms, VK_SHADER_STAGE_VERTEX_BIT, vulk::cpp2::VulkShaderUBOBinding::Xforms);
         std::shared_ptr<VulkDescriptorSetInfo> axesDSInfo = dsBuilder.build();
-        axesActor = make_shared<VulkActor>(vk, axesModel, nullptr, axesDSInfo, axesPipeline);
+        axesActor                                         = make_shared<VulkActor>(vk, axesModel, axesDSInfo, axesPipeline);
     }
 
     VulkPauseableTimer rotateWorldTimer;
@@ -150,9 +153,11 @@ class World final : public VulkRenderable {
         ubo.proj   = clip * glm::perspective(DEFAULT_FOV_RADS, viewport.width / (float)viewport.height, nearClip, farClip);
 
         // Vulkan clip space has inverted Y
-        glm::mat4 mvp                     = ubo.proj * ubo.view * ubo.world;
-        glm::mat4 invMvp                  = glm::inverse(mvp);
-        *scene->invViewProjUBO->mappedUBO = invMvp;
+        if (scene->invViewProjUBO) {
+            glm::mat4 mvp                     = ubo.proj * ubo.view * ubo.world;
+            glm::mat4 invMvp                  = glm::inverse(mvp);
+            *scene->invViewProjUBO->mappedUBO = invMvp;
+        }
 
         // set up the light view proj
         VulkPointLight& light = *scene->sceneUBOs.pointLight.mappedUBO;
@@ -167,21 +172,17 @@ class World final : public VulkRenderable {
 
         renderPickBuffer(commandBuffer);
         renderShadowMapImageForLight(commandBuffer);
-        vk.transitionImageLayout(
-            commandBuffer,
-            depthView->image,
-            VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-        );
+        vk.transitionImageLayout(commandBuffer,
+                                 depthView->image,
+                                 VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+                                 VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         drawMainStuff(commandBuffer, frameBuffer);
         // TODO
         // drawDebugStuff(commandBuffer, frameBuffer);
-        vk.transitionImageLayout(
-            commandBuffer,
-            depthView->image,
-            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-            VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
-        );
+        vk.transitionImageLayout(commandBuffer,
+                                 depthView->image,
+                                 VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                 VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
     }
 
     void renderPickBuffer(VkCommandBuffer commandBuffer) {
@@ -206,16 +207,14 @@ class World final : public VulkRenderable {
             uint32_t data = i + 1;
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pickPipeline->pipeline);
             vkCmdPushConstants(commandBuffer, pickPipeline->pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(data), &data);
-            vkCmdBindDescriptorSets(
-                commandBuffer,
-                VK_PIPELINE_BIND_POINT_GRAPHICS,
-                pickPipeline->pipelineLayout,
-                0,
-                1,
-                &actor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet,
-                0,
-                nullptr
-            );
+            vkCmdBindDescriptorSets(commandBuffer,
+                                    VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                    pickPipeline->pipelineLayout,
+                                    0,
+                                    1,
+                                    &actor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet,
+                                    0,
+                                    nullptr);
             model->bindInputBuffers(commandBuffer);
             vkCmdDrawIndexed(commandBuffer, model->numIndices, 1, 0, 0, 0);
         }
@@ -245,16 +244,14 @@ class World final : public VulkRenderable {
         for (auto& actor : shadowMapActors) {
             auto model = actor->model;
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipeline);
-            vkCmdBindDescriptorSets(
-                commandBuffer,
-                VK_PIPELINE_BIND_POINT_GRAPHICS,
-                actor->pipeline->pipelineLayout,
-                0,
-                1,
-                &actor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet,
-                0,
-                nullptr
-            );
+            vkCmdBindDescriptorSets(commandBuffer,
+                                    VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                    actor->pipeline->pipelineLayout,
+                                    0,
+                                    1,
+                                    &actor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet,
+                                    0,
+                                    nullptr);
             model->bindInputBuffers(commandBuffer);
             vkCmdDrawIndexed(commandBuffer, model->numIndices, 1, 0, 0, 0);
         }
@@ -267,16 +264,14 @@ class World final : public VulkRenderable {
         for (auto& actor : deferredActors) {
             auto model = actor->model;
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipeline);
-            vkCmdBindDescriptorSets(
-                commandBuffer,
-                VK_PIPELINE_BIND_POINT_GRAPHICS,
-                actor->pipeline->pipelineLayout,
-                0,
-                1,
-                &actor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet,
-                0,
-                nullptr
-            );
+            vkCmdBindDescriptorSets(commandBuffer,
+                                    VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                    actor->pipeline->pipelineLayout,
+                                    0,
+                                    1,
+                                    &actor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet,
+                                    0,
+                                    nullptr);
             model->bindInputBuffers(commandBuffer);
             vkCmdDrawIndexed(commandBuffer, model->numIndices, 1, 0, 0, 0);
         }
@@ -307,16 +302,14 @@ class World final : public VulkRenderable {
             for (auto& actor : debugWireframeActors) {
                 auto model = actor->model;
                 vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, wireframePipeline->pipeline);
-                vkCmdBindDescriptorSets(
-                    commandBuffer,
-                    VK_PIPELINE_BIND_POINT_GRAPHICS,
-                    wireframePipeline->pipelineLayout,
-                    0,
-                    1,
-                    &actor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet,
-                    0,
-                    nullptr
-                );
+                vkCmdBindDescriptorSets(commandBuffer,
+                                        VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                        wireframePipeline->pipelineLayout,
+                                        0,
+                                        1,
+                                        &actor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet,
+                                        0,
+                                        nullptr);
                 model->bindInputBuffers(commandBuffer);
                 vkCmdDrawIndexed(commandBuffer, model->numIndices, 1, 0, 0, 0);
             }
@@ -328,16 +321,14 @@ class World final : public VulkRenderable {
             for (auto& actor : debugNormalsActors) {
                 auto model = actor->model;
                 vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipeline);
-                vkCmdBindDescriptorSets(
-                    commandBuffer,
-                    VK_PIPELINE_BIND_POINT_GRAPHICS,
-                    actor->pipeline->pipelineLayout,
-                    0,
-                    1,
-                    &actor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet,
-                    0,
-                    nullptr
-                );
+                vkCmdBindDescriptorSets(commandBuffer,
+                                        VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                        actor->pipeline->pipelineLayout,
+                                        0,
+                                        1,
+                                        &actor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet,
+                                        0,
+                                        nullptr);
 
                 model->bindInputBuffers(commandBuffer);
                 vkCmdDraw(commandBuffer, model->numVertices, 1, 0, 0);
@@ -350,16 +341,14 @@ class World final : public VulkRenderable {
             for (auto& actor : debugTangentsActors) {
                 auto model = actor->model;
                 vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, actor->pipeline->pipeline);
-                vkCmdBindDescriptorSets(
-                    commandBuffer,
-                    VK_PIPELINE_BIND_POINT_GRAPHICS,
-                    actor->pipeline->pipelineLayout,
-                    0,
-                    1,
-                    &actor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet,
-                    0,
-                    nullptr
-                );
+                vkCmdBindDescriptorSets(commandBuffer,
+                                        VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                        actor->pipeline->pipelineLayout,
+                                        0,
+                                        1,
+                                        &actor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet,
+                                        0,
+                                        nullptr);
 
                 model->bindInputBuffers(commandBuffer);
                 vkCmdDraw(commandBuffer, model->numVertices, 1, 0, 0);
@@ -368,16 +357,14 @@ class World final : public VulkRenderable {
 
         // draw the axes
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, axesPipeline->pipeline);
-        vkCmdBindDescriptorSets(
-            commandBuffer,
-            VK_PIPELINE_BIND_POINT_GRAPHICS,
-            axesPipeline->pipelineLayout,
-            0,
-            1,
-            &axesActor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet,
-            0,
-            nullptr
-        );
+        vkCmdBindDescriptorSets(commandBuffer,
+                                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                axesPipeline->pipelineLayout,
+                                0,
+                                1,
+                                &axesActor->dsInfo->descriptorSets[vk.currentFrame]->descriptorSet,
+                                0,
+                                nullptr);
 
         axesActor->model->bindInputBuffers(commandBuffer);
         vkCmdDrawIndexed(commandBuffer, axesActor->model->numIndices, 1, 0, 0, 0);

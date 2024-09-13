@@ -74,14 +74,12 @@ std::shared_ptr<VulkModel> VulkResources::getModel(ModelDef const& modelDef, Pip
         return pipelineModels.at(key);
     }
     shared_ptr<VulkMaterialTextures> textures = getMaterialTextures(modelDef.material->name);
-    auto p                                    = make_shared<VulkModel>(
-        vk,
-        getMesh(*modelDef.mesh),
-        textures,
-        getMaterial(modelDef.material->name),
-        pipelineDef.def.get_vertInputs()
-    );
-    pipelineModels[key] = p;
+    auto p                                    = make_shared<VulkModel>(vk,
+                                    getMesh(*modelDef.mesh),
+                                    textures,
+                                    getMaterial(modelDef.material->name),
+                                    pipelineDef.def.get_vertInputs());
+    pipelineModels[key]                       = p;
     return p;
 }
 
@@ -103,27 +101,29 @@ std::shared_ptr<VulkDescriptorSetLayout> VulkResources::buildDescriptorSetLayout
 
     // build the descriptor set layout
     VulkDescriptorSetLayoutBuilder dslb(vk);
-    for (auto& [stage, bindings] : def->def.get_descriptorSetDef().get_uniformBuffers()) {
+    auto dsdef = def->def.get_descriptorSetDef();
+    for (auto& [stage, bindings] : dsdef.get_uniformBuffers()) {
         for (auto& binding : bindings) {
             vulk::cpp2::VulkShaderUBOBinding const& bindingRef = binding;
             dslb.addUniformBuffer(stage, bindingRef);
         }
     }
-    for (auto& [stage, bindings] : def->def.get_descriptorSetDef().get_storageBuffers()) {
+    for (auto& [stage, bindings] : dsdef.get_storageBuffers()) {
         for (auto& binding : bindings) {
             dslb.addStorageBuffer(stage, binding);
         }
     }
-    for (auto& [stage, bindings] : def->def.get_descriptorSetDef().get_imageSamplers()) {
+    for (auto& [stage, bindings] : dsdef.get_imageSamplers()) {
         for (auto& binding : bindings) {
             dslb.addImageSampler(stage, binding);
         }
     }
-    for (auto& [stage, bindingDefs] : def->def.get_descriptorSetDef().get_inputAttachments()) {
+    for (auto& [stage, bindingDefs] : dsdef.get_inputAttachments()) {
         for (auto& bd : bindingDefs) {
             dslb.addInputAttachment(stage, bd.get_binding());
         }
     }
+
     return dslb.build();
 }
 
@@ -183,19 +183,22 @@ std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(VkRenderPass renderPas
     return p;
 }
 
-// TODO: hypothetically the same descriptor set could get used for multiple actors
-// we'll get to that eventually, maybe, it's not really a big deal as DSs are cheap
-// or so I've been told.
-std::shared_ptr<VulkActor>
-VulkResources::createActorFromPipeline(ActorDef const& actorDef, shared_ptr<VulkPipeline> pipeline, shared_ptr<VulkScene> scene) {
-    logger->info("Creating actor from def {}, pipeline def {}", actorDef.def.get_name(), pipeline->def->def.get_name());
-    vulk::cpp2::DescriptorSetDef const& dsDef = pipeline->def->def.get_descriptorSetDef();
+/**
+ * @brief Create a descriptor set info from a pipeline.
+ * scene, model, and deferredRenderpass are used to create the descriptor set info
+ * if they apply to the pipeline (e.g. if the pipeline uses a UBO for the model, the model must be provided)
+ */
+shared_ptr<VulkDescriptorSetInfo> VulkResources::createDSInfoFromPipeline(
+    VulkPipeline& pipeline,
+    VulkScene* scene,
+    VulkModel* model,
+    ActorDef* actorDef,
+    vulk::VulkDeferredRenderpass const* deferredRenderpass) {
+    logger->info("Creating actor from pipeline def {}", pipeline.def->def.get_name());
+    vulk::cpp2::DescriptorSetDef const& dsDef = pipeline.def->def.get_descriptorSetDef();
     VulkDescriptorSetBuilder dsBuilder(vk);
-    PipelineDef const& pd       = *pipeline->def;
-    shared_ptr<VulkModel> model = getModel(*actorDef.model, pd);
-    shared_ptr<VulkFrameUBOs<glm::mat4>> modelXformUBOs;
 
-    dsBuilder.setDescriptorSetLayout(pipeline->descriptorSetLayout);
+    dsBuilder.setDescriptorSetLayout(pipeline.descriptorSetLayout);
     for (auto& iter : dsDef.get_uniformBuffers()) {
         VkShaderStageFlagBits stage = (VkShaderStageFlagBits)iter.first;
         for (vulk::cpp2::VulkShaderUBOBinding binding : iter.second) {
@@ -213,13 +216,14 @@ VulkResources::createActorFromPipeline(ActorDef const& actorDef, shared_ptr<Vulk
                     dsBuilder.addFrameUBOs(scene->sceneUBOs.eyePos, stage, binding);
                     break;
                 case vulk::cpp2::VulkShaderUBOBinding::ModelXform:
-                    if (!modelXformUBOs)
-                        modelXformUBOs = make_shared<VulkFrameUBOs<glm::mat4>>(vk, actorDef.xform);
-                    dsBuilder.addFrameUBOs(*modelXformUBOs, stage, binding);
+                    if (!model->xformUBOs)
+                        model->xformUBOs = make_shared<VulkFrameUBOs<glm::mat4>>(vk, actorDef->xform);
+                    dsBuilder.addFrameUBOs(*model->xformUBOs, stage, binding);
                     break;
                 case vulk::cpp2::VulkShaderUBOBinding::DebugNormals:
-                    if (scene->debugNormalsUBO == nullptr)
+                    if (scene->debugNormalsUBO == nullptr) {
                         scene->debugNormalsUBO = make_shared<VulkUniformBuffer<VulkDebugNormalsUBO>>(vk);
+                    }
                     dsBuilder.addUniformBuffer(*scene->debugNormalsUBO, stage, binding);
                     break;
                 case vulk::cpp2::VulkShaderUBOBinding::DebugTangents:
@@ -300,28 +304,41 @@ VulkResources::createActorFromPipeline(ActorDef const& actorDef, shared_ptr<Vulk
             }
         }
     }
-    static_assert(
-        TEnumTraits<::vulk::cpp2::VulkShaderTextureBinding>::max() == vulk::cpp2::VulkShaderTextureBinding::CubemapSampler
-    );
+    static_assert(TEnumTraits<::vulk::cpp2::VulkShaderTextureBinding>::max() ==
+                  vulk::cpp2::VulkShaderTextureBinding::CubemapSampler);
 
     for (auto& [stage, inputAttachments] : dsDef.get_inputAttachments()) {
         for (vulk::cpp2::DescriptorSetInputAttachmentDef inputDef : inputAttachments) {
-            vulk::cpp2::GBufBinding binding = inputDef.get_binding();
-            vulk::cpp2::GBufAtmtIdx atmtIdx = inputDef.get_atmtIdx();
-            VULK_ASSERT(scene->deferredRenderpass && scene->deferredRenderpass->geoBufs);
-            auto& gbufs                                        = scene->deferredRenderpass->geoBufs;
-            vulk::VulkDeferredRenderpass::DeferredImage* image = gbufs->gbufs.at(atmtIdx).get();
+            vulk::cpp2::GBufBinding binding      = inputDef.get_binding();
+            vulk::cpp2::GBufInputAtmtIdx atmtIdx = inputDef.get_atmtIdx();
+            VULK_ASSERT(deferredRenderpass->geoBufs);
+            vulk::VulkDeferredRenderpass::VulkGBufs& gbufs           = *deferredRenderpass->geoBufs;
+            vulk::VulkDeferredRenderpass::DeferredImage const* image = gbufs.imageFromInput(atmtIdx);
             dsBuilder.addInputAttachment(stage, binding, image->view);
         }
         static_assert(TEnumTraits<::vulk::cpp2::GBufAtmtIdx>::max() == vulk::cpp2::GBufAtmtIdx::Depth);
     }
 
-    std::shared_ptr<VulkDescriptorSetInfo> info = dsBuilder.build();
-    return make_shared<VulkActor>(vk, model, modelXformUBOs, info, pipeline);
+    return dsBuilder.build();
 }
 
-std::shared_ptr<VulkScene>
-VulkResources::loadScene(std::string name, std::array<std::shared_ptr<VulkDepthView>, MAX_FRAMES_IN_FLIGHT> shadowMapViews) {
+// TODO: hypothetically the same descriptor set could get used for multiple actors
+// we'll get to that eventually, maybe, it's not really a big deal as DSs are cheap
+// or so I've been told.
+std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef& actorDef,
+                                                                  shared_ptr<VulkPipeline> pipeline,
+                                                                  VulkScene* scene,
+                                                                  vulk::VulkDeferredRenderpass const* deferredRenderpass) {
+    logger->info("Creating actor from def {}, pipeline def {}", actorDef.def.get_name(), pipeline->def->def.get_name());
+    shared_ptr<VulkModel> model = getModel(*actorDef.model, *pipeline->def);
+    shared_ptr<VulkDescriptorSetInfo> info =
+        createDSInfoFromPipeline(*pipeline, scene, model.get(), &actorDef, deferredRenderpass);
+    return make_shared<VulkActor>(vk, model, info, pipeline);
+}
+
+std::shared_ptr<VulkScene> VulkResources::loadScene(
+    std::string name,
+    std::array<std::shared_ptr<VulkDepthView>, MAX_FRAMES_IN_FLIGHT> shadowMapViews) {
     if (scenes.contains(name)) {
         logger->info("Returning cached scene {}", name);
         return scenes[name];
@@ -335,7 +352,7 @@ VulkResources::loadScene(std::string name, std::array<std::shared_ptr<VulkDepthV
     *scene->sceneUBOs.pointLight.mappedUBO = *sceneDef.pointLights[0];  // just one light for now
 
     // for (auto& actorDef : sceneDef.actors) {
-    //     auto pipeline = loadPipeline(renderPass, vk.swapChainExtent, actorDef->pipeline->def.get_name());
+    //     auto pipeline = loadPipeline(renderPass, vk.swapChainExtent, actorDef->pipeline.def.get_name());
     //     scene->actors.push_back(createActorFromPipeline(*actorDef, pipeline, scene));
     // }
     return scenes[name] = scene;
@@ -383,9 +400,8 @@ shared_ptr<VulkMaterialTextures> VulkResources::getMaterialTextures(string const
         materialTextures[name]->roughnessView    = !def.mapPr.empty() ? make_unique<VulkImageView>(vk, def.mapPr, true) : nullptr;
         materialTextures[name]->cubemapView =
             !def.cubemapImgs[0].empty() ? VulkImageView::createCubemapView(vk, def.cubemapImgs) : nullptr;
-        static_assert(
-            TEnumTraits<::vulk::cpp2::VulkShaderTextureBinding>::max() == vulk::cpp2::VulkShaderTextureBinding::CubemapSampler
-        );
+        static_assert(TEnumTraits<::vulk::cpp2::VulkShaderTextureBinding>::max() ==
+                      vulk::cpp2::VulkShaderTextureBinding::CubemapSampler);
     }
 
     return materialTextures[name];

@@ -60,8 +60,8 @@ class VulkResources {
     std::unordered_map<std::string, std::shared_ptr<VulkShaderModule>> vertShaders, geomShaders, fragShaders;
     std::shared_ptr<VulkSampler> textureSampler, shadowMapSampler;
 
-    std::shared_ptr<VulkScene>
-    loadScene(std::string name, std::array<std::shared_ptr<VulkDepthView>, MAX_FRAMES_IN_FLIGHT> shadowMapViews);
+    std::shared_ptr<VulkScene> loadScene(std::string name,
+                                         std::array<std::shared_ptr<VulkDepthView>, MAX_FRAMES_IN_FLIGHT> shadowMapViews);
 
     std::shared_ptr<VulkShaderModule> getvertShader(std::string const& name) {
         if (!vertShaders.contains(name))
@@ -79,8 +79,16 @@ class VulkResources {
         return fragShaders.at(name);
     }
 
-    std::shared_ptr<VulkActor>
-    createActorFromPipeline(ActorDef const& actorDef, std::shared_ptr<VulkPipeline> pipeline, std::shared_ptr<VulkScene> scene);
+    std::shared_ptr<VulkDescriptorSetInfo> createDSInfoFromPipeline(VulkPipeline& pipeline,
+                                                                    VulkScene* scene,
+                                                                    VulkModel* model,
+                                                                    ActorDef* actorDef,
+                                                                    vulk::VulkDeferredRenderpass const* deferredRenderpass);
+
+    std::shared_ptr<VulkActor> createActorFromPipeline(ActorDef& actorDef,
+                                                       std::shared_ptr<VulkPipeline> pipeline,
+                                                       VulkScene* scene,
+                                                       vulk::VulkDeferredRenderpass const* deferredRenderpass);
 
     std::shared_ptr<VulkDescriptorSetLayout> buildDescriptorSetLayoutFromPipeline(std::string name);
     std::shared_ptr<VulkPipeline> loadPipeline(VkRenderPass renderPass, VkExtent2D extent, std::string const& name);

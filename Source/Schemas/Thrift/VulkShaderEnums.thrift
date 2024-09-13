@@ -45,6 +45,21 @@ enum VulkShaderBinding {
     InvViewProjUBO = 27,
 }
 
+// ================================================
+// GBuffer enums
+// - bindings: index bound to in a shader
+// - attachment indices: index of the attachment in the framebuffer
+// - input attachment indices: index of the input attachment in the shader
+//
+// (this is a bit of a mess)
+// ================================================
+enum GBufBinding {
+    Normal = 22,
+    Depth = 23,
+    Albedo = 24,
+    Material = 25,
+}
+
 // attachments are bound to framebuffers and typically written to by the fragment shader
 enum GBufAtmtIdx {
     Color = 0, // the index of the swapchain image
@@ -52,6 +67,13 @@ enum GBufAtmtIdx {
     Normal = 2,
     Material = 3,
     Depth = 4,
+}
+
+// ugh this is a mess
+enum GBufInputAtmtIdx {
+    Albedo = 0,
+    Normal = 1,
+    Material = 2,
 }
 
 enum VulkShaderUBOBinding {
@@ -96,13 +118,6 @@ enum InputAttachmentBinding {
     GBufDepth = 23,
     GBufAlbedo = 24,
     GBufMaterial = 25,
-}
-
-enum GBufBinding {
-    Normal = 22,
-    Depth = 23,
-    Albedo = 24,
-    Material = 25,
 }
 
 enum VulkLights {

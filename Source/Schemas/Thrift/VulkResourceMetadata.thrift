@@ -21,7 +21,7 @@ struct PushConstantDef {
 }
 
 struct DescriptorSetInputAttachmentDef {
-    1: VulkShaderEnums.GBufAtmtIdx atmtIdx;
+    1: VulkShaderEnums.GBufInputAtmtIdx atmtIdx;
     2: VulkShaderEnums.GBufBinding binding;
 }
 

@@ -198,13 +198,11 @@ void Vulk::run() {
     cleanupVulkan();  // calls cleanup
 }
 
-void Vulk::createBuffer(
-    VkDeviceSize size,
-    VkBufferUsageFlags usage,
-    VkMemoryPropertyFlags properties,
-    VkBuffer& buffer,
-    VkDeviceMemory& bufferMemory
-) {
+void Vulk::createBuffer(VkDeviceSize size,
+                        VkBufferUsageFlags usage,
+                        VkMemoryPropertyFlags properties,
+                        VkBuffer& buffer,
+                        VkDeviceMemory& bufferMemory) {
     VkBufferCreateInfo bufferInfo{};
     bufferInfo.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     bufferInfo.size        = size;
@@ -229,13 +227,11 @@ void Vulk::createBuffer(
 void Vulk::copyMemToBuffer(void const* srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
-    createBuffer(
-        size,
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        stagingBuffer,
-        stagingBufferMemory
-    );
+    createBuffer(size,
+                 VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                 stagingBuffer,
+                 stagingBufferMemory);
     void* data;
     vkMapMemory(device, stagingBufferMemory, 0, size, 0, &data);
     memcpy(data, srcBuffer, size);
@@ -282,13 +278,11 @@ void Vulk::copyBufferToMem(VkBuffer srcBuffer, void* dstBuffer, VkDeviceSize siz
     // Map the staging buffer memory and copy the data to the destination buffer in CPU memory
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
-    createBuffer(
-        size,
-        VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        stagingBuffer,
-        stagingBufferMemory
-    );
+    createBuffer(size,
+                 VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                 stagingBuffer,
+                 stagingBufferMemory);
     copyBuffer(srcBuffer, stagingBuffer, size);
     void* data;
     vkMapMemory(device, stagingBufferMemory, 0, size, 0, &data);
@@ -303,13 +297,11 @@ void Vulk::copyImageToMem(VkImage image, void* dstBuffer, uint32_t width, uint32
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
     VkDeviceSize size = width * height * dstEltSize;
-    createBuffer(
-        size,
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        stagingBuffer,
-        stagingBufferMemory
-    );
+    createBuffer(size,
+                 VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                 stagingBuffer,
+                 stagingBufferMemory);
 
     VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
@@ -451,13 +443,11 @@ static const std::unordered_map<VkFormat, uint32_t> numChannelsFromFormat = {
     {VK_FORMAT_R8G8B8A8_SRGB, 4},
 };
 
-VkImage Vulk::createTextureImage(
-    char const* texture_path,
-    VkDeviceMemory& textureImageMemory,
-    VkImage& textureImage,
-    bool isUNORM,
-    VkFormat& formatOut
-) {
+VkImage Vulk::createTextureImage(char const* texture_path,
+                                 VkDeviceMemory& textureImageMemory,
+                                 VkImage& textureImage,
+                                 bool isUNORM,
+                                 VkFormat& formatOut) {
     int texWidth, texHeight, texChannels;
     stbi_uc* pixels        = stbi_load(texture_path, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
     VkDeviceSize imageSize = texWidth * texHeight * 4;  // not texChannels because we always load 4 channels because
@@ -473,13 +463,11 @@ VkImage Vulk::createTextureImage(
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
-    createBuffer(
-        imageSize,
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        stagingBuffer,
-        stagingBufferMemory
-    );
+    createBuffer(imageSize,
+                 VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                 stagingBuffer,
+                 stagingBufferMemory);
 
     void* data;
     vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
@@ -488,16 +476,14 @@ VkImage Vulk::createTextureImage(
 
     stbi_image_free(pixels);
 
-    createImage(
-        texWidth,
-        texHeight,
-        format,
-        VK_IMAGE_TILING_OPTIMAL,
-        VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        textureImage,
-        textureImageMemory
-    );
+    createImage(texWidth,
+                texHeight,
+                format,
+                VK_IMAGE_TILING_OPTIMAL,
+                VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                textureImage,
+                textureImageMemory);
 
     VkCommandBuffer commandBuffer = beginSingleTimeCommands();
     transitionImageLayout(commandBuffer, textureImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
@@ -506,12 +492,10 @@ VkImage Vulk::createTextureImage(
     copyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
 
     commandBuffer = beginSingleTimeCommands();
-    transitionImageLayout(
-        commandBuffer,
-        textureImage,
-        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-    );
+    transitionImageLayout(commandBuffer,
+                          textureImage,
+                          VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                          VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     endSingleTimeCommands(commandBuffer);
 
     vkDestroyBuffer(device, stagingBuffer, nullptr);
@@ -600,6 +584,7 @@ VkImageView Vulk::createImageView(VkImage image, VkFormat format, VkImageAspectF
 }
 
 void Vulk::recreateSwapChain() {
+    WindowDims windowDims = {};
     glfwGetFramebufferSize(window, &windowDims.width, &windowDims.height);
     while (windowDims.width == 0 || windowDims.height == 0) {
         glfwGetFramebufferSize(window, &windowDims.width, &windowDims.height);
@@ -944,16 +929,14 @@ void Vulk::createCommandBuffers() {
 void Vulk::createDepthResources() {
     VkFormat depthFormat = findDepthFormat();
 
-    createImage(
-        swapChainExtent.width,
-        swapChainExtent.height,
-        depthFormat,
-        VK_IMAGE_TILING_OPTIMAL,
-        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        depthImage,
-        depthImageMemory
-    );
+    createImage(swapChainExtent.width,
+                swapChainExtent.height,
+                depthFormat,
+                VK_IMAGE_TILING_OPTIMAL,
+                VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                depthImage,
+                depthImageMemory);
     depthImageView = createImageView(depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
 }
 
@@ -981,16 +964,16 @@ VkFormat Vulk::findDepthFormat() {
             VK_FORMAT_D24_UNORM_S8_UINT,
         },
         VK_IMAGE_TILING_OPTIMAL,
-        VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
-    );
+        VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 }
 
 bool Vulk::hasStencilComponent(VkFormat format) {
     return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
 }
 
-std::unique_ptr<VkImageFormatProperties2>
-Vulk::getDeviceImageFormatProperties(VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage) {
+std::unique_ptr<VkImageFormatProperties2> Vulk::getDeviceImageFormatProperties(VkFormat format,
+                                                                               VkImageTiling tiling,
+                                                                               VkImageUsageFlags usage) {
     // VkImageFormatProperties2 ifp2 = {};
     std::unique_ptr<VkImageFormatProperties2> ifp2 = std::make_unique<VkImageFormatProperties2>();
     ifp2->sType                                    = VK_STRUCTURE_TYPE_IMAGE_FORMAT_PROPERTIES_2;
@@ -1007,16 +990,14 @@ Vulk::getDeviceImageFormatProperties(VkFormat format, VkImageTiling tiling, VkIm
     return nullptr;
 }
 
-void Vulk::createImage(
-    uint32_t width,
-    uint32_t height,
-    VkFormat format,
-    VkImageTiling tiling,
-    VkImageUsageFlags usage,
-    VkMemoryPropertyFlags properties,
-    VkImage& image,
-    VkDeviceMemory& imageMemory
-) {
+void Vulk::createImage(uint32_t width,
+                       uint32_t height,
+                       VkFormat format,
+                       VkImageTiling tiling,
+                       VkImageUsageFlags usage,
+                       VkMemoryPropertyFlags properties,
+                       VkImage& image,
+                       VkDeviceMemory& imageMemory) {
     VkImageCreateInfo imageInfo{};
     imageInfo.sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     imageInfo.imageType     = VK_IMAGE_TYPE_2D;
@@ -1047,14 +1028,12 @@ void Vulk::createImage(
     VK_CALL(vkBindImageMemory(device, image, imageMemory, 0));
 }
 
-void Vulk::transitionImageLayout(
-    VkCommandBuffer commandBuffer,
-    VkImage image,
-    VkImageLayout oldLayout,
-    VkImageLayout newLayout,
-    uint32_t mipLevels,
-    uint32_t layerCount
-) {
+void Vulk::transitionImageLayout(VkCommandBuffer commandBuffer,
+                                 VkImage image,
+                                 VkImageLayout oldLayout,
+                                 VkImageLayout newLayout,
+                                 uint32_t mipLevels,
+                                 uint32_t layerCount) {
     VkImageMemoryBarrier barrier{};
     barrier.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
     barrier.oldLayout           = oldLayout;
@@ -1303,6 +1282,7 @@ VkExtent2D Vulk::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities) 
     if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
         return capabilities.currentExtent;
     } else {
+        WindowDims windowDims = {};
         glfwGetFramebufferSize(window, &windowDims.width, &windowDims.height);
         VkExtent2D actualExtent = {static_cast<uint32_t>(windowDims.width), static_cast<uint32_t>(windowDims.height)};
 
@@ -1353,11 +1333,10 @@ bool Vulk::checkValidationLayerSupport() {
     return true;
 }
 
-VKAPI_ATTR VkBool32 VKAPI_CALL Vulk::debugCallback(
-    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-    VkDebugUtilsMessageTypeFlagsEXT messageType,
-    const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-    void* /*pUserData*/
+VKAPI_ATTR VkBool32 VKAPI_CALL Vulk::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+                                                   VkDebugUtilsMessageTypeFlagsEXT messageType,
+                                                   const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+                                                   void* /*pUserData*/
 ) {
     char const* severity;
     if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
@@ -1375,24 +1354,20 @@ VKAPI_ATTR VkBool32 VKAPI_CALL Vulk::debugCallback(
     if ((messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
         // super annoying: I used vulkan configurator to see if it did anything
         // useful and now I can't figure out how to turn this off.
-        && 0 != strcmp(
-                    pCallbackData->pMessage,
-                    "loader_get_json: Failed to open JSON file C:\\Program "
-                    "Files\\IntelSWTools\\GPA\\Streams\\VkLayer_state_tracker."
-                    "json"
-                )) {
+        && 0 != strcmp(pCallbackData->pMessage,
+                       "loader_get_json: Failed to open JSON file C:\\Program "
+                       "Files\\IntelSWTools\\GPA\\Streams\\VkLayer_state_tracker."
+                       "json")) {
         VULK_THROW("validation layer error");
     }
 
     return VK_FALSE;
 }
 
-VkResult Vulk::CreateDebugUtilsMessengerEXT(
-    VkInstance instance,
-    const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
-    const VkAllocationCallbacks* pAllocator,
-    VkDebugUtilsMessengerEXT* pDebugMessenger
-) {
+VkResult Vulk::CreateDebugUtilsMessengerEXT(VkInstance instance,
+                                            const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
+                                            const VkAllocationCallbacks* pAllocator,
+                                            VkDebugUtilsMessengerEXT* pDebugMessenger) {
     auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
     if (func != nullptr) {
         return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
@@ -1401,11 +1376,9 @@ VkResult Vulk::CreateDebugUtilsMessengerEXT(
     }
 }
 
-void Vulk::DestroyDebugUtilsMessengerEXT(
-    VkInstance instance,
-    VkDebugUtilsMessengerEXT debugMessenger,
-    const VkAllocationCallbacks* pAllocator
-) {
+void Vulk::DestroyDebugUtilsMessengerEXT(VkInstance instance,
+                                         VkDebugUtilsMessengerEXT debugMessenger,
+                                         const VkAllocationCallbacks* pAllocator) {
     auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
     if (func != nullptr) {
         func(instance, debugMessenger, pAllocator);

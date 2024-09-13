@@ -2,7 +2,7 @@
 
 namespace vulk {
 
-VulkDeferredRenderpass::VulkDeferredRenderpass(Vulk& vkIn, VulkResources& resources) : vk(vkIn) {
+VulkDeferredRenderpass::VulkDeferredRenderpass(Vulk& vkIn, VulkResources& resources, VulkScene& scene) : vk(vkIn) {
     // TODO: remove
     logger->set_level(spdlog::level::debug);
     geoBufs = std::make_unique<VulkGBufs>(vk);
@@ -163,10 +163,36 @@ VulkDeferredRenderpass::VulkDeferredRenderpass(Vulk& vkIn, VulkResources& resour
     };
     VK_CALL(vkCreateRenderPass(vk.device, &renderPassInfo, nullptr, &renderPass));
 
-    // ------------------------------ Create Framebuffers ------------------------------
+    // ------------------------------ Load Pipelines ------------------------------
 
     deferredGeoPipeline      = resources.loadPipeline(renderPass, vk.swapChainExtent, "DeferredRenderGeo");
     deferredLightingPipeline = resources.loadPipeline(renderPass, vk.swapChainExtent, "DeferredRenderLighting");
+
+    deferredLightingDescriptorSetInfo =
+        resources.createDSInfoFromPipeline(*deferredLightingPipeline, &scene, nullptr, nullptr, this);
+
+    // ------------------------------ Create Framebuffers ------------------------------
+
+    VkImageView atmts[5];
+
+    VkFramebufferCreateInfo frameBufferCreateInfo = {};
+    frameBufferCreateInfo.sType                   = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+    frameBufferCreateInfo.renderPass              = renderPass;
+    frameBufferCreateInfo.attachmentCount         = 5;
+    frameBufferCreateInfo.pAttachments            = atmts;
+    frameBufferCreateInfo.width                   = vk.swapChainExtent.width;
+    frameBufferCreateInfo.height                  = vk.swapChainExtent.height;
+    frameBufferCreateInfo.layers                  = 1;
+
+    // Create frame buffers for every swap chain image
+    for (uint32_t i = 0; i < frameBuffers.size(); i++) {
+        atmts[(int)GBufAtmtIdx::Color]    = vk.swapChainImageViews[i];
+        atmts[(int)GBufAtmtIdx::Albedo]   = geoBufs->gbufViews[(int)GBufAtmtIdx::Albedo];
+        atmts[(int)GBufAtmtIdx::Normal]   = geoBufs->gbufViews[(int)GBufAtmtIdx::Normal];
+        atmts[(int)GBufAtmtIdx::Material] = geoBufs->gbufViews[(int)GBufAtmtIdx::Material];
+        atmts[(int)GBufAtmtIdx::Depth]    = geoBufs->gbufViews[(int)GBufAtmtIdx::Depth];
+        VK_CALL(vkCreateFramebuffer(vk.device, &frameBufferCreateInfo, nullptr, &frameBuffers[i]));
+    }
 }
 
 }  // namespace vulk

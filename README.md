@@ -84,6 +84,49 @@ TODOS:
 * depth buffer: I think I should just use the depth buffer I'm already allocating in Vulk.
 * I also don't know if the 2 subpass needs the depth buffer?
 * I don't need to build the command buffer each frame
+* constify our code? kinda a pain but may save time eventually
+* DeferredRenderGeo.pipeline has 4 colorblends explicitly specified because we're making 4 attachments in VulkDeferredRenderpass.
+  Probably we should have a .renderpass file at some point that describes the subpasses and attachments...
+
+## 9/10/24
+
+Vulk: ERROR: 2 message: Validation Error: [ VUID-VkFramebufferCreateInfo-pAttachments-00879 ]
+Object 0: handle = 0x12923b00f70, type = VK_OBJECT_TYPE_DEVICE; | MessageID = 0xef3de402 | vkCreateFramebuffer:  Framebuffer Attachment (1) conflicts with the image's IMAGE_USAGE flags (VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT). The Vulkan spec states: If renderpass is not VK_NULL_HANDLE, flags does not include VK_FRAMEBUFFER_CREATE_IMAGELESS_BIT, each element of pAttachments that is used as an input attachment by renderPass must have been created with a usage value including VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT (<https://vulkan.lunarg.com/doc/view/1.3.250.1/windows/1.3-extensions/vkspec.html#VUID-VkFramebufferCreateInfo-pAttachments-00879>)
+
+## 9/9/24
+
+Vulk: ERROR: 2 message: Validation Error: [ VUID-VkGraphicsPipelineCreateInfo-renderPass-06038 ]
+Object 0: handle = 0x612f93000000004e, type = VK_OBJECT_TYPE_SHADER_MODULE;
+Object 1: handle = 0x69eeaa0000000047, type = VK_OBJECT_TYPE_RENDER_PASS; | MessageID = 0x36ed8418 | vkCreateGraphicsPipelines(): pCreateInfos[0]
+Shader consumes input attachment index 4 but that is greater than the pSubpasses[1].inputAttachmentCount (3) The Vulkan spec states: If renderPass is not VK_NULL_HANDLE and the pipeline is being created with fragment shader state the fragment shader must not read from any input attachment that is defined as VK_ATTACHMENT_UNUSED in subpass (<https://vulkan.lunarg.com/doc/view/1.3.250.1/windows/1.3-extensions/vkspec.html#VUID-VkGraphicsPipelineCreateInfo-renderPass-06038>)
+
+## 9/9/24 DeferredRenderLighting pipeline
+
+Vulk: ERROR: 2 message: Validation Error: [ VUID-VkGraphicsPipelineCreateInfo-layout-07988 ]
+Object 0: handle = 0x612f93000000004e, type = VK_OBJECT_TYPE_SHADER_MODULE;
+Object 1: handle = 0x7f79ad0000000050, type = VK_OBJECT_TYPE_PIPELINE_LAYOUT; | MessageID = 0x215f02cd | vkCreateGraphicsPipelines(): pCreateInfos[0]
+Set 0 Binding 23 in shader (VK_SHADER_STAGE_FRAGMENT_BIT) uses descriptor slot (expected `VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT`) but not declared in pipeline layout The Vulkan spec states: If a resource variables is declared in a shader, a descriptor slot in layout must match the shader stage (<https://vulkan.lunarg.com/doc/view/1.3.250.1/windows/1.3-extensions/vkspec.html#VUID-VkGraphicsPipelineCreateInfo-layout-07988>)
+
+* The shader uses a descriptor slot for an input attachment (expected VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT) at binding 23, set 0.
+* However, the pipeline layout does not declare a descriptor slot for an input attachment at binding 23, set 0.
+
+Okay, so either we're not setting this properly, or not extracting it from the spv. bisect
+
+where should I be using VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT?
+
+* pool size            : VkDescriptorPoolSize
+* descriptor set layout: VkDescriptorSetLayoutBinding
+* write it to the ds   : VkWriteDescriptorSet
+* pipeline input?
+
+## 9/8/24
+
+* DeferredRenderGeo.pipeline fails to get created
+* because colorAttachmentCount = 4 (for the gbufs) but the pipeline only has one pColorBlendState
+
+what we need:
+
+* gbufs properly added - done
 
 ## 8/30/24
 
@@ -289,7 +332,7 @@ Frag Shader
 * in: the usual stuff - normal, pos, UV, color
 * out:
 
-  ```
+  ```glsl
       layout (location = 0) out vec4 outColor;
       layout (location = 1) out vec4 outPosition;
       layout (location = 2) out vec4 outNormal;
@@ -313,7 +356,7 @@ shader (as a triangle strip)
 * in: nothing! it uses the data from the attachments and uniforms (lights)
 * out: a pixel position.
 
-```
+```glsl
 
   out gl_PerVertex
   {
@@ -324,7 +367,7 @@ shader (as a triangle strip)
 
 * body
 
-```
+```glsl
 
   outUV = vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2);
   gl_Position = vec4(outUV * 2.0f - 1.0f, 0.0f, 1.0f);
@@ -337,7 +380,7 @@ Frag shader
   * the 2D UV encoded as a gl_Position,
   * the gbuf attachments:
 
-  ```
+  ```glsl
 
   layout (input_attachment_index = 0, binding = 0) uniform subpassInput inputPosition;
   layout (input_attachment_index = 1, binding = 1) uniform subpassInput inputNormal;
@@ -352,7 +395,7 @@ Frag shader
 
   * this gets the gbuf values:
 
-  ```
+  ```glsl
 
     vec3 fragPos = subpassLoad(inputPosition).rgb;
     vec3 normal = subpassLoad(inputNormal).rgb;
