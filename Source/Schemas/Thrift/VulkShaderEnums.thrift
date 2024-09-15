@@ -60,6 +60,7 @@ enum GBufBinding {
     Material = 25,
 }
 
+
 // attachments are bound to framebuffers and typically written to by the fragment shader
 enum GBufAtmtIdx {
     Color = 0, // the index of the swapchain image
@@ -111,13 +112,6 @@ enum VulkShaderTextureBinding {
     MetallicSampler = 17,
     RoughnessSampler = 18,
     CubemapSampler = 21,
-}
-
-enum InputAttachmentBinding {
-    GBufNormal = 22,
-    GBufDepth = 23,
-    GBufAlbedo = 24,
-    GBufMaterial = 25,
 }
 
 enum VulkLights {
