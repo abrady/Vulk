@@ -88,6 +88,26 @@ TODOS:
 * DeferredRenderGeo.pipeline has 4 colorblends explicitly specified because we're making 4 attachments in VulkDeferredRenderpass.
   Probably we should have a .renderpass file at some point that describes the subpasses and attachments...
 
+## 9/15/24 renderdoc debugging
+
+Let's see if we can figure out why things are so dark.
+
+After GBuf creation
+![](Assets/Screenshots/albedo_v0.png)
+
+* albedo buffer
+
+### gbuf creation
+
+![](Assets/Screenshots/red_row_in_renderdoc.png)
+
+* 128 bytes needed, 32 provided
+
+Oh, I think I'm declaring 4 lights in the shader but only sending one... that's not going to help the rendering for sure.
+
+1. let's pass more
+2. can we catch this during validaton? why didn't vulkan say something...
+
 ## 9/14/24
 
 Vulk: ERROR: 2 message: Validation Error: [ UNASSIGNED-CoreValidation-DrawState-InvalidImageLayout ] Object 0: handle = 0x1cb1caff990, type = VK_OBJECT_TYPE_COMMAND_BUFFER; | MessageID = 0x4dae5635 | vkQueueSubmit(): pSubmits[0].pCommandBuffers[0] command buffer VkCommandBuffer 0x1cb1caff990[] expects VkImage 0xf443490000000006[] (subresource: aspectMask 0x1 array layer 0, mip level 0) to be in layout VK_IMAGE_LAYOUT_PRESENT_SRC_KHR--instead, current layout is VK_IMAGE_LAYOUT_UNDEFINED.

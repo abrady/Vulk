@@ -11,7 +11,6 @@
 #include "Vulk/VulkDescriptorSetLayoutBuilder.h"
 #include "Vulk/VulkMesh.h"
 #include "Vulk/VulkPipelineBuilder.h"
-#include "Vulk/VulkPointLight.h"
 #include "Vulk/VulkResourceMetadata.h"
 #include "Vulk/VulkUBO.h"
 
@@ -210,7 +209,7 @@ shared_ptr<VulkDescriptorSetInfo> VulkResources::createDSInfoFromPipeline(
                     dsBuilder.addUniformBuffer(*model->materialUBO, stage, binding);
                     break;
                 case vulk::cpp2::VulkShaderUBOBinding::Lights:
-                    dsBuilder.addUniformBuffer(scene->sceneUBOs.pointLight, stage, binding);
+                    dsBuilder.addUniformBuffer(scene->sceneUBOs.lightsUBO, stage, binding);
                     break;
                 case vulk::cpp2::VulkShaderUBOBinding::EyePos:
                     dsBuilder.addFrameUBOs(scene->sceneUBOs.eyePos, stage, binding);
@@ -347,9 +346,12 @@ std::shared_ptr<VulkScene> VulkResources::loadScene(
     SceneDef& sceneDef          = *metadata->scenes.at(name);
     shared_ptr<VulkScene> scene = make_shared<VulkScene>(vk, metadata->scenes.at(name));
 
-    scene->shadowMapViews                  = shadowMapViews;
-    scene->camera                          = sceneDef.camera;
-    *scene->sceneUBOs.pointLight.mappedUBO = *sceneDef.pointLights[0];  // just one light for now
+    scene->shadowMapViews = shadowMapViews;
+    scene->camera         = sceneDef.camera;
+    VULK_ASSERT(sceneDef.pointLights.size() <= (int)vulk::cpp2::VulkLights::NumLights);
+    for (size_t i = 0; i < sceneDef.pointLights.size(); i++) {
+        scene->sceneUBOs.lightsUBO.mappedUBO->lights[i] = *sceneDef.pointLights[i];
+    }
 
     // for (auto& actorDef : sceneDef.actors) {
     //     auto pipeline = loadPipeline(renderPass, vk.swapChainExtent, actorDef->pipeline.def.get_name());

@@ -160,7 +160,7 @@ class World final : public VulkRenderable {
         }
 
         // set up the light view proj
-        VulkPointLight& light = *scene->sceneUBOs.pointLight.mappedUBO;
+        VulkPointLight& light = scene->sceneUBOs.lightsUBO.mappedUBO->lights[0];
         glm::mat4 lightView   = glm::lookAt(light.pos, glm::vec3(0.0f, 0.0f, 0.0f), VIEWSPACE_UP_VEC);
         glm::mat4 lightProj   = glm::perspective(DEFAULT_FOV_RADS, viewport.width / (float)viewport.height, nearClip, farClip);
         glm::mat4 viewProj    = lightProj * lightView;

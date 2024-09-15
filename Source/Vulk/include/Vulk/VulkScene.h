@@ -14,6 +14,10 @@ class VulkDeferredRenderpass;
 }
 struct SceneDef;
 
+struct LightsUBO {
+    VulkPointLight lights[(int)vulk::cpp2::VulkLights::NumLights];
+};
+
 struct VulkSceneUBOs {
     struct XformsUBO {
         alignas(16) glm::mat4 world;
@@ -23,8 +27,8 @@ struct VulkSceneUBOs {
 
     VulkFrameUBOs<XformsUBO> xforms;
     VulkFrameUBOs<glm::vec3> eyePos;
-    VulkUniformBuffer<VulkPointLight> pointLight;
-    VulkSceneUBOs(Vulk& vk) : xforms(vk), eyePos(vk), pointLight(vk) {}
+    VulkUniformBuffer<LightsUBO> lightsUBO;
+    VulkSceneUBOs(Vulk& vk) : xforms(vk), eyePos(vk), lightsUBO(vk) {}
 };
 
 class VulkScene {
