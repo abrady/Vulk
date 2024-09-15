@@ -94,8 +94,37 @@ Let's see if we can figure out why things are so dark.
 
 After GBuf creation
 ![](Assets/Screenshots/albedo_v0.png)
+![](Assets/Screenshots/normal_v0.png)
+![](Assets/Screenshots/material_v0.png)
 
-* albedo buffer
+buffers
+
+1. albedo
+2. normal
+3. material
+
+Let's check our gbuf outputs against our lighting inputs:
+
+* gbuf albedo: float4 0.45678711, 0.33959961, 0.12298584, 1.00
+* gbuf normal
+  * normal: float3 0.41141656, -0.64938074, 0.63956314
+  * hemioct:float2 -0.13994925, 0.62386608
+* gbuf material: float4 0.00, 0.31812009, 1.00, 0.00
+  * metallic: 0
+  * roughness 0.31812009
+  * ao        1.00
+* input albedo: 0.45490196, 0.34117648, 0.12156863 - check
+* input normal:
+  * hemioctNormal: -0.13989258, 0.62353516            - check
+  * N               0.4111627, -0.64901859, 0.6400938 - check
+* input material:
+  * metallic: 0.317
+  * roughness: 1.0
+  * ao 0
+
+Ah! swizzling the materials improperly.
+
+![](Assets/Screenshots/post_swizzle_fix_v0.png)
 
 ### gbuf creation
 

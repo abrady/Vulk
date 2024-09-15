@@ -96,9 +96,9 @@ vec3 reconstructPosition(vec2 texCoord, float depth, mat4 invViewProj) {
 
 void main() {
     vec3 albedo = subpassLoad(albedoMap).rgb;
-    float ao = subpassLoad(materialMap).r;
-    float metallic = subpassLoad(materialMap).g;
-	float roughness = subpassLoad(materialMap).b;
+    float metallic = subpassLoad(materialMap).r;
+	float roughness = subpassLoad(materialMap).g;
+    float ao = subpassLoad(materialMap).b;
 	vec2 hemioctNormal = subpassLoad(normalMap).xy; // VK_FORMAT_R16G16_SFLOAT stores normal in the xy channels
 	vec3 N = hemioctToNormal(hemioctNormal);
 	float depth = gl_FragCoord.z; // subpassLoad(depthMap).r; // VK_FORMAT_D32_SFLOAT stores depth in the red channel
