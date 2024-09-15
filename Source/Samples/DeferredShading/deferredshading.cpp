@@ -118,7 +118,7 @@ class World final : public VulkRenderable {
     }
 
     VulkPauseableTimer rotateWorldTimer;
-    void renderFrame(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer) override {
+    void renderFrame(VkCommandBuffer commandBuffer, uint32_t /*swapchainIdx*/) override {
         // set up the global ubos
         // - the xforms which is just to say the world, view, and proj matrices
         // - the actor local transforms (if necessary, not doing this currently)
@@ -176,7 +176,7 @@ class World final : public VulkRenderable {
                                  depthView->image,
                                  VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
                                  VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-        drawMainStuff(commandBuffer, frameBuffer);
+        drawMainStuff(commandBuffer);
         // TODO
         // drawDebugStuff(commandBuffer, frameBuffer);
         vk.transitionImageLayout(commandBuffer,
@@ -258,7 +258,7 @@ class World final : public VulkRenderable {
         vkCmdEndRenderPass(commandBuffer);
     }
 
-    void drawMainStuff(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer) {
+    void drawMainStuff(VkCommandBuffer commandBuffer) {
         deferredRenderpass->beginRenderToGBufs(commandBuffer);
 
         for (auto& actor : deferredActors) {
@@ -277,8 +277,6 @@ class World final : public VulkRenderable {
         }
 
         deferredRenderpass->renderGBufsAndEnd(commandBuffer);
-
-        frameBuffer;  // I'm sure I'll need this eventually
     }
 
     void drawDebugStuff(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer) {

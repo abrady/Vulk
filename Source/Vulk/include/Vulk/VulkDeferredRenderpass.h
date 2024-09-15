@@ -138,7 +138,7 @@ class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
     Vulk& vk;
     VkRenderPass renderPass;
     std::unique_ptr<VulkGBufs> geoBufs;
-    std::array<VkFramebuffer, MAX_FRAMES_IN_FLIGHT> frameBuffers;
+    std::vector<VkFramebuffer> frameBuffers;
     std::shared_ptr<VulkPipeline> deferredGeoPipeline;
     std::shared_ptr<VulkPipeline> deferredLightingPipeline;
     std::shared_ptr<VulkDescriptorSetInfo> deferredLightingDescriptorSetInfo;
@@ -153,7 +153,7 @@ class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
 
         VkRenderPassBeginInfo renderPassInfo{.sType       = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
                                              .renderPass  = renderPass,
-                                             .framebuffer = frameBuffers[vk.currentFrame],
+                                             .framebuffer = frameBuffers[vk.swapChainImageIndex],
                                              .renderArea =
                                                  {
                                                      .offset = {0, 0},
@@ -200,7 +200,7 @@ class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
     }
 
     ~VulkDeferredRenderpass() {
-        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+        for (size_t i = 0; i < frameBuffers.size(); i++) {
             vkDestroyFramebuffer(vk.device, frameBuffers[i], nullptr);
         }
         vkDestroyRenderPass(vk.device, renderPass, nullptr);

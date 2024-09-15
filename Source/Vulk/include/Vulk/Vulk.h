@@ -64,9 +64,9 @@ constexpr uint32_t WINDOW_HEIGHT   = 1800;
 
 class VulkRenderable {
    public:
-    virtual ~VulkRenderable()                                                          = default;
-    virtual void tick()                                                                = 0;
-    virtual void renderFrame(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer) = 0;
+    virtual ~VulkRenderable()                                                           = default;
+    virtual void tick()                                                                 = 0;
+    virtual void renderFrame(VkCommandBuffer commandBuffer, uint32_t swapchainImageIdx) = 0;
 
     // ==================
     // events
@@ -149,6 +149,9 @@ class Vulk {
     uint32_t lastFrame    = UINT32_MAX;
     uint32_t frameCount   = 0;
     VkExtent2D swapChainExtent;
+    // index of the current swap chain image. this is different than currentFrame as it is device-specific: A GPU may
+    // make 3 swapchain images, for example, even if we only have 2 frames in our code.
+    uint32_t swapChainImageIndex = 0;
     VkCommandPool commandPool;
     std::vector<VkCommandBuffer> commandBuffers;
 

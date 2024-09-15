@@ -185,7 +185,8 @@ VulkDeferredRenderpass::VulkDeferredRenderpass(Vulk& vkIn, VulkResources& resour
     frameBufferCreateInfo.layers                  = 1;
 
     // Create frame buffers for every swap chain image
-    for (uint32_t i = 0; i < frameBuffers.size(); i++) {
+    frameBuffers.resize(vk.swapChainImageViews.size());
+    for (uint32_t i = 0; i < vk.swapChainImageViews.size(); i++) {
         atmts[(int)GBufAtmtIdx::Color]    = vk.swapChainImageViews[i];
         atmts[(int)GBufAtmtIdx::Albedo]   = geoBufs->gbufViews[(int)GBufAtmtIdx::Albedo];
         atmts[(int)GBufAtmtIdx::Normal]   = geoBufs->gbufViews[(int)GBufAtmtIdx::Normal];

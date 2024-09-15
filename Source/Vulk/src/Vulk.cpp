@@ -1174,9 +1174,12 @@ void Vulk::render() {
     if (renderable && lastFrame < MAX_FRAMES_IN_FLIGHT)
         renderable->onBeforeRender();
 
-    uint32_t imageIndex;
-    VkResult result =
-        vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+    VkResult result = vkAcquireNextImageKHR(device,
+                                            swapChain,
+                                            UINT64_MAX,
+                                            imageAvailableSemaphores[currentFrame],
+                                            VK_NULL_HANDLE,
+                                            &swapChainImageIndex);
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
         recreateSwapChain();
@@ -1198,11 +1201,11 @@ void Vulk::render() {
     VK_CALL(vkBeginCommandBuffer(commandBuffer, &beginInfo));
 
     if (renderable) {
-        renderable->renderFrame(commandBuffer, swapChainFramebuffers[imageIndex]);
+        renderable->renderFrame(commandBuffer, swapChainImageIndex);
     }
 
     if (uiRenderer) {
-        uiRenderer->renderFrame(commandBuffer, imageIndex);
+        uiRenderer->renderFrame(commandBuffer, swapChainImageIndex);
     }
 
     VK_CALL(vkEndCommandBuffer(commandBuffer));
@@ -1235,7 +1238,7 @@ void Vulk::render() {
     presentInfo.swapchainCount  = 1;
     presentInfo.pSwapchains     = swapChains;
 
-    presentInfo.pImageIndices = &imageIndex;
+    presentInfo.pImageIndices = &swapChainImageIndex;
 
     result = vkQueuePresentKHR(presentQueue, &presentInfo);
 

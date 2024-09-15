@@ -88,6 +88,22 @@ TODOS:
 * DeferredRenderGeo.pipeline has 4 colorblends explicitly specified because we're making 4 attachments in VulkDeferredRenderpass.
   Probably we should have a .renderpass file at some point that describes the subpasses and attachments...
 
+## 9/14/24
+
+Vulk: ERROR: 2 message: Validation Error: [ UNASSIGNED-CoreValidation-DrawState-InvalidImageLayout ] Object 0: handle = 0x1cb1caff990, type = VK_OBJECT_TYPE_COMMAND_BUFFER; | MessageID = 0x4dae5635 | vkQueueSubmit(): pSubmits[0].pCommandBuffers[0] command buffer VkCommandBuffer 0x1cb1caff990[] expects VkImage 0xf443490000000006[] (subresource: aspectMask 0x1 array layer 0, mip level 0) to be in layout VK_IMAGE_LAYOUT_PRESENT_SRC_KHR--instead, current layout is VK_IMAGE_LAYOUT_UNDEFINED.
+
+![](Assets/Screenshots/deferred_render_v0.png)
+
+### In renderdoc
+
+EID 27 API High Miscellaneous 1303270965 Validation Error: [ UNASSIGNED-CoreValidation-DrawState-InvalidImageLayout ] Object 0: handle = Command Buffer 152, type = VK_OBJECT_TYPE_COMMAND_BUFFER; | MessageID = 0x4dae5635 | vkQueueSubmit(): pSubmits[0].pCommandBuffers[0] command buffer VkCommandBuffer Command Buffer 152 expects
+VkImage Swapchain Image 134
+(subresource: aspectMask 0x1 array layer 0, mip level 0) to be in layout VK_IMAGE_LAYOUT_PRESENT_SRC_KHR--instead, current layout is VK_IMAGE_LAYOUT_UNDEFINED.
+
+* interestingly this happens on the 3d time we call render.
+* looks like it is the 3d swapchain image
+* this has to be some assumption of mine about what the current swapchain is...
+
 ## 9/10/24
 
 Vulk: ERROR: 2 message: Validation Error: [ VUID-VkFramebufferCreateInfo-pAttachments-00879 ]
