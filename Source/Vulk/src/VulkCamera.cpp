@@ -23,26 +23,26 @@ void VulkCamera::setLookAt(glm::vec3 eyeIn, glm::vec3 target) {
     this->orientation = lookAtToQuaternion(eye, target, this->up);
 }
 
-glm::mat4 VulkCamera::getViewMat() {
+glm::mat4 VulkCamera::getViewMat() const {
     glm::mat4 trans = glm::translate(glm::mat4(1.0f), -eye);
     glm::mat4 rot   = glm::mat4_cast(orientation);
     return rot * trans;
 }
 
-glm::vec3 VulkCamera::getForwardVec() {
+glm::vec3 VulkCamera::getForwardVec() const {
     glm::quat invOrientation = glm::inverse(orientation);
     return glm::normalize(invOrientation * VIEWSPACE_FORWARD_VEC);
 }
-glm::vec3 VulkCamera::getRightVec() {
+glm::vec3 VulkCamera::getRightVec() const {
     glm::quat invOrientation = glm::inverse(orientation);
     return glm::mat3_cast(invOrientation) * VIEWSPACE_RIGHT_VEC;
 }
-glm::vec3 VulkCamera::getUpVec() {
+glm::vec3 VulkCamera::getUpVec() const {
     glm::quat invOrientation = glm::inverse(orientation);
     return glm::mat3_cast(invOrientation) * VIEWSPACE_UP_VEC;
 }
 
-glm::vec3 VulkCamera::getEulers() {
+glm::vec3 VulkCamera::getEulers() const {
     return glm::eulerAngles(orientation);
 }
 

@@ -23,19 +23,21 @@
 // * a set of vertex and index buffers
 struct VulkModel {
     Vulk& vk;
-    std::shared_ptr<VulkMesh> mesh;
-    std::shared_ptr<VulkMaterialTextures> textures;
-    std::shared_ptr<VulkUniformBuffer<VulkMaterialConstants>> materialUBO;
+    std::shared_ptr<const VulkMesh> mesh;
+    std::shared_ptr<const VulkMaterialTextures> textures;
+    std::shared_ptr<const VulkUniformBuffer<VulkMaterialConstants>> materialUBO;
     uint32_t numIndices, numVertices;
-    std::unordered_map<vulk::cpp2::VulkShaderLocation, std::shared_ptr<VulkBuffer>>
+    std::unordered_map<vulk::cpp2::VulkShaderLocation, std::shared_ptr<const VulkBuffer>>
         bufs;  // each index is VulkShaderLocation_Pos, Color, Normal, etc.;
-    std::shared_ptr<VulkBuffer> indexBuf;
-    std::shared_ptr<VulkFrameUBOs<glm::mat4>> xformUBOs;
+    std::shared_ptr<const VulkBuffer> indexBuf;
+
+    // mutable: don't allocate this unless a descriptor set uses it in a scene.
+    mutable std::shared_ptr<const VulkFrameUBOs<glm::mat4>> xformUBOs;
 
     VulkModel(Vulk& vk,
-              std::shared_ptr<VulkMesh> meshIn,
-              std::shared_ptr<VulkMaterialTextures> texturesIn,
-              std::shared_ptr<VulkUniformBuffer<VulkMaterialConstants>> materialUBO,
+              std::shared_ptr<const VulkMesh> meshIn,
+              std::shared_ptr<const VulkMaterialTextures> texturesIn,
+              std::shared_ptr<const VulkUniformBuffer<VulkMaterialConstants>> materialUBO,
               std::vector<vulk::cpp2::VulkShaderLocation> const& inputs)
         : vk(vk),
           mesh(meshIn),
@@ -93,7 +95,7 @@ struct VulkModel {
         }
     }
 
-    void bindInputBuffers(VkCommandBuffer cmdBuf) {
+    void bindInputBuffers(VkCommandBuffer cmdBuf) const {
         for (auto& [binding, buf] : this->bufs) {
             VkDeviceSize offsets[] = {0};
             vkCmdBindVertexBuffers(cmdBuf, (uint32_t)binding, 1, &buf->buf, offsets);

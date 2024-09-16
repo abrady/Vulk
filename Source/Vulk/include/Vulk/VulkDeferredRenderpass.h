@@ -139,14 +139,14 @@ class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
     VkRenderPass renderPass;
     std::unique_ptr<VulkGBufs> geoBufs;
     std::vector<VkFramebuffer> frameBuffers;
-    std::shared_ptr<VulkPipeline> deferredGeoPipeline;
-    std::shared_ptr<VulkPipeline> deferredLightingPipeline;
-    std::shared_ptr<VulkDescriptorSetInfo> deferredLightingDescriptorSetInfo;
-    std::shared_ptr<VulkSampler> textureSampler;
+    std::shared_ptr<const VulkPipeline> deferredGeoPipeline;
+    std::shared_ptr<const VulkPipeline> deferredLightingPipeline;
+    std::shared_ptr<const VulkDescriptorSetInfo> deferredLightingDescriptorSetInfo;
+    std::shared_ptr<const VulkSampler> textureSampler;
 
     VulkDeferredRenderpass(Vulk& vkIn, VulkResources& resources, VulkScene& scene);
 
-    void beginRenderToGBufs(VkCommandBuffer commandBuffer) {
+    void beginRenderToGBufs(VkCommandBuffer commandBuffer) const {
         vk.beginDebugLabel(commandBuffer, "Deferred GBuffer Creation");
         std::array<VkClearValue, TEnumTraits<GBufAtmtIdx>::size + 1> clearValues{};
         clearValues[(int)GBufAtmtIdx::Depth].depthStencil = {1.0f, 0};
@@ -181,7 +181,7 @@ class VulkDeferredRenderpass : public ClassNonCopyableNonMovable {
         vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
     }
 
-    void renderGBufsAndEnd(VkCommandBuffer commandBuffer) {
+    void renderGBufsAndEnd(VkCommandBuffer commandBuffer) const {
         vk.endDebugLabel(commandBuffer);
         vk.beginDebugLabel(commandBuffer, "Deferred Lighting Pass");
         vkCmdNextSubpass(commandBuffer, VK_SUBPASS_CONTENTS_INLINE);

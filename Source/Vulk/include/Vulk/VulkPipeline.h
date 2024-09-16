@@ -8,22 +8,20 @@ struct PipelineDef;
 class VulkPipeline : public ClassNonCopyableNonMovable {
    private:
     Vulk& vk;
-    std::vector<std::shared_ptr<VulkShaderModule>> shaderModules;
+    std::vector<std::shared_ptr<const VulkShaderModule>> shaderModules;
 
    public:
-    std::shared_ptr<PipelineDef> def;
+    std::shared_ptr<const PipelineDef> def;
     VkPipeline pipeline;
     VkPipelineLayout pipelineLayout;
-    std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout;
+    std::shared_ptr<const VulkDescriptorSetLayout> descriptorSetLayout;
 
-    VulkPipeline(
-        Vulk& vk,
-        std::shared_ptr<PipelineDef> def,
-        VkPipeline pipeline,
-        VkPipelineLayout pipelineLayout,
-        std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout,
-        std::vector<std::shared_ptr<VulkShaderModule>> shaderModules
-    )
+    VulkPipeline(Vulk& vk,
+                 std::shared_ptr<const PipelineDef> def,
+                 VkPipeline pipeline,
+                 VkPipelineLayout pipelineLayout,
+                 std::shared_ptr<const VulkDescriptorSetLayout> descriptorSetLayout,
+                 std::vector<std::shared_ptr<const VulkShaderModule>> shaderModules)
         : vk(vk),
           def(def),
           shaderModules(shaderModules),

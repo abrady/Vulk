@@ -2,7 +2,7 @@
 #include "Vulk/Vulk.h"
 #include "Vulk/VulkUtil.h"
 
-VulkPipelineBuilder::VulkPipelineBuilder(Vulk& vk, std::shared_ptr<PipelineDef> def) : vk(vk), def(def) {
+VulkPipelineBuilder::VulkPipelineBuilder(Vulk& vk, std::shared_ptr<const PipelineDef> def) : vk(vk), def(def) {
     rasterizer.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     rasterizer.depthClampEnable        = VK_FALSE;
     rasterizer.rasterizerDiscardEnable = VK_FALSE;
@@ -49,8 +49,8 @@ VulkPipelineBuilder& VulkPipelineBuilder::addShaderStage(VkShaderStageFlagBits s
     return *this;
 }
 
-VulkPipelineBuilder&
-VulkPipelineBuilder::addShaderStage(VkShaderStageFlagBits stage, std::shared_ptr<VulkShaderModule> shaderModule) {
+VulkPipelineBuilder& VulkPipelineBuilder::addShaderStage(VkShaderStageFlagBits stage,
+                                                         std::shared_ptr<const VulkShaderModule> shaderModule) {
     VkPipelineShaderStageCreateInfo shaderStageInfo{};
     shaderStageInfo.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     shaderStageInfo.stage  = stage;
@@ -158,12 +158,10 @@ VulkPipelineBuilder& VulkPipelineBuilder::addColorBlendAttachment(bool blendEnab
     return *this;
 }
 
-void VulkPipelineBuilder::build(
-    VkRenderPass renderPass,
-    std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout,
-    VkPipelineLayout* pipelineLayout,
-    VkPipeline* graphicsPipeline
-) {
+void VulkPipelineBuilder::build(VkRenderPass renderPass,
+                                std::shared_ptr<const VulkDescriptorSetLayout> descriptorSetLayout,
+                                VkPipelineLayout* pipelineLayout,
+                                VkPipeline* graphicsPipeline) {
     assert(viewport.maxDepth > 0.f);
 
     std::vector<VkVertexInputBindingDescription> bindingDescriptions;
@@ -219,8 +217,9 @@ void VulkPipelineBuilder::build(
     VK_CALL(vkCreateGraphicsPipelines(vk.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, graphicsPipeline));
 }
 
-std::shared_ptr<VulkPipeline>
-VulkPipelineBuilder::build(VkRenderPass renderPass, std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout) {
+std::shared_ptr<const VulkPipeline> VulkPipelineBuilder::build(
+    VkRenderPass renderPass,
+    std::shared_ptr<const VulkDescriptorSetLayout> descriptorSetLayout) {
     VkPipelineLayout pipelineLayout;
     VkPipeline graphicsPipeline;
     build(renderPass, descriptorSetLayout, &pipelineLayout, &graphicsPipeline);

@@ -35,10 +35,10 @@ std::shared_ptr<VulkResources> VulkResources::loadFromProject(Vulk& vk, std::fil
     return std::make_shared<VulkResources>(vk, metadata);
 }
 
-std::shared_ptr<VulkShaderModule> VulkResources::createShaderModule(ShaderType type, string const& name) {
+std::shared_ptr<const VulkShaderModule> VulkResources::createShaderModule(ShaderType type, string const& name) const {
     fs::path subdir;
     char const* suffix;
-    std::unordered_map<std::string, std::shared_ptr<VulkShaderModule>>* shaders_map;
+    std::unordered_map<std::string, std::shared_ptr<const VulkShaderModule>>* shaders_map;
     switch (type) {
         case Vert:
             subdir      = "Vert";
@@ -67,18 +67,18 @@ std::shared_ptr<VulkShaderModule> VulkResources::createShaderModule(ShaderType t
     return sm;
 }
 
-std::shared_ptr<VulkModel> VulkResources::getModel(ModelDef const& modelDef, PipelineDef const& pipelineDef) {
+std::shared_ptr<const VulkModel> VulkResources::getModel(ModelDef const& modelDef, PipelineDef const& pipelineDef) {
     string key = modelDef.name + ":" + pipelineDef.def.name().value();
     if (pipelineModels.contains(key)) {
         return pipelineModels.at(key);
     }
-    shared_ptr<VulkMaterialTextures> textures = getMaterialTextures(modelDef.material->name);
-    auto p                                    = make_shared<VulkModel>(vk,
+    shared_ptr<const VulkMaterialTextures> textures = getMaterialTextures(modelDef.material->name);
+    auto p                                          = make_shared<VulkModel>(vk,
                                     getMesh(*modelDef.mesh),
                                     textures,
                                     getMaterial(modelDef.material->name),
                                     pipelineDef.def.get_vertInputs());
-    pipelineModels[key]                       = p;
+    pipelineModels[key]                             = p;
     return p;
 }
 
@@ -95,8 +95,8 @@ VkPolygonMode toVkPolygonMode(vulk::cpp2::VulkPolygonMode polygonMode) {
     return static_cast<VkPolygonMode>(polygonMode);
 }
 
-std::shared_ptr<VulkDescriptorSetLayout> VulkResources::buildDescriptorSetLayoutFromPipeline(std::string name) {
-    std::shared_ptr<PipelineDef> def = metadata->pipelines.at(name);
+std::shared_ptr<const VulkDescriptorSetLayout> VulkResources::buildDescriptorSetLayoutFromPipeline(std::string name) {
+    std::shared_ptr<const PipelineDef> def = metadata->pipelines.at(name);
 
     // build the descriptor set layout
     VulkDescriptorSetLayoutBuilder dslb(vk);
@@ -126,13 +126,15 @@ std::shared_ptr<VulkDescriptorSetLayout> VulkResources::buildDescriptorSetLayout
     return dslb.build();
 }
 
-std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(VkRenderPass renderPass, VkExtent2D extent, std::string const& name) {
+std::shared_ptr<const VulkPipeline> VulkResources::loadPipeline(VkRenderPass renderPass,
+                                                                VkExtent2D extent,
+                                                                std::string const& name) {
     if (pipelines.contains(name)) {
         return pipelines[name];
     }
 
     // make the pipeline itself
-    std::shared_ptr<PipelineDef> def = metadata->pipelines.at(name);
+    std::shared_ptr<const PipelineDef> def = metadata->pipelines.at(name);
     VulkPipelineBuilder pb(vk, def);
 
     for (auto& pc : def->def.get_pushConstants()) {
@@ -176,9 +178,10 @@ std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(VkRenderPass renderPas
         pb.addVertexInput(input);
     }
 
-    std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout = buildDescriptorSetLayoutFromPipeline(name);
-    auto p                                                       = pb.build(renderPass, descriptorSetLayout);
-    pipelines[name]                                              = p;
+    std::shared_ptr<const VulkDescriptorSetLayout> descriptorSetLayout = buildDescriptorSetLayoutFromPipeline(name);
+    // build, save and return the pipeline
+    auto p          = pb.build(renderPass, descriptorSetLayout);
+    pipelines[name] = p;
     return p;
 }
 
@@ -187,11 +190,11 @@ std::shared_ptr<VulkPipeline> VulkResources::loadPipeline(VkRenderPass renderPas
  * scene, model, and deferredRenderpass are used to create the descriptor set info
  * if they apply to the pipeline (e.g. if the pipeline uses a UBO for the model, the model must be provided)
  */
-shared_ptr<VulkDescriptorSetInfo> VulkResources::createDSInfoFromPipeline(
-    VulkPipeline& pipeline,
-    VulkScene* scene,
-    VulkModel* model,
-    ActorDef* actorDef,
+shared_ptr<const VulkDescriptorSetInfo> VulkResources::createDSInfoFromPipeline(
+    VulkPipeline const& pipeline,
+    VulkScene const* scene,
+    VulkModel const* model,
+    ActorDef const* actorDef,
     vulk::VulkDeferredRenderpass const* deferredRenderpass) {
     logger->info("Creating actor from pipeline def {}", pipeline.def->def.get_name());
     vulk::cpp2::DescriptorSetDef const& dsDef = pipeline.def->def.get_descriptorSetDef();
@@ -324,20 +327,20 @@ shared_ptr<VulkDescriptorSetInfo> VulkResources::createDSInfoFromPipeline(
 // TODO: hypothetically the same descriptor set could get used for multiple actors
 // we'll get to that eventually, maybe, it's not really a big deal as DSs are cheap
 // or so I've been told.
-std::shared_ptr<VulkActor> VulkResources::createActorFromPipeline(ActorDef& actorDef,
-                                                                  shared_ptr<VulkPipeline> pipeline,
-                                                                  VulkScene* scene,
-                                                                  vulk::VulkDeferredRenderpass const* deferredRenderpass) {
+shared_ptr<const VulkActor> VulkResources::createActorFromPipeline(ActorDef const& actorDef,
+                                                                   shared_ptr<const VulkPipeline> pipeline,
+                                                                   VulkScene const* scene,
+                                                                   vulk::VulkDeferredRenderpass const* deferredRenderpass) {
     logger->info("Creating actor from def {}, pipeline def {}", actorDef.def.get_name(), pipeline->def->def.get_name());
-    shared_ptr<VulkModel> model = getModel(*actorDef.model, *pipeline->def);
-    shared_ptr<VulkDescriptorSetInfo> info =
+    shared_ptr<const VulkModel> model = getModel(*actorDef.model, *pipeline->def);
+    shared_ptr<const VulkDescriptorSetInfo> info =
         createDSInfoFromPipeline(*pipeline, scene, model.get(), &actorDef, deferredRenderpass);
     return make_shared<VulkActor>(vk, model, info, pipeline);
 }
 
 std::shared_ptr<VulkScene> VulkResources::loadScene(
     std::string name,
-    std::array<std::shared_ptr<VulkDepthView>, MAX_FRAMES_IN_FLIGHT> shadowMapViews) {
+    std::array<std::shared_ptr<VulkDepthView>, MAX_FRAMES_IN_FLIGHT> shadowMapViews) const {
     if (scenes.contains(name)) {
         logger->info("Returning cached scene {}", name);
         return scenes[name];
@@ -360,7 +363,7 @@ std::shared_ptr<VulkScene> VulkResources::loadScene(
     return scenes[name] = scene;
 }
 
-shared_ptr<VulkUniformBuffer<VulkMaterialConstants>> VulkResources::getMaterial(string const& name) {
+shared_ptr<const VulkUniformBuffer<VulkMaterialConstants>> VulkResources::getMaterial(string const& name) {
     if (!materialUBOs.contains(name)) {
         materialUBOs[name] =
             make_shared<VulkUniformBuffer<VulkMaterialConstants>>(vk, metadata->materials.at(name)->toVulkMaterialConstants());
@@ -368,12 +371,12 @@ shared_ptr<VulkUniformBuffer<VulkMaterialConstants>> VulkResources::getMaterial(
     return materialUBOs[name];
 }
 
-shared_ptr<VulkMesh> VulkResources::getMesh(MeshDef& meshDef) {
+shared_ptr<const VulkMesh> VulkResources::getMesh(MeshDef& meshDef) {
     string name = meshDef.name;
     if (meshes.contains(name)) {
         return meshes[name];
     }
-    shared_ptr<VulkMesh> m;
+    shared_ptr<const VulkMesh> m;
     switch (meshDef.type) {
         case vulk::cpp2::MeshDefType::Model:
             m = make_shared<VulkMesh>(VulkMesh::loadFromPath(meshDef.getModelMeshDef()->path, name));
@@ -388,20 +391,19 @@ shared_ptr<VulkMesh> VulkResources::getMesh(MeshDef& meshDef) {
     return m;
 }
 
-shared_ptr<VulkMaterialTextures> VulkResources::getMaterialTextures(string const& name) {
+shared_ptr<const VulkMaterialTextures> VulkResources::getMaterialTextures(string const& name) {
     if (!materialTextures.contains(name)) {
-        MaterialDef const& def              = *metadata->materials.at(name);
-        materialTextures[name]              = make_shared<VulkMaterialTextures>();
-        materialTextures[name]->diffuseView = !def.mapKd.empty() ? make_unique<VulkImageView>(vk, def.mapKd, false) : nullptr;
-        materialTextures[name]->normalView =
-            !def.mapNormal.empty() ? make_unique<VulkImageView>(vk, def.mapNormal, true) : nullptr;
-        materialTextures[name]->ambientOcclusionView =
-            !def.mapKa.empty() ? make_unique<VulkImageView>(vk, def.mapKa, true) : nullptr;
-        materialTextures[name]->displacementView = !def.disp.empty() ? make_unique<VulkImageView>(vk, def.disp, true) : nullptr;
-        materialTextures[name]->metallicView     = !def.mapPm.empty() ? make_unique<VulkImageView>(vk, def.mapPm, true) : nullptr;
-        materialTextures[name]->roughnessView    = !def.mapPr.empty() ? make_unique<VulkImageView>(vk, def.mapPr, true) : nullptr;
-        materialTextures[name]->cubemapView =
-            !def.cubemapImgs[0].empty() ? VulkImageView::createCubemapView(vk, def.cubemapImgs) : nullptr;
+        MaterialDef const& def  = *metadata->materials.at(name);
+        auto p                  = make_shared<VulkMaterialTextures>();
+        p->diffuseView          = !def.mapKd.empty() ? make_unique<VulkImageView>(vk, def.mapKd, false) : nullptr;
+        p->normalView           = !def.mapNormal.empty() ? make_unique<VulkImageView>(vk, def.mapNormal, true) : nullptr;
+        p->ambientOcclusionView = !def.mapKa.empty() ? make_unique<VulkImageView>(vk, def.mapKa, true) : nullptr;
+        p->displacementView     = !def.disp.empty() ? make_unique<VulkImageView>(vk, def.disp, true) : nullptr;
+        p->metallicView         = !def.mapPm.empty() ? make_unique<VulkImageView>(vk, def.mapPm, true) : nullptr;
+        p->roughnessView        = !def.mapPr.empty() ? make_unique<VulkImageView>(vk, def.mapPr, true) : nullptr;
+        p->cubemapView          = !def.cubemapImgs[0].empty() ? VulkImageView::createCubemapView(vk, def.cubemapImgs) : nullptr;
+
+        materialTextures[name] = p;
         static_assert(TEnumTraits<::vulk::cpp2::VulkShaderTextureBinding>::max() ==
                       vulk::cpp2::VulkShaderTextureBinding::CubemapSampler);
     }

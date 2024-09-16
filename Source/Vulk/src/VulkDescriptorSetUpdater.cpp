@@ -1,8 +1,9 @@
 #include "Vulk/VulkDescriptorSetUpdater.h"
 #include "Vulk/VulkImageView.h"
 
-VulkDescriptorSetUpdater&
-VulkDescriptorSetUpdater::addUniformBuffer(VkBuffer buf, VkDeviceSize range, vulk::cpp2::VulkShaderUBOBinding bindingIn) {
+VulkDescriptorSetUpdater& VulkDescriptorSetUpdater::addUniformBuffer(VkBuffer buf,
+                                                                     VkDeviceSize range,
+                                                                     vulk::cpp2::VulkShaderUBOBinding bindingIn) {
     uint32_t binding          = (uint32_t)bindingIn;
     auto uniformBufferInfo    = std::make_unique<VkDescriptorBufferInfo>();
     uniformBufferInfo->buffer = buf;
@@ -22,11 +23,9 @@ VulkDescriptorSetUpdater::addUniformBuffer(VkBuffer buf, VkDeviceSize range, vul
     return *this;
 }
 
-VulkDescriptorSetUpdater& VulkDescriptorSetUpdater::addImageSampler(
-    std::shared_ptr<VulkImageView> textureImageView,
-    std::shared_ptr<VulkSampler> textureSampler,
-    vulk::cpp2::VulkShaderTextureBinding bindingIn
-) {
+VulkDescriptorSetUpdater& VulkDescriptorSetUpdater::addImageSampler(std::shared_ptr<const VulkImageView> textureImageView,
+                                                                    std::shared_ptr<const VulkSampler> textureSampler,
+                                                                    vulk::cpp2::VulkShaderTextureBinding bindingIn) {
     uint32_t binding = (uint32_t)bindingIn;
 
     auto imageInfo         = std::make_unique<VkDescriptorImageInfo>();
@@ -50,8 +49,9 @@ VulkDescriptorSetUpdater& VulkDescriptorSetUpdater::addImageSampler(
     return *this;
 }
 
-VulkDescriptorSetUpdater&
-VulkDescriptorSetUpdater::addStorageBuffer(VkBuffer buf, VkDeviceSize range, vulk::cpp2::VulkShaderSSBOBinding bindingIn) {
+VulkDescriptorSetUpdater& VulkDescriptorSetUpdater::addStorageBuffer(VkBuffer buf,
+                                                                     VkDeviceSize range,
+                                                                     vulk::cpp2::VulkShaderSSBOBinding bindingIn) {
     uint32_t binding    = (uint32_t)bindingIn;
     auto storageInfo    = std::make_unique<VkDescriptorBufferInfo>();
     storageInfo->buffer = buf;

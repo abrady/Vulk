@@ -79,14 +79,11 @@ My goal for this project is to transition from the hand-coded samples I was doin
 
 TODOS:
 
-* VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT
-* pack roughness into the material, make sure ao is in the r field (see TODOs)
 * depth buffer: I think I should just use the depth buffer I'm already allocating in Vulk.
-* I also don't know if the 2 subpass needs the depth buffer?
-* I don't need to build the command buffer each frame
 * constify our code? kinda a pain but may save time eventually
 * DeferredRenderGeo.pipeline has 4 colorblends explicitly specified because we're making 4 attachments in VulkDeferredRenderpass.
   Probably we should have a .renderpass file at some point that describes the subpasses and attachments...
+* xformUBOs : is it actually used? remove
 
 ## 9/15/24 renderdoc debugging
 
@@ -121,7 +118,7 @@ Let's check our gbuf outputs against our lighting inputs:
   * metallic: 0.317
   * roughness: 1.0
   * ao 0
-
+  
 Ah! swizzling the materials improperly.
 
 ![](Assets/Screenshots/post_swizzle_fix_v0.png)

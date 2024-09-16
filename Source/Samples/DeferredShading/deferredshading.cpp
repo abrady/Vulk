@@ -9,27 +9,27 @@ class World final : public VulkRenderable {
     Vulk& vk;
     std::shared_ptr<VulkScene> scene;
 
-    std::shared_ptr<vulk::VulkDeferredRenderpass> deferredRenderpass;
-    std::vector<std::shared_ptr<VulkActor>> deferredActors;
-    std::shared_ptr<VulkFence> deferredFence;
+    std::shared_ptr<const vulk::VulkDeferredRenderpass> deferredRenderpass;
+    std::vector<std::shared_ptr<const VulkActor>> deferredActors;
+    std::shared_ptr<const VulkFence> deferredFence;
 
-    std::shared_ptr<VulkDepthRenderpass> shadowMapRenderpass;
-    std::vector<std::shared_ptr<VulkActor>> shadowMapActors;
-    std::shared_ptr<VulkPipeline> shadowMapPipeline;
-    std::shared_ptr<VulkFence> shadowMapFence;
+    std::shared_ptr<const VulkDepthRenderpass> shadowMapRenderpass;
+    std::vector<std::shared_ptr<const VulkActor>> shadowMapActors;
+    std::shared_ptr<const VulkPipeline> shadowMapPipeline;
+    std::shared_ptr<const VulkFence> shadowMapFence;
 
-    std::vector<std::shared_ptr<VulkActor>> debugTangentsActors;
-    std::vector<std::shared_ptr<VulkActor>> debugNormalsActors;
+    std::vector<std::shared_ptr<const VulkActor>> debugTangentsActors;
+    std::vector<std::shared_ptr<const VulkActor>> debugNormalsActors;
 
-    std::shared_ptr<VulkPipeline> wireframePipeline;
-    std::vector<std::shared_ptr<VulkActor>> debugWireframeActors;
+    std::shared_ptr<const VulkPipeline> wireframePipeline;
+    std::vector<std::shared_ptr<const VulkActor>> debugWireframeActors;
 
     std::shared_ptr<VulkPickRenderpass> pickRenderpass;
-    std::vector<std::shared_ptr<VulkActor>> pickActors;
-    std::shared_ptr<VulkPipeline> pickPipeline;
+    std::vector<std::shared_ptr<const VulkActor>> pickActors;
+    std::shared_ptr<const VulkPipeline> pickPipeline;
 
-    std::shared_ptr<VulkActor> axesActor;
-    std::shared_ptr<VulkPipeline> axesPipeline;
+    std::shared_ptr<const VulkActor> axesActor;
+    std::shared_ptr<const VulkPipeline> axesPipeline;
 
     struct Debug {
         bool renderNormals   = false;
@@ -54,12 +54,11 @@ class World final : public VulkRenderable {
         scene              = resources->loadScene(sceneName, shadowMapRenderpass->depthViews);
         deferredRenderpass = std::make_shared<vulk::VulkDeferredRenderpass>(vk, *resources, *scene);
         for (size_t i = 0; i < scene->def->actors.size(); ++i) {
-            auto actorDef                            = scene->def->actors[i];
-            std::shared_ptr<VulkActor> deferredActor = resources->createActorFromPipeline(*actorDef,
-                                                                                          deferredRenderpass->deferredGeoPipeline,
-                                                                                          scene.get(),
-                                                                                          deferredRenderpass.get());
-            deferredActors.push_back(deferredActor);
+            auto actorDef = scene->def->actors[i];
+            deferredActors.push_back(resources->createActorFromPipeline(*actorDef,
+                                                                        deferredRenderpass->deferredGeoPipeline,
+                                                                        scene.get(),
+                                                                        deferredRenderpass.get()));
         }
 
         shadowMapFence    = std::make_shared<VulkFence>(vk);
@@ -67,18 +66,14 @@ class World final : public VulkRenderable {
         auto shadowMapPipelineDef = resources->metadata->pipelines.at("ShadowMap");
         for (size_t i = 0; i < scene->def->actors.size(); ++i) {
             auto actorDef = scene->def->actors[i];
-            std::shared_ptr<VulkActor> shadowMapActor =
-                resources->createActorFromPipeline(*actorDef, shadowMapPipeline, scene.get(), nullptr);
-            shadowMapActors.push_back(shadowMapActor);
+            shadowMapActors.push_back(resources->createActorFromPipeline(*actorDef, shadowMapPipeline, scene.get(), nullptr));
         }
 
         pickRenderpass = std::make_shared<VulkPickRenderpass>(vk);
         pickPipeline   = resources->loadPipeline(pickRenderpass->renderPass, vk.swapChainExtent, "Pick");
         for (size_t i = 0; i < scene->def->actors.size(); ++i) {
             auto actorDef = scene->def->actors[i];
-            std::shared_ptr<VulkActor> pickActor =
-                resources->createActorFromPipeline(*actorDef, pickPipeline, scene.get(), nullptr);
-            pickActors.push_back(pickActor);
+            pickActors.push_back(resources->createActorFromPipeline(*actorDef, pickPipeline, scene.get(), nullptr));
         }
 
         // ========================================================================================================
@@ -93,10 +88,8 @@ class World final : public VulkRenderable {
         wireframePipeline = resources->loadPipeline(vk.renderPass, vk.swapChainExtent, "Wireframe");
         for (size_t i = 0; i < scene->def->actors.size(); ++i) {
             auto actorDef = scene->def->actors[i];
-            std::shared_ptr<VulkActor> wireframeActor =
-                resources->createActorFromPipeline(*actorDef, wireframePipeline, scene.get(), nullptr);
-            // scene->actors[i]->pipeline = wireframeActor->pipeline;
-            debugWireframeActors.push_back(wireframeActor);
+            debugWireframeActors.push_back(
+                resources->createActorFromPipeline(*actorDef, wireframePipeline, scene.get(), nullptr));
         }
 
         // show the axes of world coordinates
@@ -113,8 +106,8 @@ class World final : public VulkRenderable {
 
         VulkDescriptorSetBuilder dsBuilder(vk);
         dsBuilder.addFrameUBOs(scene->sceneUBOs.xforms, VK_SHADER_STAGE_VERTEX_BIT, vulk::cpp2::VulkShaderUBOBinding::Xforms);
-        std::shared_ptr<VulkDescriptorSetInfo> axesDSInfo = dsBuilder.build();
-        axesActor                                         = make_shared<VulkActor>(vk, axesModel, axesDSInfo, axesPipeline);
+        std::shared_ptr<const VulkDescriptorSetInfo> axesDSInfo = dsBuilder.build();
+        axesActor                                               = make_shared<VulkActor>(vk, axesModel, axesDSInfo, axesPipeline);
     }
 
     VulkPauseableTimer rotateWorldTimer;

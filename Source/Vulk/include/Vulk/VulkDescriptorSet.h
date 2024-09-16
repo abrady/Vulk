@@ -10,8 +10,8 @@ class VulkImageView;
 
 class VulkDescriptorSet : public ClassNonCopyableNonMovable {
     friend class VulkDescriptorSetUpdater;
-    std::vector<std::shared_ptr<VulkImageView>> textureImageViews;
-    std::vector<std::shared_ptr<VulkSampler>> textureSamplers;
+    std::vector<std::shared_ptr<const VulkImageView>> textureImageViews;
+    std::vector<std::shared_ptr<const VulkSampler>> textureSamplers;
 
    public:
     VkDescriptorSet descriptorSet;

@@ -168,8 +168,8 @@ VulkDeferredRenderpass::VulkDeferredRenderpass(Vulk& vkIn, VulkResources& resour
     deferredGeoPipeline      = resources.loadPipeline(renderPass, vk.swapChainExtent, "DeferredRenderGeo");
     deferredLightingPipeline = resources.loadPipeline(renderPass, vk.swapChainExtent, "DeferredRenderLighting");
 
-    deferredLightingDescriptorSetInfo =
-        resources.createDSInfoFromPipeline(*deferredLightingPipeline, &scene, nullptr, nullptr, this);
+    VulkPipeline const& pipeline      = *deferredLightingPipeline;
+    deferredLightingDescriptorSetInfo = resources.createDSInfoFromPipeline(pipeline, &scene, nullptr, nullptr, this);
 
     // ------------------------------ Create Framebuffers ------------------------------
 

@@ -39,15 +39,15 @@ class VulkScene {
 
     std::shared_ptr<vulk::VulkDeferredRenderpass> deferredRenderpass;
 
-    std::shared_ptr<VulkUniformBuffer<VulkLightViewProjUBO>> lightViewProjUBO;
-    std::array<std::shared_ptr<VulkDepthView>, MAX_FRAMES_IN_FLIGHT> shadowMapViews;
-    std::shared_ptr<VulkUniformBuffer<VulkGlobalConstantsUBO>> globalConstantsUBO;
-    std::shared_ptr<VulkUniformBuffer<glm::mat4>> invViewProjUBO;
+    mutable std::shared_ptr<VulkUniformBuffer<VulkLightViewProjUBO>> lightViewProjUBO;
+    mutable std::array<std::shared_ptr<VulkDepthView>, MAX_FRAMES_IN_FLIGHT> shadowMapViews;
+    mutable std::shared_ptr<VulkUniformBuffer<VulkGlobalConstantsUBO>> globalConstantsUBO;
+    mutable std::shared_ptr<VulkUniformBuffer<glm::mat4>> invViewProjUBO;
 
-    // debug
-    std::shared_ptr<VulkUniformBuffer<VulkDebugNormalsUBO>> debugNormalsUBO;
-    std::shared_ptr<VulkUniformBuffer<VulkDebugTangentsUBO>> debugTangentsUBO;
-    std::shared_ptr<VulkUniformBuffer<VulkPBRDebugUBO>> pbrDebugUBO;
+    // debug. we don't allocate these until we need them
+    mutable std::shared_ptr<VulkUniformBuffer<VulkDebugNormalsUBO>> debugNormalsUBO;
+    mutable std::shared_ptr<VulkUniformBuffer<VulkDebugTangentsUBO>> debugTangentsUBO;
+    mutable std::shared_ptr<VulkUniformBuffer<VulkPBRDebugUBO>> pbrDebugUBO;
 
     VulkScene(Vulk& vk, std::shared_ptr<SceneDef> def) : sceneUBOs(vk), def(def) {}
 };

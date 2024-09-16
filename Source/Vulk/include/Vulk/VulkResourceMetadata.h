@@ -95,20 +95,18 @@ struct MaterialDef {
 
 struct PipelineDef {
     vulk::cpp2::PipelineDef def;
-    shared_ptr<vulk::cpp2::ShaderDef> vertShader;
-    shared_ptr<vulk::cpp2::ShaderDef> geomShader;
-    shared_ptr<vulk::cpp2::ShaderDef> fragShader;
+    shared_ptr<const vulk::cpp2::ShaderDef> vertShader;
+    shared_ptr<const vulk::cpp2::ShaderDef> geomShader;
+    shared_ptr<const vulk::cpp2::ShaderDef> fragShader;
 
     void validate() {
         assert(vertShader);
         assert(fragShader);
     }
 
-    void fixup(
-        unordered_map<string, shared_ptr<vulk::cpp2::ShaderDef>> const& vertShaders,
-        unordered_map<string, shared_ptr<vulk::cpp2::ShaderDef>> const& geometryShaders,
-        unordered_map<string, shared_ptr<vulk::cpp2::ShaderDef>> const& fragmentShaders
-    ) {
+    void fixup(unordered_map<string, shared_ptr<vulk::cpp2::ShaderDef>> const& vertShaders,
+               unordered_map<string, shared_ptr<vulk::cpp2::ShaderDef>> const& geometryShaders,
+               unordered_map<string, shared_ptr<vulk::cpp2::ShaderDef>> const& fragmentShaders) {
         vertShader = vertShaders.at(def.vertShader().value());
         fragShader = fragmentShaders.at(def.fragShader().value());
         if (!def.geomShader()->empty()) {
@@ -117,12 +115,10 @@ struct PipelineDef {
         validate();
     }
 
-    static PipelineDef fromFile(
-        const fs::path& path,
-        unordered_map<string, shared_ptr<vulk::cpp2::ShaderDef>> const& vertShaders,
-        unordered_map<string, shared_ptr<vulk::cpp2::ShaderDef>> const& geometryShaders,
-        unordered_map<string, shared_ptr<vulk::cpp2::ShaderDef>> const& fragmentShaders
-    ) {
+    static PipelineDef fromFile(const fs::path& path,
+                                unordered_map<string, shared_ptr<vulk::cpp2::ShaderDef>> const& vertShaders,
+                                unordered_map<string, shared_ptr<vulk::cpp2::ShaderDef>> const& geometryShaders,
+                                unordered_map<string, shared_ptr<vulk::cpp2::ShaderDef>> const& fragmentShaders) {
         PipelineDef pipe;
 
         using namespace apache::thrift;
@@ -147,11 +143,11 @@ struct MeshDef {
     MeshDef(string name, ModelMeshDef model)
         : name(name), type(vulk::cpp2::MeshDefType::Model), model(make_shared<ModelMeshDef>(model)) {};
     MeshDef(string name, std::shared_ptr<VulkMesh> mesh) : name(name), type(vulk::cpp2::MeshDefType::Mesh), mesh(mesh) {};
-    shared_ptr<ModelMeshDef> getModelMeshDef() {
+    shared_ptr<const ModelMeshDef> getModelMeshDef() {
         assert(type == vulk::cpp2::MeshDefType::Model);
         return model;
     }
-    shared_ptr<VulkMesh> getMesh() {
+    shared_ptr<const VulkMesh> getMesh() {
         assert(type == vulk::cpp2::MeshDefType::Mesh);
         return mesh;
     }
@@ -173,11 +169,9 @@ struct ModelDef {
         assert(mesh);
     }
 
-    static ModelDef fromDef(
-        vulk::cpp2::ModelDef const& def,
-        unordered_map<string, shared_ptr<MeshDef>> const& meshes,
-        unordered_map<string, shared_ptr<MaterialDef>> materials
-    );
+    static ModelDef fromDef(vulk::cpp2::ModelDef const& def,
+                            unordered_map<string, shared_ptr<MeshDef>> const& meshes,
+                            unordered_map<string, shared_ptr<MaterialDef>> materials);
 };
 
 struct ActorDef {
@@ -193,13 +187,11 @@ struct ActorDef {
         assert(xform != glm::mat4(0.0f));
     }
 
-    static ActorDef fromDef(
-        vulk::cpp2::ActorDef defIn,
-        unordered_map<string, shared_ptr<PipelineDef>> const& pipelines,
-        unordered_map<string, shared_ptr<ModelDef>> const& models,
-        unordered_map<string, shared_ptr<MeshDef>> meshes,
-        unordered_map<string, shared_ptr<MaterialDef>> materials
-    );
+    static ActorDef fromDef(vulk::cpp2::ActorDef defIn,
+                            unordered_map<string, shared_ptr<PipelineDef>> const& pipelines,
+                            unordered_map<string, shared_ptr<ModelDef>> const& models,
+                            unordered_map<string, shared_ptr<MeshDef>> meshes,
+                            unordered_map<string, shared_ptr<MaterialDef>> materials);
 };
 
 #define SCENE_JSON_VERSION 1
@@ -215,13 +207,11 @@ struct SceneDef {
         assert(!actors.empty());
     }
 
-    static SceneDef fromDef(
-        vulk::cpp2::SceneDef,
-        unordered_map<string, std::shared_ptr<PipelineDef>> const& pipelines,
-        unordered_map<string, shared_ptr<ModelDef>> const& models,
-        unordered_map<string, shared_ptr<MeshDef>> const& meshes,
-        unordered_map<string, shared_ptr<MaterialDef>> const& materials
-    );
+    static SceneDef fromDef(vulk::cpp2::SceneDef,
+                            unordered_map<string, std::shared_ptr<PipelineDef>> const& pipelines,
+                            unordered_map<string, shared_ptr<ModelDef>> const& models,
+                            unordered_map<string, shared_ptr<MeshDef>> const& meshes,
+                            unordered_map<string, shared_ptr<MaterialDef>> const& materials);
 };
 
 // The metadata is valid up to the point of loading resources, but does

@@ -19,15 +19,15 @@ class VulkDescriptorSetInfo : public ClassNonCopyableNonMovable {
 
    public:
     // These need to be kept around as long as the descriptor set is in use
-    std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout;
+    std::shared_ptr<const VulkDescriptorSetLayout> descriptorSetLayout;
     VkDescriptorPool descriptorPool;
 
-    std::array<std::shared_ptr<VulkDescriptorSet>, MAX_FRAMES_IN_FLIGHT> descriptorSets;
+    std::array<std::shared_ptr<const VulkDescriptorSet>, MAX_FRAMES_IN_FLIGHT> descriptorSets;
 
     VulkDescriptorSetInfo(Vulk& vk,
-                          std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout,
+                          std::shared_ptr<const VulkDescriptorSetLayout> descriptorSetLayout,
                           VkDescriptorPool descriptorPool,
-                          std::array<std::shared_ptr<VulkDescriptorSet>, MAX_FRAMES_IN_FLIGHT>&& descriptorSets)
+                          std::array<std::shared_ptr<const VulkDescriptorSet>, MAX_FRAMES_IN_FLIGHT>&& descriptorSets)
         : vk(vk),
           descriptorSetLayout(descriptorSetLayout),
           descriptorPool(descriptorPool),
@@ -42,7 +42,7 @@ class VulkDescriptorSetBuilder {
     Vulk& vk;
     VulkDescriptorSetLayoutBuilder layoutBuilder;
     VulkDescriptorPoolBuilder poolBuilder;
-    std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayoutOverride;
+    std::shared_ptr<const VulkDescriptorSetLayout> descriptorSetLayoutOverride;
     struct BufSetUpdaterInfo {
         VkBuffer buf;
         VkDeviceSize range;
@@ -55,15 +55,15 @@ class VulkDescriptorSetBuilder {
     std::array<PerFrameInfo, MAX_FRAMES_IN_FLIGHT> perFrameInfos;
 
     struct SamplerSetUpdaterInfo {
-        std::shared_ptr<VulkImageView> imageView;
-        std::shared_ptr<VulkSampler> sampler;
+        std::shared_ptr<const VulkImageView> imageView;
+        std::shared_ptr<const VulkSampler> sampler;
     };
     std::array<std::unordered_map<vulk::cpp2::VulkShaderTextureBinding, SamplerSetUpdaterInfo>, MAX_FRAMES_IN_FLIGHT>
         perFrameSamplerSetInfos;
 
     struct InputAttachmentInfo {
         // uint32_t atmtIdx;
-        std::shared_ptr<VulkImageView> imageView;
+        std::shared_ptr<const VulkImageView> imageView;
     };
     std::unordered_map<vulk::cpp2::GBufBinding, InputAttachmentInfo> inputAttachments;
 
@@ -71,7 +71,7 @@ class VulkDescriptorSetBuilder {
     VulkDescriptorSetBuilder(Vulk& vk) : vk(vk), layoutBuilder(vk), poolBuilder(vk) {}
 
     // if we have this cached and it matches the current layout just use it. make sure you know what you're doing
-    VulkDescriptorSetBuilder& setDescriptorSetLayout(std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout) {
+    VulkDescriptorSetBuilder& setDescriptorSetLayout(std::shared_ptr<const VulkDescriptorSetLayout> descriptorSetLayout) {
         VULK_ASSERT(descriptorSetLayout);
         this->descriptorSetLayoutOverride = descriptorSetLayout;
         return *this;
@@ -105,8 +105,8 @@ class VulkDescriptorSetBuilder {
     // for non-mutable image views that are the same for both frames.
     VulkDescriptorSetBuilder& addBothFramesImageSampler(VkShaderStageFlags stageFlags,
                                                         vulk::cpp2::VulkShaderTextureBinding bindingID,
-                                                        std::shared_ptr<VulkImageView> imageView,
-                                                        std::shared_ptr<VulkSampler> sampler) {
+                                                        std::shared_ptr<const VulkImageView> imageView,
+                                                        std::shared_ptr<const VulkSampler> sampler) {
         VULK_ASSERT(imageView && sampler);
         layoutBuilder.addImageSampler(stageFlags, bindingID);
         poolBuilder.addCombinedImageSamplerCount(MAX_FRAMES_IN_FLIGHT);
@@ -118,8 +118,8 @@ class VulkDescriptorSetBuilder {
     VulkDescriptorSetBuilder& addFrameImageSampler(uint32_t frame,
                                                    VkShaderStageFlags stageFlags,
                                                    vulk::cpp2::VulkShaderTextureBinding bindingID,
-                                                   std::shared_ptr<VulkImageView> imageView,
-                                                   std::shared_ptr<VulkSampler> sampler) {
+                                                   std::shared_ptr<const VulkImageView> imageView,
+                                                   std::shared_ptr<const VulkSampler> sampler) {
         VULK_ASSERT(imageView && sampler);
         layoutBuilder.addImageSampler(stageFlags, bindingID);
         poolBuilder.addCombinedImageSamplerCount(1);
@@ -129,7 +129,7 @@ class VulkDescriptorSetBuilder {
 
     VulkDescriptorSetBuilder& addInputAttachment(VkShaderStageFlags stageFlags,
                                                  auto bindingID,
-                                                 std::shared_ptr<VulkImageView> imageView)
+                                                 std::shared_ptr<const VulkImageView> imageView)
         requires InputAtmtBinding<decltype(bindingID)>
     {
         layoutBuilder.addInputAttachment(stageFlags, bindingID);
@@ -139,18 +139,18 @@ class VulkDescriptorSetBuilder {
         return *this;
     }
 
-    std::shared_ptr<VulkDescriptorSetInfo> build() {
-        std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout;
+    std::shared_ptr<const VulkDescriptorSetInfo> build() {
+        std::shared_ptr<const VulkDescriptorSetLayout> descriptorSetLayout;
         if (this->descriptorSetLayoutOverride) {
             descriptorSetLayout = this->descriptorSetLayoutOverride;
         } else {
             descriptorSetLayout = layoutBuilder.build();
         }
         VkDescriptorPool pool = poolBuilder.build(MAX_FRAMES_IN_FLIGHT);
-        std::array<std::shared_ptr<VulkDescriptorSet>, MAX_FRAMES_IN_FLIGHT> descriptorSets;
+        std::array<std::shared_ptr<const VulkDescriptorSet>, MAX_FRAMES_IN_FLIGHT> descriptorSets;
         for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-            descriptorSets[i]                = std::make_shared<VulkDescriptorSet>(vk, descriptorSetLayout->layout, pool);
-            VulkDescriptorSetUpdater updater = VulkDescriptorSetUpdater(descriptorSets[i]);
+            auto ds = std::make_shared<VulkDescriptorSet>(vk, descriptorSetLayout->layout, pool);
+            VulkDescriptorSetUpdater updater(ds);
 
             for (auto& pair : perFrameInfos[i].uniformSetInfos) {
                 updater.addUniformBuffer(pair.second.buf, pair.second.range, pair.first);
@@ -166,7 +166,8 @@ class VulkDescriptorSetBuilder {
             }
 
             updater.update(vk.device);
+            descriptorSets[i] = ds;
         }
-        return std::make_shared<VulkDescriptorSetInfo>(vk, descriptorSetLayout, pool, std::move(descriptorSets));
+        return std::make_shared<const VulkDescriptorSetInfo>(vk, descriptorSetLayout, pool, std::move(descriptorSets));
     }
 };

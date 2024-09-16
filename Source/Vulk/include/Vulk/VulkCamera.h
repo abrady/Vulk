@@ -19,11 +19,11 @@ class VulkCamera {
     VulkCamera();
 
     void setLookAt(glm::vec3 eyeIn, glm::vec3 target);
-    glm::mat4 getViewMat();
-    glm::vec3 getForwardVec();
-    glm::vec3 getRightVec();
-    glm::vec3 getUpVec();
-    glm::vec3 getEulers();
+    glm::mat4 getViewMat() const;
+    glm::vec3 getForwardVec() const;
+    glm::vec3 getRightVec() const;
+    glm::vec3 getUpVec() const;
+    glm::vec3 getEulers() const;
 
     void updateOrientation(float dx, float dy);
     void updatePosition(float dx, float dy, float dz);

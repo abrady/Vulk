@@ -9,14 +9,14 @@ struct PipelineDef;
 
 class VulkPipelineBuilder {
     Vulk& vk;
-    std::shared_ptr<PipelineDef> def;
+    std::shared_ptr<const PipelineDef> def;
 
     struct VertInput {
         VkVertexInputBindingDescription binding     = {};
         VkVertexInputAttributeDescription attribute = {};
     };
 
-    std::vector<std::shared_ptr<VulkShaderModule>> shaderModules;
+    std::vector<std::shared_ptr<const VulkShaderModule>> shaderModules;
     std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
     std::unordered_map<vulk::cpp2::VulkShaderLocation, VertInput> vertInputs;
     VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
@@ -35,20 +35,20 @@ class VulkPipelineBuilder {
     std::vector<VkPushConstantRange> pushConstantRanges;
 
     VulkPipelineBuilder& addShaderStage(VkShaderStageFlagBits stage, char const* path);
-    VulkPipelineBuilder& addShaderStage(VkShaderStageFlagBits stage, std::shared_ptr<VulkShaderModule> shaderModule);
+    VulkPipelineBuilder& addShaderStage(VkShaderStageFlagBits stage, std::shared_ptr<const VulkShaderModule> shaderModule);
 
    public:
-    VulkPipelineBuilder(Vulk& vk, std::shared_ptr<PipelineDef> def);
+    VulkPipelineBuilder(Vulk& vk, std::shared_ptr<const PipelineDef> def);
 
-    VulkPipelineBuilder& addvertShaderStage(std::shared_ptr<VulkShaderModule> shaderModule) {
+    VulkPipelineBuilder& addvertShaderStage(std::shared_ptr<const VulkShaderModule> shaderModule) {
         return addShaderStage(VK_SHADER_STAGE_VERTEX_BIT, shaderModule);
     }
 
-    VulkPipelineBuilder& addFragmentShaderStage(std::shared_ptr<VulkShaderModule> shaderModule) {
+    VulkPipelineBuilder& addFragmentShaderStage(std::shared_ptr<const VulkShaderModule> shaderModule) {
         return addShaderStage(VK_SHADER_STAGE_FRAGMENT_BIT, shaderModule);
     }
 
-    VulkPipelineBuilder& addGeometryShaderStage(std::shared_ptr<VulkShaderModule> shaderModule) {
+    VulkPipelineBuilder& addGeometryShaderStage(std::shared_ptr<const VulkShaderModule> shaderModule) {
         return addShaderStage(VK_SHADER_STAGE_GEOMETRY_BIT, shaderModule);
     }
 
@@ -70,11 +70,11 @@ class VulkPipelineBuilder {
     VulkPipelineBuilder& copyFrontStencilToBack();
 
     VulkPipelineBuilder& addVertexInput(vulk::cpp2::VulkShaderLocation input);
-    VulkPipelineBuilder& addColorBlendAttachment(
-        bool blendingEnabled,
-        VkColorComponentFlags colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT |
-                                               VK_COLOR_COMPONENT_A_BIT
-    );
+    VulkPipelineBuilder& addColorBlendAttachment(bool blendingEnabled,
+                                                 VkColorComponentFlags colorWriteMask = VK_COLOR_COMPONENT_R_BIT |
+                                                                                        VK_COLOR_COMPONENT_G_BIT |
+                                                                                        VK_COLOR_COMPONENT_B_BIT |
+                                                                                        VK_COLOR_COMPONENT_A_BIT);
 
     VulkPipelineBuilder& setScissor(VkExtent2D extent);
     VulkPipelineBuilder& setViewport(VkExtent2D extent);
@@ -98,11 +98,10 @@ class VulkPipelineBuilder {
         return *this;
     }
 
-    void build(
-        VkRenderPass renderPass,
-        std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout,
-        VkPipelineLayout* pipelineLayout,
-        VkPipeline* graphicsPipeline
-    );
-    std::shared_ptr<VulkPipeline> build(VkRenderPass renderPass, std::shared_ptr<VulkDescriptorSetLayout> descriptorSetLayout);
+    void build(VkRenderPass renderPass,
+               std::shared_ptr<const VulkDescriptorSetLayout> descriptorSetLayout,
+               VkPipelineLayout* pipelineLayout,
+               VkPipeline* graphicsPipeline);
+    std::shared_ptr<const VulkPipeline> build(VkRenderPass renderPass,
+                                              std::shared_ptr<const VulkDescriptorSetLayout> descriptorSetLayout);
 };

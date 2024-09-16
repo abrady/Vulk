@@ -17,8 +17,8 @@ class VulkStorageBuffer;
 class VulkDescriptorSetUpdater {
    private:
     // why did I allocate these? I don't know...
-    std::vector<std::unique_ptr<VkDescriptorBufferInfo>> bufferInfos;
-    std::vector<std::unique_ptr<VkDescriptorImageInfo>> imageInfos;
+    std::vector<std::unique_ptr<const VkDescriptorBufferInfo>> bufferInfos;
+    std::vector<std::unique_ptr<const VkDescriptorImageInfo>> imageInfos;
     std::vector<VkWriteDescriptorSet> descriptorWrites;
     std::shared_ptr<VulkDescriptorSet> descriptorSet;
 
@@ -26,11 +26,9 @@ class VulkDescriptorSetUpdater {
     VulkDescriptorSetUpdater(std::shared_ptr<VulkDescriptorSet> descriptorSet) : descriptorSet(descriptorSet) {}
 
     VulkDescriptorSetUpdater& addUniformBuffer(VkBuffer buf, VkDeviceSize range, vulk::cpp2::VulkShaderUBOBinding binding);
-    VulkDescriptorSetUpdater& addImageSampler(
-        std::shared_ptr<VulkImageView> textureImageView,
-        std::shared_ptr<VulkSampler> textureSampler,
-        vulk::cpp2::VulkShaderTextureBinding binding
-    );
+    VulkDescriptorSetUpdater& addImageSampler(std::shared_ptr<const VulkImageView> textureImageView,
+                                              std::shared_ptr<const VulkSampler> textureSampler,
+                                              vulk::cpp2::VulkShaderTextureBinding binding);
     VulkDescriptorSetUpdater& addStorageBuffer(VkBuffer buf, VkDeviceSize range, vulk::cpp2::VulkShaderSSBOBinding binding);
     template <typename T>
     VulkDescriptorSetUpdater& addVulkStorageBuffer(VulkStorageBuffer<T>& storageBuffer, uint32_t binding) {
@@ -38,7 +36,7 @@ class VulkDescriptorSetUpdater {
     }
 
     // e.g. for GBuffer when you need the gbuf as an input attachment
-    VulkDescriptorSetUpdater& addInputAttachment(std::shared_ptr<VulkImageView> textureImageView, auto bindingIn)
+    VulkDescriptorSetUpdater& addInputAttachment(std::shared_ptr<const VulkImageView> textureImageView, auto bindingIn)
         requires InputAtmtBinding<decltype(bindingIn)>
     {
         uint32_t binding = (uint32_t)bindingIn;
